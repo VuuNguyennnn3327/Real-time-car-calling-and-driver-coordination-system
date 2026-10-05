@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Trị Viên - Giám Sát Bản Đồ (RIDE-RTREE)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="shared/style.css">
+    <!-- Người phụ trách: Vương -->
+</head>
+<body>
+    <div class="app-layout">
+        <div class="sidebar admin-sidebar">
+            <div class="sidebar-header">
+                <h2>🗺️ Giám Sát Hệ Thống</h2>
+                <a href="index.html" class="back-link">Đổi vai trò</a>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalDriversCount">50</div>
+                    <div class="stat-label">Tổng Tài Xế</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="activeRidesCount">0</div>
+                    <div class="stat-label">Cuốc Xe Hoạt Động</div>
+                </div>
+            </div>
+
+            <h3>Danh sách cuốc xe trong hệ thống</h3>
+            <div class="admin-orders-table-wrapper">
+                <table class="data-table" id="ridesTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Trạng Thái</th>
+                            <th>Tài Xế</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ridesTableBody">
+                        <tr><td colspan="3">Chưa có cuốc xe nào</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="map-container" id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="shared/app.js"></script>
+    <script>
+        const map = L.map('map').setView([10.7769, 106.7009], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Polling danh sách xe và cuốc xe từ GET /api/admin/overview
+    </script>
+</body>
+</html>

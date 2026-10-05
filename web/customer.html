@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khách Hàng - Đặt Xe (RIDE-RTREE)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="shared/style.css">
+    <!-- Người phụ trách: Dương -->
+</head>
+<body>
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>👤 Khách Hàng</h2>
+                <a href="index.html" class="back-link">Đổi vai trò</a>
+            </div>
+            
+            <div class="booking-panel">
+                <p class="instruction">1. Click chuột trên bản đồ để chọn <b>Điểm đón (Pickup)</b></p>
+                <div class="coord-box" id="pickupBox">Chưa chọn điểm đón</div>
+
+                <p class="instruction">2. Click chuột tiếp theo để chọn <b>Điểm đến (Destination)</b></p>
+                <div class="coord-box" id="destBox">Chưa chọn điểm đến</div>
+
+                <button id="bookBtn" class="btn btn-primary btn-block" disabled onclick="requestRide()">Đặt Xe Ngay</button>
+            </div>
+
+            <div class="ride-status-card" id="statusCard" style="display: none;">
+                <h3>Trạng thái cuốc xe</h3>
+                <div id="statusBadge" class="badge badge-pending">Đang tìm tài xế gần nhất...</div>
+                <div id="assignedDriverInfo" style="margin-top: 10px;"></div>
+            </div>
+        </div>
+
+        <div class="map-container" id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="shared/app.js"></script>
+    <script>
+        // Khởi tạo bản đồ trung tâm Quận 1
+        const map = L.map('map').setView([10.7769, 106.7009], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        let pickup = null;
+        let dest = null;
+        let pickupMarker = null;
+        let destMarker = null;
+
+        map.on('click', function(e) {
+            if (!pickup) {
+                pickup = e.latlng;
+                pickupMarker = L.marker(pickup).addTo(map).bindPopup('Điểm đón').openPopup();
+                document.getElementById('pickupBox').innerText = `${pickup.lat.toFixed(5)}, ${pickup.lng.toFixed(5)}`;
+            } else if (!dest) {
+                dest = e.latlng;
+                destMarker = L.marker(dest).addTo(map).bindPopup('Điểm đến').openPopup();
+                document.getElementById('destBox').innerText = `${dest.lat.toFixed(5)}, ${dest.lng.toFixed(5)}`;
+                document.getElementById('bookBtn').disabled = false;
+            }
+        });
+
+        async function requestRide() {
+            document.getElementById('statusCard').style.display = 'block';
+            document.getElementById('bookBtn').disabled = true;
+            const res = await apiPost('/rides', {
+                pickup: { lat: pickup.lat, lng: pickup.lng },
+                destination: { lat: dest.lat, lng: dest.lng }
+            });
+            if (res) {
+                document.getElementById('statusBadge').innerText = 'Đã tạo đơn - Chờ tài xế nhận';
+            }
+        }
+    </script>
+</body>
+</html>

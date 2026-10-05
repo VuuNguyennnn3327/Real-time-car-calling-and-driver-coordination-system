@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIDE-RTREE - Chọn Vai Trò</title>
+    <link rel="stylesheet" href="shared/style.css">
+    <!-- Người phụ trách: Dương -->
+</head>
+<body class="role-select-page">
+    <div class="role-container">
+        <h1>RIDE-RTREE</h1>
+        <p class="subtitle">Hệ Thống Gọi Xe & Điều Phối Thời Gian Thực Dựa Trên Cây R-Tree</p>
+        
+        <div class="role-cards">
+            <!-- 1. Khách hàng -->
+            <div class="role-card" onclick="selectRole('customer')">
+                <div class="role-icon">👤</div>
+                <h2>Khách Hàng</h2>
+                <p>Chọn điểm đón & điểm đến trên bản đồ, đặt xe tìm tài xế gần nhất.</p>
+                <button class="btn btn-primary">Vào vai Khách Hàng</button>
+            </div>
+
+            <!-- 2. Tài xế -->
+            <div class="role-card" onclick="selectRole('driver')">
+                <div class="role-icon">🚗</div>
+                <h2>Tài Xế</h2>
+                <p>Xem vị trí hiện tại, theo dõi các cuốc xe đang chờ gần mình và nhận đơn.</p>
+                <button class="btn btn-success">Vào vai Tài Xế</button>
+            </div>
+
+            <!-- 3. Quản trị viên -->
+            <div class="role-card" onclick="selectRole('admin')">
+                <div class="role-icon">🗺️</div>
+                <h2>Quản Trị Viên</h2>
+                <p>Bản đồ tổng quan giám sát toàn bộ xe và trạng thái đơn hàng theo thời gian thực.</p>
+                <button class="btn btn-warning">Vào vai Admin</button>
+            </div>
+        </div>
+
+        <div class="demo-link">
+            <a href="rtree-demo.html">👉 Xem Trang Trực Quan Hóa Cây R-Tree (Demo Giải Thuật)</a>
+        </div>
+    </div>
+
+    <script>
+        function selectRole(role) {
+            if (role === 'customer') {
+                window.location.href = 'customer.html';
+            } else if (role === 'driver') {
+                const driverId = prompt('Nhập ID tài xế (mẫu: D001 - D050):', 'D001');
+                if (driverId) {
+                    localStorage.setItem('userId', driverId);
+                    window.location.href = 'driver.html';
+                }
+            } else if (role === 'admin') {
+                window.location.href = 'admin.html';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+/* 
+ * File: style.css
+ * Author: Dương (Người phụ trách)
+ * Định kiểu giao diện hiện đại, tối giản cho các trang web của dự án
+ */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    background: #f4f6f8;
+    color: #2c3e50;
+}
+
+/* 1. Màn hình chọn vai trò */
+.role-select-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: #1a1e24;
+    color: #fff;
+}
+
+.role-container {
+    text-align: center;
+    max-width: 900px;
+    padding: 2rem;
+}
+
+.role-container h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: #3498db;
+}
+
+.role-container .subtitle {
+    color: #95a5a6;
+    margin-bottom: 2.5rem;
+}
+
+.role-cards {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.role-card {
+    background: #242b35;
+    border-radius: 12px;
+    padding: 2rem;
+    width: 260px;
+    border: 1px solid #34495e;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    text-align: left;
+}
+
+.role-card:hover {
+    transform: translateY(-5px);
+    border-color: #3498db;
+}
+
+.role-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.role-card h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+}
+
+.role-card p {
+    font-size: 0.9rem;
+    color: #bdc3c7;
+    margin-bottom: 1.5rem;
+    min-height: 50px;
+}
+
+.demo-link {
+    margin-top: 3rem;
+}
+
+.demo-link a {
+    color: #2ecc71;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* 2. Bố cục ứng dụng chính (Sidebar + Map) */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 380px;
+    background: #fff;
+    padding: 1.5rem;
+    border-right: 1px solid #e1e8ed;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.back-link {
+    font-size: 0.85rem;
+    color: #3498db;
+    text-decoration: none;
+}
+
+.map-container {
+    flex: 1;
+    height: 100%;
+}
+
+.coord-box {
+    background: #f8f9fa;
+    border: 1px dashed #ced4da;
+    border-radius: 6px;
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.instruction {
+    font-size: 0.9rem;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: opacity 0.2s;
+    text-align: center;
+}
+
+.btn-primary { background: #3498db; color: #fff; }
+.btn-success { background: #2ecc71; color: #fff; }
+.btn-warning { background: #f39c12; color: #fff; }
+.btn-block { display: block; width: 100%; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.badge-pending {
+    display: inline-block;
+    padding: 0.4rem 0.8rem;
+    background: #fff3cd;
+    color: #856404;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-card {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #7f8c8d;
+}
+
+/* Data Table */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+}
+
+.data-table th, .data-table td {
+    padding: 0.6rem;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}

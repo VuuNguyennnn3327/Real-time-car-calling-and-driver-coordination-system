@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tài Xế - Nhận Đơn (RIDE-RTREE)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="shared/style.css">
+    <!-- Người phụ trách: Dương -->
+</head>
+<body>
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>🚗 Tài Xế: <span id="driverDisplayId">D001</span></h2>
+                <a href="index.html" class="back-link">Đổi vai trò</a>
+            </div>
+
+            <div class="driver-status-box">
+                <div>Trạng thái: <b id="driverStatus" class="status-available">SẴN SÀNG (AVAILABLE)</b></div>
+            </div>
+
+            <h3>Cuốc xe đang chờ gần bạn</h3>
+            <div class="rides-list" id="ridesList">
+                <div class="empty-state">Đang quét cuốc xe gần bạn qua R-Tree...</div>
+            </div>
+        </div>
+
+        <div class="map-container" id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="shared/app.js"></script>
+    <script>
+        const driverId = localStorage.getItem('userId') || 'D001';
+        document.getElementById('driverDisplayId').innerText = driverId;
+
+        const map = L.map('map').setView([10.7769, 106.7009], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Polling danh sách cuốc xe đang chờ qua GET /api/rides/nearby mỗi 2.5s
+    </script>
+</body>
+</html>

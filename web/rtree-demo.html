@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trực Quan Hóa Cây R-Tree - Demo Giải Thuật (DSA)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="shared/style.css">
+    <!-- Người phụ trách: Dương + Trường Vũ -->
+</head>
+<body>
+    <div class="app-layout">
+        <div class="sidebar demo-sidebar">
+            <div class="sidebar-header">
+                <h2>🌲 Demo Giải Thuật R-Tree</h2>
+                <a href="index.html" class="back-link">Trang chủ</a>
+            </div>
+
+            <div class="demo-controls">
+                <h3>1. Chế độ hiển thị (MBR Layers)</h3>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="toggleMBR" checked> Hiển thị khung MBR đa tầng
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="togglePoints" checked> Hiển thị điểm dữ liệu
+                </label>
+
+                <hr>
+
+                <h3>2. Thử nghiệm Range Search</h3>
+                <p class="instruction">Nhấp nút dưới để chạy tìm kiếm vùng chữ nhật:</p>
+                <button class="btn btn-primary btn-block" onclick="triggerRangeQuery()">Chạy Range Search</button>
+
+                <hr>
+
+                <h3>3. Thử nghiệm k-NN Search</h3>
+                <p class="instruction">Click 1 điểm bất kỳ trên bản đồ để tìm k điểm gần nhất:</p>
+                <div class="input-group">
+                    <label>Số lượng k:</label>
+                    <input type="number" id="knnK" value="3" min="1" max="10">
+                </div>
+
+                <div class="metrics-panel" id="metricsPanel">
+                    <h4>Thông số truy vấn</h4>
+                    <div>Thời gian phản hồi: <b id="queryTime">0.12 ms</b></div>
+                    <div>Số điểm tìm thấy: <b id="pointsCount">0</b></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-container" id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="shared/app.js"></script>
+    <script>
+        const map = L.map('map').setView([10.7769, 106.7009], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        async function triggerRangeQuery() {
+            const bounds = map.getBounds();
+            const res = await apiPost('/rtree/range', {
+                minLat: bounds.getSouth(),
+                minLng: bounds.getWest(),
+                maxLat: bounds.getNorth(),
+                maxLng: bounds.getEast()
+            });
+            if (res) {
+                document.getElementById('pointsCount').innerText = res.length || 0;
+            }
+        }
+    </script>
+</body>
+</html>

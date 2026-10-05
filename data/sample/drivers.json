@@ -1,0 +1,22 @@
+[
+  {"id": "D001", "name": "Nguyễn Văn An", "lat": 10.7769, "lng": 106.7009, "status": "AVAILABLE"},
+  {"id": "D002", "name": "Trần Minh Bình", "lat": 10.7782, "lng": 106.6995, "status": "AVAILABLE"},
+  {"id": "D003", "name": "Lê Hoàng Cường", "lat": 10.7745, "lng": 106.7032, "status": "AVAILABLE"},
+  {"id": "D004", "name": "Phạm Quốc Dũng", "lat": 10.7810, "lng": 106.6980, "status": "AVAILABLE"},
+  {"id": "D005", "name": "Hoàng Trọng Em", "lat": 10.7720, "lng": 106.7050, "status": "AVAILABLE"},
+  {"id": "D006", "name": "Vũ Đình Phong", "lat": 10.7795, "lng": 106.7065, "status": "AVAILABLE"},
+  {"id": "D007", "name": "Đỗ Quang Hải", "lat": 10.7735, "lng": 106.6960, "status": "AVAILABLE"},
+  {"id": "D008", "name": "Bùi Văn Hùng", "lat": 10.7830, "lng": 106.7020, "status": "AVAILABLE"},
+  {"id": "D009", "name": "Đặng Hữu Khoa", "lat": 10.7750, "lng": 106.7080, "status": "AVAILABLE"},
+  {"id": "D010", "name": "Ngô Tiến Long", "lat": 10.7705, "lng": 106.7000, "status": "AVAILABLE"},
+  {"id": "D011", "name": "Dương Văn Minh", "lat": 10.7800, "lng": 106.6930, "status": "AVAILABLE"},
+  {"id": "D012", "name": "Lý Gia Nam", "lat": 10.7760, "lng": 106.7110, "status": "AVAILABLE"},
+  {"id": "D013", "name": "Phan Hữu Nghĩa", "lat": 10.7850, "lng": 106.6990, "status": "AVAILABLE"},
+  {"id": "D014", "name": "Trịnh Công Phúc", "lat": 10.7715, "lng": 106.6920, "status": "AVAILABLE"},
+  {"id": "D015", "name": "Mai Anh Quân", "lat": 10.7825, "lng": 106.7075, "status": "AVAILABLE"},
+  {"id": "D016", "name": "Cao Xuân Sang", "lat": 10.7680, "lng": 106.7040, "status": "AVAILABLE"},
+  {"id": "D017", "name": "Đinh Hùng Sơn", "lat": 10.7770, "lng": 106.6900, "status": "AVAILABLE"},
+  {"id": "D018", "name": "Lâm Quốc Thắng", "lat": 10.7840, "lng": 106.6950, "status": "AVAILABLE"},
+  {"id": "D019", "name": "Võ Tuấn Kiệt", "lat": 10.7690, "lng": 106.6980, "status": "AVAILABLE"},
+  {"id": "D020", "name": "Trần Quốc Toản", "lat": 10.7780, "lng": 106.7130, "status": "AVAILABLE"}
+]
