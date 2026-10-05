@@ -1,0 +1,41 @@
+# QUY TẮC BẮT BUỘC DÀNH CHO AI ASSISTANT TRONG DỰ ÁN RIDE-RTREE
+
+Bạn đang làm việc trong dự án đồ án Cấu trúc Dữ liệu & Giải thuật (DSA) mang tên: **RIDE-RTREE**.
+Thư mục gốc: `D:\Nam2_ky1\BTL_DSA` (hoặc thư mục workspace hiện tại).
+
+## 1. QUY TẮC GIT COMMIT TỰ ĐỘNG & GHI NHẬN ĐÚNG TÁC GIẢ (BẮT BUỘC 100%)
+Mỗi khi bạn (AI) hoàn thành viết mã, chỉnh sửa file hoặc fix bug theo yêu cầu của thành viên:
+1. **GHI NHẬN ĐÚNG TÁC GIẢ BẰNG CỜ `--author`:**
+   - Khi commit, AI BẮT BUỘC phải gắn cờ `--author="<Tên thành viên> <<email_sinh_vien>>"`.
+   - TUYỆT ĐỐI KHÔNG commit dưới tên người khác (đặc biệt không được gộp vào tên của Nhóm trưởng Trường Vũ nếu thành viên đó là Vương, Tưởng, Đẹp, hoặc Dương).
+2. **THỰC THI HOẶC IN LỆNH:**
+   - Nếu có quyền terminal/run_command: Tự động chạy `git add <files>` và `git commit --author="..." -m "..."`.
+   - Nếu không có quyền terminal trực tiếp: Ở cuối câu trả lời, AI BẮT BUỘC phải in ra khối lệnh CMD/Bash chứa sẵn lệnh commit có kèm cờ `--author` đúng tên của bạn đó.
+
+## 2. BẢNG DANH TÍNH TÁC GIẢ VÀ MÃ TASK JIRA:
+- **Tưởng:**
+  - Author: `Tuong <tuong@student.edu.vn>`
+  - Task Jira: `[RT-05]`, `[RT-06]`, `[RT-07]`
+  - Ví dụ lệnh: `git commit --author="Tuong <tuong@student.edu.vn>" -m "feat(knn): [RT-05] implement Best-First Search with Min-Heap [Tuong]"`
+- **Vương:**
+  - Author: `Vuong <vuong@student.edu.vn>`
+  - Task Jira: `[RT-08]`, `[RT-09]`, `[RT-10]`
+  - Ví dụ lệnh: `git commit --author="Vuong <vuong@student.edu.vn>" -m "feat(simulator): [RT-10] add driver coordinate drift [Vuong]"`
+- **Đẹp:**
+  - Author: `Dep <dep@student.edu.vn>`
+  - Task Jira: `[RT-11]`, `[RT-12]`, `[RT-13]`
+  - Ví dụ lệnh: `git commit --author="Dep <dep@student.edu.vn>" -m "feat(storage): [RT-13] implement thread-safe RAM Store [Dep]"`
+- **Dương:**
+  - Author: `Duong <duong@student.edu.vn>`
+  - Task Jira: `[RT-14]`, `[RT-15]`, `[RT-16]`
+  - Ví dụ lệnh: `git commit --author="Duong <duong@student.edu.vn>" -m "feat(web): [RT-14] implement customer ride booking map Leaflet [Duong]"`
+- **Trường Vũ (Lead):**
+  - Author: `Truong Vu <truongvu@student.edu.vn>`
+  - Task Jira: `[RT-01]`, `[RT-02]`, `[RT-03]`, `[RT-04]`
+  - Ví dụ lệnh: `git commit --author="Truong Vu <truongvu@student.edu.vn>" -m "feat(core): [RT-03] implement Guttman Quadratic Split [Truong Vu]"`
+
+## 3. RANH GIỚI KỸ THUẬT (TUYỆT ĐỐI KHÔNG LÀM)
+- KHÔNG thêm thư viện xác thực bảo mật JWT, OAuth, Bcrypt.
+- KHÔNG dùng WebSocket (Dùng Polling `setInterval` 2-3s).
+- KHÔNG thêm tính năng thanh toán, chat, rating, GPS thiết bị thật.
+- R-Tree C++ tự code 100% từ đầu, KHÔNG dùng thư viện R-Tree ngoài.
