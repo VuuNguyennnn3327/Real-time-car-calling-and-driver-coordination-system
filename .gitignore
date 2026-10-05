@@ -1,0 +1,16 @@
+# Build directories
+build/
+bin/
+obj/
+*.out
+*.exe
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
