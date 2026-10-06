@@ -1,25 +1,31 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include "httplib.h"
+#include <string>
+
 /**
  * @file Server.h
- * @author Tưởng (Người phụ trách)
- * @brief Lớp quản lý vòng đời của Web Server C++.
- *
- * HƯỚNG DẪN DÀNH CHO AI KHI THỰC HIỆN FILE NÀY:
- * - Khởi tạo httplib::Server.
- * - Cấu hình svr.set_mount_point("/", "./web") để phục vụ static files trực tiếp từ thư mục web/.
- * - Đăng ký registerApiRoutes(svr).
- * - Lắng nghe tại cổng 8080 (hoặc cổng cấu hình).
+ * @author Tưởng (Người phụ trách - RT-06)
+ * @brief Lớp quản lý C++ Web Server chạy cổng 8080, phục vụ file tĩnh và REST API.
  */
-
 class Server {
 private:
+    httplib::Server svr;
+    std::string host;
     int port;
+    std::string webRoot;
 
 public:
-    explicit Server(int port = 8080);
+    Server(const std::string& host = "0.0.0.0", int port = 8080, const std::string& webRoot = "./web");
+    
+    // Thiết lập cấu hình static files, CORS và đăng ký API routes
+    void setupRoutes();
+    
+    // Khởi chạy Web Server
     void start();
+    
+    // Dừng Web Server
     void stop();
 };
 
