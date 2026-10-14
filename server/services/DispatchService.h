@@ -29,10 +29,33 @@ struct DriverCandidate {
     double distanceKm;
 };
 
-class DispatchService {
-private:
-    RTree driverSpatialIndex;
+struct CandidateDriverInfo {
+    std::string id;
+    std::string name;
+    double distanceKm;
+};
 
+struct CreatedRide {
+    std::string id;
+    std::string status;
+    double pickupLat;
+    double pickupLng;
+    double destLat;
+    double destLng;
+    std::vector<CandidateDriverInfo> candidateDrivers;
+};
+
+struct NearbyRideInfo {
+    std::string id;
+    double pickupLat;
+    double pickupLng;
+    double destLat;
+    double destLng;
+    std::string status;
+    double distanceKm;
+};
+
+class DispatchService {
 public:
     static DispatchService& getInstance() {
         static DispatchService instance;
@@ -48,8 +71,17 @@ public:
     // Tìm các tài xế rảnh gần điểm đón của khách nhất (k-NN)
     std::vector<DriverCandidate> findCandidatesForRide(double pickupLat, double pickupLng, size_t k = 5);
 
+    // Tạo cuốc xe mới và tìm ứng viên tài xế (dùng cho POST /api/rides)
+    CreatedRide createRide(double pickupLat, double pickupLng, double destLat, double destLng);
+
+    // Lấy danh sách cuốc xe PENDING gần vị trí tài xế (dùng cho GET /api/rides/nearby)
+    std::vector<NearbyRideInfo> getNearbyPendingRides(double lat, double lng);
+
+    // Tài xế nhận cuốc xe (dùng cho POST /api/rides/:id/accept)
+    bool acceptRide(const std::string& rideId, const std::string& driverId);
+
     // Lấy tham chiếu đến cây R-Tree phục vụ truy vấn Range/Demo trực tiếp
-    const RTree& getSpatialIndex() const { return driverSpatialIndex; }
+    const RTree& getSpatialIndex() const;
 };
 
 #endif // DISPATCHSERVICE_H

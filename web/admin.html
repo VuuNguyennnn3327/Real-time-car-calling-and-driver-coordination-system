@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="app-layout">
-        <div class="sidebar admin-sidebar">
+        <aside class="sidebar admin-sidebar">
             <div class="sidebar-header">
                 <h2>🗺️ Giám Sát Hệ Thống</h2>
                 <a href="index.html" class="back-link">Đổi vai trò</a>
@@ -18,7 +18,7 @@
 
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-number" id="totalDriversCount">50</div>
+                    <div class="stat-number" id="totalDriversCount">0</div>
                     <div class="stat-label">Tổng Tài Xế</div>
                 </div>
                 <div class="stat-card">
@@ -26,6 +26,8 @@
                     <div class="stat-label">Cuốc Xe Hoạt Động</div>
                 </div>
             </div>
+
+            <div id="adminNotice" class="notice notice-info">Đang kết nối server…</div>
 
             <h3>Danh sách cuốc xe trong hệ thống</h3>
             <div class="admin-orders-table-wrapper">
@@ -38,22 +40,109 @@
                         </tr>
                     </thead>
                     <tbody id="ridesTableBody">
-                        <tr><td colspan="3">Chưa có cuốc xe nào</td></tr>
+                        <tr><td colspan="3" class="empty-state">Chưa có cuốc xe nào</td></tr>
                     </tbody>
                 </table>
             </div>
-        </div>
 
-        <div class="map-container" id="map"></div>
+            <section class="panel" style="margin-top: 1.5rem;">
+                <h3>Chú giải trạng thái</h3>
+                <div class="legend-row"><span class="legend-dot" style="background: #198754;"></span> Xe Sẵn Sàng (AVAILABLE)</div>
+                <div class="legend-row"><span class="legend-dot" style="background: #dc2626;"></span> Xe Đang Chở Khách (BUSY)</div>
+            </section>
+        </aside>
+
+        <main class="map-container" id="map" aria-label="Bản đồ giám sát tổng thể"></main>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="shared/app.js"></script>
     <script>
+    (() => {
         const map = L.map('map').setView([10.7769, 106.7009], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+            attribution: '&copy; OpenStreetMap contributors' 
+        }).addTo(map);
 
-        // Polling danh sách xe và cuốc xe từ GET /api/admin/overview
+        const driverMarkers = new Map();
+        const notice = document.getElementById('adminNotice');
+        const ridesTableBody = document.getElementById('ridesTableBody');
+
+        async function refreshOverview() {
+            const overview = await apiGet('/admin/overview');
+            if (!overview) {
+                showNotice(notice, 'Mất kết nối server. Kiểm tra backend tại localhost:8080.', 'error');
+                return;
+            }
+
+            // 1. Cập nhật thống kê
+            const drivers = normalizeArray(overview.drivers);
+            const rides = normalizeArray(overview.rides);
+            
+            setText('totalDriversCount', drivers.length || overview.totalAvailable + overview.totalBusy || '0');
+            const activeRides = rides.filter(r => r.status !== 'COMPLETED');
+            setText('activeRidesCount', String(activeRides.length));
+
+            showNotice(notice, `Đang giám sát ${drivers.length} tài xế và ${rides.length} cuốc xe (Cập nhật mỗi 2.5s).`, 'success');
+
+            // 2. Vẽ và cập nhật vị trí xe trên bản đồ
+            const activeDriverIds = new Set(drivers.map(d => String(d.id)));
+            for (const [id, marker] of driverMarkers) {
+                if (!activeDriverIds.has(id)) {
+                    map.removeLayer(marker);
+                    driverMarkers.delete(id);
+                }
+            }
+
+            drivers.forEach(driver => {
+                if (!validLatLng(driver)) return;
+                const id = String(driver.id);
+                const pos = [Number(driver.lat), Number(driver.lng)];
+                const isAvailable = (driver.status === 'AVAILABLE');
+                const color = isAvailable ? '#198754' : '#dc2626';
+
+                if (!driverMarkers.has(id)) {
+                    const marker = L.circleMarker(pos, {
+                        radius: 6,
+                        color: color,
+                        fillColor: isAvailable ? '#4ade80' : '#f87171',
+                        fillOpacity: 0.9,
+                        weight: 2
+                    }).addTo(map);
+                    driverMarkers.set(id, marker);
+                }
+
+                const marker = driverMarkers.get(id);
+                marker.setLatLng(pos);
+                marker.setStyle({
+                    color: color,
+                    fillColor: isAvailable ? '#4ade80' : '#f87171'
+                });
+                marker.bindPopup(`<b>${escapeHtml(driver.name || driver.id)}</b> (${escapeHtml(driver.id)})<br>Trạng thái: <span class="${isAvailable ? 'status-available' : 'status-busy'}">${escapeHtml(driver.status)}</span>`);
+            });
+
+            // 3. Render danh sách cuốc xe
+            if (!rides.length) {
+                ridesTableBody.innerHTML = '<tr><td colspan="3" class="empty-state">Chưa có cuốc xe nào trong hệ thống</td></tr>';
+            } else {
+                ridesTableBody.innerHTML = rides.slice(-10).reverse().map(r => {
+                    const isAccepted = (String(r.status).toUpperCase() === 'ACCEPTED');
+                    const badgeClass = isAccepted ? 'badge-success' : 'badge-pending';
+                    const driverDisplay = r.assignedDriverId || r.driverId || '<span class="muted">Đang chờ…</span>';
+                    return `
+                        <tr>
+                            <td><strong>${escapeHtml(r.id)}</strong></td>
+                            <td><span class="badge ${badgeClass}">${escapeHtml(r.status || 'PENDING')}</span></td>
+                            <td>${escapeHtml(driverDisplay)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        refreshOverview();
+        startPolling(refreshOverview, 2500);
+    })();
     </script>
 </body>
 </html>

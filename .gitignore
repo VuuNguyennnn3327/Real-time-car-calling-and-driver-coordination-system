@@ -14,3 +14,22 @@ obj/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# AI/tooling config
+.cursorrules
+.github/
+CLAUDE.md
+GIT_GUIDE.md
+git_commit_history.bat
+save_progress.bat
+
+# Stray duplicate files - kept locally only
+Point.cpp
+Point.h
+Rectangle.cpp
+DriverSimulator.cpp
+DriverSimulator.h
+admin.html
+app.js
+style.css
+test_geometry.cpp

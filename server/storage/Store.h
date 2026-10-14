@@ -2,6 +2,14 @@
 #define STORE_H
 
 #include "Point.h"
+#include "RTree.h"
+#if __has_include("nlohmann/json.hpp")
+#include "nlohmann/json.hpp"
+#define STORE_HAS_NLOHMANN_JSON 1
+#elif __has_include(<nlohmann/json.hpp>)
+#include <nlohmann/json.hpp>
+#define STORE_HAS_NLOHMANN_JSON 1
+#endif
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -51,6 +59,7 @@ class Store {
 private:
     std::unordered_map<std::string, Driver> drivers;
     std::unordered_map<std::string, RideRequest> rides;
+    RTree driverRTree;
     std::mutex mtx;
 
 public:
@@ -59,9 +68,18 @@ public:
         return instance;
     }
 
+    RTree& getRTree() {
+        return driverRTree;
+    }
+
+    const RTree& getRTree() const {
+        return driverRTree;
+    }
+
     void addDriver(const Driver& d) {
         std::lock_guard<std::mutex> lock(mtx);
         drivers[d.id] = d;
+        driverRTree.insert(Point(d.lng, d.lat, d.id));
     }
 
     void updateDriverLocation(const std::string& id, double lat, double lng) {
@@ -69,6 +87,7 @@ public:
         if (drivers.find(id) != drivers.end()) {
             drivers[id].lat = lat;
             drivers[id].lng = lng;
+            driverRTree.updatePosition(id, lng, lat);
         }
     }
 
@@ -116,6 +135,45 @@ public:
         }
         return result;
     }
+
+#ifdef STORE_HAS_NLOHMANN_JSON
+    nlohmann::json getOverview() {
+        std::lock_guard<std::mutex> lock(mtx);
+        nlohmann::json j;
+        j["drivers"] = nlohmann::json::array();
+        int totalAvailable = 0;
+        int totalBusy = 0;
+
+        for (const auto& pair : drivers) {
+            const auto& d = pair.second;
+            j["drivers"].push_back({
+                {"id", d.id},
+                {"name", d.name},
+                {"lat", d.lat},
+                {"lng", d.lng},
+                {"status", d.status}
+            });
+            if (d.status == "AVAILABLE") totalAvailable++;
+            else if (d.status == "BUSY") totalBusy++;
+        }
+
+        j["rides"] = nlohmann::json::array();
+        for (const auto& pair : rides) {
+            const auto& r = pair.second;
+            j["rides"].push_back({
+                {"id", r.id},
+                {"pickup", {{"lat", r.pickupLat}, {"lng", r.pickupLng}}},
+                {"destination", {{"lat", r.destLat}, {"lng", r.destLng}}},
+                {"status", r.status},
+                {"assignedDriverId", r.assignedDriverId}
+            });
+        }
+
+        j["totalAvailable"] = totalAvailable;
+        j["totalBusy"] = totalBusy;
+        return j;
+    }
+#endif
 };
 
 #endif // STORE_H

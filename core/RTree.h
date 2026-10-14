@@ -67,8 +67,20 @@ public:
     // 4. Cập nhật vị trí điểm (Delete vị trí cũ + Insert vị trí mới)
     void updatePosition(const std::string& pointId, double newX, double newY);
 
+#if __has_include("nlohmann/json.hpp")
+#include "nlohmann/json.hpp"
+#define RTREE_HAS_NLOHMANN_JSON 1
+#elif __has_include(<nlohmann/json.hpp>)
+#include <nlohmann/json.hpp>
+#define RTREE_HAS_NLOHMANN_JSON 1
+#endif
+
     // 5. Lấy cấu trúc tất cả MBR theo tầng để vẽ demo
     std::vector<std::pair<int, Rectangle>> getStructure() const;
+
+#ifdef RTREE_HAS_NLOHMANN_JSON
+    nlohmann::json getTreeStructureJson() const;
+#endif
 
     // 6. Tiện ích
     size_t size() const { return totalPoints; }

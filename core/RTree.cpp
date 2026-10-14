@@ -270,3 +270,24 @@ void RTree::clear() {
     root = std::make_shared<RTreeNode>(true);
     totalPoints = 0;
 }
+
+#ifdef RTREE_HAS_NLOHMANN_JSON
+nlohmann::json RTree::getTreeStructureJson() const {
+    auto boxes = getStructure();
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& item : boxes) {
+        arr.push_back({
+            {"depth", item.first},
+            {"minLng", item.second.minX},
+            {"minLat", item.second.minY},
+            {"maxLng", item.second.maxX},
+            {"maxLat", item.second.maxY},
+            {"minX", item.second.minX},
+            {"minY", item.second.minY},
+            {"maxX", item.second.maxX},
+            {"maxY", item.second.maxY}
+        });
+    }
+    return arr;
+}
+#endif
