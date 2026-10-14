@@ -16,12 +16,10 @@
 ---
 
 ## 📁 Cấu Trúc Dự Án
-Chi tiết đặc tả kỹ thuật, hợp đồng API và kế hoạch Jira xem tại: [`PROJECT_MASTER_BRIEF.md`](./PROJECT_MASTER_BRIEF.md).
 
 ```text
 RIDE-RTREE/
 ├── CMakeLists.txt                         # [Trường Vũ] Cấu hình biên dịch C++17 (5 target build)
-├── PROJECT_MASTER_BRIEF.md                # [Trường Vũ] Tài liệu đặc tả tổng quan, hợp đồng API, Jira
 ├── README.md                              # [Trường Vũ + Dương] Hướng dẫn cài đặt và chạy hệ thống
 ├── .gitignore                             # [Trường Vũ] Loại trừ file build rác, cache IDE
 │
