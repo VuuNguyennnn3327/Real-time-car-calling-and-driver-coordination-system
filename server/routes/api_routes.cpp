@@ -7,9 +7,14 @@
 
 using json = nlohmann::json;
 
+/**
+ * @file api_routes.cpp
+ * @author Tưởng (Người phụ trách - RT-07)
+ * @brief Cài đặt logic chi tiết xử lý 8 REST API Endpoints kết nối Store, DispatchService và KNNSearch.
+ */
 void APIRoutes::registerRoutes(httplib::Server& svr) {
 
-    // 4.1 GET /api/drivers - Lấy danh sách toàn bộ tài xế
+    // 1. GET /api/drivers - Lấy danh sách toàn bộ tài xế
     svr.Get("/api/drivers", [](const httplib::Request& req, httplib::Response& res) {
         auto drivers = Store::getInstance().getAllDrivers();
         json j = json::array();
@@ -25,7 +30,7 @@ void APIRoutes::registerRoutes(httplib::Server& svr) {
         res.set_content(j.dump(), "application/json");
     });
 
-    // 4.2 POST /api/rides - Khách hàng tạo yêu cầu đặt xe
+    // 2. POST /api/rides - Khách hàng tạo yêu cầu đặt xe
     svr.Post("/api/rides", [](const httplib::Request& req, httplib::Response& res) {
         try {
             auto body = json::parse(req.body);
@@ -59,7 +64,7 @@ void APIRoutes::registerRoutes(httplib::Server& svr) {
         }
     });
 
-    // 4.3 GET /api/rides/nearby - Tài xế lấy danh sách đơn chờ gần vị trí của mình
+    // 3. GET /api/rides/nearby - Tài xế lấy danh sách đơn chờ gần vị trí của mình
     svr.Get("/api/rides/nearby", [](const httplib::Request& req, httplib::Response& res) {
         if (!req.has_param("lat") || !req.has_param("lng")) {
             res.status = 400;
@@ -84,7 +89,7 @@ void APIRoutes::registerRoutes(httplib::Server& svr) {
         res.set_content(j.dump(), "application/json");
     });
 
-    // 4.4 POST /api/rides/{id}/accept - Tài xế nhận đơn
+    // 4. POST /api/rides/{id}/accept - Tài xế nhận đơn
     svr.Post(R"(/api/rides/([^/]+)/accept)", [](const httplib::Request& req, httplib::Response& res) {
         std::string rideId = req.matches[1];
         try {
@@ -109,13 +114,13 @@ void APIRoutes::registerRoutes(httplib::Server& svr) {
         }
     });
 
-    // 4.5 GET /api/admin/overview - Admin lấy tổng quan toàn bộ hệ thống
+    // 5. GET /api/admin/overview - Admin lấy tổng quan toàn bộ hệ thống
     svr.Get("/api/admin/overview", [](const httplib::Request& req, httplib::Response& res) {
         auto overview = Store::getInstance().getOverview();
         res.set_content(overview.dump(), "application/json");
     });
 
-    // 4.6 POST /api/rtree/knn - Trực quan hóa k-NN Search
+    // 6. POST /api/rtree/knn - Trực quan hóa k-NN Search
     svr.Post("/api/rtree/knn", [](const httplib::Request& req, httplib::Response& res) {
         try {
             auto body = json::parse(req.body);
@@ -142,7 +147,7 @@ void APIRoutes::registerRoutes(httplib::Server& svr) {
         }
     });
 
-    // 4.6 POST /api/rtree/range - Range Search theo MBR
+    // 7. POST /api/rtree/range - Range Search theo MBR
     svr.Post("/api/rtree/range", [](const httplib::Request& req, httplib::Response& res) {
         try {
             auto body = json::parse(req.body);
@@ -164,7 +169,7 @@ void APIRoutes::registerRoutes(httplib::Server& svr) {
         }
     });
 
-    // 4.6 GET /api/rtree/structure - Lấy MBR đa tầng trực quan hóa cây
+    // 8. GET /api/rtree/structure - Lấy MBR đa tầng trực quan hóa cây
     svr.Get("/api/rtree/structure", [](const httplib::Request& req, httplib::Response& res) {
         json structure = Store::getInstance().getRTree().getTreeStructureJson();
         res.set_content(structure.dump(), "application/json");

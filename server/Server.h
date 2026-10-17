@@ -3,11 +3,13 @@
 
 #include "httplib.h"
 #include <string>
+#include <thread>
+#include <atomic>
 
 /**
  * @file Server.h
- * @author Tưởng (Người phụ trách - RT-06)
- * @brief Lớp quản lý C++ Web Server chạy cổng 8080, phục vụ file tĩnh và REST API.
+ * @author Tưởng (Người phụ trách - RT-06 / RT-18)
+ * @brief Quản lý C++ HTTP Web Server và luồng chạy nền DriverSimulator ở cổng 8080.
  */
 class Server {
 private:
@@ -16,16 +18,16 @@ private:
     int port;
     std::string webRoot;
 
+    // Quản lý luồng chạy nền cho DriverSimulator (RT-18)
+    std::thread simThread;
+    std::atomic<bool> simRunning{false};
+
 public:
     Server(const std::string& host = "0.0.0.0", int port = 8080, const std::string& webRoot = "./web");
-    
-    // Thiết lập cấu hình static files, CORS và đăng ký API routes
+    ~Server();
+
     void setupRoutes();
-    
-    // Khởi chạy Web Server
     void start();
-    
-    // Dừng Web Server
     void stop();
 };
 
