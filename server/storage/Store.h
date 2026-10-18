@@ -19,17 +19,6 @@
  * @file Store.h
  * @author Đẹp (Người phụ trách)
  * @brief Quản lý dữ liệu tài xế và cuốc xe lưu trong RAM (Thread-safe).
- *
- * HƯỚNG DẪN DÀNH CHO AI KHI THỰC HIỆN FILE NÀY:
- * - Driver Model:
- *     - id (std::string), name (std::string), lat (double), lng (double), status ("AVAILABLE", "BUSY", "OFFLINE").
- * - Ride Request Model:
- *     - id (std::string), pickupLat (double), pickupLng (double), destLat (double), destLng (double),
- *     - status ("PENDING", "ACCEPTED", "COMPLETED"), assignedDriverId (std::string).
- * - Phương thức:
- *     - Lưu trữ dùng std::unordered_map<std::string, Driver> và std::unordered_map<std::string, RideRequest>.
- *     - Sử dụng std::mutex để đảm bảo thread-safe khi server đa luồng gọi.
- */
 
 struct Driver {
     std::string id;
@@ -48,7 +37,7 @@ struct RideRequest {
     double pickupLng;
     double destLat;
     double destLng;
-    std::string status; // PENDING, ACCEPTED, COMPLETED
+    std::string status; // PENDING, ACCEPTED, REJECTED, CANCELLED, STARTED, COMPLETED
     std::string assignedDriverId;
 
     RideRequest(const std::string& id = "", double pLat = 0.0, double pLng = 0.0, double dLat = 0.0, double dLng = 0.0)
@@ -65,14 +54,17 @@ private:
 public:
     static Store& getInstance() {
         static Store instance;
+        
         return instance;
     }
 
     RTree& getRTree() {
+        
         return driverRTree;
     }
 
     const RTree& getRTree() const {
+        
         return driverRTree;
     }
 
@@ -105,6 +97,7 @@ public:
         for (const auto& pair : drivers) {
             result.push_back(pair.second);
         }
+        
         return result;
     }
 
@@ -113,18 +106,97 @@ public:
         rides[r.id] = r;
     }
 
+    // =========================================================================
+    // XỬ LÝ VÒNG ĐỜI CHUYẾN ĐI (RIDE LIFECYCLE)
+    // =========================================================================
+
+    // Tài xế chấp nhận cuốc xe
     bool acceptRide(const std::string& rideId, const std::string& driverId) {
         std::lock_guard<std::mutex> lock(mtx);
         if (rides.find(rideId) != rides.end() && rides[rideId].status == "PENDING") {
             rides[rideId].status = "ACCEPTED";
             rides[rideId].assignedDriverId = driverId;
+            
+            // Chuyển trạng thái tài xế sang bận
             if (drivers.find(driverId) != drivers.end()) {
                 drivers[driverId].status = "BUSY";
             }
+            
             return true;
         }
+        
         return false;
     }
+
+    // Tài xế từ chối cuốc xe
+    bool rejectRide(const std::string& rideId) {
+        std::lock_guard<std::mutex> lock(mtx);
+        // Chỉ có thể từ chối khi đơn đang chờ (PENDING)
+        if (rides.find(rideId) != rides.end() && rides[rideId].status == "PENDING") {
+            rides[rideId].status = "REJECTED";
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Khách hàng hủy cuốc xe
+    bool cancelRide(const std::string& rideId) {
+        std::lock_guard<std::mutex> lock(mtx);
+        if (rides.find(rideId) != rides.end()) {
+            std::string currentStatus = rides[rideId].status;
+            
+            // Không cho phép hủy nếu đã bắt đầu chạy hoặc đã hoàn thành
+            if (currentStatus != "STARTED" && currentStatus != "COMPLETED" && currentStatus != "CANCELLED") {
+                rides[rideId].status = "CANCELLED";
+                
+                // Giải phóng tài xế (nếu có) về lại trạng thái sẵn sàng
+                std::string driverId = rides[rideId].assignedDriverId;
+                if (!driverId.empty() && drivers.find(driverId) != drivers.end()) {
+                    drivers[driverId].status = "AVAILABLE";
+                }
+                
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    // Tài xế bắt đầu chuyến đi
+    bool startRide(const std::string& rideId) {
+        std::lock_guard<std::mutex> lock(mtx);
+        // Đơn phải được ACCEPTED mới có thể START
+        if (rides.find(rideId) != rides.end() && rides[rideId].status == "ACCEPTED") {
+            rides[rideId].status = "STARTED";
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Tài xế hoàn thành chuyến đi
+    bool completeRide(const std::string& rideId) {
+        std::lock_guard<std::mutex> lock(mtx);
+        // Đơn phải đang chạy (STARTED) mới có thể COMPLETE
+        if (rides.find(rideId) != rides.end() && rides[rideId].status == "STARTED") {
+            rides[rideId].status = "COMPLETED";
+            
+            // Giải phóng tài xế về lại trạng thái sẵn sàng
+            std::string driverId = rides[rideId].assignedDriverId;
+            if (!driverId.empty() && drivers.find(driverId) != drivers.end()) {
+                drivers[driverId].status = "AVAILABLE";
+            }
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    // =========================================================================
 
     std::vector<RideRequest> getAllRides() {
         std::lock_guard<std::mutex> lock(mtx);
@@ -133,6 +205,7 @@ public:
         for (const auto& pair : rides) {
             result.push_back(pair.second);
         }
+        
         return result;
     }
 
@@ -171,6 +244,7 @@ public:
 
         j["totalAvailable"] = totalAvailable;
         j["totalBusy"] = totalBusy;
+        
         return j;
     }
 #endif
