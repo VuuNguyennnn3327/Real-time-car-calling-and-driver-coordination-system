@@ -1,104 +1,105 @@
-# RIDE-RTREE
+# Navigo 🚗
+> **“Dẫn lối chuẩn xác, đón rước tận nơi”**
 
-> **Hệ Thống Gọi Xe & Điều Phối Tài Xế Theo Thời Gian Thực Dựa Trên Chỉ Mục Không Gian R-Tree**  
-> Đồ án môn học: **Cấu trúc Dữ liệu & Giải thuật (DSA)**  
-> 🔗 **GitHub Repository:** [VuuNguyennnn3327/Real-time-car-calling-and-driver-coordination-system](https://github.com/VuuNguyennnn3327/Real-time-car-calling-and-driver-coordination-system)
-
----
-
-## 👥 Đội Ngũ Thực Hiện & Phân Công Trọng Tâm
-* **Trường Vũ (Leader):** Kiến trúc hệ thống, `CMakeLists.txt`, Lõi `RTreeNode`, `RTree` (Insert, Quadratic Split, Range Search), `DispatchService`.
-* **Tưởng:** Thuật toán `KNNSearch` (Min-Heap Best-First Search), Web Server C++ (`cpp-httplib`), REST API Routing (`server/routes/`).
-* **Vương:** Hình học 2D (`Point`, `Rectangle`/MBR), `DriverSimulator`, Dữ liệu mẫu GPS TP.HCM, Giao diện Admin (`web/admin.html`).
-* **Đẹp:** Thuật toán đối chứng `NaiveScan` $O(N)$, Console CLI độc lập (`console/main.cpp`), RAM Storage (`server/storage/Store.h`), Đo kiểm Benchmark.
-* **Dương:** Giao diện Khách hàng & Tài xế (`index.html`, `customer.html`, `driver.html`), Demo trực quan hóa MBR (`rtree-demo.html`), Polling engine, Báo cáo & Slide.
+Hệ thống đặt xe trực tuyến & điều phối tài xế thời gian thực - Đồ án môn Cấu trúc Dữ liệu và Giải thuật (DSA).
 
 ---
 
-## 📁 Cấu Trúc Dự Án
+## 🌟 Giới thiệu tổng quan
+
+**Navigo** là nền tảng đặt xe thông minh đa phương thức kết hợp giải thuật không gian hiện đại và công nghệ đồng bộ đám mây thời gian thực:
+- **Đồng bộ thời gian thực 24/7 (Realtime Cloud Sync)**: Tích hợp **Firebase Realtime Database** đảm bảo khách hàng đặt chuyến và tài xế nhận chuyến tức thì giữa các thiết bị khác nhau (PC, Điện thoại di động, Tablet) mà không cần cài đặt phức tạp.
+- **Giải thuật không gian (Spatial Indexing)**: Mô phỏng cấu trúc **R-Tree** giúp lập chỉ mục không gian hai chiều, tối ưu hóa thuật toán tìm $k$ tài xế lân cận ($k$-Nearest Neighbors) trong bán kính đón khách.
+- **Định tuyến & Lộ trình thông minh (Routing Engine)**: Ứng dụng giải thuật **Dijkstra** trên đồ thị mạng lưới giao thông thực tế TP. Hồ Chí Minh kết hợp OpenStreetMap/OSRM cho cự ly và thời gian chính xác theo thời gian thực.
+
+---
+
+## 🚀 Tính năng nổi bật
+
+### 1. Dành cho Khách hàng (`frontend/pages/customer.html`)
+- **Twin-Inputs Tìm kiếm**: Tự động gợi ý điểm đón & điểm đến tại TP.HCM, lọc tức thì theo từ khóa.
+- **Xác nhận Điểm đón trên Bản đồ**: Ghim trung tâm động, định vị GPS một chạm, tùy chọn cuốc xe (*Chuyến đi yên lặng*, *Hành lý cồng kềnh*).
+- **Đa dạng Phương tiện & Ước tính Cước**:
+  - 🛵 **Navigo Bike**: Tiết kiệm, luồn lách nhanh trong đô thị.
+  - 🚗 **Navigo Car (4 chỗ)**: Êm ái, tiện lợi, điều hòa mát lạnh.
+  - 🚘 **Navigo Plus**: Xe sang cao cấp, tài xế 5 sao.
+  - 🚐 **Navigo XL (7 chỗ)**: Rộng rãi cho gia đình và nhóm bạn.
+- **Theo dõi Trực tiếp 24/7**: Radar quét tài xế, mô phỏng xe tài xế di chuyển thực tế trên bản đồ Leaflet theo polyline tuyến đường.
+
+### 2. Dành cho Đối tác Tài xế (`frontend/pages/driver.html`)
+- **Bật / Tắt Trực tuyến**: Cập nhật trạng thái sẵn sàng đón khách ngay trên hệ thống đám mây.
+- **Nhận Cuốc xe Tức thì**: Modal phát sóng cuốc xe hiển thị rõ lộ trình đón - trả, khoảng cách và giá cước.
+- **Dẫn đường & Cập nhật Trạng thái**: Bắt đầu đón khách -> Đã đến điểm đón -> Đang chở khách -> Hoàn thành chuyến đi.
+
+### 3. Dành cho Quản trị viên (`frontend/pages/admin.html`)
+- **Thống kê Tổng quan**: Doanh thu, số cuốc xe thành công, số tài xế trực tuyến, tỷ lệ hoàn thành.
+- **Bản đồ Giám sát Toàn thành phố**: Theo dõi trực tiếp vị trí các phương tiện đang lưu thông.
+- **Quản lý Cuốc xe**: Danh sách toàn bộ các chuyến xe theo thời gian thực.
+
+---
+
+## 📂 Cấu trúc thư mục dự án
 
 ```text
-RIDE-RTREE/
-├── CMakeLists.txt                         # [Trường Vũ] Cấu hình biên dịch C++17 (5 target build)
-├── README.md                              # [Trường Vũ + Dương] Hướng dẫn cài đặt và chạy hệ thống
-├── .gitignore                             # [Trường Vũ] Loại trừ file build rác, cache IDE
-│
-├── core/                                  # [LÕI THUẬT TOÁN DSA - C++ THUẦN]
-│   ├── Point.h                            # [Vương] Khai báo struct tọa độ 2D (lng, lat)
-│   ├── Point.cpp                          # [Vương] Cài đặt tính khoảng cách Euclid giữa 2 điểm
-│   ├── Rectangle.h                        # [Vương] Khai báo hộp bao MBR (AABB)
-│   ├── Rectangle.cpp                      # [Vương] Cài đặt diện tích, giao cắt, mở rộng, MINDIST
-│   ├── RTreeNode.h                        # [Trường Vũ] Khai báo cấu trúc nút cây (M=4, m=2) & RTreeEntry
-│   ├── RTreeNode.cpp                      # [Trường Vũ] Cài đặt bounding box, kiểm tra tràn/thiếu nút
-│   ├── RTree.h                            # [Trường Vũ] Khai báo cây R-Tree (Guttman 1984)
-│   ├── RTree.cpp                          # [Trường Vũ] Cài đặt Insert, Quadratic Split, adjustTree, Range Search, Delete
-│   ├── KNNSearch.h                        # [Tưởng] Khai báo k-NN Best-First Search
-│   ├── KNNSearch.cpp                      # [Tưởng] Cài đặt k-NN Min-Heap (priority_queue)
-│   ├── NaiveScan.h                        # [Đẹp] Khai báo thuật toán quét mảng tuần tự O(N)
-│   └── NaiveScan.cpp                      # [Đẹp] Cài đặt Naive Range & k-NN làm trọng tài đối chứng
-│
-├── console/                               # [CHƯƠNG TRÌNH CONSOLE TERMINAL ĐỘC LẬP]
-│   └── main.cpp                           # [Đẹp] Menu terminal độc lập để báo cáo/chấm điểm trực tiếp
-│
-├── server/                                # [BACKEND HTTP REST API SERVER]
-│   ├── Server.h                           # [Tưởng] Khai báo Web Server C++ (cpp-httplib)
-│   ├── Server.cpp                         # [Tưởng] Cài đặt vòng đời server cổng 8080
-│   ├── routes/                            # Định tuyến các API
-│   │   ├── api_routes.h                   # [Tưởng] Khai báo danh sách REST API endpoints
-│   │   └── api_routes.cpp                 # [Tưởng] Cài đặt logic xử lý request / response JSON
-│   ├── services/                          # Dịch vụ nghiệp vụ
-│   │   ├── DispatchService.h              # [Trường Vũ] Khai báo dịch vụ điều phối cuốc xe (Singleton)
-│   │   └── DispatchService.cpp            # [Trường Vũ] Kết nối cây R-Tree với Store, lọc tài xế rảnh
-│   └── storage/                           # Bộ nhớ tạm
-│       └── Store.h                        # [Đẹp] Quản lý Driver & RideRequest trong RAM (Thread-safe)
-│
-├── simulator/                             # [BỘ GIẢ LẬP DI CHUYỂN TÀI XẾ]
-│   ├── DriverSimulator.h                  # [Vương] Khai báo bộ giả lập xe di chuyển
-│   └── DriverSimulator.cpp                # [Vương] Cài đặt cập nhật tọa độ ngẫu nhiên 50 xe (Delete + Insert)
-│
-├── web/                                   # [GIAO DIỆN WEB BẢN ĐỒ LEAFLET.JS]
-│   ├── index.html                         # [Dương] Màn hình trang chủ chọn vai trò (Khách/Tài xế/Admin)
-│   ├── customer.html                      # [Dương] Màn hình khách click bản đồ đặt xe
-│   ├── driver.html                        # [Dương] Màn hình tài xế xem đơn chờ và nhận cuốc
-│   ├── admin.html                         # [Vương] Màn hình Admin giám sát toàn bộ xe và trạng thái
-│   ├── rtree-demo.html                    # [Dương + Trường Vũ] Trang trực quan hóa các tầng khung MBR
-│   └── shared/                            # Thư mục tài nguyên dùng chung
-│       ├── app.js                         # [Dương] Engine Polling định kỳ gọi fetch API
-│       └── style.css                      # [Dương] Giao diện, bố cục CSS chung cho 5 trang web
-│
-├── data/                                  # [DỮ LIỆU GPS]
-│   ├── sample/                            # Dữ liệu mẫu ban đầu
-│   │   └── drivers.json                   # [Vương] Danh sách 20 tài xế mẫu với tọa độ thực tế Quận 1
-│   └── benchmark/                         # Dữ liệu đo kiểm tải nặng
-│       └── README.md                      # [Đẹp] Hướng dẫn đo benchmark quy mô 1.000 - 50.000 điểm
-│
-├── tests/                                 # [BỘ KIỂM THỬ TỰ ĐỘNG]
-│   ├── core/                              # Kiểm thử giải thuật cây
-│   │   └── test_rtree.cpp                 # [Đẹp] Test đối chứng kết quả R-Tree khớp 100% với NaiveScan
-│   └── geometry/                          # Kiểm thử hình học
-│       └── test_geometry.cpp              # [Vương] Unit test Point và Rectangle (diện tích, giao cắt)
-│
-└── docs/                                  # [TÀI LIỆU BÁO CÁO & SLIDE]
-    └── 02-rtree/                          # Thuyết minh giải thuật
-        └── spec.md                        # [Dương + Trường Vũ] Lý thuyết cấu trúc R-Tree & công thức Big-O
+.
+├── CMakeLists.txt          # Cấu hình build C++17 cho DSA backend
+├── backend/                # Mã nguồn C++ (Dijkstra, R-Tree, Road Graph)
+├── database/               # SQLite schema
+├── data/                   # Dữ liệu mạng lưới giao thông TP.HCM (OSM)
+├── .gitignore              # Cấu hình loại bỏ file tạm và báo cáo AI
+├── README.md               # Tài liệu hướng dẫn dự án
+└── frontend/               # Giao diện Web App tương tác
+    ├── index.html          # Trang chủ ứng dụng (App Home)
+    ├── pages/
+    │   ├── customer.html   # Giao diện đặt xe khách hàng
+    │   ├── driver.html     # Cổng đối tác tài xế
+    │   ├── admin.html      # Bảng điều khiển quản trị viên
+    │   ├── login.html      # Đăng nhập tài khoản
+    │   ├── register.html   # Đăng ký tài khoản
+    │   ├── profile.html    # Hồ sơ người dùng
+    │   └── dsa-demo.html   # Mô phỏng thuật toán DSA
+    ├── css/                # Hệ thống CSS Design System chuẩn mực
+    └── js/                 # Bộ điều khiển Javascript & Firebase Realtime
+        ├── core/
+        │   ├── firebase-config.js  # Cấu hình đám mây Firebase Realtime
+        │   ├── realtime.js         # Động cơ đồng bộ hai chiều 24/7
+        │   ├── api.js              # REST API Client
+        │   ├── session.js          # Quản lý phiên đăng nhập
+        │   └── app.js              # Khởi tạo App & Utilities
+        ├── customer/               # Điều phối giao diện khách hàng
+        ├── driver/                 # Điều phối giao diện tài xế
+        └── admin/                  # Điều phối giao diện quản trị
 ```
 
 ---
 
-## 🚀 Hướng Dẫn Biên Dịch & Chạy (Build Guide)
-Yêu cầu môi trường: C++17 trở lên, CMake >= 3.16.
+## 🛠️ Hướng dẫn Khởi chạy Nhanh
 
+### Cách 1: Chạy trực tiếp trên trình duyệt
+1. Mở file `frontend/index.html` hoặc `frontend/pages/customer.html` bằng bất kỳ trình duyệt nào.
+2. Hệ thống đã được tích hợp sẵn cấu hình đám mây Firebase Realtime, tự động kết nối và đồng bộ 24/7.
+
+### Cách 2: Chạy với Local Server
 ```bash
-# 1. Tạo thư mục build và cấu hình
-mkdir build
-cd build
-cmake ..
+# Sử dụng Python
+python -m http.server 8080
 
-# 2. Biên dịch toàn bộ
-cmake --build .
+# Hoặc sử dụng Node.js
+npx serve .
 ```
+Truy cập: `http://localhost:8080`
 
-Các file thực thi sinh ra trong thư mục `build/`:
-* `console_app`: Chạy menu console terminal độc lập phục vụ bảo vệ đồ án trước giảng viên.
-* `server_app`: Chạy Backend Web Server tại cổng `8080` (Mở trình duyệt: `http://localhost:8080`).
-* `test_runner`: Chạy toàn bộ test case đối chứng tự động (R-Tree vs Naive Scan).
+---
+
+## 👥 Tài khoản Demo dùng thử
+
+| Vai trò | Email đăng nhập | Mật khẩu |
+|---|---|---|
+| **Khách hàng** | `customer@demo.com` | `123456` (hoặc bất kỳ) |
+| **Tài xế** | `driver@demo.com` | `123456` (hoặc bất kỳ) |
+| **Quản trị viên** | `admin@demo.com` | `123456` (hoặc bất kỳ) |
+
+---
+
+## 📜 Giấy phép
+DSA Course Project - Phục vụ mục đích học tập và nghiên cứu.

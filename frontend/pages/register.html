@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng ký tài khoản - Navigo</title>
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    <div class="auth-layout">
+        <div class="auth-container">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-logo">🚗</div>
+                    <h1 class="auth-title">Navigo</h1>
+                    <p class="auth-subtitle">Tạo tài khoản mới</p>
+                </div>
+
+                <!-- Role Selector Tabs -->
+                <div style="display:flex; margin-bottom:var(--space-5); border:1.5px solid #e2e8f0; border-radius:9999px; padding:4px; background:#f8fafc; gap:4px;">
+                    <button type="button" id="tab-customer" class="btn btn-block" style="border-radius:9999px; border:none; background:linear-gradient(135deg, #00897b, #00695c); color:white; font-weight:700; cursor:pointer; transition:all 0.22s cubic-bezier(0.16,1,0.3,1); box-shadow:0 2px 8px rgba(0,137,123,0.25);" onclick="selectRole('customer')">
+                        Khách hàng
+                    </button>
+                    <button type="button" id="tab-driver" class="btn btn-block" style="border-radius:9999px; border:none; background:transparent; color:#64748b; font-weight:700; cursor:pointer; transition:all 0.22s cubic-bezier(0.16,1,0.3,1); box-shadow:none;" onclick="selectRole('driver')">
+                        Tài xế đối tác
+                    </button>
+                </div>
+
+                <div id="register-error" class="app-alert alert-error" style="display:none;">
+                    <span id="register-error-msg"></span>
+                    <button type="button" class="app-alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+                </div>
+
+                <div id="register-success" class="app-alert alert-success" style="display:none;">
+                    <span id="register-success-msg"></span>
+                </div>
+
+                <form id="register-form" class="auth-form" novalidate>
+                    <input type="hidden" id="register-role" value="customer">
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-name">Họ và tên <span style="color:var(--color-error);">*</span></label>
+                        <input type="text" id="reg-name" class="form-input" placeholder="Nguyễn Văn A" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-email">Email <span style="color:var(--color-error);">*</span></label>
+                        <input type="email" id="reg-email" class="form-input" placeholder="email@example.com" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-phone">Số điện thoại <span style="color:var(--color-error);">*</span></label>
+                        <input type="tel" id="reg-phone" class="form-input" placeholder="0901234567" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-password">Mật khẩu <span style="color:var(--color-error);">*</span></label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="reg-password" class="form-input" placeholder="Tối thiểu 6 ký tự" required minlength="6">
+                            <button type="button" class="password-toggle-btn" id="toggle-reg-password" title="Hiện mật khẩu" aria-label="Hiện mật khẩu">
+                                <svg class="eye-icon eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-icon eye-closed" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                    <line x1="2" x2="22" y1="2" y2="22"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="reg-confirm">Xác nhận mật khẩu <span style="color:var(--color-error);">*</span></label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="reg-confirm" class="form-input" placeholder="Nhập lại mật khẩu" required>
+                            <button type="button" class="password-toggle-btn" id="toggle-reg-confirm" title="Hiện mật khẩu" aria-label="Hiện mật khẩu">
+                                <svg class="eye-icon eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-icon eye-closed" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                    <line x1="2" x2="22" y1="2" y2="22"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Driver-specific fields -->
+                    <div id="driver-fields" style="display:none;">
+                        <div class="divider" style="margin:var(--space-3) 0;"></div>
+                        <p style="font-size:0.875rem; font-weight:600; color:var(--color-text-primary); margin-bottom:var(--space-3);">
+                            Thông tin đăng ký lái xe
+                        </p>
+
+                        <div class="form-group">
+                            <label class="form-label" for="reg-plate">Biển số xe <span style="color:var(--color-error);">*</span></label>
+                            <input type="text" id="reg-plate" class="form-input" placeholder="59A-123.45">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="reg-vehicle">Loại phương tiện <span style="color:var(--color-error);">*</span></label>
+                            <select id="reg-vehicle" class="form-select">
+                                <option value="">Chọn loại phương tiện</option>
+                                <option value="motorbike">🛵 Xe máy (Navigo Bike)</option>
+                                <option value="car4">🚗 Ô tô 4 chỗ (Navigo Car)</option>
+                                <option value="premium">🚘 Xe sang 4 chỗ (Navigo Plus)</option>
+                                <option value="car7">🚐 Ô tô 7 chỗ (Navigo XL)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="reg-experience">Số năm kinh nghiệm</label>
+                            <input type="number" id="reg-experience" class="form-input" placeholder="Ví dụ: 2" min="0" max="50">
+                        </div>
+
+                        <div class="app-alert alert-info" style="font-size:0.8rem; margin-top:var(--space-2);">
+                            <span>ℹ️ Hồ sơ tài xế sẽ được Quản trị viên duyệt trên Bảng điều khiển trước khi có thể bắt đầu nhận chuyến.</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="register-btn" class="btn btn-primary btn-block btn-lg" style="margin-top:var(--space-3);">
+                        Hoàn tất đăng ký
+                    </button>
+                </form>
+
+                <div class="auth-footer">
+                    <span>Đã có tài khoản?</span>
+                    <a href="login.html">Đăng nhập</a>
+                    <span style="color:var(--color-border);">•</span>
+                    <a href="../index.html">Về trang chủ</a>
+                </div>
+            </div>
+
+            <!-- Page Footer -->
+            <p class="auth-page-footer">
+                Navigo • Đồ án môn học Cấu trúc Dữ liệu & Giải thuật (DSA) • 
+                <a href="../index.html">Trang chủ công khai</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/core/api.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/router.js"></script>
+    <script src="../js/core/demo-data.js"></script>
+    <script src="../js/core/app.js"></script>
+    <script>
+        let currentRole = 'customer';
+
+        function selectRole(role) {
+            currentRole = role;
+            const roleInput = document.getElementById('register-role');
+            if (roleInput) roleInput.value = role;
+
+            const tabC = document.getElementById('tab-customer');
+            const tabD = document.getElementById('tab-driver');
+            const driverFields = document.getElementById('driver-fields');
+            const regPlate = document.getElementById('reg-plate');
+            const regVehicle = document.getElementById('reg-vehicle');
+
+            if (role === 'customer') {
+                if (tabC) {
+                    tabC.style.background = 'linear-gradient(135deg, #00897b, #00695c)';
+                    tabC.style.color = '#ffffff';
+                    tabC.style.boxShadow = '0 2px 8px rgba(0,137,123,0.25)';
+                }
+                if (tabD) {
+                    tabD.style.background = 'transparent';
+                    tabD.style.color = '#64748b';
+                    tabD.style.boxShadow = 'none';
+                }
+                if (driverFields) driverFields.style.display = 'none';
+                if (regPlate) regPlate.removeAttribute('required');
+                if (regVehicle) regVehicle.removeAttribute('required');
+            } else {
+                if (tabD) {
+                    tabD.style.background = 'linear-gradient(135deg, #00897b, #00695c)';
+                    tabD.style.color = '#ffffff';
+                    tabD.style.boxShadow = '0 2px 8px rgba(0,137,123,0.25)';
+                }
+                if (tabC) {
+                    tabC.style.background = 'transparent';
+                    tabC.style.color = '#64748b';
+                    tabC.style.boxShadow = 'none';
+                }
+                if (driverFields) driverFields.style.display = 'block';
+                if (regPlate) regPlate.setAttribute('required', 'required');
+                if (regVehicle) regVehicle.setAttribute('required', 'required');
+            }
+        }
+        window.selectRole = selectRole;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabC = document.getElementById('tab-customer');
+            const tabD = document.getElementById('tab-driver');
+            if (tabC) tabC.addEventListener('click', () => selectRole('customer'));
+            if (tabD) tabD.addEventListener('click', () => selectRole('driver'));
+
+            setupPasswordToggle('toggle-reg-password', 'reg-password');
+            setupPasswordToggle('toggle-reg-confirm', 'reg-confirm');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('role') === 'driver') {
+                selectRole('driver');
+            }
+        });
+
+        function setupPasswordToggle(btnId, inputId) {
+            const btn = document.getElementById(btnId);
+            const input = document.getElementById(inputId);
+            if (!btn || !input) return;
+
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+
+                const eyeOpen = btn.querySelector('.eye-open');
+                const eyeClosed = btn.querySelector('.eye-closed');
+                if (eyeOpen && eyeClosed) {
+                    eyeOpen.style.display = isPassword ? 'none' : 'block';
+                    eyeClosed.style.display = isPassword ? 'block' : 'none';
+                }
+                const titleText = isPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+                btn.setAttribute('title', titleText);
+                btn.setAttribute('aria-label', titleText);
+            });
+        }
+
+        document.getElementById('register-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const errorDiv = document.getElementById('register-error');
+            const errorMsg = document.getElementById('register-error-msg');
+            const successDiv = document.getElementById('register-success');
+            const successMsg = document.getElementById('register-success-msg');
+            const btn = document.getElementById('register-btn');
+
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone').value.trim();
+            const password = document.getElementById('reg-password').value;
+            const confirm = document.getElementById('reg-confirm').value;
+
+            if (!name || !email || !phone || !password) {
+                errorMsg.textContent = 'Vui lòng điền đầy đủ các thông tin bắt buộc (*)';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+
+            if (password !== confirm) {
+                errorMsg.textContent = 'Mật khẩu xác nhận không khớp. Vui lòng kiểm tra lại.';
+                errorDiv.style.display = 'flex';
+                return;
+            }
+
+            const userData = {
+                name,
+                email,
+                phone,
+                password,
+                role: currentRole
+            };
+
+            if (currentRole === 'driver') {
+                userData.licensePlate = document.getElementById('reg-plate').value.trim();
+                userData.vehicleType = document.getElementById('reg-vehicle').value;
+                userData.experience = document.getElementById('reg-experience').value;
+                if (!userData.licensePlate || !userData.vehicleType) {
+                    errorMsg.textContent = 'Vui lòng cung cấp biển số xe và loại phương tiện đăng ký';
+                    errorDiv.style.display = 'flex';
+                    return;
+                }
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Đang xử lý đăng ký...';
+
+            try {
+                if (typeof apiClient === 'undefined') {
+                    throw new Error('ApiClient chưa sẵn sàng. Vui lòng kiểm tra kết nối mạng hoặc làm mới trang.');
+                }
+
+                let isOfflineFallback = false;
+                try {
+                    const apiRes = await apiClient.post('/auth/register', userData);
+                    if (!apiRes || !apiRes.data || !apiRes.data.success) {
+                        throw new Error(apiRes?.data?.error || 'Đăng ký không thành công.');
+                    }
+                } catch (apiErr) {
+                    if (apiErr instanceof ApiError || (apiErr.status !== undefined && apiErr.status > 0)) {
+                        throw new Error(apiErr.message || 'Đăng ký không thành công.');
+                    }
+                    // Graceful offline fallback: Save user to localStorage
+                    console.warn('[GoRide Register] Backend offline, saving user locally:', apiErr.message);
+                    isOfflineFallback = true;
+                    const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                    if (offlineUsers.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+                        throw new Error('Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.');
+                    }
+                    const localUser = {
+                        id: `usr_${Date.now()}`,
+                        name: userData.name,
+                        email: userData.email,
+                        phone: userData.phone,
+                        password: userData.password,
+                        role: currentRole,
+                        walletBalance: 0,
+                        createdAt: new Date().toISOString()
+                    };
+                    if (currentRole === 'driver') {
+                        localUser.vehicle = {
+                            plate: userData.licensePlate,
+                            type: userData.vehicleType,
+                            experience: userData.experience
+                        };
+                        localUser.vehicleType = userData.vehicleType;
+                        localUser.licensePlate = userData.licensePlate;
+                        localUser.status = 'pending';
+
+                        // Add to real pending approvals pool for Admin
+                        const pendingDrivers = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
+                        if (!pendingDrivers.some(p => p.email.toLowerCase() === email.toLowerCase())) {
+                            pendingDrivers.unshift({
+                                id: localUser.id,
+                                name: localUser.name,
+                                email: localUser.email,
+                                phone: localUser.phone,
+                                vehicleType: userData.vehicleType,
+                                plate: userData.licensePlate,
+                                experienceYears: Number(userData.experience) || 1,
+                                status: 'pending',
+                                createdAt: new Date().toISOString()
+                            });
+                            localStorage.setItem('goride_pending_drivers', JSON.stringify(pendingDrivers));
+                        }
+                    }
+                    offlineUsers.push(localUser);
+                    localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
+                }
+
+                // If online registration also add to local pending list for immediate admin visibility
+                if (currentRole === 'driver' && !isOfflineFallback) {
+                    const pendingDrivers = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
+                    if (!pendingDrivers.some(p => p.email.toLowerCase() === email.toLowerCase())) {
+                        pendingDrivers.unshift({
+                            id: `drv_${Date.now()}`,
+                            name: userData.name,
+                            email: userData.email,
+                            phone: userData.phone,
+                            vehicleType: userData.vehicleType,
+                            plate: userData.licensePlate,
+                            experienceYears: Number(userData.experience) || 1,
+                            status: 'pending',
+                            createdAt: new Date().toISOString()
+                        });
+                        localStorage.setItem('goride_pending_drivers', JSON.stringify(pendingDrivers));
+                    }
+                }
+
+                successMsg.textContent = currentRole === 'driver'
+                    ? 'Đăng ký tài xế thành công! Hồ sơ thực tế của bạn đang ở trạng thái CHỜ DUYỆT bởi Quản trị viên (Admin). Đang chuyển đến trang đăng nhập...'
+                    : 'Đăng ký tài khoản thành công! Đang chuyển đến trang đăng nhập...';
+                successDiv.style.display = 'flex';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, currentRole === 'driver' ? 2500 : 1500);
+            } catch (err) {
+                errorMsg.textContent = err.message || 'Đăng ký không thành công. Vui lòng thử lại.';
+                errorDiv.style.display = 'flex';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Hoàn tất đăng ký';
+            }
+        });
+    </script>
+</body>
+</html>

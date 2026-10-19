@@ -1,36 +1,62 @@
-# Build directories
+# ==========================================
+# Navigo .gitignore
+# ==========================================
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# AI Assistant artifacts & scratch reports
+.gemini/
+.antigravity/
+.system_generated/
+scratch/
+*scratch*
+*report*.md
+*REPORT*.md
+*summary*.md
+*ai*.md
+*AI*.md
+*walkthrough*.md
+*task*.md
+!README.md
+
+# Build outputs & C++ binaries
 build/
 bin/
-obj/
-*.out
+lib/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
 *.exe
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
 
-# IDE files
+# IDE & Editor files
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
+*.swp
+*.swo
 
-# OS junk
-.DS_Store
-Thumbs.db
+# Node & package manager logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# AI/tooling config & Internal docs
-.cursorrules
-.github/
-CLAUDE.md
-GIT_GUIDE.md
-PROJECT_MASTER_BRIEF.md
-git_commit_history.bat
-save_progress.bat
-
-# Stray duplicate files - kept locally only
-Point.cpp
-Point.h
-Rectangle.cpp
-DriverSimulator.cpp
-DriverSimulator.h
-admin.html
-app.js
-style.css
-test_geometry.cpp
+# Temporary files
+*.tmp
+*.temp
+*.log

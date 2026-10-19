@@ -1,0 +1,33 @@
+{
+  "rules": {
+    "goride_trips": {
+      "$tripId": {
+        ".read": true,
+        ".write": true,
+        ".validate": "newData.hasChildren(['status', 'pickupName', 'dropoffName', 'fareAmount', 'vehicleType'])"
+      }
+    },
+    "goride_active_offers": {
+      "$tripId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_online_drivers": {
+      "$driverId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_chat": {
+      "$tripId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "$other": {
+      ".read": false,
+      ".write": false
+    }
+  }
+}

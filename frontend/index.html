@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navigo — Dẫn lối chuẩn xác, đón rước tận nơi</title>
+    <meta name="description" content="Navigo - Ứng dụng đặt xe thông minh, tối ưu lộ trình và ghép nối tài xế với cấu trúc R-Tree và thuật toán Dijkstra.">
+    <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body class="app-home-body">
+    <!-- Desktop Top Navigation Bar (>= 1025px) -->
+    <nav class="goride-desktop-navbar">
+        <div class="goride-desktop-nav-inner">
+            <a href="index.html" class="goride-desktop-nav-brand">
+                <div class="brand-logo">🚗</div>
+                <div class="brand-text">
+                    <span class="brand-name">Navigo</span>
+                    <span class="brand-tagline">Dẫn lối chuẩn xác, đón rước tận nơi</span>
+                </div>
+            </a>
+
+            <div class="goride-desktop-nav-links">
+                <a href="index.html" class="goride-desktop-nav-link active">Trang chủ</a>
+                <a href="pages/customer.html" class="goride-desktop-nav-link" id="nav-link-customer" data-nav="customer">Đặt chuyến</a>
+                <a href="pages/driver.html" class="goride-desktop-nav-link" id="nav-link-driver" data-nav="driver">Đối tác tài xế</a>
+                <a href="pages/admin.html" class="goride-desktop-nav-link" id="nav-link-admin" data-nav="admin">Quản trị</a>
+                <a href="pages/customer.html#history" class="goride-desktop-nav-link" id="nav-link-history" data-nav="history">Lịch sử</a>
+                <a href="pages/profile.html" class="goride-desktop-nav-link" id="nav-link-profile" data-nav="profile">Hồ sơ</a>
+            </div>
+
+            <div class="goride-desktop-nav-actions">
+                <!-- Auth / Profile -->
+                <div data-auth="guest">
+                    <a href="pages/login.html" class="btn btn-primary btn-sm" style="border-radius:18px; padding:6px 16px;">
+                        Đăng nhập
+                    </a>
+                </div>
+                <div data-auth="user" style="display: none;">
+                    <a href="pages/profile.html" class="goride-user-avatar-btn" id="desktop-user-badge" data-user-avatar title="Hồ sơ cá nhân">
+                        <span>K</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- App Shell Container (Responsive Desktop & Mobile) -->
+    <div class="goride-app-shell">
+        <!-- App Top Header (Mobile & Tablet) -->
+        <header class="goride-header mobile-header-hide-desktop">
+            <div class="goride-header-top">
+                <a href="index.html" class="goride-brand-pill">
+                    <div class="goride-brand-logo-icon">🚗</div>
+                    <div>
+                        <div class="goride-brand-title">Navigo</div>
+                        <div class="goride-brand-slogan">Dẫn lối chuẩn xác, đón rước tận nơi</div>
+                    </div>
+                </a>
+
+                <div class="goride-header-actions">
+                    <!-- User Profile / Auth Toggle -->
+                    <div data-auth="guest">
+                        <a href="pages/login.html" class="goride-user-avatar-btn" title="Đăng nhập">
+                            👤
+                        </a>
+                    </div>
+                    <div data-auth="user" style="display: none;">
+                        <a href="pages/profile.html" class="goride-user-avatar-btn" id="user-profile-badge" data-user-avatar title="Hồ sơ người dùng">
+                            <span>K</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Search Pill: "Bạn muốn đi đâu hôm nay?" (ref-01) -->
+            <a href="pages/customer.html" class="goride-search-pill" id="home-search-pill">
+                <span class="goride-search-icon">🔍</span>
+                <span class="goride-search-text">Bạn muốn đi đâu hôm nay?</span>
+                <span class="goride-search-action">Đặt xe →</span>
+            </a>
+        </header>
+
+        <!-- Main Content Area: Responsive Grid on Desktop -->
+        <main class="goride-home-content">
+            <div class="goride-desktop-home-grid">
+                <!-- Left Column (Desktop Hero Booking & Services) -->
+                <div class="goride-desktop-hero-booking-card">
+                    <!-- Desktop Prominent Search Action (Desktop only - mobile has header search pill) -->
+                    <div class="goride-desktop-hero-search desktop-only" style="margin-bottom: 24px;">
+                        <div style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
+                            Bạn muốn di chuyển đến đâu hôm nay?
+                        </div>
+                        <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 14px 0;">
+                            Chọn điểm đón và điểm đến để Navigo điều phối xe gần bạn nhất.
+                        </p>
+                        <a href="pages/customer.html" class="goride-search-pill" style="box-shadow: 0 4px 16px rgba(0, 137, 123, 0.15);">
+                            <span class="goride-search-icon">🔍</span>
+                            <span class="goride-search-text">Nhập điểm đón và điểm đến...</span>
+                            <span class="goride-search-action">Bắt đầu đặt xe →</span>
+                        </a>
+                    </div>
+
+                    <!-- Services Section: 6 Vehicle Options -->
+                    <section class="goride-services-section">
+                        <div class="goride-section-header-compact">
+                            <h2 class="goride-section-title">
+                                <span>⚡</span> Dịch vụ di chuyển
+                            </h2>
+                            <span class="goride-instant-badge">Ghép tức thì</span>
+                        </div>
+
+                        <div class="goride-services-grid">
+                            <!-- Navigo Bike (Xe máy) -->
+                            <a href="pages/customer.html?service=bike" class="goride-service-tile" title="Đặt xe máy Navigo">
+                                <div class="goride-service-icon-wrap" style="color: #00897b;">
+                                    🛵
+                                </div>
+                                <div class="goride-service-name">Xe máy</div>
+                                <div class="goride-service-sub">Tiết kiệm</div>
+                            </a>
+
+                            <!-- Navigo Car (Ô tô 4 chỗ) -->
+                            <a href="pages/customer.html?service=car4" class="goride-service-tile" title="Đặt ô tô 4 chỗ Navigo">
+                                <div class="goride-service-icon-wrap" style="color: #0288d1;">
+                                    🚗
+                                </div>
+                                <div class="goride-service-name">Ô tô 4 chỗ</div>
+                                <div class="goride-service-sub">Phổ biến</div>
+                            </a>
+
+                            <!-- Navigo Plus (Xe sang cao cấp) -->
+                            <a href="pages/customer.html?service=premium" class="goride-service-tile" title="Đặt xe cao cấp Navigo Plus">
+                                <div class="goride-service-icon-wrap" style="color: #7c3aed;">
+                                    🚘
+                                </div>
+                                <div class="goride-service-name">Navigo Plus</div>
+                                <div class="goride-service-sub">Cao cấp</div>
+                            </a>
+
+                            <!-- Navigo XL (Xe 7 chỗ) -->
+                            <a href="pages/customer.html?service=car7" class="goride-service-tile" title="Đặt xe 7 chỗ Navigo XL">
+                                <div class="goride-service-icon-wrap" style="color: #ea580c;">
+                                    🚐
+                                </div>
+                                <div class="goride-service-name">Xe 7 chỗ</div>
+                                <div class="goride-service-sub">Rộng rãi</div>
+                            </a>
+
+                            <!-- Giao hàng -->
+                            <a href="pages/customer.html?service=delivery" class="goride-service-tile" title="Giao hàng hỏa tốc">
+                                <div class="goride-service-icon-wrap" style="color: #d97706;">
+                                    📦
+                                </div>
+                                <div class="goride-service-name">Giao hàng</div>
+                                <div class="goride-service-sub">Hỏa tốc</div>
+                            </a>
+
+                            <!-- Đặt trước -->
+                            <a href="pages/customer.html?service=schedule" class="goride-service-tile" title="Đặt xe theo lịch hẹn">
+                                <div class="goride-service-icon-wrap" style="color: #059669;">
+                                    📅
+                                </div>
+                                <div class="goride-service-name">Đặt trước</div>
+                                <div class="goride-service-sub">Hẹn giờ</div>
+                            </a>
+                        </div>
+                    </section>
+
+                    <!-- Promo Banner -->
+                    <div class="goride-promo-banner" onclick="window.location.href='pages/customer.html'">
+                        <div class="goride-promo-left">
+                            <h4>Ưu đãi 20% hôm nay</h4>
+                            <p>Tự động áp dụng khi đặt chuyến</p>
+                        </div>
+                        <div class="goride-promo-badge">
+                            🏷️ NAVIGO20
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (Modern Promotions, Safety Standards, Service Highlights) -->
+                <div class="goride-desktop-sidebar-col">
+                    <!-- Featured Promotion Banner -->
+                    <div class="goride-sidebar-promo-card">
+                        <div class="goride-sidebar-promo-badge">ƯU ĐÃI ĐẶC QUYỀN</div>
+                        <div class="goride-sidebar-promo-content">
+                            <div class="goride-sidebar-promo-title">Giảm 25% cho chuyến đi hôm nay</div>
+                            <div class="goride-sidebar-promo-desc">Nhập mã <strong>NAVIGO25</strong> khi đặt xe. Tối đa 30.000 ₫, áp dụng tự động cho cả xe máy và ô tô.</div>
+                        </div>
+                        <a href="pages/customer.html" class="goride-sidebar-promo-cta">
+                            Đặt xe nhận ưu đãi ngay →
+                        </a>
+                    </div>
+
+                    <!-- Navigo Pass & Membership Benefits -->
+                    <div class="goride-sidebar-pass-card">
+                        <div class="goride-pass-header">
+                            <div class="goride-pass-icon">🎁</div>
+                            <div>
+                                <div class="goride-pass-title">Gói Tiết Kiệm Navigo Pass</div>
+                                <div class="goride-pass-sub">Tiết kiệm đến 400.000 ₫ mỗi tháng</div>
+                            </div>
+                        </div>
+                        <div class="goride-pass-benefits">
+                            <div class="goride-pass-benefit-item">
+                                <span class="goride-benefit-check">✓</span>
+                                <span>Giảm 20% các cuốc xe vào giờ cao điểm sáng & tối</span>
+                            </div>
+                            <div class="goride-pass-benefit-item">
+                                <span class="goride-benefit-check">✓</span>
+                                <span>Ưu tiên ghép tài xế 5 sao gần bạn nhất</span>
+                            </div>
+                            <div class="goride-pass-benefit-item">
+                                <span class="goride-benefit-check">✓</span>
+                                <span>Tích điểm đổi mã voucher nước uống & tiện ích</span>
+                            </div>
+                        </div>
+                        <a href="pages/customer.html" class="goride-pass-btn">Khám phá gói Navigo Pass</a>
+                    </div>
+
+                    <!-- Safety & Quality Standards -->
+                    <div class="goride-sidebar-safety-card">
+                        <div class="goride-safety-header">
+                            <span class="goride-safety-shield">🛡️</span>
+                            <span class="goride-safety-title">Cam kết an tâm mọi hành trình</span>
+                        </div>
+                        <div class="goride-safety-list">
+                            <div class="goride-safety-item">
+                                <span class="goride-safety-bullet">⭐</span>
+                                <div>
+                                    <strong>Tài xế 5 sao được xác minh danh tính</strong>
+                                    <p>100% tài xế kiểm tra lý lịch, giấy phép lái xe và định kỳ kiểm định xe.</p>
+                                </div>
+                            </div>
+                            <div class="goride-safety-item">
+                                <span class="goride-safety-bullet">🛡️</span>
+                                <div>
+                                    <strong>Bảo hiểm chuyến đi tự động tích hợp</strong>
+                                    <p>Bảo vệ toàn diện cho hành khách và tài xế trong suốt lộ trình di chuyển.</p>
+                                </div>
+                            </div>
+                            <div class="goride-safety-item">
+                                <span class="goride-safety-bullet">⚡</span>
+                                <div>
+                                    <strong>Ghép xe thông minh với R-Tree & Dijkstra</strong>
+                                    <p>Định vị tài xế tối ưu cự ly đón, rút ngắn tối đa thời gian chờ đợi.</p>
+                                </div>
+                            </div>
+                            <div class="goride-safety-item">
+                                <span class="goride-safety-bullet">📞</span>
+                                <div>
+                                    <strong>Tổng đài hỗ trợ & SOS khẩn cấp 24/7</strong>
+                                    <p>Chia sẻ lộ trình trực tiếp cho người thân và trợ giúp liên tục 24/7.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Platform Trust Stats -->
+                    <div class="goride-sidebar-stats-card">
+                        <div class="goride-stats-grid">
+                            <div class="goride-stat-item">
+                                <div class="goride-stat-number">500K+</div>
+                                <div class="goride-stat-label">Chuyến đi an toàn</div>
+                            </div>
+                            <div class="goride-stat-item">
+                                <div class="goride-stat-number">4.9/5 ⭐</div>
+                                <div class="goride-stat-label">Đánh giá hài lòng</div>
+                            </div>
+                            <div class="goride-stat-item">
+                                <div class="goride-stat-number">99.8%</div>
+                                <div class="goride-stat-label">Đúng giờ đón khách</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
+    <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav"></nav>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="js/core/firebase-config.js"></script>
+    <script src="js/core/realtime.js"></script>
+    <script src="js/core/api.js"></script>
+    <script src="js/core/session.js"></script>
+    <script src="js/core/router.js"></script>
+    <script src="js/core/demo-data.js"></script>
+    <script src="js/core/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check session status and customize avatar/profile
+            if (typeof sessionManager !== 'undefined') {
+                const user = sessionManager.getCurrentUser();
+                const role = sessionManager.getRole?.() || (user ? user.role : null);
+
+                // Role-based visibility across Desktop navbar
+                const driverLinks = [
+                    document.getElementById('nav-link-driver'),
+                    document.getElementById('m-pill-driver')
+                ];
+                const adminLinks = [
+                    document.getElementById('nav-link-admin'),
+                    document.getElementById('m-pill-admin')
+                ];
+                const customerLinks = [
+                    document.getElementById('nav-link-customer')
+                ];
+                const historyLinks = [
+                    document.getElementById('nav-link-history')
+                ];
+                const profileLinks = [
+                    document.getElementById('nav-link-profile')
+                ];
+
+                const setVisible = (elements, show) => {
+                    elements.forEach(el => {
+                        if (el) el.style.display = show ? '' : 'none';
+                    });
+                };
+
+                if (role === 'admin') {
+                    // Admin: Strictly HIDE "Đối tác tài xế" & Customer booking, SHOW "Quản trị" & Profile
+                    setVisible(driverLinks, false);
+                    setVisible(adminLinks, true);
+                    setVisible(customerLinks, false);
+                    setVisible(historyLinks, false);
+                    setVisible(profileLinks, true);
+                } else if (role === 'driver') {
+                    // Driver: Show "Đối tác tài xế", hide "Quản trị" & Customer booking
+                    setVisible(driverLinks, true);
+                    setVisible(adminLinks, false);
+                    setVisible(customerLinks, false);
+                    setVisible(historyLinks, false);
+                    setVisible(profileLinks, true);
+                } else if (role === 'customer') {
+                    // Customer: Show Booking, History, Profile; hide Driver & Admin
+                    setVisible(driverLinks, false);
+                    setVisible(adminLinks, false);
+                    setVisible(customerLinks, true);
+                    setVisible(historyLinks, true);
+                    setVisible(profileLinks, true);
+                } else {
+                    // Guest / Not logged in: Show Booking & Driver signup; hide Admin, History, Profile
+                    setVisible(driverLinks, true);
+                    setVisible(adminLinks, false);
+                    setVisible(customerLinks, true);
+                    setVisible(historyLinks, false);
+                    setVisible(profileLinks, false);
+                }
+
+                if (user) {
+                    if (typeof app !== 'undefined' && app.updateAuthUI) {
+                        app.updateAuthUI();
+                    }
+                }
+            }
+
+            if (typeof app !== 'undefined' && app.initMobileBottomNav) {
+                app.initMobileBottomNav();
+            }
+        });
+    </script>
+</body>
+</html>

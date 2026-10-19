@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị hệ thống | Navigo Admin</title>
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        /* Admin Specialized Styles */
+        .app-header {
+            z-index: 2500 !important;
+        }
+        .user-menu {
+            position: relative !important;
+            z-index: 2600 !important;
+        }
+        .user-menu-dropdown {
+            z-index: 2700 !important;
+        }
+        .admin-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .admin-home-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 18px;
+            background: #ffffff;
+            border: 1.5px solid var(--color-gray-300, #cbd5e1);
+            border-radius: 9999px;
+            color: var(--color-gray-700, #334155);
+            font-size: 0.86rem;
+            font-weight: 700;
+            text-decoration: none !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .admin-home-btn:hover {
+            background: linear-gradient(135deg, #f0fdfa 0%, #e6fffa 100%);
+            border-color: #00897b;
+            color: #00897b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 137, 123, 0.18);
+            text-decoration: none !important;
+        }
+        .admin-home-btn:active {
+            transform: scale(0.96) translateY(0);
+        }
+        .admin-table th, .admin-table td {
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .table-actions {
+            display: inline-flex;
+            gap: 6px;
+        }
+        .btn-action-edit {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1.5px solid #bfdbfe;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .btn-action-edit:hover {
+            background: #dbeafe;
+            border-color: #60a5fa;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+        }
+        .btn-action-edit:active {
+            transform: scale(0.96);
+        }
+        .btn-action-delete {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1.5px solid #fecaca;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .btn-action-delete:hover {
+            background: #fee2e2;
+            border-color: #f87171;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+        }
+        .btn-action-delete:active {
+            transform: scale(0.96);
+        }
+        /* Modal System */
+        .admin-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .admin-modal-overlay.is-active {
+            display: flex;
+        }
+        .admin-modal-card {
+            background: #ffffff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 540px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .admin-modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--color-gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .admin-modal-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            color: var(--color-gray-900);
+        }
+        .admin-modal-close {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-gray-500);
+            line-height: 1;
+        }
+        .admin-modal-body {
+            padding: 20px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+        /* Real-time Driver GPS Marker on Admin Spatial Map */
+        .admin-driver-marker-wrap {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+        .admin-driver-icon-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.45), 0 0 0 3px #ffffff;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .admin-driver-marker-wrap:hover .admin-driver-icon-circle {
+            transform: scale(1.15);
+        }
+        .admin-driver-marker-car .admin-driver-icon-circle {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.45), 0 0 0 3px #ffffff;
+        }
+        .admin-driver-marker-premium .admin-driver-icon-circle {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            box-shadow: 0 4px 10px rgba(124, 58, 237, 0.45), 0 0 0 3px #ffffff;
+        }
+        .admin-driver-marker-car7 .admin-driver-icon-circle {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.45), 0 0 0 3px #ffffff;
+        }
+        .admin-driver-radar-ping {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.35);
+            animation: admin-driver-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .admin-driver-marker-car .admin-driver-radar-ping {
+            background: rgba(2, 132, 199, 0.35);
+        }
+        .admin-driver-marker-premium .admin-driver-radar-ping {
+            background: rgba(124, 58, 237, 0.35);
+        }
+        .admin-driver-marker-car7 .admin-driver-radar-ping {
+            background: rgba(234, 88, 12, 0.35);
+        }
+        @keyframes admin-driver-ping {
+            0% {
+                transform: scale(0.6);
+                opacity: 1;
+            }
+            80%, 100% {
+                transform: scale(2.2);
+                opacity: 0;
+            }
+        }
+        .admin-driver-label-chip {
+            margin-top: 4px;
+            background: rgba(15, 23, 42, 0.90);
+            backdrop-filter: blur(4px);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .admin-driver-label-chip .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #10b981;
+            display: inline-block;
+        }
+
+        /* Leaflet popup customization */
+        .leaflet-popup-content-wrapper {
+            border-radius: 14px !important;
+            padding: 0 !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+            overflow: hidden;
+        }
+        .leaflet-popup-content {
+            margin: 0 !important;
+            line-height: 1.4 !important;
+        }
+        .admin-driver-popup {
+            min-width: 270px;
+            font-family: inherit;
+        }
+        .admin-popup-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .admin-popup-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .admin-popup-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .admin-popup-badge-online {
+            font-size: 11px;
+            color: #34d399;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 1px;
+        }
+        .admin-popup-body {
+            padding: 12px 14px;
+            background: #ffffff;
+        }
+        .admin-popup-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+        .admin-popup-lbl {
+            color: #64748b;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .admin-popup-val {
+            color: #0f172a;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* ==========================================================================
+           Admin Sidebar Fixed Desktop Layout & Modern Footer Buttons
+           ========================================================================== */
+        @media (min-width: 1025px) {
+            .app {
+                overflow-x: visible !important;
+            }
+            .app-sidebar {
+                position: fixed !important;
+                top: var(--header-height, 56px) !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                width: 260px !important;
+                height: calc(100vh - var(--header-height, 56px)) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                background: #ffffff !important;
+                border-right: 1px solid var(--color-gray-200, #e2e8f0) !important;
+                z-index: 100 !important;
+                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02) !important;
+            }
+            .app-body {
+                display: flex !important;
+                position: relative !important;
+            }
+            .app-main {
+                margin-left: 260px !important;
+                width: calc(100% - 260px) !important;
+                min-height: calc(100vh - var(--header-height, 56px)) !important;
+            }
+        }
+
+        /* Sidebar Footer Action Buttons */
+        .admin-sidebar-footer {
+            margin-top: auto;
+            flex-shrink: 0;
+            padding: 14px 12px;
+            border-top: 1px solid var(--color-gray-200, #e2e8f0);
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .admin-sidebar-footer-title {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-gray-500, #64748b);
+            letter-spacing: 0.05em;
+            margin-bottom: 2px;
+            padding-left: 4px;
+        }
+        .admin-sidebar-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            text-decoration: none !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+            box-sizing: border-box;
+            border: 1.5px solid transparent;
+            cursor: pointer;
+        }
+        .admin-sidebar-btn-home {
+            background: #ffffff;
+            color: #334155;
+            border-color: #e2e8f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .admin-sidebar-btn-home:hover {
+            background: #ffffff;
+            border-color: #00897b;
+            color: #00897b;
+            transform: translateY(-1.5px);
+            box-shadow: 0 4px 12px rgba(0, 137, 123, 0.15);
+        }
+        .admin-sidebar-btn-home:active {
+            transform: scale(0.98);
+        }
+        .admin-sidebar-btn-logout {
+            background: #fff1f2;
+            color: #e11d48;
+            border-color: #fecdd3;
+            box-shadow: 0 1px 3px rgba(225, 29, 72, 0.06);
+        }
+        .admin-sidebar-btn-logout:hover {
+            background: #ffe4e6;
+            border-color: #fda4af;
+            color: #be123c;
+            transform: translateY(-1.5px);
+            box-shadow: 0 4px 12px rgba(225, 29, 72, 0.18);
+        }
+        .admin-sidebar-btn-logout:active {
+            transform: scale(0.98);
+        }
+        .admin-sidebar-icon-box {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+        .admin-sidebar-icon-home {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 14px;
+        }
+        .admin-sidebar-btn-home:hover .admin-sidebar-icon-home {
+            background: #e6fffa;
+            color: #00897b;
+        }
+        .admin-sidebar-icon-logout {
+            background: #fee2e2;
+            color: #e11d48;
+        }
+        .admin-sidebar-btn-logout:hover .admin-sidebar-icon-logout {
+            background: #fecdd3;
+            color: #be123c;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <!-- Top App Header -->
+        <header class="app-header">
+            <div style="display:flex; align-items:center; gap:var(--space-3);">
+                <button class="btn btn-ghost btn-icon mobile-only" id="sidebar-toggle" aria-label="Toggle menu" style="font-size:1.25rem;">☰</button>
+                <div style="display:flex; align-items:center; gap:var(--space-2);">
+                    <span style="font-size:1.4rem;">🚗</span>
+                    <span class="header-brand" style="font-weight:800; font-size:1.25rem; color:var(--color-primary);">Navigo</span>
+                </div>
+                <span class="badge badge-danger" style="font-weight:700;">Quản trị viên</span>
+            </div>
+
+            <div class="admin-header-actions">
+                <!-- Separate "Về trang chủ" Button in Header -->
+                <a href="../index.html" class="admin-home-btn desktop-only" title="Truy cập giao diện người dùng Navigo">
+                    <span>🏠</span>
+                    <span>Về trang chủ</span>
+                </a>
+
+                <!-- User Profile & Dropdown -->
+                <div class="user-menu" id="admin-user-menu">
+                    <button class="user-menu-trigger" id="user-menu-btn" type="button" aria-expanded="false" style="display:flex; align-items:center; gap:8px;">
+                        <div class="avatar avatar-sm" id="admin-user-avatar" data-user-avatar style="background:var(--color-error); color:#fff; font-weight:700; overflow:hidden; padding:0;">A</div>
+                        <span class="user-menu-name desktop-only" id="admin-user-name">Quản trị viên</span>
+                        <span class="user-menu-chevron desktop-only" style="font-size:0.75rem;">▼</span>
+                    </button>
+                    <div class="user-menu-dropdown" id="user-menu-dropdown" style="display:none;">
+                        <div class="user-menu-item" style="font-weight:700; color:var(--color-text-primary);">Tài khoản Quản trị</div>
+                        <a href="profile.html" class="user-menu-item" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:6px;">👤 Cập nhật hồ sơ & Ảnh</a>
+                        <a href="../index.html" class="user-menu-item" style="text-decoration:none; color:inherit;">🏠 Về trang chủ Navigo</a>
+                        <div class="user-menu-divider" style="height:1px; background:var(--color-gray-200); margin:4px 0;"></div>
+                        <div class="user-menu-item user-menu-item-danger" data-action="logout" style="color:var(--color-error); cursor:pointer;">🚪 Đăng xuất</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Application Body: Sidebar + Main Content -->
+        <div class="app-body">
+            <!-- Sidebar: Clean, NO duplicate logo -->
+            <aside class="app-sidebar" id="sidebar">
+                <div style="padding: 16px 16px 10px 16px; border-bottom: 1px solid var(--color-gray-200); display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--color-gray-500); letter-spacing: 0.05em;">Chức năng quản trị</span>
+                    <span class="badge badge-success" style="font-size: 0.65rem;">24/24</span>
+                </div>
+                
+                <nav class="nav-list" style="padding: var(--space-3) var(--space-2); display: flex; flex-direction: column; gap: 4px;">
+                    <a href="#dashboard" class="nav-item nav-link active" data-tab="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-label">Tổng quan</span>
+                    </a>
+                    <a href="#recent-trips" class="nav-item nav-link" data-tab="recent-trips">
+                        <span class="nav-icon">⏱️</span>
+                        <span class="nav-label">Chuyến đi gần đây</span>
+                        <span class="badge badge-info nav-link-badge" id="sidebar-recent-trips-count" style="font-size:0.72rem;">0</span>
+                    </a>
+                    <a href="#trips" class="nav-item nav-link" data-tab="trips">
+                        <span class="nav-icon">🚗</span>
+                        <span class="nav-label">Quản lý chuyến đi</span>
+                        <span class="badge badge-primary nav-link-badge" id="sidebar-trips-count" style="font-size:0.72rem;">0</span>
+                    </a>
+                    <a href="#drivers" class="nav-item nav-link" data-tab="drivers">
+                        <span class="nav-icon">👨‍✈️</span>
+                        <span class="nav-label">Quản lý tài xế</span>
+                        <span class="badge badge-warning nav-link-badge" id="sidebar-drivers-count" style="font-size:0.72rem;">0</span>
+                    </a>
+                </nav>
+
+                <!-- Sidebar Footer: Separated exit options -->
+                <div class="admin-sidebar-footer">
+                    <div class="admin-sidebar-footer-title">Hệ thống & Tài khoản</div>
+                    <a href="../index.html" class="admin-sidebar-btn admin-sidebar-btn-home" title="Quay lại giao diện người dùng Navigo">
+                        <span class="admin-sidebar-icon-box admin-sidebar-icon-home">🏠</span>
+                        <span>Về trang chủ Navigo</span>
+                    </a>
+                    <button type="button" class="admin-sidebar-btn admin-sidebar-btn-logout" data-action="logout" title="Đăng xuất khỏi phiên quản trị">
+                        <span class="admin-sidebar-icon-box admin-sidebar-icon-logout">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                        </span>
+                        <span>Đăng xuất</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Backdrop for Mobile Sidebar Drawer -->
+            <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+            <!-- Main Content Area -->
+            <main class="app-main">
+                <!-- TAB 1: DASHBOARD -->
+                <div id="tab-dashboard" class="dashboard-layout" style="padding:var(--space-4);">
+                    <div class="page-header">
+                        <div>
+                            <h2>Tổng quan hệ thống</h2>
+                            <p style="margin:2px 0 0 0; color:var(--color-gray-600); font-size:0.875rem;">Theo dõi số liệu vận hành và điều phối giao thông trực tiếp 24/24.</p>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge badge-success" id="server-status-badge">● Dữ liệu trực tiếp</span>
+                            <button class="btn btn-sm btn-ghost" onclick="adminController.loadDashboard()" title="Làm mới">🔄 Làm mới</button>
+                        </div>
+                    </div>
+
+                    <!-- KPI Statistics Grid -->
+                    <div class="stats-grid" id="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#e0f2fe; color:#0288d1;">🚗</div>
+                            <div class="stat-card-value" id="stat-total-rides">0</div>
+                            <div class="stat-card-label">Tổng chuyến đi</div>
+                            <div class="stat-card-trend trend-up" id="stat-rides-trend">● Trực tiếp</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#dcfce7; color:#16a34a;">👨‍✈️</div>
+                            <div class="stat-card-value" id="stat-active-drivers">0</div>
+                            <div class="stat-card-label">Tài xế hoạt động</div>
+                            <div class="stat-card-trend trend-up" id="stat-drivers-trend">● Trực tiếp</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#fef3c7; color:#d97706;">💰</div>
+                            <div class="stat-card-value" id="stat-revenue">0 ₫</div>
+                            <div class="stat-card-label">Doanh thu</div>
+                            <div class="stat-card-trend trend-up" id="stat-revenue-trend">● Trực tiếp</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#f3e8ff; color:#7e22ce;">👥</div>
+                            <div class="stat-card-value" id="stat-customers">0</div>
+                            <div class="stat-card-label">Khách hàng</div>
+                            <div class="stat-card-trend trend-up" id="stat-customers-trend">● Trực tiếp</div>
+                        </div>
+                    </div>
+
+                    <!-- Operational Map Section -->
+                    <div class="dashboard-section" style="margin-top:var(--space-4);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                                    <span>🗺️</span>
+                                    <span>Bản đồ giám sát không gian (Spatial Map)</span>
+                                </h3>
+                                <span id="admin-map-online-badge" class="badge badge-secondary" style="font-size:0.75rem; font-weight:700; padding:4px 10px;">⚪ Đang quét tài xế...</span>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <button class="btn btn-sm btn-ghost" id="admin-map-locate-btn" onclick="adminController.focusOnOnlineDrivers()" style="font-size:0.8rem; font-weight:600; padding:5px 12px; border:1px solid var(--color-gray-300); border-radius:8px; background:#ffffff;">🎯 Định vị tài xế</button>
+                                <span style="font-size:0.8rem; color:var(--color-gray-500);">TP. Hồ Chí Minh &bull; Tọa độ GPS thời gian thực</span>
+                            </div>
+                        </div>
+                        <div id="admin-map" style="height:440px; width:100%; border-radius:14px; border:1px solid var(--color-gray-200); overflow:hidden; position:relative; z-index:1; box-shadow:0 4px 12px rgba(0,0,0,0.04);"></div>
+                    </div>
+                </div>
+
+                <!-- TAB: CHUYẾN ĐI GẦN ĐÂY -->
+                <div id="tab-recent-trips" style="display:none; padding:var(--space-4);">
+                    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+                        <div>
+                            <h2>Chuyến đi gần đây</h2>
+                            <p style="margin:2px 0 0 0; color:var(--color-gray-600); font-size:0.875rem;">Theo dõi danh sách các chuyến đi mới nhất vừa phát sinh theo thời gian thực (100% dữ liệu thực).</p>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-secondary btn-sm" onclick="adminController.loadRecentTripsTable()" style="display:flex; align-items:center; gap:6px;">
+                                <span>🔄</span> <strong>Làm mới</strong>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search & Quick Filter for Recent Trips -->
+                    <div class="admin-filters" style="margin-bottom:var(--space-4); display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center; background:#fff; padding:12px 16px; border-radius:12px; border:1px solid var(--color-gray-200);">
+                        <input type="text" class="form-input" id="recent-trip-search-input" placeholder="🔍 Tìm theo mã chuyến, khách hàng, tài xế..." style="width:280px; max-width:100%;">
+                        <select class="form-select" id="recent-trip-status-filter" style="width:auto;">
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="completed">Hoàn thành</option>
+                            <option value="in_progress">Đang di chuyển</option>
+                            <option value="accepted">Đã nhận</option>
+                            <option value="requested">Đang tìm xe</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                        <button class="btn btn-ghost btn-sm" onclick="adminController.resetRecentTripFilters()">Đặt lại</button>
+                        <span style="margin-left:auto; font-size:0.82rem; color:var(--color-gray-500);" id="recent-trip-count-text">Hiển thị 0 chuyến gần đây</span>
+                    </div>
+
+                    <!-- Recent Trips Data Table -->
+                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                        <table class="data-table admin-table" id="recent-trips-table">
+                            <thead>
+                                <tr>
+                                    <th>MÃ CHUYẾN</th>
+                                    <th>THỜI GIAN</th>
+                                    <th>KHÁCH HÀNG</th>
+                                    <th>TÀI XẾ</th>
+                                    <th>LỘ TRÌNH (ĐÓN &rarr; ĐẾN)</th>
+                                    <th>TRẠNG THÁI</th>
+                                    <th>GIÁ CƯỚC</th>
+                                    <th style="text-align:right;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-trips-body">
+                                <tr><td colspan="8" class="text-center" style="padding:28px;">Đang tải danh sách chuyến đi gần đây...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 2: QUẢN LÝ CHUYẾN ĐI (FULL CRUD) -->
+                <div id="tab-trips" style="display:none; padding:var(--space-4);">
+                    <div class="page-header">
+                        <div>
+                            <h2>Quản lý chuyến đi</h2>
+                            <p style="margin:2px 0 0 0; color:var(--color-gray-600); font-size:0.875rem;">Thêm mới, chỉnh sửa thông tin, cập nhật trạng thái hoặc xóa chuyến đi.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="adminController.openAddTripModal()" style="display:flex; align-items:center; gap:6px;">
+                            <span>➕</span> <strong>Thêm chuyến đi mới</strong>
+                        </button>
+                    </div>
+
+                    <!-- Search & Filters -->
+                    <div class="admin-filters" style="margin-bottom:var(--space-4); display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center; background:#fff; padding:12px 16px; border-radius:12px; border:1px solid var(--color-gray-200);">
+                        <input type="text" class="form-input" id="trip-search-input" placeholder="🔍 Tìm theo mã, tên khách, tài xế..." style="width:260px; max-width:100%;">
+                        <select class="form-select" id="trip-status-filter" style="width:auto;">
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="completed">Hoàn thành</option>
+                            <option value="in_progress">Đang di chuyển</option>
+                            <option value="accepted">Đã nhận</option>
+                            <option value="requested">Đang tìm xe</option>
+                            <option value="cancelled">Đã hủy</option>
+                        </select>
+                        <button class="btn btn-ghost btn-sm" onclick="adminController.resetTripFilters()">Đặt lại</button>
+                        <span style="margin-left:auto; font-size:0.82rem; color:var(--color-gray-500);" id="trip-count-text">Hiển thị 0 chuyến</span>
+                    </div>
+
+                    <!-- Trips Data Table -->
+                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow:hidden;">
+                        <table class="data-table admin-table">
+                            <thead>
+                                <tr>
+                                    <th>MÃ CHUYẾN</th>
+                                    <th>KHÁCH HÀNG</th>
+                                    <th>TÀI XẾ</th>
+                                    <th>ĐIỂM ĐÓN</th>
+                                    <th>ĐIỂM ĐẾN</th>
+                                    <th>TRẠNG THÁI</th>
+                                    <th>GIÁ CƯỚC</th>
+                                    <th style="text-align:right;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-trips-body">
+                                <tr><td colspan="8" class="text-center" style="padding:24px;">Đang tải danh sách chuyến đi...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- TAB 3: QUẢN LÝ TÀI XẾ (FULL CRUD + PHÊ DUYỆT) -->
+                <div id="tab-drivers" style="display:none; padding:var(--space-4);">
+                    <div class="page-header">
+                        <div>
+                            <h2>Quản lý tài xế</h2>
+                            <p style="margin:2px 0 0 0; color:var(--color-gray-600); font-size:0.875rem;">Phê duyệt hồ sơ đăng ký mới, quản lý thông tin và trạng thái hoạt động của tài xế.</p>
+                        </div>
+                        <button class="btn btn-primary btn-sm" onclick="adminController.openAddDriverModal()" style="display:flex; align-items:center; gap:6px;">
+                            <span>➕</span> <strong>Thêm tài xế mới</strong>
+                        </button>
+                    </div>
+
+                    <!-- Section: Pending Approvals -->
+                    <div class="dashboard-section" style="margin-bottom:var(--space-6);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                                <span>📋 Yêu cầu đăng ký chờ duyệt</span>
+                                <span class="badge badge-warning" id="pending-drivers-count">0</span>
+                            </h3>
+                            <button class="btn btn-sm btn-ghost" onclick="adminController.loadDriverApprovals()">🔄 Tải lại</button>
+                        </div>
+                        <div id="driver-approvals">
+                            <div class="empty-state">
+                                <p class="empty-state-title">Đang tải danh sách chờ duyệt...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Registered Drivers Table -->
+                    <div class="dashboard-section">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                            <h3 style="margin:0; font-size:1.1rem;">Danh sách tài xế hệ thống</h3>
+                            <span style="font-size:0.82rem; color:var(--color-gray-500);" id="registered-drivers-count">Tổng cộng: 0 tài xế</span>
+                        </div>
+                        <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow:hidden;">
+                            <table class="data-table admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>MÃ TÀI XẾ</th>
+                                        <th>HỌ TÊN</th>
+                                        <th>LIÊN HỆ</th>
+                                        <th>PHƯƠNG TIỆN</th>
+                                        <th>BIỂN SỐ</th>
+                                        <th>TRẠNG THÁI</th>
+                                        <th style="text-align:right;">THAO TÁC</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="registered-drivers-body">
+                                    <tr><td colspan="7" class="text-center" style="padding:24px;">Đang tải danh sách tài xế...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </main>
+        </div> <!-- .app-body -->
+
+        <!-- MODAL 1: TRIP (ADD / EDIT) -->
+        <div class="admin-modal-overlay" id="modal-trip">
+            <div class="admin-modal-card">
+                <div class="admin-modal-header">
+                    <h3 id="modal-trip-title">Thêm chuyến đi mới</h3>
+                    <button type="button" class="admin-modal-close" onclick="adminController.closeModal('modal-trip')">&times;</button>
+                </div>
+                <form id="form-trip" onsubmit="adminController.saveTrip(event)">
+                    <div class="admin-modal-body">
+                        <input type="hidden" id="trip-form-id">
+                        
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="trip-form-customer">Tên khách hàng <span style="color:var(--color-error);">*</span></label>
+                            <input type="text" id="trip-form-customer" class="form-input" required placeholder="Ví dụ: Nguyễn Văn An">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="trip-form-phone">Số điện thoại khách hàng</label>
+                            <input type="tel" id="trip-form-phone" class="form-input" placeholder="Ví dụ: 0901234567">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="trip-form-driver">Tên tài xế phụ trách</label>
+                            <input type="text" id="trip-form-driver" class="form-input" placeholder="Ví dụ: Trần Văn Bình">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="trip-form-pickup">Điểm đón <span style="color:var(--color-error);">*</span></label>
+                            <input type="text" id="trip-form-pickup" class="form-input" required placeholder="Ví dụ: Chợ Bến Thành, Quận 1">
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="trip-form-dest">Điểm đến <span style="color:var(--color-error);">*</span></label>
+                            <input type="text" id="trip-form-dest" class="form-input" required placeholder="Ví dụ: Landmark 81, Bình Thạnh">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="trip-form-fare">Giá cước (VNĐ) <span style="color:var(--color-error);">*</span></label>
+                                <input type="number" id="trip-form-fare" class="form-input" required min="10000" step="1000" value="45000">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="trip-form-status">Trạng thái chuyến <span style="color:var(--color-error);">*</span></label>
+                                <select id="trip-form-status" class="form-select" required>
+                                    <option value="completed">Hoàn thành</option>
+                                    <option value="in_progress">Đang di chuyển</option>
+                                    <option value="accepted">Đã nhận</option>
+                                    <option value="requested">Đang tìm xe</option>
+                                    <option value="cancelled">Đã hủy</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-modal-footer">
+                        <button type="button" class="btn btn-ghost" onclick="adminController.closeModal('modal-trip')">Hủy</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-trip">Lưu chuyến đi</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL 2: DRIVER (ADD / EDIT) -->
+        <div class="admin-modal-overlay" id="modal-driver">
+            <div class="admin-modal-card">
+                <div class="admin-modal-header">
+                    <h3 id="modal-driver-title">Thêm tài xế mới</h3>
+                    <button type="button" class="admin-modal-close" onclick="adminController.closeModal('modal-driver')">&times;</button>
+                </div>
+                <form id="form-driver" onsubmit="adminController.saveDriver(event)">
+                    <div class="admin-modal-body">
+                        <input type="hidden" id="driver-form-id">
+                        
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="driver-form-name">Họ và tên tài xế <span style="color:var(--color-error);">*</span></label>
+                            <input type="text" id="driver-form-name" class="form-input" required placeholder="Ví dụ: Lê Hoàng Nam">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="driver-form-email">Email <span style="color:var(--color-error);">*</span></label>
+                                <input type="email" id="driver-form-email" class="form-input" required placeholder="driver@demo.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="driver-form-phone">Số điện thoại <span style="color:var(--color-error);">*</span></label>
+                                <input type="tel" id="driver-form-phone" class="form-input" required placeholder="0912345678">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="driver-form-vtype">Loại phương tiện</label>
+                                <select id="driver-form-vtype" class="form-select">
+                                    <option value="bike">Xe máy (GoBike)</option>
+                                    <option value="car4" selected>Ô tô 4 chỗ (GoCar)</option>
+                                    <option value="car7">Ô tô 7 chỗ (GoCar Plus)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="driver-form-plate">Biển số xe <span style="color:var(--color-error);">*</span></label>
+                                <input type="text" id="driver-form-plate" class="form-input" required placeholder="Ví dụ: 51G-889.24">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="driver-form-exp">Kinh nghiệm (năm)</label>
+                                <input type="number" id="driver-form-exp" class="form-input" min="0" max="40" value="3">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="driver-form-status">Trạng thái <span style="color:var(--color-error);">*</span></label>
+                                <select id="driver-form-status" class="form-select">
+                                    <option value="active">Đang hoạt động (Active)</option>
+                                    <option value="offline">Ngoại tuyến (Offline)</option>
+                                    <option value="pending">Chờ phê duyệt</option>
+                                    <option value="locked">Bị khóa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="admin-modal-footer">
+                        <button type="button" class="btn btn-ghost" onclick="adminController.closeModal('modal-driver')">Hủy</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-driver">Lưu tài xế</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL 3: DELETE CONFIRM -->
+        <div class="admin-modal-overlay" id="modal-delete">
+            <div class="admin-modal-card" style="max-width:420px;">
+                <div class="admin-modal-header" style="background:#fef2f2; border-bottom:1px solid #fee2e2;">
+                    <h3 style="color:#b91c1c; display:flex; align-items:center; gap:8px;">
+                        <span>⚠️</span> Xác nhận xóa dữ liệu
+                    </h3>
+                    <button type="button" class="admin-modal-close" onclick="adminController.closeModal('modal-delete')">&times;</button>
+                </div>
+                <div class="admin-modal-body">
+                    <p style="margin:0; font-size:0.95rem; color:#374151;" id="delete-modal-msg">
+                        Bạn có chắc chắn muốn xóa mục này khỏi hệ thống dữ liệu? Hành động này không thể hoàn tác.
+                    </p>
+                </div>
+                <div class="admin-modal-footer">
+                    <button type="button" class="btn btn-ghost" onclick="adminController.closeModal('modal-delete')">Hủy bỏ</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-delete">Xác nhận xóa</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="toast-container" id="toast-container"></div>
+
+        <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
+        <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav"></nav>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../js/core/firebase-config.js"></script>
+    <script src="../js/core/realtime.js"></script>
+    <script src="../js/core/api.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/router.js"></script>
+    <script src="../js/core/demo-data.js"></script>
+    <script src="../js/core/app.js"></script>
+    <script src="../js/map/map-controller.js"></script>
+    <script src="../js/map/map-renderer.js"></script>
+    <script src="../js/admin/admin.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof sessionManager !== 'undefined') {
+                const user = sessionManager.getCurrentUser();
+                if (user && user.role !== 'admin') {
+                    window.location.replace(user.role === 'driver' ? 'driver.html' : 'customer.html');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
