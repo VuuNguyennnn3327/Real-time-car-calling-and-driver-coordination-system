@@ -217,6 +217,14 @@ class SessionManager {
             apiClient.setAuthToken(this.token);
         }
 
+        // If logging in as admin or driver, purge any stale passenger active trips
+        if (this.currentUser.role === 'admin' || this.currentUser.role === 'driver') {
+            try {
+                localStorage.removeItem('goride_active_trip');
+                localStorage.removeItem('goride_pending_trip_offers');
+            } catch (e) {}
+        }
+
         // Dispatch events for reactive UI updates
         this._dispatchAuthEvents('login', this.currentUser);
 
@@ -298,6 +306,8 @@ class SessionManager {
             localStorage.removeItem('navigo_token');
             localStorage.removeItem('ride_rtree_user');
             localStorage.removeItem('ride_rtree_token');
+            localStorage.removeItem('goride_active_trip');
+            localStorage.removeItem('goride_pending_trip_offers');
         } catch (error) {
             console.error('[SessionManager] Error clearing storage:', error);
         }

@@ -1069,17 +1069,67 @@ class App {
 
     /**
      * Floating Active Trip Window (Banner) on Homepage & Outside Views
-     * Shows current ride status if a trip is currently requested or in progress.
-     * Clicking returns immediately to the live map tracking view.
+     * Shows current ride status ONLY if the logged-in customer currently has an active trip.
+     * Strictly hidden for Admin and Driver roles, and strictly isolated to the trip's actual owner.
      */
     initActiveTripBanner() {
-        const isCustomerPage = window.location.pathname.endsWith('customer.html');
-        const isDriverPage = window.location.pathname.endsWith('driver.html');
-        const isPagesDir = window.location.pathname.includes('/pages/');
+        const path = window.location.pathname.toLowerCase();
+        const isCustomerPage = path.endsWith('customer.html');
+        const isDriverPage = path.endsWith('driver.html');
+        const isAdminPage = path.includes('admin.html');
+        const isPagesDir = path.includes('/pages/');
         const customerUrl = isPagesDir ? 'customer.html' : 'pages/customer.html';
 
+        const extractLocationString = (loc, fallback = '--') => {
+            if (!loc) return fallback;
+            if (typeof loc === 'string') {
+                const trimmed = loc.trim();
+                return (trimmed && trimmed !== '[object Object]') ? trimmed : fallback;
+            }
+            if (typeof loc === 'object') {
+                if (typeof loc.name === 'string' && loc.name && loc.name !== '[object Object]') return loc.name.trim();
+                if (typeof loc.address === 'string' && loc.address && loc.address !== '[object Object]') return loc.address.trim();
+                if (typeof loc.title === 'string' && loc.title && loc.title !== '[object Object]') return loc.title.trim();
+                if (loc.lat && loc.lng) return `${Number(loc.lat).toFixed(4)}, ${Number(loc.lng).toFixed(4)}`;
+            }
+            return fallback;
+        };
+
         const updateBanner = () => {
-            // Check active trip in localStorage or admin trips
+            let container = document.getElementById('goride-floating-active-trip');
+
+            // 1. Never show inside Admin or Driver portals
+            if (isAdminPage || isDriverPage) {
+                if (container) container.remove();
+                return;
+            }
+
+            // 2. Identify current authenticated user and role
+            let currentUser = null;
+            if (typeof sessionManager !== 'undefined') {
+                currentUser = sessionManager.getCurrentUser?.() || sessionManager.getUser?.();
+            }
+            if (!currentUser) {
+                try {
+                    const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
+                    if (raw && raw !== 'null') currentUser = JSON.parse(raw);
+                } catch (e) {}
+            }
+            const userRole = currentUser ? (currentUser.role || 'customer') : 'guest';
+
+            // 3. Admin and Driver accounts NEVER see customer booking floating banners
+            if (userRole === 'admin' || userRole === 'driver') {
+                if (container) container.remove();
+                return;
+            }
+
+            // 4. Hide if on customer page and already in tracking view
+            if (isCustomerPage && window.customerAppController && window.customerAppController.currentView === 'tracking') {
+                if (container) container.remove();
+                return;
+            }
+
+            // 5. Check active trip strictly for the current customer (NEVER grab random trips from goride_admin_trips)
             let activeTrip = null;
             try {
                 const raw = localStorage.getItem('goride_active_trip');
@@ -1087,46 +1137,31 @@ class App {
                     const parsed = JSON.parse(raw);
                     const validStatuses = ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'];
                     if (parsed && parsed.status && validStatuses.includes(parsed.status.toUpperCase())) {
-                        activeTrip = parsed;
+                        // Strict owner verification
+                        if (currentUser) {
+                            const isOwner = (
+                                (parsed.customerId && parsed.customerId === currentUser.id) ||
+                                (parsed.customerEmail && currentUser.email && parsed.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+                                (parsed.customerPhone && currentUser.phone && parsed.customerPhone === currentUser.phone) ||
+                                (parsed.customerName && currentUser.name && parsed.customerName === currentUser.name)
+                            );
+                            if (isOwner) {
+                                activeTrip = parsed;
+                            }
+                        } else if (parsed.isGuestTrip || !parsed.customerId) {
+                            activeTrip = parsed;
+                        }
                     }
                 }
             } catch (e) {}
 
             if (!activeTrip) {
-                try {
-                    const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                    const found = adminTrips.find(t => ['requested', 'offered', 'accepted', 'arrived', 'in_progress'].includes(t.status?.toLowerCase()));
-                    if (found) {
-                        activeTrip = {
-                            id: found.id,
-                            status: found.status.toUpperCase(),
-                            customerName: found.customerName || 'Khách hàng',
-                            driverName: found.driverName !== 'Chưa gán' ? found.driverName : null,
-                            licensePlate: found.licensePlate || '51G-889.24',
-                            vehicleModel: found.vehicleModel || 'GoRide',
-                            pickup: { name: found.pickup || 'Điểm đón' },
-                            destination: { name: found.destination || 'Điểm đến' },
-                            fareAmount: Number(found.fare) || 45000
-                        };
-                    }
-                } catch (e) {}
-            }
-
-            let container = document.getElementById('goride-floating-active-trip');
-
-            // If we are on customer page and in tracking view, hide floating banner (as map itself is tracking)
-            if (isCustomerPage && window.customerAppController && window.customerAppController.currentView === 'tracking') {
                 if (container) container.remove();
                 return;
             }
 
-            // If user is currently in driver portal as driver, do not show customer banner
-            if (isDriverPage) {
-                if (container) container.remove();
-                return;
-            }
-
-            if (!activeTrip) {
+            // 6. Check if user dismissed this trip banner for current browser session
+            if (sessionStorage.getItem('goride_dismissed_active_banner_' + activeTrip.id) === '1') {
                 if (container) container.remove();
                 return;
             }
@@ -1152,9 +1187,16 @@ class App {
                 pulseClass = 'pulse-moving';
             }
 
-            const pickupName = (activeTrip.pickup && (activeTrip.pickup.name || activeTrip.pickup.address)) || activeTrip.pickupName || 'Điểm đón';
-            const destName = (activeTrip.destination && (activeTrip.destination.name || activeTrip.destination.address)) || activeTrip.dropoffName || 'Điểm đến';
-            const fareFormatted = formatCurrency(activeTrip.fareAmount || 45000);
+            const pickupName = extractLocationString(activeTrip.pickupName, null)
+                || extractLocationString(activeTrip.pickup, null)
+                || extractLocationString(activeTrip.pickupAddress, null)
+                || 'Điểm đón';
+            const destName = extractLocationString(activeTrip.dropoffName, null)
+                || extractLocationString(activeTrip.destinationName, null)
+                || extractLocationString(activeTrip.destination, null)
+                || extractLocationString(activeTrip.dropoffAddress, null)
+                || 'Điểm đến';
+            const fareFormatted = formatCurrency(activeTrip.fareAmount || activeTrip.fare || 45000);
 
             if (!container) {
                 container = document.createElement('div');
@@ -1184,15 +1226,73 @@ class App {
                         </div>
                     </div>
                     <div class="gfat-action-col">
-                        <button type="button" class="gfat-action-btn">
+                        <button type="button" class="gfat-action-btn" id="gfat-btn-view">
                             <span>${actionText}</span>
                             <span class="gfat-btn-arrow">&rarr;</span>
                         </button>
+                        ${status === 'REQUESTED' ? `<button type="button" class="gfat-cancel-btn" id="gfat-btn-cancel" title="Hủy chuyến xe này">Hủy chuyến</button>` : ''}
+                        <button type="button" class="gfat-close-btn" id="gfat-btn-close" title="Tắt thanh thông báo">&times;</button>
                     </div>
                 </div>
             `;
 
+            // Close / Dismiss button action
+            const closeBtn = container.querySelector('#gfat-btn-close');
+            if (closeBtn) {
+                closeBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sessionStorage.setItem('goride_dismissed_active_banner_' + activeTrip.id, '1');
+                    container.remove();
+                    if (typeof showToast === 'function') {
+                        showToast('Đã đóng thông báo chuyến đi.', 'info', 2500);
+                    }
+                };
+            }
+
+            // Cancel trip button action
+            const cancelBtn = container.querySelector('#gfat-btn-cancel');
+            if (cancelBtn) {
+                cancelBtn.onclick = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const confirmCancel = confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt chuyến này không?');
+                    if (confirmCancel) {
+                        const tripId = activeTrip.id;
+                        localStorage.removeItem('goride_active_trip');
+                        localStorage.removeItem('goride_pending_trip_offers');
+
+                        try {
+                            const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                            const idx = adminTrips.findIndex(t => t.id === tripId);
+                            if (idx !== -1) {
+                                adminTrips[idx].status = 'cancelled';
+                                localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
+                            }
+                        } catch (err) {}
+
+                        if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                            try {
+                                window.realtimeSync.db.ref('goride_trips/' + tripId).update({
+                                    status: 'cancelled',
+                                    cancelledAt: new Date().toISOString()
+                                });
+                            } catch (err) {}
+                        }
+
+                        container.remove();
+                        if (typeof showToast === 'function') {
+                            showToast('Đã hủy chuyến đi thành công.', 'success', 3000);
+                        }
+                    }
+                };
+            }
+
+            // Card click (navigates to tracking view)
             container.onclick = (e) => {
+                if (e.target.closest('#gfat-btn-close') || e.target.closest('#gfat-btn-cancel')) {
+                    return;
+                }
                 e.preventDefault();
                 if (isCustomerPage) {
                     if (window.customerAppController) {
@@ -1207,9 +1307,9 @@ class App {
         // Run immediately
         updateBanner();
 
-        // Listen for cross-tab storage changes (e.g. driver accepts trip in driver portal)
+        // Listen for cross-tab storage changes
         window.addEventListener('storage', (e) => {
-            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips' || e.key === 'goride_pending_trip_offers') {
+            if (e.key === 'goride_active_trip' || e.key === 'goride_user' || e.key === 'navigo_user') {
                 updateBanner();
             }
         });

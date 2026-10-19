@@ -857,6 +857,8 @@
         icon,
         title: 'Điểm đón',
         riseOnHover: true
+      });
+
       const labelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đón');
       const popupHtml = `
         <div class="rtree-popup-title" style="color: #10b981;">

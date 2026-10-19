@@ -76,10 +76,53 @@ class RealtimeSyncManager {
                 this.connectionStatus = isOnline ? 'connected' : 'offline';
                 window.dispatchEvent(new CustomEvent('realtime:connection', { detail: { online: isOnline } }));
             });
+
+            // Tự động lắng nghe danh sách người dùng đã bị xóa từ Cloud để dọn dẹp LocalStorage trên thiết bị
+            this._setupDeletedUsersListener();
         } catch (err) {
             console.warn('[RealtimeSync] Lỗi khởi tạo Firebase SDK:', err.message);
             this.connectionStatus = 'offline';
         }
+    }
+
+    /**
+     * Lắng nghe các tài khoản bị Quản trị viên xóa từ thiết bị khác để dọn dẹp LocalStorage ngay lập tức
+     * @private
+     */
+    _setupDeletedUsersListener() {
+        if (!this.db) return;
+        const purgeLocal = (delData) => {
+            if (!delData || typeof delData !== 'object') return;
+            const delId = delData.id;
+            const delEmail = (delData.email || '').toLowerCase().trim();
+            if (!delId && !delEmail) return;
+
+            try {
+                const users = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                const filtered = users.filter(u => !(u && ((delId && u.id === delId) || (delEmail && u.email && u.email.toLowerCase().trim() === delEmail))));
+                if (filtered.length !== users.length) {
+                    localStorage.setItem('goride_offline_users', JSON.stringify(filtered));
+                }
+
+                const pending = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
+                const filteredPending = pending.filter(p => !(p && ((delId && p.id === delId) || (delEmail && p.email && p.email.toLowerCase().trim() === delEmail))));
+                if (filteredPending.length !== pending.length) {
+                    localStorage.setItem('goride_pending_drivers', JSON.stringify(filteredPending));
+                }
+
+                const drivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+                const filteredDrivers = drivers.filter(d => !(d && ((delId && d.id === delId) || (delEmail && d.email && d.email.toLowerCase().trim() === delEmail))));
+                if (filteredDrivers.length !== drivers.length) {
+                    localStorage.setItem('goride_admin_drivers', JSON.stringify(filteredDrivers));
+                }
+            } catch (e) {}
+        };
+
+        try {
+            this.db.ref('goride_deleted_users').on('child_added', (snap) => {
+                purgeLocal(snap.val());
+            });
+        } catch (e) {}
     }
 
     /**
@@ -820,6 +863,16 @@ class RealtimeSyncManager {
                         totalRides: 0
                     });
                 }
+
+                // Xóa tombstone cũ nếu tài khoản này từng bị xóa trước đó
+                try {
+                    if (user.id) await this.db.ref(`goride_deleted_users/${user.id}`).remove();
+                    if (user.email) {
+                        const safeKey = user.email.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+                        await this.db.ref(`goride_deleted_users/${safeKey}`).remove();
+                    }
+                } catch (tombErr) {}
+
                 syncedToCloud = true;
                 console.log('[RealtimeSync] 🚀 Đã đồng bộ tài khoản người dùng lên Firebase SDK:', user.id);
             } catch (err) {
@@ -874,7 +927,7 @@ class RealtimeSyncManager {
         if (this.databaseURL) {
             this._restGet('goride_pending_drivers').then(data => {
                 if (data && typeof data === 'object') {
-                    const list = Object.values(data).filter(d => d && (d.status === 'pending' || !d.status));
+                    const list = Object.values(data).filter(d => d && (d.status === 'pending' || !d.status || d.status === 'Chờ duyệt'));
                     if (list.length > 0) callback(list);
                 }
             }).catch(() => {});
@@ -885,7 +938,7 @@ class RealtimeSyncManager {
                 const pendingRef = this.db.ref('goride_pending_drivers');
                 const handler = (snapshot) => {
                     const data = snapshot.val() || {};
-                    const list = Object.values(data).filter(d => d && (d.status === 'pending' || !d.status));
+                    const list = Object.values(data).filter(d => d && (d.status === 'pending' || !d.status || d.status === 'Chờ duyệt'));
                     callback(list);
                 };
                 pendingRef.on('value', handler);
@@ -1078,6 +1131,15 @@ class RealtimeSyncManager {
                         }
                     }
                 }
+
+                // Phát sóng bản ghi xóa (tombstone) để tất cả các thiết bị tự động dọn sạch localStorage
+                const tombKey = (userId || (userEmail ? userEmail.replace(/[^a-zA-Z0-9]/g, '_') : 'del_' + Date.now())).replace(/[.#$[\]]/g, '_');
+                await this.db.ref(`goride_deleted_users/${tombKey}`).set({
+                    id: userId || '',
+                    email: userEmail || '',
+                    deletedAt: Date.now()
+                });
+
                 console.log(`[RealtimeSync] 🗑️ Đã xóa sạch dữ liệu người dùng ${userId || userEmail} trên Firebase Realtime Cloud!`);
             } catch (err) {
                 if (err.message && err.message.includes('PERMISSION_DENIED')) this._handlePermissionDenied('deleteUser');

@@ -1630,15 +1630,23 @@ int main(int argc, char* argv[]) {
             return;
         }
 
-        // Clean purge across all tables
-        auto stmt_user = auth_service.database().prepare("DELETE FROM users WHERE id = ?;");
-        if (stmt_user) { stmt_user->bind(1, user_id); stmt_user->step(); }
+        // Clean purge across all tables with correct dependency order
+        auto stmt_trips = auth_service.database().prepare("DELETE FROM trips WHERE customer_id = ? OR driver_id = ?;");
+        if (stmt_trips) { stmt_trips->bind(1, user_id); stmt_trips->bind(2, user_id); stmt_trips->step(); }
 
         auto stmt_driver = auth_service.database().prepare("DELETE FROM drivers WHERE user_id = ?;");
         if (stmt_driver) { stmt_driver->bind(1, user_id); stmt_driver->step(); }
 
+        auto stmt_sess = auth_service.database().prepare("DELETE FROM sessions WHERE user_id = ?;");
+        if (stmt_sess) { stmt_sess->bind(1, user_id); stmt_sess->step(); }
+
         auto stmt_token = auth_service.database().prepare("DELETE FROM tokens WHERE user_id = ?;");
         if (stmt_token) { stmt_token->bind(1, user_id); stmt_token->step(); }
+
+        auto stmt_user = auth_service.database().prepare("DELETE FROM users WHERE id = ?;");
+        if (stmt_user) { stmt_user->bind(1, user_id); stmt_user->step(); }
+
+        auth_service.sync_backup_json();
 
         res.set_json("{\"success\":true,\"message\":\"Đã xóa vĩnh viễn tài khoản người dùng và dọn dẹp sạch toàn bộ dữ liệu.\"}", 200);
     };

@@ -142,6 +142,17 @@
                 btn.textContent = 'Đang xác thực...';
 
                 try {
+                    const deletedUserIds = (() => {
+                        try {
+                            const ids = JSON.parse(localStorage.getItem('goride_deleted_user_ids') || '[]');
+                            return Array.isArray(ids) ? ids.map(x => String(x).toLowerCase().trim()) : [];
+                        } catch (e) { return []; }
+                    })();
+
+                    if (deletedUserIds.includes(normInput) && ['usr_c101', 'customer@demo.com'].includes(normInput)) {
+                        throw new Error('Tài khoản này đã bị xóa khỏi hệ thống bởi Quản trị viên.');
+                    }
+
                     let result = null;
 
                     // 1. Attempt authentic C++ backend API connection
@@ -332,6 +343,8 @@
                             ];
 
                             const matchedDemo = defaultAccounts.find(d => 
+                                !deletedUserIds.includes(d.id.toLowerCase()) &&
+                                !deletedUserIds.includes(d.email.toLowerCase()) &&
                                 d.identifiers.some(id => id.toLowerCase() === normInput)
                             );
 

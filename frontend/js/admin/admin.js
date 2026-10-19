@@ -20,7 +20,8 @@ class AdminController {
             ONLINE_DRIVERS: 'goride_online_drivers',
             PENDING: 'goride_pending_drivers',
             USERS: 'goride_offline_users',
-            DELETED_TRIPS: 'goride_deleted_trip_ids'
+            DELETED_TRIPS: 'goride_deleted_trip_ids',
+            DELETED_USERS: 'goride_deleted_user_ids'
         };
     }
 
@@ -59,11 +60,11 @@ class AdminController {
         this.setupCloudSyncDiagnostics();
 
         // 5. Load Initial Dashboard Data & Tables
+        await this.loadDriverApprovals();
+        await this.loadDriversList();
         await this.loadDashboard();
         this.loadRecentTripsTable();
         this.loadTripsTable();
-        this.loadDriversList();
-        this.loadDriverApprovals();
         this.loadCustomers();
         this.setupCustomerFilters();
 
@@ -96,6 +97,31 @@ class AdminController {
             ids.push(id);
             localStorage.setItem(this.STORAGE_KEYS.DELETED_TRIPS, JSON.stringify(ids));
         }
+    }
+
+    getDeletedUserIds() {
+        try {
+            const ids = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.DELETED_USERS));
+            return Array.isArray(ids) ? ids : [];
+        } catch {
+            return [];
+        }
+    }
+
+    addDeletedUserId(id) {
+        if (!id) return;
+        const ids = this.getDeletedUserIds();
+        if (!ids.includes(id)) {
+            ids.push(id);
+            localStorage.setItem(this.STORAGE_KEYS.DELETED_USERS, JSON.stringify(ids));
+        }
+    }
+
+    removeDeletedUserId(id, email) {
+        let ids = this.getDeletedUserIds();
+        if (id) ids = ids.filter(x => x !== id);
+        if (email) ids = ids.filter(x => String(x).toLowerCase().trim() !== email.toLowerCase().trim());
+        localStorage.setItem(this.STORAGE_KEYS.DELETED_USERS, JSON.stringify(ids));
     }
 
     getStoredTrips() {
@@ -164,10 +190,18 @@ class AdminController {
             let list = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PENDING));
             if (!Array.isArray(list)) list = [];
 
+            const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
+            const isDeleted = (id, email) => {
+                if (id && deletedIds.has(String(id).toLowerCase().trim())) return true;
+                if (email && deletedIds.has(String(email).toLowerCase().trim())) return true;
+                return false;
+            };
+
             // Merge any pending driver applications from goride_offline_users
             const offlineUsers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
             offlineUsers.forEach(u => {
-                if (u && u.role === 'driver' && u.status === 'pending') {
+                if (u && u.role === 'driver' && (u.status === 'pending' || !u.status || u.status === 'Chờ duyệt')) {
+                    if (isDeleted(u.id, u.email)) return;
                     if (!list.some(p => p.id === u.id || (u.email && p.email === u.email))) {
                         list.unshift({
                             id: u.id,
@@ -184,7 +218,7 @@ class AdminController {
                 }
             });
 
-            return list;
+            return list.filter(p => !isDeleted(p.id, p.email));
         } catch {
             return [];
         }
@@ -351,8 +385,18 @@ class AdminController {
                         }
                     });
 
+                    // Real-time continuous listener for driver accounts
+                    window.realtimeSync.db.ref('goride_drivers').on('value', () => {
+                        this.loadDriverApprovals();
+                        this.loadDriversList();
+                        if (this.currentTab === 'dashboard') {
+                            this.loadDashboard();
+                        }
+                    });
+
                     // Real-time continuous listener for user / customer account updates
                     window.realtimeSync.db.ref('goride_users').on('value', () => {
+                        this.loadDriverApprovals();
                         if (this.currentTab === 'customers') {
                             this.loadCustomers();
                         }
@@ -973,6 +1017,34 @@ class AdminController {
         this.filterRecentTrips();
     }
 
+    getTripLocationText(trip, type = 'pickup') {
+        if (!trip) return '--';
+        if (type === 'pickup') {
+            if (trip.pickupName && typeof trip.pickupName === 'string') return trip.pickupName.trim();
+            if (trip.pickup) {
+                if (typeof trip.pickup === 'string') return trip.pickup.trim();
+                if (typeof trip.pickup === 'object') {
+                    return trip.pickup.name || trip.pickup.address || trip.pickup.title || (trip.pickup.lat && trip.pickup.lng ? `${Number(trip.pickup.lat).toFixed(4)}, ${Number(trip.pickup.lng).toFixed(4)}` : '--');
+                }
+            }
+            if (trip.pickupAddress && typeof trip.pickupAddress === 'string') return trip.pickupAddress.trim();
+            if (trip.pickupLat && trip.pickupLon) return `${Number(trip.pickupLat).toFixed(4)}, ${Number(trip.pickupLon).toFixed(4)}`;
+            return '--';
+        } else {
+            if (trip.dropoffName && typeof trip.dropoffName === 'string') return trip.dropoffName.trim();
+            if (trip.destinationName && typeof trip.destinationName === 'string') return trip.destinationName.trim();
+            if (trip.destination) {
+                if (typeof trip.destination === 'string') return trip.destination.trim();
+                if (typeof trip.destination === 'object') {
+                    return trip.destination.name || trip.destination.address || trip.destination.title || (trip.destination.lat && trip.destination.lng ? `${Number(trip.destination.lat).toFixed(4)}, ${Number(trip.destination.lng).toFixed(4)}` : '--');
+                }
+            }
+            if (trip.dropoffAddress && typeof trip.dropoffAddress === 'string') return trip.dropoffAddress.trim();
+            if (trip.dropoffLat && trip.dropoffLon) return `${Number(trip.dropoffLat).toFixed(4)}, ${Number(trip.dropoffLon).toFixed(4)}`;
+            return '--';
+        }
+    }
+
     filterRecentTrips() {
         const searchInput = document.getElementById('recent-trip-search-input');
         const statusFilter = document.getElementById('recent-trip-status-filter');
@@ -984,17 +1056,21 @@ class AdminController {
         let filtered = this.recentTripsData || this.getStoredTrips();
 
         if (status !== 'all') {
-            filtered = filtered.filter(t => t.status === status);
+            filtered = filtered.filter(t => (t.status || '').toLowerCase() === status.toLowerCase());
         }
 
         if (query) {
-            filtered = filtered.filter(t =>
-                (t.id && String(t.id).toLowerCase().includes(query)) ||
-                (t.customerName && t.customerName.toLowerCase().includes(query)) ||
-                (t.driverName && t.driverName.toLowerCase().includes(query)) ||
-                (t.pickup && t.pickup.toLowerCase().includes(query)) ||
-                (t.destination && t.destination.toLowerCase().includes(query))
-            );
+            filtered = filtered.filter(t => {
+                const pText = this.getTripLocationText(t, 'pickup').toLowerCase();
+                const dText = this.getTripLocationText(t, 'destination').toLowerCase();
+                return (
+                    (t.id && String(t.id).toLowerCase().includes(query)) ||
+                    (t.customerName && t.customerName.toLowerCase().includes(query)) ||
+                    (t.driverName && t.driverName.toLowerCase().includes(query)) ||
+                    pText.includes(query) ||
+                    dText.includes(query)
+                );
+            });
         }
 
         if (countText) {
@@ -1023,10 +1099,10 @@ class AdminController {
 
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
-            const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
+            const fareFormatted = Number(t.fare || t.fareAmount || 0).toLocaleString('vi-VN') + ' ₫';
             const timeFormatted = t.createdAt ? new Date(t.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : 'Vừa xong';
-            const pickupShort = t.pickup ? this.escapeHtml(t.pickup) : '--';
-            const dropoffShort = t.destination ? this.escapeHtml(t.destination) : '--';
+            const pickupShort = this.escapeHtml(this.getTripLocationText(t, 'pickup'));
+            const dropoffShort = this.escapeHtml(this.getTripLocationText(t, 'destination'));
 
             return `
                 <tr>
@@ -1084,13 +1160,15 @@ class AdminController {
 
         const allTrips = this.getStoredTrips();
         const filtered = allTrips.filter(t => {
-            const matchStatus = (status === 'all') || (t.status === status);
+            const matchStatus = (status === 'all') || ((t.status || '').toLowerCase() === status.toLowerCase());
+            const pText = this.getTripLocationText(t, 'pickup').toLowerCase();
+            const dText = this.getTripLocationText(t, 'destination').toLowerCase();
             const matchQuery = !query || 
-                (t.id && t.id.toLowerCase().includes(query)) ||
+                (t.id && String(t.id).toLowerCase().includes(query)) ||
                 (t.customerName && t.customerName.toLowerCase().includes(query)) ||
                 (t.driverName && t.driverName.toLowerCase().includes(query)) ||
-                (t.pickup && t.pickup.toLowerCase().includes(query)) ||
-                (t.destination && t.destination.toLowerCase().includes(query));
+                pText.includes(query) ||
+                dText.includes(query);
             return matchStatus && matchQuery;
         });
 
@@ -1116,17 +1194,20 @@ class AdminController {
 
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
-            const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
+            const fareFormatted = Number(t.fare || t.fareAmount || 0).toLocaleString('vi-VN') + ' ₫';
+            const pickupShort = this.escapeHtml(this.getTripLocationText(t, 'pickup'));
+            const dropoffShort = this.escapeHtml(this.getTripLocationText(t, 'destination'));
+
             return `
                 <tr>
                     <td style="font-weight:700; color:var(--color-primary); font-family:monospace;">#${t.id}</td>
                     <td>
-                        <div style="font-weight:600;">${t.customerName || '--'}</div>
-                        <div style="font-size:0.75rem; color:var(--color-gray-500);">${t.customerPhone || ''}</div>
+                        <div style="font-weight:600;">${this.escapeHtml(t.customerName || '--')}</div>
+                        <div style="font-size:0.75rem; color:var(--color-gray-500);">${this.escapeHtml(t.customerPhone || '')}</div>
                     </td>
-                    <td>${t.driverName || '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${t.pickup || ''}">${t.pickup || '--'}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${t.destination || ''}">${t.destination || '--'}</td>
+                    <td>${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
+                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${pickupShort}">${pickupShort}</td>
+                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${dropoffShort}">${dropoffShort}</td>
                     <td><span class="badge ${badge.cls}">${badge.label}</span></td>
                     <td style="font-weight:700; color:#0f766e;">${fareFormatted}</td>
                     <td style="text-align:right;">
@@ -1154,15 +1235,18 @@ class AdminController {
         const trip = trips.find(t => t.id === tripId);
         if (!trip) return;
 
+        const pickupText = this.getTripLocationText(trip, 'pickup');
+        const destText = this.getTripLocationText(trip, 'destination');
+
         document.getElementById('modal-trip-title').textContent = `Chỉnh sửa chuyến đi #${trip.id}`;
         document.getElementById('trip-form-id').value = trip.id;
         document.getElementById('trip-form-customer').value = trip.customerName || '';
         document.getElementById('trip-form-phone').value = trip.customerPhone || '';
         document.getElementById('trip-form-driver').value = trip.driverName || '';
-        document.getElementById('trip-form-pickup').value = trip.pickup || '';
-        document.getElementById('trip-form-dest').value = trip.destination || '';
-        document.getElementById('trip-form-fare').value = trip.fare || 40000;
-        document.getElementById('trip-form-status').value = trip.status || 'requested';
+        document.getElementById('trip-form-pickup').value = pickupText === '--' ? '' : pickupText;
+        document.getElementById('trip-form-dest').value = destText === '--' ? '' : destText;
+        document.getElementById('trip-form-fare').value = trip.fare || trip.fareAmount || 40000;
+        document.getElementById('trip-form-status').value = (trip.status || 'requested').toLowerCase();
 
         this.openModal('modal-trip');
     }
@@ -1184,17 +1268,37 @@ class AdminController {
             // Edit existing trip
             const idx = trips.findIndex(t => t.id === idInput);
             if (idx !== -1) {
-                trips[idx] = {
-                    ...trips[idx],
+                const existing = trips[idx];
+                const updatedPickup = (existing.pickup && typeof existing.pickup === 'object')
+                    ? { ...existing.pickup, name: pickup, address: pickup }
+                    : pickup;
+                const updatedDest = (existing.destination && typeof existing.destination === 'object')
+                    ? { ...existing.destination, name: destination, address: destination }
+                    : destination;
+
+                const updatedTrip = {
+                    ...existing,
                     customerName,
                     customerPhone,
                     driverName,
-                    pickup,
-                    destination,
+                    pickup: updatedPickup,
+                    destination: updatedDest,
+                    pickupName: pickup,
+                    dropoffName: destination,
                     fare,
+                    fareAmount: fare,
                     status,
                     updatedAt: new Date().toISOString()
                 };
+                trips[idx] = updatedTrip;
+
+                // Sync to Firebase Cloud
+                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                    try {
+                        window.realtimeSync.db.ref('goride_trips/' + idInput).update(updatedTrip);
+                    } catch (fbErr) {}
+                }
+
                 this.showToast(`Đã cập nhật chuyến đi #${idInput} thành công!`, 'success');
             }
         } else {
@@ -1207,17 +1311,29 @@ class AdminController {
                 driverName: driverName || 'Chưa gán',
                 pickup,
                 destination,
+                pickupName: pickup,
+                dropoffName: destination,
                 fare,
+                fareAmount: fare,
                 status,
                 createdAt: new Date().toISOString()
             };
             trips.unshift(newTrip);
+
+            // Sync to Firebase Cloud
+            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                try {
+                    window.realtimeSync.db.ref('goride_trips/' + newId).set(newTrip);
+                } catch (fbErr) {}
+            }
+
             this.showToast(`Đã thêm mới chuyến đi #${newId}!`, 'success');
         }
 
         this.saveStoredTrips(trips);
         this.closeModal('modal-trip');
         this.loadTripsTable();
+        this.loadRecentTripsTable();
         this.loadDashboard();
     }
 
@@ -1225,7 +1341,83 @@ class AdminController {
        DRIVERS MANAGEMENT (FULL CRUD & REAL DRIVER APPROVALS)
        ========================================================================== */
 
-    loadDriversList() {
+    async loadDriversList() {
+        // Sync active registered drivers from cloud
+        if (window.realtimeSync) {
+            try {
+                let cloudDrivers = null;
+                let cloudUsers = null;
+                if (window.realtimeSync.isAvailable()) {
+                    const [dSnap, uSnap] = await Promise.all([
+                        window.realtimeSync.db.ref('goride_drivers').once('value').catch(() => null),
+                        window.realtimeSync.db.ref('goride_users').once('value').catch(() => null)
+                    ]);
+                    if (dSnap) cloudDrivers = dSnap.val();
+                    if (uSnap) cloudUsers = uSnap.val();
+                } else if (typeof window.realtimeSync._restGet === 'function') {
+                    const [dData, uData] = await Promise.all([
+                        window.realtimeSync._restGet('goride_drivers').catch(() => null),
+                        window.realtimeSync._restGet('goride_users').catch(() => null)
+                    ]);
+                    cloudDrivers = dData;
+                    cloudUsers = uData;
+                }
+
+                const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
+                const isDeleted = (id, email) => {
+                    if (id && deletedIds.has(String(id).toLowerCase().trim())) return true;
+                    if (email && deletedIds.has(String(email).toLowerCase().trim())) return true;
+                    return false;
+                };
+
+                let drivers = this.getStoredDrivers();
+                let hasChange = false;
+
+                const processDriverRecord = (cd) => {
+                    if (!cd || !cd.id) return;
+                    if (isDeleted(cd.id, cd.email)) return;
+                    if (cd.status === 'pending' || cd.status === 'Chờ duyệt') return; // Pending belongs in Approvals
+                    const vType = cd.vehicleType || cd.vehicle?.type || 'motorbike';
+                    const isBike = (vType === 'bike' || vType === 'motorbike');
+                    const vLabel = isBike ? 'Xe máy (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo XL)' : 'Ô tô 4 chỗ (Navigo Car)');
+                    const record = {
+                        id: cd.id,
+                        name: cd.name,
+                        email: cd.email,
+                        phone: cd.phone,
+                        vehicleType: vType,
+                        vehicleTypeName: vLabel,
+                        plate: cd.plate || cd.licensePlate || cd.vehicle?.plate || '--',
+                        experience: cd.experienceYears || cd.experience || 1,
+                        status: cd.status || 'active',
+                        createdAt: cd.createdAt || new Date().toISOString()
+                    };
+
+                    const idx = drivers.findIndex(d => d.id === cd.id || (cd.email && d.email === cd.email));
+                    if (idx !== -1) {
+                        drivers[idx] = { ...drivers[idx], ...record };
+                        hasChange = true;
+                    } else {
+                        drivers.push(record);
+                        hasChange = true;
+                    }
+                };
+
+                if (cloudDrivers && typeof cloudDrivers === 'object') {
+                    Object.values(cloudDrivers).forEach(processDriverRecord);
+                }
+                if (cloudUsers && typeof cloudUsers === 'object') {
+                    Object.values(cloudUsers).filter(u => u && u.role === 'driver' && u.status !== 'pending' && u.status !== 'Chờ duyệt').forEach(processDriverRecord);
+                }
+
+                if (hasChange) {
+                    this.saveStoredDrivers(drivers);
+                }
+            } catch (e) {
+                console.warn('[Admin] Cloud drivers sync notice:', e);
+            }
+        }
+
         const drivers = this.getStoredDrivers();
         const tbody = document.getElementById('registered-drivers-body');
         const countText = document.getElementById('registered-drivers-count');
@@ -1361,68 +1553,141 @@ class AdminController {
 
         let pendingList = [];
 
-        // 1. Check live backend
+        // 1. Live C++ backend API check (Fast non-blocking with 800ms timeout)
         if (typeof apiClient !== 'undefined') {
             try {
-                const res = await apiClient.getPendingDrivers();
-                if (res && res.data && Array.isArray(res.data.drivers)) {
-                    pendingList = res.data.drivers;
+                const apiRes = await Promise.race([
+                    apiClient.getPendingDrivers(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800))
+                ]);
+                if (apiRes && apiRes.data && Array.isArray(apiRes.data.drivers)) {
+                    pendingList = apiRes.data.drivers;
                 }
             } catch (err) {
-                console.warn('[Admin] Live API pending drivers check:', err.message);
+                // Silently fallback if C++ backend is not running on web deploy
             }
         }
 
-        // 2. Combine with real registered applicants in Firebase & localStorage
+        // 2. Query Firebase Realtime Cloud for ALL pending drivers
+        // Check goride_pending_drivers, goride_users (role=driver & status=pending), and goride_drivers (status=pending)
+        const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
+        const isDeleted = (id, email) => {
+            if (id && deletedIds.has(String(id).toLowerCase().trim())) return true;
+            if (email && deletedIds.has(String(email).toLowerCase().trim())) return true;
+            return false;
+        };
+
+        if (window.realtimeSync) {
+            try {
+                let cloudPending = {};
+                let cloudUsers = {};
+                let cloudDrivers = {};
+
+                if (window.realtimeSync.isAvailable()) {
+                    const [pSnap, uSnap, dSnap] = await Promise.all([
+                        window.realtimeSync.db.ref('goride_pending_drivers').once('value').catch(() => null),
+                        window.realtimeSync.db.ref('goride_users').once('value').catch(() => null),
+                        window.realtimeSync.db.ref('goride_drivers').once('value').catch(() => null)
+                    ]);
+                    if (pSnap) cloudPending = pSnap.val() || {};
+                    if (uSnap) cloudUsers = uSnap.val() || {};
+                    if (dSnap) cloudDrivers = dSnap.val() || {};
+                } else if (typeof window.realtimeSync._restGet === 'function') {
+                    const [pData, uData, dData] = await Promise.all([
+                        window.realtimeSync._restGet('goride_pending_drivers').catch(() => null),
+                        window.realtimeSync._restGet('goride_users').catch(() => null),
+                        window.realtimeSync._restGet('goride_drivers').catch(() => null)
+                    ]);
+                    if (pData) cloudPending = pData || {};
+                    if (uData) cloudUsers = uData || {};
+                    if (dData) cloudDrivers = dData || {};
+                }
+
+                // If Firebase connects later, auto re-run
+                if (!window.realtimeSync.isAvailable() && !this._driverApprovalsReadyHooked) {
+                    this._driverApprovalsReadyHooked = true;
+                    window.realtimeSync.onReady(() => {
+                        this.loadDriverApprovals();
+                    });
+                }
+
+                // A. Extract from goride_pending_drivers
+                Object.values(cloudPending).forEach(cp => {
+                    if (cp && (cp.status === 'pending' || !cp.status || cp.status === 'Chờ duyệt')) {
+                        if (isDeleted(cp.id, cp.email)) return;
+                        if (!pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                            pendingList.push({
+                                id: cp.id,
+                                name: cp.name,
+                                email: cp.email,
+                                phone: cp.phone,
+                                vehicleType: cp.vehicleType || cp.vehicle?.type || 'motorbike',
+                                plate: cp.plate || cp.licensePlate || cp.vehicle?.plate || '--',
+                                experienceYears: cp.experienceYears || cp.experience || 1,
+                                status: 'pending',
+                                createdAt: cp.createdAt || new Date().toISOString()
+                            });
+                        }
+                    }
+                });
+
+                // B. Extract from goride_users (role === 'driver' && status === 'pending')
+                Object.values(cloudUsers).forEach(cu => {
+                    if (cu && cu.role === 'driver' && (cu.status === 'pending' || !cu.status || cu.status === 'Chờ duyệt')) {
+                        if (isDeleted(cu.id, cu.email)) return;
+                        if (!pendingList.some(p => p.id === cu.id || (cu.email && p.email === cu.email))) {
+                            pendingList.push({
+                                id: cu.id,
+                                name: cu.name,
+                                email: cu.email,
+                                phone: cu.phone,
+                                vehicleType: cu.vehicleType || cu.vehicle?.type || 'motorbike',
+                                plate: cu.licensePlate || cu.plate || cu.vehicle?.plate || '--',
+                                experienceYears: cu.experienceYears || cu.experience || 1,
+                                status: 'pending',
+                                createdAt: cu.createdAt || new Date().toISOString()
+                            });
+                        }
+                    }
+                });
+
+                // C. Extract from goride_drivers (status === 'pending')
+                Object.values(cloudDrivers).forEach(cd => {
+                    if (cd && (cd.status === 'pending' || !cd.status || cd.status === 'Chờ duyệt')) {
+                        if (isDeleted(cd.id, cd.email)) return;
+                        if (!pendingList.some(p => p.id === cd.id || (cd.email && p.email === cd.email))) {
+                            pendingList.push({
+                                id: cd.id,
+                                name: cd.name,
+                                email: cd.email,
+                                phone: cd.phone,
+                                vehicleType: cd.vehicleType || cd.vehicle?.type || 'motorbike',
+                                plate: cd.plate || cd.licensePlate || cd.vehicle?.plate || '--',
+                                experienceYears: cd.experienceYears || cd.experience || 1,
+                                status: 'pending',
+                                createdAt: cd.createdAt || new Date().toISOString()
+                            });
+                        }
+                    }
+                });
+            } catch (e) {
+                console.warn('[Admin] Cloud pending drivers fetch warning:', e);
+            }
+        }
+
+        // 3. Combine with real registered applicants in localStorage
         const localPending = this.getPendingDrivers();
         localPending.forEach(lp => {
+            if (isDeleted(lp.id, lp.email)) return;
             if (!pendingList.some(p => p.id === lp.id || (lp.email && p.email === lp.email))) {
                 pendingList.push(lp);
             }
         });
 
-        if (window.realtimeSync) {
-            try {
-                if (window.realtimeSync.isAvailable()) {
-                    const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
-                    const cloudPending = snap.val() || {};
-                    Object.values(cloudPending).forEach(cp => {
-                        if (cp && cp.status === 'pending' && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
-                            pendingList.push(cp);
-                        }
-                    });
-                }
-                // Dual REST fallback for pending drivers
-                if (typeof window.realtimeSync._restGet === 'function') {
-                    const restData = await window.realtimeSync._restGet('goride_pending_drivers');
-                    if (restData && typeof restData === 'object') {
-                        Object.values(restData).forEach(cp => {
-                            if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
-                                pendingList.push(cp);
-                            }
-                        });
-                    }
-                } else if (!window.realtimeSync.isAvailable()) {
-                    window.realtimeSync.onReady(async () => {
-                        try {
-                            const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
-                            const cloudPending = snap.val() || {};
-                            let hasNew = false;
-                            Object.values(cloudPending).forEach(cp => {
-                                if (cp && cp.status === 'pending' && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
-                                    pendingList.push(cp);
-                                    hasNew = true;
-                                }
-                            });
-                            if (hasNew) {
-                                this.loadDriverApprovals();
-                            }
-                        } catch (e) {}
-                    });
-                }
-            } catch (e) {}
-        }
+        // 4. CRITICAL: Persist to localStorage on this Admin device for instant access across tabs
+        this.savePendingDrivers(pendingList);
 
+        // 5. Update UI Badges synchronously
         if (badge) badge.textContent = pendingList.length;
 
         const sidebarDriversBadge = document.getElementById('sidebar-drivers-count');
@@ -1431,13 +1696,13 @@ class AdminController {
             sidebarDriversBadge.textContent = pendingList.length > 0 ? `${drivers.length} (${pendingList.length} chờ)` : drivers.length;
         }
 
-        // If no real applicants, show clean empty state (ZERO fake mock applicants!)
+        // 6. If no real applicants, show clean empty state
         if (pendingList.length === 0) {
             container.innerHTML = `
                 <div class="empty-state" style="padding:28px 16px; text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
                     <div style="font-size:2rem; margin-bottom:6px;">✨</div>
                     <p style="font-weight:600; color:var(--color-gray-700); margin:0;">Không có hồ sơ tài xế nào đang chờ duyệt.</p>
-                    <p style="font-size:0.8rem; color:var(--color-gray-500); margin:4px 0 0 0;">Khi có người đăng ký tài xế trên web, hồ sơ thực tế sẽ lập tức xuất hiện tại đây để Quản trị viên duyệt.</p>
+                    <p style="font-size:0.8rem; color:var(--color-gray-500); margin:4px 0 0 0;">Khi có người đăng ký tài xế trên web hoặc điện thoại, hồ sơ thực tế sẽ lập tức xuất hiện tại đây để Quản trị viên duyệt.</p>
                 </div>
             `;
             return;
@@ -1450,15 +1715,15 @@ class AdminController {
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                         <div>
                             <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                                <h4 style="margin:0; font-size:1.05rem;">${driver.name}</h4>
+                                <h4 style="margin:0; font-size:1.05rem;">${this.escapeHtml(driver.name)}</h4>
                                 <span class="badge badge-warning" style="font-size:0.75rem;">Chờ duyệt</span>
-                                <span style="font-size:0.75rem; color:var(--color-gray-500); font-family:monospace;">ID: ${driver.id}</span>
+                                <span style="font-size:0.75rem; color:var(--color-gray-500); font-family:monospace;">ID: ${this.escapeHtml(driver.id)}</span>
                             </div>
                             <p style="color:var(--color-gray-600); font-size:0.875rem; margin:2px 0;">
-                                ✉️ ${driver.email} &bull; 📞 ${driver.phone}
+                                ✉️ ${this.escapeHtml(driver.email || '--')} &bull; 📞 ${this.escapeHtml(driver.phone || '--')}
                             </p>
                             <p style="color:var(--color-gray-700); font-size:0.85rem; margin:2px 0; font-weight:500;">
-                                ${vLabel} &bull; Biển số: <strong style="color:var(--color-primary);">${driver.plate || driver.licensePlate || '---'}</strong> &bull; Kinh nghiệm: ${driver.experienceYears || driver.experience || 1} năm
+                                ${vLabel} &bull; Biển số: <strong style="color:var(--color-primary);">${this.escapeHtml(driver.plate || driver.licensePlate || '---')}</strong> &bull; Kinh nghiệm: ${driver.experienceYears || driver.experience || 1} năm
                             </p>
                         </div>
                         <div class="approval-actions" style="display:flex; gap:8px;">
@@ -1486,19 +1751,40 @@ class AdminController {
         }
 
         try {
-            // 1. Call backend API endpoint
+            // 1. Call backend API endpoint if reachable (fast non-blocking)
             if (typeof apiClient !== 'undefined') {
                 try {
-                    if (approved) await apiClient.approveDriver(driverId);
-                    else await apiClient.rejectDriver(driverId);
+                    await Promise.race([
+                        approved ? apiClient.approveDriver(driverId) : apiClient.rejectDriver(driverId),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800))
+                    ]);
                 } catch (e) {
-                    console.warn('[Admin] Backend approval call:', e.message);
+                    console.warn('[Admin] Backend approval call notice:', e.message);
                 }
             }
 
             // 2. Read pending list & find applicant
             let pending = this.getPendingDrivers();
-            const applicant = pending.find(d => d.id === driverId);
+            let applicant = pending.find(d => d.id === driverId);
+
+            // Cloud query fallback if applicant is not cached in local storage
+            if (!applicant && window.realtimeSync) {
+                try {
+                    if (window.realtimeSync.isAvailable()) {
+                        const snap = await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).once('value');
+                        applicant = snap.val();
+                        if (!applicant) {
+                            const uSnap = await window.realtimeSync.db.ref(`goride_users/${driverId}`).once('value');
+                            applicant = uSnap.val();
+                        }
+                    } else if (typeof window.realtimeSync._restGet === 'function') {
+                        applicant = await window.realtimeSync._restGet(`goride_pending_drivers/${driverId}`);
+                        if (!applicant) {
+                            applicant = await window.realtimeSync._restGet(`goride_users/${driverId}`);
+                        }
+                    }
+                } catch (e) {}
+            }
 
             // 3. Update real registered users in goride_offline_users
             try {
@@ -1513,69 +1799,83 @@ class AdminController {
             // 4. If approved, add to active registered drivers pool
             if (approved && applicant) {
                 const drivers = this.getStoredDrivers();
-                if (!drivers.some(d => d.id === driverId)) {
-                    const vType = applicant.vehicleType || 'motorbike';
-                    const isBike = (vType === 'bike' || vType === 'motorbike');
-                    const vLabel = isBike ? 'Xe máy (GoRide Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (GoRide XL)' : 'Ô tô 4 chỗ (GoRide Car)');
-                    drivers.unshift({
-                        id: driverId,
-                        name: applicant.name,
-                        email: applicant.email,
-                        phone: applicant.phone,
-                        vehicleType: vType,
-                        vehicleTypeName: vLabel,
-                        plate: applicant.plate || applicant.licensePlate || '--',
-                        experience: applicant.experienceYears || applicant.experience || 1,
-                        status: 'active',
-                        createdAt: applicant.createdAt || new Date().toISOString()
-                    });
-                    this.saveStoredDrivers(drivers);
-                    this.loadDriversList();
+                const existingIdx = drivers.findIndex(d => d.id === driverId || (applicant.email && d.email === applicant.email));
+                const vType = applicant.vehicleType || applicant.vehicle?.type || 'motorbike';
+                const isBike = (vType === 'bike' || vType === 'motorbike');
+                const vLabel = isBike ? 'Xe máy (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo XL)' : 'Ô tô 4 chỗ (Navigo Car)');
+                const driverRecord = {
+                    id: driverId,
+                    name: applicant.name,
+                    email: applicant.email,
+                    phone: applicant.phone,
+                    vehicleType: vType,
+                    vehicleTypeName: vLabel,
+                    plate: applicant.plate || applicant.licensePlate || applicant.vehicle?.plate || '--',
+                    experience: applicant.experienceYears || applicant.experience || 1,
+                    status: 'active',
+                    createdAt: applicant.createdAt || new Date().toISOString()
+                };
+
+                if (existingIdx !== -1) {
+                    drivers[existingIdx] = { ...drivers[existingIdx], ...driverRecord };
+                } else {
+                    drivers.unshift(driverRecord);
                 }
+                this.saveStoredDrivers(drivers);
             }
 
-            // 5. Remove from pending list & sync to Firebase
+            // 5. Remove from pending list locally
             pending = pending.filter(d => d.id !== driverId);
             this.savePendingDrivers(pending);
 
-            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
-                try {
-                    await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).remove();
-                    await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).update({
-                        status: approved ? 'active' : 'rejected',
-                        updatedAt: new Date().toISOString()
-                    });
-                    await window.realtimeSync.db.ref(`goride_users/${driverId}`).update({
-                        status: approved ? 'active' : 'rejected',
-                        updatedAt: new Date().toISOString()
-                    });
-                    if (applicant && applicant.email) {
-                        try {
-                            const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
-                            const allUsers = uSnap.val() || {};
-                            for (const k of Object.keys(allUsers)) {
-                                if (allUsers[k] && allUsers[k].email && allUsers[k].email.toLowerCase() === applicant.email.toLowerCase()) {
-                                    await window.realtimeSync.db.ref(`goride_users/${k}`).update({
-                                        status: approved ? 'active' : 'rejected',
-                                        updatedAt: new Date().toISOString()
-                                    });
+            // 6. Synchronize status across Firebase Realtime Cloud
+            if (window.realtimeSync) {
+                const newStatus = approved ? 'active' : 'rejected';
+                const cloudUpdate = {
+                    status: newStatus,
+                    updatedAt: new Date().toISOString()
+                };
+
+                if (window.realtimeSync.isAvailable()) {
+                    try {
+                        await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).remove();
+                        await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).update(cloudUpdate);
+                        await window.realtimeSync.db.ref(`goride_users/${driverId}`).update(cloudUpdate);
+
+                        if (applicant && applicant.email) {
+                            try {
+                                const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
+                                const allUsers = uSnap.val() || {};
+                                for (const k of Object.keys(allUsers)) {
+                                    if (allUsers[k] && allUsers[k].email && allUsers[k].email.toLowerCase() === applicant.email.toLowerCase()) {
+                                        await window.realtimeSync.db.ref(`goride_users/${k}`).update(cloudUpdate);
+                                    }
                                 }
-                            }
-                        } catch (e) {}
-                    }
-                } catch (e) {}
+                            } catch (e) {}
+                        }
+                    } catch (e) {}
+                }
+
+                if (typeof window.realtimeSync._restDelete === 'function') {
+                    try {
+                        await window.realtimeSync._restDelete(`goride_pending_drivers/${driverId}`);
+                        await window.realtimeSync._restPatch(`goride_drivers/${driverId}`, cloudUpdate);
+                        await window.realtimeSync._restPatch(`goride_users/${driverId}`, cloudUpdate);
+                    } catch (e) {}
+                }
             }
 
             this.showToast(approved 
-                ? `Đã phê duyệt tài xế thành công! Tài khoản đã được kích hoạt.` 
+                ? `Đã phê duyệt tài xế "${applicant ? applicant.name : driverId}" thành công! Tài khoản đã được kích hoạt.` 
                 : 'Đã từ chối hồ sơ đăng ký tài xế.', 
                 approved ? 'success' : 'info'
             );
 
             if (card) card.remove();
             
-            // Reload badge and lists
-            this.loadDriverApprovals();
+            // 7. Reload badge, pending approvals, driver list, and dashboard
+            await this.loadDriverApprovals();
+            await this.loadDriversList();
             this.loadDashboard();
         } catch (err) {
             this.showToast('Lỗi xử lý duyệt: ' + err.message, 'error');
@@ -1620,6 +1920,12 @@ class AdminController {
 
     async getStoredCustomers() {
         const userMap = new Map();
+        const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
+        const isUserDeleted = (u) => {
+            if (!u) return true;
+            if (u.id && deletedIds.has(String(u.id).toLowerCase().trim())) return true;
+            return false;
+        };
 
         // 1. Fetch from C++ Backend API if reachable
         if (typeof apiClient !== 'undefined') {
@@ -1627,7 +1933,9 @@ class AdminController {
                 const res = await apiClient.get('/admin/users');
                 if (res && res.data && Array.isArray(res.data.users)) {
                     res.data.users.forEach(u => {
-                        if (u && u.id) userMap.set(u.id, u);
+                        if (u && u.id && !isUserDeleted(u)) {
+                            userMap.set(u.id, u);
+                        }
                     });
                 }
             } catch (e) {}
@@ -1641,6 +1949,12 @@ class AdminController {
                     const cloudUsers = snap.val() || {};
                     Object.values(cloudUsers).forEach(u => {
                         if (u && (u.id || u.email)) {
+                            if (isUserDeleted(u)) {
+                                try {
+                                    if (u.id) window.realtimeSync.db.ref(`goride_users/${u.id}`).remove();
+                                } catch (e) {}
+                                return;
+                            }
                             const key = u.id || u.email;
                             userMap.set(key, { ...userMap.get(key), ...u });
                         }
@@ -1652,6 +1966,7 @@ class AdminController {
                     if (restUsers && typeof restUsers === 'object') {
                         Object.values(restUsers).forEach(u => {
                             if (u && (u.id || u.email)) {
+                                if (isUserDeleted(u)) return;
                                 const key = u.id || u.email;
                                 userMap.set(key, { ...userMap.get(key), ...u });
                             }
@@ -1666,13 +1981,14 @@ class AdminController {
             const offline = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
             offline.forEach(u => {
                 if (u && (u.id || u.email)) {
+                    if (isUserDeleted(u)) return;
                     const key = u.id || u.email;
                     userMap.set(key, { ...u, ...userMap.get(key) });
                 }
             });
         } catch (e) {}
 
-        // Baseline customer & admin accounts if not already included
+        // Baseline admin account (no hardcoded demo customer so deleted customers never resurrect)
         const defaultAccounts = [
             {
                 id: 'adm_admin',
@@ -1682,24 +1998,15 @@ class AdminController {
                 role: 'admin',
                 status: 'active',
                 createdAt: '2025-01-01T00:00:00.000Z'
-            },
-            {
-                id: 'usr_c101',
-                name: 'Nguyễn Văn An',
-                email: 'customer@demo.com',
-                phone: '0901234567',
-                role: 'customer',
-                status: 'active',
-                createdAt: '2026-01-15T08:30:00.000Z'
             }
         ];
         defaultAccounts.forEach(da => {
-            if (!userMap.has(da.id) && !userMap.has(da.email)) {
+            if (!isUserDeleted(da) && !userMap.has(da.id) && !userMap.has(da.email)) {
                 userMap.set(da.id, da);
             }
         });
 
-        return Array.from(userMap.values());
+        return Array.from(userMap.values()).filter(u => !isUserDeleted(u));
     }
 
     async loadCustomers() {
@@ -2072,8 +2379,18 @@ class AdminController {
             this.showToast(`Đã xóa vĩnh viễn chuyến đi #${id}!`, 'info');
         } else if (type === 'driver') {
             let drivers = this.getStoredDrivers();
+            const targetDriver = drivers.find(d => d && d.id === id);
+            this.addDeletedUserId(id);
+
             drivers = drivers.filter(d => d && d.id !== id);
             this.saveStoredDrivers(drivers);
+
+            // Clean from backend API
+            if (typeof apiClient !== 'undefined') {
+                try {
+                    apiClient.post('/admin/users/delete', { userId: id });
+                } catch (e) {}
+            }
 
             // Also clean from pending, offline users, online, and Firebase
             try {
@@ -2082,14 +2399,17 @@ class AdminController {
                 this.savePendingDrivers(pending);
 
                 let users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
-                users = users.filter(u => u && u.id !== id);
+                users = users.filter(u => u && u.id !== id && (!targetDriver?.email || u.email !== targetDriver.email));
                 localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
 
                 let online = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.ONLINE_DRIVERS) || '{}');
                 delete online[id];
                 localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(online));
 
-                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                if (window.realtimeSync && typeof window.realtimeSync.deleteUser === 'function') {
+                    window.realtimeSync.deleteUser(id, targetDriver?.email);
+                } else if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                    window.realtimeSync.db.ref('goride_users/' + id).remove();
                     window.realtimeSync.db.ref('goride_drivers/' + id).remove();
                     window.realtimeSync.db.ref('goride_pending_drivers/' + id).remove();
                     window.realtimeSync.db.ref('goride_online_drivers/' + id).remove();
@@ -2099,19 +2419,22 @@ class AdminController {
             this.loadDriversList();
             this.loadDriverApprovals();
             this.loadDashboard();
-            this.showToast(`Đã xóa tài xế #${id} thành công!`, 'info');
+            this.showToast(`Đã xóa vĩnh viễn tài xế #${id} khỏi hệ thống!`, 'info');
         } else if (type === 'customer') {
             try {
                 const targetCustomer = (this.cachedCustomers || []).find(c => c.id === id);
 
-                // 1. Delete from SQLite Backend API
+                // 1. Record in blacklisted/deleted user IDs so mock never resurrects
+                this.addDeletedUserId(id);
+
+                // 2. Delete from SQLite Backend API
                 if (typeof apiClient !== 'undefined') {
                     try {
                         await apiClient.post('/admin/users/delete', { userId: id });
                     } catch (e) {}
                 }
 
-                // 2. Delete cleanly from Firebase Realtime Cloud via RealtimeSyncManager
+                // 3. Delete cleanly from Firebase Realtime Cloud via RealtimeSyncManager
                 if (window.realtimeSync && typeof window.realtimeSync.deleteUser === 'function') {
                     await window.realtimeSync.deleteUser(id, targetCustomer?.email);
                 } else if (window.realtimeSync && window.realtimeSync.isAvailable()) {
@@ -2121,7 +2444,7 @@ class AdminController {
                     window.realtimeSync.db.ref(`goride_online_drivers/${id}`).remove();
                 }
 
-                // 3. Purge cleanly from localStorage
+                // 4. Purge cleanly from localStorage
                 let users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
                 users = users.filter(u => !(u && (u.id === id || (targetCustomer && targetCustomer.email && u.email === targetCustomer.email))));
                 localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
@@ -2138,10 +2461,21 @@ class AdminController {
                 delete online[id];
                 localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(online));
 
-                // Clean cached list
+                // Clean session if current user was deleted
+                try {
+                    const cur = JSON.parse(sessionStorage.getItem('ride_rtree_user') || 'null');
+                    if (cur && (cur.id === id || (targetCustomer?.email && cur.email === targetCustomer.email))) {
+                        sessionStorage.removeItem('ride_rtree_user');
+                        sessionStorage.removeItem('ride_rtree_token');
+                    }
+                } catch (e) {}
+
+                // Clean cached list & DOM immediately
                 if (this.cachedCustomers) {
-                    this.cachedCustomers = this.cachedCustomers.filter(c => c.id !== id);
+                    this.cachedCustomers = this.cachedCustomers.filter(c => c.id !== id && (!targetCustomer?.email || c.email !== targetCustomer.email));
                 }
+                const domRow = document.getElementById(`customer-row-${id}`);
+                if (domRow) domRow.remove();
 
                 this.showToast(`Đã xóa vĩnh viễn tài khoản #${id} và dọn dẹp sạch toàn bộ database.`, 'info');
                 await this.loadCustomers();
