@@ -61,6 +61,8 @@
   min-height: calc(100vh - var(--header-height));
   margin-top: var(--header-height);
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -577,9 +579,11 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  max-width: 100%;
   min-height: 0;
   background-color: var(--color-bg-body);
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
 }
 
@@ -1257,6 +1261,30 @@
   box-shadow: var(--shadow-lg, 0 -2px 10px rgba(0, 0, 0, 0.08));
   padding: 0 4px env(safe-area-inset-bottom, 0px) 4px;
   box-sizing: border-box !important;
+}
+
+/* Strictly hide bottom navigation on Auth pages (Login & Register) */
+.auth-page .bottom-nav,
+.auth-page #mobile-bottom-nav,
+.auth-page .mobile-only-flex.bottom-nav,
+body.auth-page .bottom-nav,
+body.auth-page #mobile-bottom-nav,
+body:has(.auth-layout) .bottom-nav,
+body:has(.auth-layout) #mobile-bottom-nav,
+body:has(.auth-container) .bottom-nav,
+body:has(.auth-container) #mobile-bottom-nav,
+body:has(#login-form) .bottom-nav,
+body:has(#login-form) #mobile-bottom-nav,
+body:has(#register-form) .bottom-nav,
+body:has(#register-form) #mobile-bottom-nav,
+.auth-layout ~ .bottom-nav,
+.auth-layout ~ #mobile-bottom-nav,
+.auth-container ~ .bottom-nav,
+.auth-container ~ #mobile-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .bottom-nav-item,

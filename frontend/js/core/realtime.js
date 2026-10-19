@@ -803,11 +803,22 @@ class RealtimeSyncManager {
     async cleanStaleDrivers() {
         if (!this.isAvailable()) return;
         try {
+            // Dọn dẹp triệt để các node rác 'undefined' / 'null'
+            ['undefined', 'null'].forEach(badKey => {
+                this.db.ref(`goride_drivers/${badKey}`).remove().catch(() => {});
+                this.db.ref(`goride_pending_drivers/${badKey}`).remove().catch(() => {});
+                this.db.ref(`goride_users/${badKey}`).remove().catch(() => {});
+            });
+
             const snap = await this.db.ref('goride_drivers').once('value');
             const data = snap.val() || {};
             const now = Date.now();
             Object.entries(data).forEach(([key, driver]) => {
                 if (!driver) return;
+                if (key === 'undefined' || key === 'null') {
+                    this.db.ref(`goride_drivers/${key}`).remove().catch(() => {});
+                    return;
+                }
                 const lastTime = driver.location?.updatedAt || (driver.updatedAt ? new Date(driver.updatedAt).getTime() : 0);
                 if (driver.isOnline && (!lastTime || (now - lastTime > 120000))) {
                     this.db.ref(`goride_drivers/${key}`).update({
@@ -923,11 +934,21 @@ class RealtimeSyncManager {
     listenPendingDrivers(callback) {
         if (typeof callback !== 'function') return () => {};
 
+        const isValidPending = (d) => {
+            if (!d || typeof d !== 'object') return false;
+            const id = String(d.id || '').trim();
+            if (!id || id === 'undefined' || id === 'null') return false;
+            const hasInfo = (d.name && String(d.name).trim()) || (d.phone && String(d.phone).trim()) || (d.email && String(d.email).trim() && d.email !== '--');
+            if (!hasInfo) return false;
+            const status = String(d.status || '').toLowerCase().trim();
+            return status === 'pending' || status === 'chờ duyệt';
+        };
+
         // REST initial fetch fallback
         if (this.databaseURL) {
             this._restGet('goride_pending_drivers').then(data => {
                 if (data && typeof data === 'object') {
-                    const list = Object.values(data).filter(d => d && (d.status === 'pending' || !d.status || d.status === 'Chờ duyệt'));
+                    const list = Object.values(data).filter(isValidPending);
                     if (list.length > 0) callback(list);
                 }
             }).catch(() => {});
@@ -938,7 +959,7 @@ class RealtimeSyncManager {
                 const pendingRef = this.db.ref('goride_pending_drivers');
                 const handler = (snapshot) => {
                     const data = snapshot.val() || {};
-                    const list = Object.values(data).filter(d => d && (d.status === 'pending' || !d.status || d.status === 'Chờ duyệt'));
+                    const list = Object.values(data).filter(isValidPending);
                     callback(list);
                 };
                 pendingRef.on('value', handler);

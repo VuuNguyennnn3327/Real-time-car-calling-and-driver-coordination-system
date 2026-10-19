@@ -994,7 +994,30 @@ html, body {
     gap: 6px;
   }
 
-  .goride-brand-slogan {
-    display: none;
-  }
+}
+
+/* ==========================================================================
+   STRICT OVERRIDE: NEVER DISPLAY BOTTOM NAV ON AUTH PAGES (LOGIN / REGISTER)
+   ========================================================================== */
+.auth-page .bottom-nav,
+.auth-page #mobile-bottom-nav,
+.auth-page .mobile-only-flex.bottom-nav,
+body.auth-page .bottom-nav,
+body.auth-page #mobile-bottom-nav,
+body:has(.auth-layout) .bottom-nav,
+body:has(.auth-layout) #mobile-bottom-nav,
+body:has(.auth-container) .bottom-nav,
+body:has(.auth-container) #mobile-bottom-nav,
+body:has(#login-form) .bottom-nav,
+body:has(#login-form) #mobile-bottom-nav,
+body:has(#register-form) .bottom-nav,
+body:has(#register-form) #mobile-bottom-nav,
+.auth-layout ~ .bottom-nav,
+.auth-layout ~ #mobile-bottom-nav,
+.auth-container ~ .bottom-nav,
+.auth-container ~ #mobile-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }

@@ -83,6 +83,7 @@ class DriverController {
     this.initMap();
     this.bindEvents();
     await this.loadDriverProfileAndStats();
+    this.setupCloudTripsListener();
 
     // Check if previously set to online
     const savedOnline = localStorage.getItem('goride_driver_online_state') === '1';
@@ -301,6 +302,195 @@ class DriverController {
       case 'car4':
       default:
         return { type: 'car4', name: 'Navigo Car', label: 'Ô tô 4 chỗ (Navigo Car)', icon: '🚗', defaultModel: 'Ô tô 4 chỗ', defaultPlate: '' };
+    }
+  }
+
+  getCurrentDriverUser() {
+    let user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+    if (!user) {
+      try {
+        user = JSON.parse(localStorage.getItem('goride_user') || localStorage.getItem('user') || 'null');
+      } catch (e) {}
+    }
+    if (!user) {
+      try {
+        const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+        const found = offlineUsers.find(u => u.role === 'driver');
+        if (found) user = found;
+      } catch (e) {}
+    }
+    return user;
+  }
+
+  isCompletedTrip(t) {
+    if (!t || !t.status) return false;
+    const s = String(t.status).toLowerCase().trim();
+    return s === 'completed' || s === 'finished' || s === 'finish' || s === 'done';
+  }
+
+  getTripFare(t) {
+    if (!t) return 0;
+    const raw = (t.fare !== undefined && t.fare !== null) ? t.fare 
+              : ((t.fareAmount !== undefined && t.fareAmount !== null) ? t.fareAmount 
+              : ((t.price !== undefined && t.price !== null) ? t.price 
+              : ((t.totalFare !== undefined && t.totalFare !== null) ? t.totalFare : 0)));
+    if (typeof raw === 'number') return isNaN(raw) ? 0 : raw;
+    if (typeof raw === 'string') {
+      const clean = raw.replace(/[^\d]/g, '');
+      const val = Number(clean);
+      return isNaN(val) ? 0 : val;
+    }
+    return 0;
+  }
+
+  isTripForCurrentDriver(t) {
+    if (!t) return false;
+    const user = this.getCurrentDriverUser();
+    if (!user) return false;
+
+    const myId = String(user.id || '').trim().toLowerCase();
+    const myPhone = String(user.phone || '').trim().toLowerCase();
+    const myEmail = String(user.email || '').trim().toLowerCase();
+    const myName = String(user.name || '').trim().toLowerCase();
+    const myPlate = String(user.vehicle?.plate || user.licensePlate || user.plate || '').trim().toLowerCase();
+
+    const tDriverId = String(t.driverId || '').trim().toLowerCase();
+    const tDriverPhone = String(t.driverPhone || '').trim().toLowerCase();
+    const tDriverEmail = String(t.driverEmail || '').trim().toLowerCase();
+    const tDriverName = String(t.driverName || '').trim().toLowerCase();
+    const tPlate = String(t.licensePlate || t.plate || '').trim().toLowerCase();
+
+    // Match by ID
+    if (myId && (tDriverId === myId || tDriverId === 'drv_' + myId || myId === 'drv_' + tDriverId)) return true;
+    // Match by Phone
+    if (myPhone && (tDriverPhone === myPhone || tDriverId === 'drv_' + myPhone)) return true;
+    // Match by Email
+    if (myEmail && tDriverEmail && tDriverEmail === myEmail) return true;
+    // Match by License Plate
+    if (myPlate && myPlate !== '--' && tPlate && tPlate === myPlate) return true;
+    // Match by Driver Name if distinct
+    if (myName && !myName.includes('quản trị') && !myName.includes('admin') && tDriverName && tDriverName === myName) return true;
+
+    return false;
+  }
+
+  getDriverTrips() {
+    const user = this.getCurrentDriverUser();
+    const myKey = user?.id || user?.phone || 'default';
+    const allTrips = [];
+
+    // 1. Specific local storage for this driver
+    try {
+      const specific = JSON.parse(localStorage.getItem(`goride_driver_trips_${myKey}`) || '[]');
+      if (Array.isArray(specific)) allTrips.push(...specific);
+    } catch (e) {}
+
+    // 2. Global driver trips, strictly filtered to this driver
+    try {
+      const driverTrips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
+      if (Array.isArray(driverTrips)) {
+        driverTrips.forEach(t => {
+          if (this.isTripForCurrentDriver(t)) allTrips.push(t);
+        });
+      }
+    } catch (e) {}
+
+    // 3. Admin trips storage, strictly filtered to this driver
+    try {
+      const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+      if (Array.isArray(adminTrips)) {
+        adminTrips.forEach(t => {
+          if (this.isTripForCurrentDriver(t)) allTrips.push(t);
+        });
+      }
+    } catch (e) {}
+
+    // Deduplicate and filter out mock trips
+    const tripMap = new Map();
+    const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => ['trip_vn_101', 'trip_vn_102', 'trip_vn_103', 'trip_vn_104'].includes(t?.id));
+
+    allTrips.forEach(t => {
+      if (t && t.id && !checkMock(t)) {
+        const existing = tripMap.get(t.id);
+        tripMap.set(t.id, { ...(existing || {}), ...t });
+      }
+    });
+
+    const result = Array.from(tripMap.values());
+    result.sort((a, b) => new Date(b.completedAt || b.createdAt || 0) - new Date(a.completedAt || a.createdAt || 0));
+    return result;
+  }
+
+  async syncDriverTripsFromCloud() {
+    if (typeof realtimeSync === 'undefined') return;
+    try {
+      let cloudTrips = null;
+      if (realtimeSync.isAvailable()) {
+        const snap = await realtimeSync.db.ref('goride_trips').once('value');
+        cloudTrips = snap.val();
+      } else if (typeof realtimeSync._restGet === 'function') {
+        cloudTrips = await realtimeSync._restGet('goride_trips');
+      }
+
+      if (cloudTrips && typeof cloudTrips === 'object') {
+        const user = this.getCurrentDriverUser();
+        const myKey = user?.id || user?.phone;
+        const myCloudTrips = Object.values(cloudTrips).filter(t => t && t.id && this.isTripForCurrentDriver(t));
+
+        if (myCloudTrips.length > 0 && myKey) {
+          let existing = [];
+          try {
+            existing = JSON.parse(localStorage.getItem(`goride_driver_trips_${myKey}`) || '[]');
+          } catch (e) {}
+          const tripMap = new Map();
+          existing.forEach(t => { if (t && t.id) tripMap.set(t.id, t); });
+          myCloudTrips.forEach(t => { if (t && t.id) tripMap.set(t.id, { ...(tripMap.get(t.id) || {}), ...t }); });
+          const merged = Array.from(tripMap.values());
+          localStorage.setItem(`goride_driver_trips_${myKey}`, JSON.stringify(merged));
+        }
+      }
+    } catch (e) {
+      console.warn('[Driver] syncDriverTripsFromCloud notice:', e);
+    }
+  }
+
+  setupCloudTripsListener() {
+    if (typeof realtimeSync === 'undefined') return;
+    try {
+      const handleTripsSnapshot = (snapshot) => {
+        const val = snapshot ? (typeof snapshot.val === 'function' ? snapshot.val() : snapshot) : null;
+        if (val && typeof val === 'object') {
+          const user = this.getCurrentDriverUser();
+          const myKey = user?.id || user?.phone;
+          const myCloudTrips = Object.values(val).filter(t => t && t.id && this.isTripForCurrentDriver(t));
+          if (myCloudTrips.length > 0 && myKey) {
+            let existing = [];
+            try {
+              existing = JSON.parse(localStorage.getItem(`goride_driver_trips_${myKey}`) || '[]');
+            } catch (e) {}
+            const tripMap = new Map();
+            existing.forEach(t => { if (t && t.id) tripMap.set(t.id, t); });
+            myCloudTrips.forEach(t => { if (t && t.id) tripMap.set(t.id, { ...(tripMap.get(t.id) || {}), ...t }); });
+            localStorage.setItem(`goride_driver_trips_${myKey}`, JSON.stringify(Array.from(tripMap.values())));
+          }
+          this.loadDriverProfileAndStats();
+          if (this.currentTab === 'trips') this.renderTripHistory(this.currentHistoryFilter);
+          if (this.currentTab === 'earnings') this.renderEarningsReport();
+        }
+      };
+
+      if (realtimeSync.isAvailable()) {
+        realtimeSync.db.ref('goride_trips').on('value', handleTripsSnapshot);
+      }
+      realtimeSync.onReady(() => {
+        try {
+          if (realtimeSync.isAvailable()) {
+            realtimeSync.db.ref('goride_trips').on('value', handleTripsSnapshot);
+          }
+        } catch (e) {}
+      });
+    } catch (e) {
+      console.warn('[Driver] setupCloudTripsListener notice:', e);
     }
   }
 
@@ -1069,15 +1259,22 @@ class DriverController {
       const coords = this.getTripCoordinates(req);
 
       // Initialize active trip in STAGE 1 (heading to pickup)
+      const myDriverId = user?.id || (user?.phone ? ('drv_' + user.phone) : 'drv_0901');
+      const myDriverPhone = user?.phone || '';
+      const tripFare = Number(req.fareNum || req.fare) || 45000;
+
       this.activeTrip = {
         id: req.tripId || req.id,
+        driverId: myDriverId,
+        driverPhone: myDriverPhone,
         customerName: req.customerName || 'Khách hàng GoRide',
         phone: req.phone || '0901234567',
         pickup: req.pickup,
         pickupCoords: coords.pickup,
         destination: req.destination,
         destinationCoords: coords.destination,
-        fare: Number(req.fareNum || req.fare) || 45000,
+        fare: tripFare,
+        fareAmount: tripFare,
         distance: req.distance || '3.2',
         stage: 'heading_to_pickup', // Stage 1: heading_to_pickup, Stage 2: trip_in_progress
         driverName: driverName,
@@ -1095,6 +1292,8 @@ class DriverController {
         const tIdx = allTrips.findIndex(t => t.id === this.activeTrip.id);
         if (tIdx !== -1) {
           allTrips[tIdx].status = 'accepted';
+          allTrips[tIdx].driverId = myDriverId;
+          allTrips[tIdx].driverPhone = myDriverPhone;
           allTrips[tIdx].driverName = driverName;
           allTrips[tIdx].licensePlate = driverPlate;
           allTrips[tIdx].vehicleModel = driverVehicle;
@@ -1103,6 +1302,8 @@ class DriverController {
         } else {
           allTrips.unshift({
             id: this.activeTrip.id,
+            driverId: myDriverId,
+            driverPhone: myDriverPhone,
             customerName: this.activeTrip.customerName,
             customerPhone: this.activeTrip.phone,
             driverName: driverName,
@@ -1112,7 +1313,8 @@ class DriverController {
             driverRating: driverRating,
             pickup: this.activeTrip.pickup,
             destination: this.activeTrip.destination,
-            fare: this.activeTrip.fare,
+            fare: tripFare,
+            fareAmount: tripFare,
             distance: this.activeTrip.distance,
             status: 'accepted',
             createdAt: new Date().toISOString()
@@ -1695,10 +1897,19 @@ class DriverController {
   async completeActiveTrip() {
     if (!this.activeTrip) return;
 
-    const completedFare = Number(this.activeTrip.fare) || 45000;
+    const user = this.getCurrentDriverUser();
+    const myDriverId = user?.id || this.activeTrip.driverId || ('drv_' + (user?.phone || '0901'));
+    const myDriverPhone = user?.phone || this.activeTrip.phone || this.activeTrip.driverPhone || '';
+    const myDriverName = user?.name || this.activeTrip.driverName || 'Đối tác tài xế';
+    const completedFare = this.getTripFare(this.activeTrip) || 45000;
+
     const completedTrip = {
       ...this.activeTrip,
+      driverId: myDriverId,
+      driverPhone: myDriverPhone,
+      driverName: myDriverName,
       fare: completedFare,
+      fareAmount: completedFare,
       status: 'completed',
       completedAt: new Date().toISOString()
     };
@@ -1714,8 +1925,13 @@ class DriverController {
     this.driverStats.earnings += completedFare;
     this.driverStats.walletBalance += completedFare;
 
-    // 2. Persist in driver's completed trips list
+    // 2. Persist in driver's completed trips list (driver-specific key AND shared)
     try {
+      const myKey = user?.id || user?.phone || 'default';
+      const specific = JSON.parse(localStorage.getItem(`goride_driver_trips_${myKey}`) || '[]');
+      specific.unshift(completedTrip);
+      localStorage.setItem(`goride_driver_trips_${myKey}`, JSON.stringify(specific));
+
       const driverTrips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
       driverTrips.unshift(completedTrip);
       localStorage.setItem('goride_driver_trips', JSON.stringify(driverTrips));
@@ -1726,9 +1942,7 @@ class DriverController {
       const allTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
       const idx = allTrips.findIndex(t => t.id === completedTrip.id);
       if (idx !== -1) {
-        allTrips[idx].status = 'completed';
-        allTrips[idx].fare = completedFare;
-        allTrips[idx].completedAt = completedTrip.completedAt;
+        allTrips[idx] = { ...allTrips[idx], ...completedTrip, status: 'completed' };
       } else {
         allTrips.unshift(completedTrip);
       }
@@ -1748,14 +1962,17 @@ class DriverController {
     // 4.1 Firebase Realtime Cloud Update
     if (typeof realtimeSync !== 'undefined' && completedTrip.id) {
       realtimeSync.updateTripStatus(completedTrip.id, 'COMPLETED', {
+        driverId: myDriverId,
+        driverPhone: myDriverPhone,
+        driverName: myDriverName,
         completedAt: completedTrip.completedAt,
-        fare: completedFare
+        fare: completedFare,
+        fareAmount: completedFare
       });
     }
 
     // 5. Update driver wallet balance in session & offline users
     try {
-      const user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
       if (user) {
         user.walletBalance = (user.walletBalance || 0) + completedFare;
         localStorage.setItem('goride_user', JSON.stringify(user));
@@ -1821,19 +2038,8 @@ class DriverController {
       purgeAllMockTrips();
     }
 
-    let trips = [];
-    try {
-      trips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
-      if (trips.length === 0) {
-        // Fallback check in goride_admin_trips with completed status
-        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-        trips = adminTrips.filter(t => t.status === 'completed');
-      }
-      const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => ['trip_vn_101', 'trip_vn_102', 'trip_vn_103', 'trip_vn_104'].includes(t?.id));
-      trips = trips.filter(t => !checkMock(t));
-    } catch {
-      trips = [];
-    }
+    // Only get trips belonging to this specific driver that are completed!
+    let trips = this.getDriverTrips().filter(t => this.isCompletedTrip(t));
 
     // Filter by date
     const now = new Date();
@@ -1858,8 +2064,10 @@ class DriverController {
     }
 
     container.innerHTML = trips.map(t => {
-      const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
+      const fareFormatted = Number(this.getTripFare(t)).toLocaleString('vi-VN') + ' ₫';
       const timeStr = t.completedAt ? new Date(t.completedAt).toLocaleString('vi-VN') : 'Gần đây';
+      const pickupText = t.pickupName || (typeof t.pickup === 'string' ? t.pickup : t.pickup?.name) || '--';
+      const destText = t.dropoffName || (typeof t.destination === 'string' ? t.destination : t.destination?.name) || '--';
       return `
         <div class="driver-trip-card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
@@ -1874,11 +2082,11 @@ class DriverController {
             <div style="font-size:0.9rem; color:#1e293b; line-height:1.5;">
               <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                 <span style="color:#10b981;">🟢</span>
-                <span>${t.pickup || '--'}</span>
+                <span>${pickupText}</span>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
                 <span style="color:#ef4444;">🔴</span>
-                <span>${t.destination || '--'}</span>
+                <span>${destText}</span>
               </div>
             </div>
             <div style="text-align:right;">
@@ -1902,16 +2110,8 @@ class DriverController {
      ========================================================================== */
 
   renderEarningsReport() {
-    let trips = [];
-    try {
-      trips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
-      if (trips.length === 0) {
-        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-        trips = adminTrips.filter(t => t.status === 'completed');
-      }
-    } catch {
-      trips = [];
-    }
+    // Only get trips belonging to this specific driver that are completed!
+    const trips = this.getDriverTrips().filter(t => this.isCompletedTrip(t));
 
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
@@ -1920,21 +2120,18 @@ class DriverController {
     const todayTrips = trips.filter(t => (t.completedAt || t.createdAt || '').startsWith(todayStr));
     const weekTrips = trips.filter(t => new Date(t.completedAt || t.createdAt || 0) >= sevenDaysAgo);
 
-    const todayEarn = todayTrips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
-    const weekEarn = weekTrips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
-    const totalEarn = trips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
+    const todayEarn = todayTrips.reduce((s, t) => s + this.getTripFare(t), 0);
+    const weekEarn = weekTrips.reduce((s, t) => s + this.getTripFare(t), 0);
+    const totalEarn = trips.reduce((s, t) => s + this.getTripFare(t), 0);
 
-    // Get wallet balance from user profile or total completed earnings (Starts at 0 for new drivers)
-    let userWallet = 0;
-    const user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+    // Get wallet balance for this driver
+    let userWallet = totalEarn;
+    const user = this.getCurrentDriverUser();
     if (user && typeof user.walletBalance === 'number' && user.walletBalance !== 350000 && user.walletBalance !== 1450000) {
       userWallet = user.walletBalance;
-    } else {
-      userWallet = totalEarn;
-      if (user) {
-        user.walletBalance = totalEarn;
-        try { localStorage.setItem('goride_user', JSON.stringify(user)); } catch(e) {}
-      }
+    } else if (user) {
+      user.walletBalance = totalEarn;
+      try { localStorage.setItem('goride_user', JSON.stringify(user)); } catch(e) {}
     }
 
     const fmt = (num) => Number(num || 0).toLocaleString('vi-VN') + ' ₫';
@@ -1960,7 +2157,8 @@ class DriverController {
     }
 
     tbody.innerHTML = trips.map(t => {
-      const fareFormatted = fmt(t.fare);
+      const fareVal = this.getTripFare(t);
+      const fareFormatted = fmt(fareVal);
       const timeStr = t.completedAt ? new Date(t.completedAt).toLocaleDateString('vi-VN') : 'Hôm nay';
       return `
         <tr>
@@ -1969,7 +2167,7 @@ class DriverController {
           <td>${t.customerName || '--'}</td>
           <td><span class="badge badge-info" style="font-size:0.75rem;">Ví điện tử</span></td>
           <td style="font-weight:600;">${fareFormatted}</td>
-          <td style="text-align:right; font-weight:800; color:#10b981;">${fareFormatted}</td>
+          <td style="text-align:right; font-weight:800; color:#10b981;">+${fareFormatted}</td>
         </tr>
       `;
     }).join('');
@@ -2056,20 +2254,22 @@ class DriverController {
         }
       }
 
-      // Calculate today stats from completed trips
-      let trips = [];
-      try {
-        trips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
-      } catch {
-        trips = [];
-      }
+      await this.syncDriverTripsFromCloud();
+
+      // Calculate stats STRICTLY from this driver's completed trips
+      const trips = this.getDriverTrips().filter(t => this.isCompletedTrip(t));
       const todayStr = new Date().toISOString().split('T')[0];
-      const todayTrips = trips.filter(t => (t.completedAt || '').startsWith(todayStr));
+      const todayTrips = trips.filter(t => (t.completedAt || t.createdAt || '').startsWith(todayStr));
 
       this.driverStats.tripsToday = todayTrips.length;
-      this.driverStats.earnings = todayTrips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
-      if (this.driverStats.walletBalance === 0 && trips.length > 0) {
-        this.driverStats.walletBalance = trips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
+      this.driverStats.earnings = todayTrips.reduce((s, t) => s + this.getTripFare(t), 0);
+      const totalCompletedEarn = trips.reduce((s, t) => s + this.getTripFare(t), 0);
+      if (this.driverStats.walletBalance === 0 && totalCompletedEarn > 0) {
+        this.driverStats.walletBalance = totalCompletedEarn;
+        if (user) {
+          user.walletBalance = totalCompletedEarn;
+          try { localStorage.setItem('goride_user', JSON.stringify(user)); } catch(e) {}
+        }
       }
 
       this.renderDriverStats();

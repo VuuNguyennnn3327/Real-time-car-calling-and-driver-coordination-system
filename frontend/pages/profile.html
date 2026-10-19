@@ -838,7 +838,7 @@
                 completedTrips = Array.from(tripMap.values()).filter(t => {
                     if (checkMock(t)) return false;
                     const st = String(t.status || '').toLowerCase().trim();
-                    return st === 'completed';
+                    return st === 'completed' || st === 'finished' || st === 'finish' || st === 'done';
                 });
             } catch(e) {
                 completedTrips = [];
@@ -997,20 +997,66 @@
             let trips = [];
             const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => false);
 
+            const myId = String(currentUser?.id || '').trim().toLowerCase();
+            const myPhone = String(currentUser?.phone || '').trim().toLowerCase();
+            const myEmail = String(currentUser?.email || '').trim().toLowerCase();
+            const myName = String(currentUser?.name || '').trim().toLowerCase();
+            const myPlate = String(currentUser?.vehicle?.plate || currentUser?.licensePlate || currentUser?.plate || '').trim().toLowerCase();
+
+            const isTripForDriver = (t) => {
+                if (!t) return false;
+                const tId = String(t.driverId || '').trim().toLowerCase();
+                const tPhone = String(t.driverPhone || '').trim().toLowerCase();
+                const tEmail = String(t.driverEmail || '').trim().toLowerCase();
+                const tName = String(t.driverName || '').trim().toLowerCase();
+                const tPlate = String(t.licensePlate || t.plate || '').trim().toLowerCase();
+
+                if (myId && (tId === myId || tId === 'drv_' + myId || myId === 'drv_' + tId)) return true;
+                if (myPhone && (tPhone === myPhone || tId === 'drv_' + myPhone)) return true;
+                if (myEmail && tEmail && tEmail === myEmail) return true;
+                if (myPlate && myPlate !== '--' && tPlate && tPlate === myPlate) return true;
+                if (myName && !myName.includes('quản trị') && !myName.includes('admin') && tName && tName === myName) return true;
+                return false;
+            };
+
+            const getFare = (t) => {
+                if (!t) return 0;
+                const raw = (t.fare !== undefined && t.fare !== null) ? t.fare 
+                          : ((t.fareAmount !== undefined && t.fareAmount !== null) ? t.fareAmount 
+                          : ((t.price !== undefined && t.price !== null) ? t.price 
+                          : ((t.totalFare !== undefined && t.totalFare !== null) ? t.totalFare : 0)));
+                if (typeof raw === 'number') return isNaN(raw) ? 0 : raw;
+                if (typeof raw === 'string') {
+                    const clean = raw.replace(/[^\d]/g, '');
+                    const val = Number(clean);
+                    return isNaN(val) ? 0 : val;
+                }
+                return 0;
+            };
+
             try {
                 const candidates = [];
+                // 1. Driver-specific storage
+                const myKey = currentUser?.id || currentUser?.phone || 'default';
+                try {
+                    const specific = JSON.parse(localStorage.getItem(`goride_driver_trips_${myKey}`) || '[]');
+                    if (Array.isArray(specific)) candidates.push(...specific);
+                } catch (e) {}
+
+                // 2. Global driver trips, filtered to this driver
                 const rawDriverTrips = localStorage.getItem('goride_driver_trips');
                 if (rawDriverTrips) {
                     const parsed = JSON.parse(rawDriverTrips);
-                    if (Array.isArray(parsed)) candidates.push(...parsed);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(t => { if (isTripForDriver(t)) candidates.push(t); });
+                    }
                 }
+
+                // 3. Admin trips, filtered to this driver
                 const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                const driverAdminTrips = adminTrips.filter(t => 
-                    (t.driverId && (t.driverId === currentUser.id || t.driverId === currentUser.phone)) ||
-                    (t.driverName && t.driverName === currentUser.name) ||
-                    (t.driverPhone && t.driverPhone === currentUser.phone)
-                );
-                candidates.push(...driverAdminTrips);
+                if (Array.isArray(adminTrips)) {
+                    adminTrips.forEach(t => { if (isTripForDriver(t)) candidates.push(t); });
+                }
 
                 const tripMap = new Map();
                 candidates.forEach(t => {
@@ -1021,34 +1067,35 @@
                 trips = Array.from(tripMap.values()).filter(t => {
                     if (checkMock(t)) return false;
                     const st = String(t.status || '').toLowerCase().trim();
-                    return st === 'completed';
+                    return st === 'completed' || st === 'finished' || st === 'finish' || st === 'done';
                 });
             } catch(e) { trips = []; }
 
             const todayStr = new Date().toISOString().split('T')[0];
             const todayTrips = trips.filter(t => (t.completedAt || t.createdAt || '').startsWith(todayStr));
-            const todayEarnings = todayTrips.reduce((sum, t) => sum + (Number(t.fare || t.fareAmount) || 0), 0);
-            const totalDriverEarnings = trips.reduce((sum, t) => sum + (Number(t.fare || t.fareAmount) || 0), 0);
+            const todayEarnings = todayTrips.reduce((sum, t) => sum + getFare(t), 0);
+            const totalDriverEarnings = trips.reduce((sum, t) => sum + getFare(t), 0);
 
             const ratingEl = document.getElementById('profile-kpi-rating');
             const earnEl = document.getElementById('profile-kpi-earnings');
             const tripsEl = document.getElementById('profile-kpi-trips');
             const walletEl = document.getElementById('profile-kpi-wallet');
 
-            if (ratingEl) ratingEl.textContent = (currentUser.rating ? currentUser.rating + ' ★' : '5.0 ★');
+            if (ratingEl) ratingEl.textContent = (currentUser?.rating ? currentUser.rating + ' ★' : '5.0 ★');
             if (earnEl) earnEl.textContent = todayEarnings.toLocaleString('vi-VN') + ' ₫';
             if (tripsEl) tripsEl.textContent = trips.length;
             if (walletEl) {
-                // Tài xế mới tạo acc thì số dư khả dụng = 0 đ; khi hoàn thành chuyến xe mới cộng dồn đúng cước phí
                 let balance = 0;
-                if (typeof currentUser.walletBalance === 'number' && currentUser.walletBalance !== 350000 && currentUser.walletBalance !== 1450000) {
+                if (typeof currentUser?.walletBalance === 'number' && currentUser.walletBalance !== 350000 && currentUser.walletBalance !== 1450000) {
                     balance = currentUser.walletBalance;
                 } else {
                     balance = totalDriverEarnings;
-                    currentUser.walletBalance = balance;
-                    try {
-                        localStorage.setItem('goride_user', JSON.stringify(currentUser));
-                    } catch(e) {}
+                    if (currentUser) {
+                        currentUser.walletBalance = balance;
+                        try {
+                            localStorage.setItem('goride_user', JSON.stringify(currentUser));
+                        } catch(e) {}
+                    }
                 }
                 walletEl.textContent = Number(balance || 0).toLocaleString('vi-VN') + ' ₫';
             }

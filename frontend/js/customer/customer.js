@@ -401,16 +401,16 @@ class CustomerAppController {
         const staticRadar = document.getElementById('tracking-radar');
         if (staticRadar) staticRadar.style.display = 'none';
 
-        // Ensure pickup marker is visible on map
+        // Ensure pickup marker is visible on map (idempotent, reuses existing marker)
         if (typeof this.mapController.addPickupMarker === 'function') {
             this.mapController.addPickupMarker(pLat, pLng, (this.pickup && this.pickup.name) || 'Điểm đón của bạn');
         }
 
-        // If radar marker already exists at this exact position, don't recreate
+        // If radar marker already exists at this exact position, don't recreate or restart CSS wave
         if (this.radarMarker) {
             try {
                 const curPos = this.radarMarker.getLatLng();
-                if (Math.abs(curPos.lat - pLat) < 0.00001 && Math.abs(curPos.lng - pLng) < 0.00001) {
+                if (Math.abs(curPos.lat - pLat) < 0.00002 && Math.abs(curPos.lng - pLng) < 0.00002) {
                     return;
                 }
             } catch (e) {}
@@ -441,21 +441,25 @@ class CustomerAppController {
             }).addTo(this.mapController.map);
         }
 
-        // Smoothly zoom map to customer pickup location
-        try {
-            this.mapController.map.invalidateSize({ animate: false });
-            if (typeof this.mapController.map.flyTo === 'function') {
-                this.mapController.map.flyTo([pLat, pLng], 16, { duration: 0.9 });
-            } else if (typeof this.mapController.setView === 'function') {
-                this.mapController.setView(pLat, pLng, 16);
-            }
-        } catch (e) {}
+        // Smoothly zoom map to customer pickup location ONLY ONCE to prevent continuous jitter
+        if (!this._hasCenteredRadar) {
+            this._hasCenteredRadar = true;
+            try {
+                this.mapController.map.invalidateSize({ animate: false });
+                if (typeof this.mapController.map.flyTo === 'function') {
+                    this.mapController.map.flyTo([pLat, pLng], 16, { duration: 0.8 });
+                } else if (typeof this.mapController.setView === 'function') {
+                    this.mapController.setView(pLat, pLng, 16);
+                }
+            } catch (e) {}
+        }
     }
 
     /**
      * Remove map-anchored radar pulse marker
      */
     hideRadar() {
+        this._hasCenteredRadar = false;
         if (this.radarMarker && this.mapController && this.mapController.map) {
             try {
                 this.mapController.map.removeLayer(this.radarMarker);
@@ -2752,6 +2756,17 @@ class CustomerAppController {
                         this.activeTrip.driverLng = cloudTrip.driverLon || cloudTrip.driverLng;
                     }
 
+                    // Synchronize updated active trip to localStorage immediately
+                    try {
+                        const existing = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                        const updated = {
+                            ...existing,
+                            ...this.activeTrip,
+                            status: (cloudTrip.status || this.activeTrip.status).toUpperCase()
+                        };
+                        localStorage.setItem('goride_active_trip', JSON.stringify(updated));
+                    } catch (e) {}
+
                     this.updateTrackingUI(this.activeTrip);
 
                     if (prevStatus === 'REQUESTED' && (cloudTrip.status === 'ACCEPTED' || cloudTrip.status === 'ARRIVED')) {
@@ -2883,7 +2898,7 @@ class CustomerAppController {
             } catch (err) {
                 console.warn('[CustomerApp] Active trip poll warning:', err.message);
             }
-        }, 1200);
+        }, 3500);
     }
 
     /**
@@ -2908,7 +2923,7 @@ class CustomerAppController {
         const searchingPanel = document.getElementById('tracking-searching-panel');
 
         if (status === 'REQUESTED' || status === 'OFFERED') {
-            if (this.mapController) {
+            if (this.mapController && this.mapController.markers && this.mapController.markers.drivers && this.mapController.markers.drivers.size > 0) {
                 this.mapController.clearMarkers('drivers');
             }
             if (radar) radar.style.display = 'none';

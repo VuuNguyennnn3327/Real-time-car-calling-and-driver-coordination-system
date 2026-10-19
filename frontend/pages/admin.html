@@ -158,6 +158,35 @@
             max-height: 75vh;
             overflow-y: auto;
         }
+        .admin-modal-footer {
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-top: 1px solid var(--color-gray-200, #e2e8f0);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            border-bottom-left-radius: 16px;
+            border-bottom-right-radius: 16px;
+        }
+        @media (max-width: 640px) {
+            .admin-modal-card {
+                max-width: calc(100vw - 28px) !important;
+                margin: 14px auto;
+                border-radius: 14px;
+            }
+            .admin-modal-footer {
+                padding: 12px 16px;
+                flex-direction: column-reverse;
+                gap: 8px;
+                border-bottom-left-radius: 14px;
+                border-bottom-right-radius: 14px;
+            }
+            .admin-modal-footer .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
         /* Real-time Driver GPS Marker on Admin Spatial Map */
         .admin-driver-marker-wrap {
             position: relative;
@@ -202,27 +231,27 @@
             width: 50px;
             height: 50px;
             border-radius: 50%;
-            background: rgba(16, 185, 129, 0.35);
-            animation: admin-driver-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            background: rgba(16, 185, 129, 0.22);
+            animation: admin-driver-ping 3.6s cubic-bezier(0.25, 1, 0.5, 1) infinite;
             pointer-events: none;
             z-index: 1;
         }
         .admin-driver-marker-car .admin-driver-radar-ping {
-            background: rgba(2, 132, 199, 0.35);
+            background: rgba(2, 132, 199, 0.22);
         }
         .admin-driver-marker-premium .admin-driver-radar-ping {
-            background: rgba(124, 58, 237, 0.35);
+            background: rgba(124, 58, 237, 0.22);
         }
         .admin-driver-marker-car7 .admin-driver-radar-ping {
-            background: rgba(234, 88, 12, 0.35);
+            background: rgba(234, 88, 12, 0.22);
         }
         @keyframes admin-driver-ping {
             0% {
-                transform: scale(0.6);
-                opacity: 1;
+                transform: scale(0.7);
+                opacity: 0.7;
             }
-            80%, 100% {
-                transform: scale(2.2);
+            70%, 100% {
+                transform: scale(1.9);
                 opacity: 0;
             }
         }
@@ -589,6 +618,137 @@
             width: 100% !important;
         }
 
+        /* ==========================================================================
+           CUSTOMER MANAGEMENT TAB (#tab-customers) & RESPONSIVE TABLE STYLES
+           ========================================================================== */
+        #tab-customers {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            overflow-x: hidden !important;
+            padding: var(--space-4) !important;
+        }
+
+        /* Customer Filter Bar */
+        .customer-filter-bar {
+            display: flex !important;
+            gap: 12px !important;
+            margin-bottom: var(--space-4) !important;
+            background: #ffffff !important;
+            padding: 12px 16px !important;
+            border-radius: 12px !important;
+            border: 1px solid var(--color-gray-200, #e2e8f0) !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .customer-filter-search {
+            flex: 1 1 260px !important;
+            min-width: 220px !important;
+            position: relative !important;
+        }
+
+        .customer-filter-select {
+            width: auto !important;
+            min-width: 160px !important;
+            flex: 0 1 180px !important;
+            border-radius: 8px !important;
+        }
+
+        .customer-filter-btn {
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+
+        /* Responsive Customer Table Container */
+        .customer-table-responsive {
+            background: #ffffff !important;
+            border: 1px solid var(--color-gray-200, #e2e8f0) !important;
+            border-radius: 12px !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            position: relative !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Custom Scrollbar for Smooth Table Scrolling */
+        .customer-table-responsive::-webkit-scrollbar {
+            height: 7px;
+        }
+        .customer-table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .customer-table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .customer-table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Table Column Sizing and Alignment */
+        .customer-admin-table {
+            min-width: 980px !important;
+            width: 100% !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+
+        .customer-admin-table th,
+        .customer-admin-table td {
+            white-space: nowrap !important;
+            padding: 10px 14px !important;
+            vertical-align: middle !important;
+        }
+
+        /* Sticky Action Column on Right Edge */
+        #tab-customers .admin-table th:last-child,
+        #tab-customers .admin-table td:last-child,
+        #tab-customers .th-actions,
+        #tab-customers .td-actions {
+            position: sticky !important;
+            right: 0 !important;
+            background: #ffffff !important;
+            z-index: 5 !important;
+            box-shadow: -6px 0 12px -3px rgba(0, 0, 0, 0.08) !important;
+            text-align: right !important;
+            min-width: 230px !important;
+            width: 230px !important;
+        }
+
+        #tab-customers .admin-table thead th:last-child,
+        #tab-customers .admin-table thead .th-actions {
+            z-index: 7 !important;
+            background: #f8fafc !important;
+        }
+
+        #tab-customers .admin-table tr:hover td:last-child,
+        #tab-customers .admin-table tr:hover .td-actions {
+            background: #f8fafc !important;
+        }
+
+        @media (max-width: 1024px) {
+            .customer-filter-bar {
+                gap: 10px !important;
+                padding: 10px 12px !important;
+            }
+            .customer-filter-search {
+                flex: 1 1 100% !important;
+                min-width: 100% !important;
+            }
+            .customer-filter-select {
+                flex: 1 1 calc(50% - 6px) !important;
+                min-width: 140px !important;
+            }
+        }
+
         /* Mobile Layout & Anti-Overflow Protection for Admin */
         @media (max-width: 640px) {
             .app-header {
@@ -605,7 +765,8 @@
             #tab-dashboard,
             #tab-recent-trips,
             #tab-trips,
-            #tab-drivers {
+            #tab-drivers,
+            #tab-customers {
                 padding: 12px 10px !important;
             }
             .page-header {
@@ -662,6 +823,19 @@
                 width: 100% !important;
                 max-width: 100% !important;
             }
+            .customer-filter-bar {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 8px !important;
+                padding: 10px !important;
+            }
+            .customer-filter-search,
+            .customer-filter-select,
+            .customer-filter-btn {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 1 1 100% !important;
+            }
             .data-table-responsive {
                 overflow-x: auto !important;
                 -webkit-overflow-scrolling: touch !important;
@@ -670,6 +844,14 @@
             .admin-table th, .admin-table td {
                 padding: 8px 10px !important;
                 font-size: 0.76rem !important;
+            }
+            #tab-customers .admin-table th:last-child,
+            #tab-customers .admin-table td:last-child,
+            #tab-customers .th-actions,
+            #tab-customers .td-actions {
+                min-width: 210px !important;
+                width: 210px !important;
+                padding: 8px 10px !important;
             }
         }
     </style>
@@ -1018,7 +1200,7 @@
                 <!-- ==========================================
                      TAB 5: CUSTOMER & ACCOUNT MANAGEMENT (P7)
                      ========================================== -->
-                <div class="tab-panel" id="tab-customers" style="display:none;">
+                <div class="tab-panel" id="tab-customers" style="display:none; padding:var(--space-4);">
                     <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-6); flex-wrap:wrap; gap:12px;">
                         <div>
                             <h2 style="margin:0 0 4px 0; font-size:1.6rem; font-weight:800; color:var(--color-primary); display:flex; align-items:center; gap:10px;">
@@ -1028,7 +1210,7 @@
                                 Danh sách tài khoản khách hàng, thống kê số cuốc xe, phân quyền Quản trị viên và xóa dữ liệu triệt để.
                             </p>
                         </div>
-                        <div style="display:flex; gap:10px;">
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
                             <button class="btn btn-outline" onclick="adminController.syncCustomersFromCloud()">
                                 <span>🔄</span> Đồng bộ đám mây
                             </button>
@@ -1071,27 +1253,27 @@
                     </div>
 
                     <!-- Filter Bar -->
-                    <div class="admin-filters" style="display:flex; gap:12px; margin-bottom:var(--space-4); background:#fff; padding:12px 16px; border-radius:12px; border:1px solid var(--color-gray-200); align-items:center; flex-wrap:wrap;">
-                        <div style="flex:1; min-width:240px; position:relative;">
+                    <div class="customer-filter-bar">
+                        <div class="customer-filter-search">
                             <input type="text" id="customer-search-input" class="form-input" placeholder="🔍 Tìm theo Tên, Email, SĐT hoặc ID..." style="width:100%; border-radius:8px; padding-left:36px;">
                             <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; opacity:0.6;">🔍</span>
                         </div>
-                        <select id="customer-role-filter" class="form-select" style="min-width:160px; border-radius:8px;">
+                        <select id="customer-role-filter" class="form-select customer-filter-select">
                             <option value="all">Tất cả vai trò</option>
                             <option value="customer">Chỉ Khách hàng</option>
                             <option value="admin">Quản trị viên (Admin)</option>
                         </select>
-                        <select id="customer-status-filter" class="form-select" style="min-width:160px; border-radius:8px;">
+                        <select id="customer-status-filter" class="form-select customer-filter-select">
                             <option value="all">Tất cả trạng thái</option>
                             <option value="active">Đang hoạt động (Active)</option>
                             <option value="locked">Bị khóa (Locked)</option>
                         </select>
-                        <button class="btn btn-ghost btn-sm" onclick="adminController.resetCustomerFilters()">Đặt lại</button>
+                        <button class="btn btn-ghost btn-sm customer-filter-btn" onclick="adminController.resetCustomerFilters()">Đặt lại</button>
                     </div>
 
                     <!-- Customers Table -->
-                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow-x:auto;">
-                        <table class="data-table admin-table">
+                    <div class="data-table-responsive customer-table-responsive">
+                        <table class="data-table admin-table customer-admin-table">
                             <thead>
                                 <tr>
                                     <th>MÃ KHÁCH HÀNG</th>
@@ -1102,7 +1284,7 @@
                                     <th>CUỐC HOÀN THÀNH</th>
                                     <th>TRẠNG THÁI</th>
                                     <th>NGÀY THAM GIA</th>
-                                    <th style="text-align:right;">THAO TÁC</th>
+                                    <th class="th-actions" style="text-align:right;">THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody id="customers-table-body">
@@ -1381,8 +1563,8 @@
                     </p>
                 </div>
                 <div class="admin-modal-footer">
-                    <button type="button" class="btn btn-ghost" onclick="adminController.closeModal('modal-delete')">Hủy bỏ</button>
-                    <button type="button" class="btn btn-danger" id="btn-confirm-delete">Xác nhận xóa</button>
+                    <button type="button" class="btn" style="background:#ffffff; border:1.5px solid #cbd5e1; color:#475569; font-weight:600; padding:8px 18px; border-radius:10px; cursor:pointer;" onclick="adminController.closeModal('modal-delete')">Hủy bỏ</button>
+                    <button type="button" class="btn btn-danger" id="btn-confirm-delete" style="padding:8px 18px; border-radius:10px; font-weight:700; cursor:pointer;">Xác nhận xóa</button>
                 </div>
             </div>
         </div>

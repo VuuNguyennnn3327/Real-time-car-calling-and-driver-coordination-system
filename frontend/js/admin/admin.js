@@ -8,6 +8,7 @@ class AdminController {
     constructor() {
         this.map = null;
         this.driverMarkersLayer = null;
+        this.driverMarkersMap = new Map();
         this.onlineDriversPollInterval = null;
         this.currentTab = 'dashboard';
         this.isProcessingApproval = new Set();
@@ -36,6 +37,7 @@ class AdminController {
         if (window.realtimeSync && typeof window.realtimeSync.cleanStaleDrivers === 'function') {
             window.realtimeSync.cleanStaleDrivers();
         }
+        this.cleanGhostPendingDrivers();
 
         // 1. Sync token with apiClient
         if (typeof sessionManager !== 'undefined' && sessionManager && sessionManager.getToken()) {
@@ -185,10 +187,79 @@ class AdminController {
         localStorage.setItem(this.STORAGE_KEYS.DRIVERS, JSON.stringify(drivers));
     }
 
+    /**
+     * Dọn dẹp triệt để các hồ sơ rác / vô danh (ghost / undefined driver records)
+     */
+    cleanGhostPendingDrivers() {
+        // 1. Dọn dẹp localStorage goride_pending_drivers
+        try {
+            const raw = localStorage.getItem(this.STORAGE_KEYS.PENDING);
+            if (raw) {
+                const pending = JSON.parse(raw);
+                if (Array.isArray(pending)) {
+                    const cleaned = pending.filter(p => {
+                        if (!p || typeof p !== 'object') return false;
+                        const pid = String(p.id || '').trim();
+                        if (!pid || pid === 'undefined' || pid === 'null') return false;
+                        const hasInfo = (p.name && String(p.name).trim()) || (p.phone && String(p.phone).trim()) || (p.email && String(p.email).trim() && p.email !== '--');
+                        return !!hasInfo;
+                    });
+                    if (cleaned.length !== pending.length) {
+                        localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(cleaned));
+                    }
+                }
+            }
+        } catch (e) {}
+
+        // 2. Dọn dẹp localStorage goride_offline_users
+        try {
+            const rawUsers = localStorage.getItem(this.STORAGE_KEYS.USERS);
+            if (rawUsers) {
+                const users = JSON.parse(rawUsers);
+                if (Array.isArray(users)) {
+                    const cleanedUsers = users.filter(u => u && u.id && String(u.id).trim() !== '' && String(u.id).trim() !== 'undefined' && String(u.id).trim() !== 'null');
+                    if (cleanedUsers.length !== users.length) {
+                        localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(cleanedUsers));
+                    }
+                }
+            }
+        } catch (e) {}
+
+        // 3. Dọn dẹp các node rác 'undefined' / 'null' trên Firebase Cloud
+        if (window.realtimeSync) {
+            try {
+                if (window.realtimeSync.isAvailable()) {
+                    window.realtimeSync.db.ref('goride_pending_drivers/undefined').remove();
+                    window.realtimeSync.db.ref('goride_pending_drivers/null').remove();
+                    window.realtimeSync.db.ref('goride_drivers/undefined').remove();
+                    window.realtimeSync.db.ref('goride_drivers/null').remove();
+                    window.realtimeSync.db.ref('goride_users/undefined').remove();
+                    window.realtimeSync.db.ref('goride_users/null').remove();
+                } else if (typeof window.realtimeSync._restDelete === 'function') {
+                    window.realtimeSync._restDelete('goride_pending_drivers/undefined');
+                    window.realtimeSync._restDelete('goride_pending_drivers/null');
+                    window.realtimeSync._restDelete('goride_drivers/undefined');
+                    window.realtimeSync._restDelete('goride_drivers/null');
+                    window.realtimeSync._restDelete('goride_users/undefined');
+                    window.realtimeSync._restDelete('goride_users/null');
+                }
+            } catch (e) {}
+        }
+    }
+
     getPendingDrivers() {
         try {
             let list = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PENDING));
             if (!Array.isArray(list)) list = [];
+
+            // Loại bỏ hoàn toàn các phần tử rác / không có ID hoặc thiếu toàn bộ thông tin
+            list = list.filter(p => {
+                if (!p || typeof p !== 'object') return false;
+                const pid = String(p.id || '').trim();
+                if (!pid || pid === 'undefined' || pid === 'null') return false;
+                const hasInfo = (p.name && String(p.name).trim()) || (p.phone && String(p.phone).trim()) || (p.email && String(p.email).trim() && p.email !== '--');
+                return !!hasInfo;
+            });
 
             const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
             const isDeleted = (id, email) => {
@@ -200,7 +271,11 @@ class AdminController {
             // Merge any pending driver applications from goride_offline_users
             const offlineUsers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
             offlineUsers.forEach(u => {
-                if (u && u.role === 'driver' && (u.status === 'pending' || !u.status || u.status === 'Chờ duyệt')) {
+                if (u && u.role === 'driver' && (u.status === 'pending' || u.status === 'Chờ duyệt')) {
+                    const uid = String(u.id || '').trim();
+                    if (!uid || uid === 'undefined' || uid === 'null') return;
+                    const hasInfo = (u.name && String(u.name).trim()) || (u.phone && String(u.phone).trim()) || (u.email && String(u.email).trim());
+                    if (!hasInfo) return;
                     if (isDeleted(u.id, u.email)) return;
                     if (!list.some(p => p.id === u.id || (u.email && p.email === u.email))) {
                         list.unshift({
@@ -218,14 +293,25 @@ class AdminController {
                 }
             });
 
-            return list.filter(p => !isDeleted(p.id, p.email));
+            const cleanList = list.filter(p => !isDeleted(p.id, p.email));
+            localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(cleanList));
+            return cleanList;
         } catch {
             return [];
         }
     }
 
     savePendingDrivers(list) {
-        localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(list));
+        if (!Array.isArray(list)) list = [];
+        // Lọc sạch trước khi lưu
+        const cleanList = list.filter(p => {
+            if (!p || typeof p !== 'object') return false;
+            const pid = String(p.id || '').trim();
+            if (!pid || pid === 'undefined' || pid === 'null') return false;
+            const hasInfo = (p.name && String(p.name).trim()) || (p.phone && String(p.phone).trim()) || (p.email && String(p.email).trim() && p.email !== '--');
+            return !!hasInfo;
+        });
+        localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(cleanList));
     }
 
     /* ==========================================================================
@@ -256,6 +342,7 @@ class AdminController {
 
             // Layer group for live driver markers
             this.driverMarkersLayer = L.layerGroup().addTo(this.map);
+            this.driverMarkersMap = new Map();
 
             // Initial render of online drivers
             this.renderOnlineDriversOnMap();
@@ -634,6 +721,7 @@ class AdminController {
     renderOnlineDriversOnMap() {
         if (!this.map || !this.driverMarkersLayer) return;
 
+        this.driverMarkersMap = this.driverMarkersMap || new Map();
         const onlineDrivers = this.getOnlineDrivers();
         const badgeEl = document.getElementById('admin-map-online-badge');
 
@@ -651,14 +739,22 @@ class AdminController {
             }
         }
 
-        // Clear previous driver markers on the map
-        this.driverMarkersLayer.clearLayers();
+        // If no drivers are currently online, remove all markers safely
+        if (onlineDrivers.length === 0) {
+            for (const marker of this.driverMarkersMap.values()) {
+                this.driverMarkersLayer.removeLayer(marker);
+            }
+            this.driverMarkersMap.clear();
+            return;
+        }
 
-        // If no drivers are currently online, nothing more to draw
-        if (onlineDrivers.length === 0) return;
+        const activeDriverKeys = new Set();
 
-        // Render each online driver with custom vehicle marker, radar pulse, and info popup
+        // Render / update each online driver smoothly without destroying open popups or refreshing icons
         onlineDrivers.forEach(driver => {
+            const driverKey = String(driver.id || driver.phone || driver.plate || 'drv');
+            activeDriverKeys.add(driverKey);
+
             const vType = String(driver.vehicleType || driver.vehicle || '').toLowerCase();
             let markerClass = 'admin-driver-marker-car';
             let vehicleEmoji = '🚗';
@@ -677,32 +773,6 @@ class AdminController {
                 vehicleEmoji = '🚘';
                 vehicleLabel = driver.vehicleTypeName || 'Xe sang 4 chỗ (Navigo Plus)';
             }
-
-            const markerHtml = `
-                <div class="admin-driver-marker-wrap ${markerClass}">
-                    <div class="admin-driver-radar-ping"></div>
-                    <div class="admin-driver-icon-circle">
-                        ${vehicleEmoji}
-                    </div>
-                    <div class="admin-driver-label-chip">
-                        <span class="pulse-dot"></span>
-                        <span>${this.escapeHtml(driver.name || 'Tài xế')} &bull; ${this.escapeHtml(driver.plate || '--')}</span>
-                    </div>
-                </div>
-            `;
-
-            const customIcon = L.divIcon({
-                html: markerHtml,
-                className: 'custom-admin-driver-marker-container',
-                iconSize: [42, 68],
-                iconAnchor: [21, 24],
-                popupAnchor: [0, -26]
-            });
-
-            const marker = L.marker([driver.lat, driver.lng], {
-                icon: customIcon,
-                title: `${driver.name} (${driver.plate}) - Đang trực tuyến`
-            });
 
             const updatedTimeStr = driver.updatedAt ? new Date(driver.updatedAt).toLocaleTimeString('vi-VN') : 'Vừa xong';
 
@@ -750,9 +820,84 @@ class AdminController {
                 </div>
             `;
 
-            marker.bindPopup(popupContent, { maxWidth: 320, minWidth: 260 });
-            marker.addTo(this.driverMarkersLayer);
+            let marker = this.driverMarkersMap.get(driverKey);
+
+            if (marker) {
+                // Update marker position smoothly only if coordinates shifted
+                const curPos = marker.getLatLng();
+                if (Math.abs(curPos.lat - driver.lat) > 0.000005 || Math.abs(curPos.lng - driver.lng) > 0.000005) {
+                    marker.setLatLng([driver.lat, driver.lng]);
+                }
+
+                // Update popup content cleanly in place (NEVER close the popup while user is viewing)
+                marker.setPopupContent(popupContent);
+
+                // Update icon style only if vehicle classification changed
+                const iconSig = `${markerClass}_${driver.plate}_${driver.name}`;
+                if (marker._iconSig !== iconSig) {
+                    marker._iconSig = iconSig;
+                    const markerHtml = `
+                        <div class="admin-driver-marker-wrap ${markerClass}">
+                            <div class="admin-driver-radar-ping"></div>
+                            <div class="admin-driver-icon-circle">
+                                ${vehicleEmoji}
+                            </div>
+                            <div class="admin-driver-label-chip">
+                                <span class="pulse-dot"></span>
+                                <span>${this.escapeHtml(driver.name || 'Tài xế')} &bull; ${this.escapeHtml(driver.plate || '--')}</span>
+                            </div>
+                        </div>
+                    `;
+                    marker.setIcon(L.divIcon({
+                        html: markerHtml,
+                        className: 'custom-admin-driver-marker-container',
+                        iconSize: [42, 68],
+                        iconAnchor: [21, 24],
+                        popupAnchor: [0, -26]
+                    }));
+                }
+            } else {
+                // New driver marker
+                const markerHtml = `
+                    <div class="admin-driver-marker-wrap ${markerClass}">
+                        <div class="admin-driver-radar-ping"></div>
+                        <div class="admin-driver-icon-circle">
+                            ${vehicleEmoji}
+                        </div>
+                        <div class="admin-driver-label-chip">
+                            <span class="pulse-dot"></span>
+                            <span>${this.escapeHtml(driver.name || 'Tài xế')} &bull; ${this.escapeHtml(driver.plate || '--')}</span>
+                        </div>
+                    </div>
+                `;
+
+                const customIcon = L.divIcon({
+                    html: markerHtml,
+                    className: 'custom-admin-driver-marker-container',
+                    iconSize: [42, 68],
+                    iconAnchor: [21, 24],
+                    popupAnchor: [0, -26]
+                });
+
+                marker = L.marker([driver.lat, driver.lng], {
+                    icon: customIcon,
+                    title: `${driver.name} (${driver.plate}) - Đang trực tuyến`
+                });
+
+                marker._iconSig = `${markerClass}_${driver.plate}_${driver.name}`;
+                marker.bindPopup(popupContent, { maxWidth: 320, minWidth: 260, autoPan: true, autoPanPadding: [20, 20] });
+                marker.addTo(this.driverMarkersLayer);
+                this.driverMarkersMap.set(driverKey, marker);
+            }
         });
+
+        // Clean up any markers of drivers that went offline
+        for (const [key, marker] of this.driverMarkersMap.entries()) {
+            if (!activeDriverKeys.has(key)) {
+                this.driverMarkersLayer.removeLayer(marker);
+                this.driverMarkersMap.delete(key);
+            }
+        }
     }
 
     focusOnOnlineDrivers() {
@@ -924,8 +1069,57 @@ class AdminController {
        DASHBOARD METRICS & RECENT TRIPS (DYNAMIC REAL METRICS)
        ========================================================================== */
 
+    isCompletedTrip(t) {
+        if (!t || !t.status) return false;
+        const s = String(t.status).toLowerCase().trim();
+        return s === 'completed' || s === 'finished' || s === 'finish' || s === 'done';
+    }
+
+    getTripFare(t) {
+        if (!t) return 0;
+        const raw = (t.fare !== undefined && t.fare !== null) ? t.fare 
+                  : ((t.fareAmount !== undefined && t.fareAmount !== null) ? t.fareAmount 
+                  : ((t.price !== undefined && t.price !== null) ? t.price 
+                  : ((t.totalFare !== undefined && t.totalFare !== null) ? t.totalFare : 0)));
+        if (typeof raw === 'number') return isNaN(raw) ? 0 : raw;
+        if (typeof raw === 'string') {
+            const clean = raw.replace(/[^\d]/g, '');
+            const val = Number(clean);
+            return isNaN(val) ? 0 : val;
+        }
+        return 0;
+    }
+
+    async syncTripsFromCloud() {
+        if (!window.realtimeSync) return;
+        try {
+            let cloudTrips = null;
+            if (window.realtimeSync.isAvailable()) {
+                const snap = await window.realtimeSync.db.ref('goride_trips').once('value');
+                cloudTrips = snap.val();
+            } else if (typeof window.realtimeSync._restGet === 'function') {
+                cloudTrips = await window.realtimeSync._restGet('goride_trips');
+            }
+            if (cloudTrips && typeof cloudTrips === 'object') {
+                const deletedIds = new Set(this.getDeletedTripIds());
+                const list = Object.values(cloudTrips).filter(t => t && t.id && !deletedIds.has(t.id));
+                if (list.length > 0) {
+                    const localTrips = this.getStoredTrips();
+                    const tripMap = new Map();
+                    localTrips.forEach(t => { if (t && t.id && !deletedIds.has(t.id)) tripMap.set(t.id, t); });
+                    list.forEach(t => { if (t && t.id && !deletedIds.has(t.id)) tripMap.set(t.id, { ...tripMap.get(t.id), ...t }); });
+                    const merged = Array.from(tripMap.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+                    this.saveStoredTrips(merged);
+                }
+            }
+        } catch (e) {
+            console.warn('[Admin] syncTripsFromCloud notice:', e);
+        }
+    }
+
     async loadDashboard() {
         try {
+            await this.syncTripsFromCloud();
             const trips = this.getStoredTrips();
             const drivers = this.getStoredDrivers();
             const onlineDrivers = this.getOnlineDrivers();
@@ -933,9 +1127,10 @@ class AdminController {
             // 100% Real KPI calculation based strictly on actual data
             const totalRides = trips.length;
             const activeDrivers = drivers.filter(d => d.status === 'active').length;
+            // Aggregate total revenue across ALL completed trips in the entire system
             const calculatedRevenue = trips
-                .filter(t => t.status === 'completed')
-                .reduce((sum, t) => sum + (Number(t.fare) || 0), 0);
+                .filter(t => this.isCompletedTrip(t))
+                .reduce((sum, t) => sum + this.getTripFare(t), 0);
 
             // Real unique customers
             const customerSet = new Set();
@@ -1056,7 +1251,11 @@ class AdminController {
         let filtered = this.recentTripsData || this.getStoredTrips();
 
         if (status !== 'all') {
-            filtered = filtered.filter(t => (t.status || '').toLowerCase() === status.toLowerCase());
+            if (status.toLowerCase() === 'completed') {
+                filtered = filtered.filter(t => this.isCompletedTrip(t));
+            } else {
+                filtered = filtered.filter(t => (t.status || '').toLowerCase() === status.toLowerCase());
+            }
         }
 
         if (query) {
@@ -1099,7 +1298,7 @@ class AdminController {
 
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
-            const fareFormatted = Number(t.fare || t.fareAmount || 0).toLocaleString('vi-VN') + ' ₫';
+            const fareFormatted = Number(this.getTripFare(t)).toLocaleString('vi-VN') + ' ₫';
             const timeFormatted = t.createdAt ? new Date(t.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : 'Vừa xong';
             const pickupShort = this.escapeHtml(this.getTripLocationText(t, 'pickup'));
             const dropoffShort = this.escapeHtml(this.getTripLocationText(t, 'destination'));
@@ -1160,7 +1359,8 @@ class AdminController {
 
         const allTrips = this.getStoredTrips();
         const filtered = allTrips.filter(t => {
-            const matchStatus = (status === 'all') || ((t.status || '').toLowerCase() === status.toLowerCase());
+            const matchStatus = (status === 'all') || 
+                (status.toLowerCase() === 'completed' ? this.isCompletedTrip(t) : (t.status || '').toLowerCase() === status.toLowerCase());
             const pText = this.getTripLocationText(t, 'pickup').toLowerCase();
             const dText = this.getTripLocationText(t, 'destination').toLowerCase();
             const matchQuery = !query || 
@@ -1194,7 +1394,7 @@ class AdminController {
 
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
-            const fareFormatted = Number(t.fare || t.fareAmount || 0).toLocaleString('vi-VN') + ' ₫';
+            const fareFormatted = Number(this.getTripFare(t)).toLocaleString('vi-VN') + ' ₫';
             const pickupShort = this.escapeHtml(this.getTripLocationText(t, 'pickup'));
             const dropoffShort = this.escapeHtml(this.getTripLocationText(t, 'destination'));
 
@@ -1611,63 +1811,59 @@ class AdminController {
                     });
                 }
 
+                // Helper to validate and normalize a real pending applicant
+                const parseValidPending = (d, keyFallback) => {
+                    if (!d || typeof d !== 'object') return null;
+                    const id = String(d.id || keyFallback || '').trim();
+                    if (!id || id === 'undefined' || id === 'null') return null;
+                    const name = (d.name || '').trim();
+                    const email = (d.email || '').trim();
+                    const phone = (d.phone || '').trim();
+                    // A real driver applicant MUST have at least name, email, or phone!
+                    if (!name && !email && !phone) return null;
+                    const status = String(d.status || '').toLowerCase().trim();
+                    if (status !== 'pending' && status !== 'chờ duyệt') return null;
+                    return {
+                        id,
+                        name: name || 'Tài xế mới',
+                        email: email || '--',
+                        phone: phone || '--',
+                        vehicleType: d.vehicleType || d.vehicle?.type || 'motorbike',
+                        plate: d.plate || d.licensePlate || d.vehicle?.plate || '--',
+                        experienceYears: Number(d.experienceYears || d.experience) || 1,
+                        status: 'pending',
+                        createdAt: d.createdAt || new Date().toISOString()
+                    };
+                };
+
                 // A. Extract from goride_pending_drivers
-                Object.values(cloudPending).forEach(cp => {
-                    if (cp && (cp.status === 'pending' || !cp.status || cp.status === 'Chờ duyệt')) {
-                        if (isDeleted(cp.id, cp.email)) return;
-                        if (!pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
-                            pendingList.push({
-                                id: cp.id,
-                                name: cp.name,
-                                email: cp.email,
-                                phone: cp.phone,
-                                vehicleType: cp.vehicleType || cp.vehicle?.type || 'motorbike',
-                                plate: cp.plate || cp.licensePlate || cp.vehicle?.plate || '--',
-                                experienceYears: cp.experienceYears || cp.experience || 1,
-                                status: 'pending',
-                                createdAt: cp.createdAt || new Date().toISOString()
-                            });
-                        }
+                Object.entries(cloudPending).forEach(([key, cp]) => {
+                    const valid = parseValidPending(cp, key);
+                    if (!valid) return;
+                    if (isDeleted(valid.id, valid.email)) return;
+                    if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
+                        pendingList.push(valid);
                     }
                 });
 
                 // B. Extract from goride_users (role === 'driver' && status === 'pending')
-                Object.values(cloudUsers).forEach(cu => {
-                    if (cu && cu.role === 'driver' && (cu.status === 'pending' || !cu.status || cu.status === 'Chờ duyệt')) {
-                        if (isDeleted(cu.id, cu.email)) return;
-                        if (!pendingList.some(p => p.id === cu.id || (cu.email && p.email === cu.email))) {
-                            pendingList.push({
-                                id: cu.id,
-                                name: cu.name,
-                                email: cu.email,
-                                phone: cu.phone,
-                                vehicleType: cu.vehicleType || cu.vehicle?.type || 'motorbike',
-                                plate: cu.licensePlate || cu.plate || cu.vehicle?.plate || '--',
-                                experienceYears: cu.experienceYears || cu.experience || 1,
-                                status: 'pending',
-                                createdAt: cu.createdAt || new Date().toISOString()
-                            });
-                        }
+                Object.entries(cloudUsers).forEach(([key, cu]) => {
+                    if (!cu || cu.role !== 'driver') return;
+                    const valid = parseValidPending(cu, key);
+                    if (!valid) return;
+                    if (isDeleted(valid.id, valid.email)) return;
+                    if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
+                        pendingList.push(valid);
                     }
                 });
 
                 // C. Extract from goride_drivers (status === 'pending')
-                Object.values(cloudDrivers).forEach(cd => {
-                    if (cd && (cd.status === 'pending' || !cd.status || cd.status === 'Chờ duyệt')) {
-                        if (isDeleted(cd.id, cd.email)) return;
-                        if (!pendingList.some(p => p.id === cd.id || (cd.email && p.email === cd.email))) {
-                            pendingList.push({
-                                id: cd.id,
-                                name: cd.name,
-                                email: cd.email,
-                                phone: cd.phone,
-                                vehicleType: cd.vehicleType || cd.vehicle?.type || 'motorbike',
-                                plate: cd.plate || cd.licensePlate || cd.vehicle?.plate || '--',
-                                experienceYears: cd.experienceYears || cd.experience || 1,
-                                status: 'pending',
-                                createdAt: cd.createdAt || new Date().toISOString()
-                            });
-                        }
+                Object.entries(cloudDrivers).forEach(([key, cd]) => {
+                    const valid = parseValidPending(cd, key);
+                    if (!valid) return;
+                    if (isDeleted(valid.id, valid.email)) return;
+                    if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
+                        pendingList.push(valid);
                     }
                 });
             } catch (e) {
@@ -1678,9 +1874,11 @@ class AdminController {
         // 3. Combine with real registered applicants in localStorage
         const localPending = this.getPendingDrivers();
         localPending.forEach(lp => {
-            if (isDeleted(lp.id, lp.email)) return;
-            if (!pendingList.some(p => p.id === lp.id || (lp.email && p.email === lp.email))) {
-                pendingList.push(lp);
+            const valid = parseValidPending(lp, lp.id);
+            if (!valid) return;
+            if (isDeleted(valid.id, valid.email)) return;
+            if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
+                pendingList.push(valid);
             }
         });
 
@@ -1741,6 +1939,54 @@ class AdminController {
     }
 
     async approveDriver(driverId, approved) {
+        const rawId = driverId;
+        driverId = String(driverId || '').trim();
+
+        // Xử lý dứt điểm trường hợp ID rác / vô danh / rỗng / 'undefined' / 'null':
+        if (!driverId || driverId === 'undefined' || driverId === 'null') {
+            console.warn('[Admin] Phê duyệt/từ chối hồ sơ không hợp lệ (Ghost driver):', rawId);
+
+            // 1. Dọn dẹp sạch hồ sơ rác trong localStorage
+            try {
+                let pending = this.getPendingDrivers();
+                pending = pending.filter(d => d && d.id && String(d.id).trim() !== '' && String(d.id).trim() !== 'undefined' && String(d.id).trim() !== 'null' && ((d.name && d.name.trim()) || (d.phone && d.phone.trim()) || (d.email && d.email.trim() && d.email !== '--')));
+                this.savePendingDrivers(pending);
+            } catch (e) {}
+
+            // 2. Xóa các node rác 'undefined' / 'null' trên Firebase Cloud
+            if (window.realtimeSync) {
+                try {
+                    if (window.realtimeSync.isAvailable()) {
+                        window.realtimeSync.db.ref('goride_pending_drivers/undefined').remove();
+                        window.realtimeSync.db.ref('goride_pending_drivers/null').remove();
+                        window.realtimeSync.db.ref('goride_drivers/undefined').remove();
+                        window.realtimeSync.db.ref('goride_drivers/null').remove();
+                        window.realtimeSync.db.ref('goride_users/undefined').remove();
+                        window.realtimeSync.db.ref('goride_users/null').remove();
+                    }
+                    if (typeof window.realtimeSync._restDelete === 'function') {
+                        window.realtimeSync._restDelete('goride_pending_drivers/undefined');
+                        window.realtimeSync._restDelete('goride_pending_drivers/null');
+                        window.realtimeSync._restDelete('goride_drivers/undefined');
+                        window.realtimeSync._restDelete('goride_drivers/null');
+                        window.realtimeSync._restDelete('goride_users/undefined');
+                        window.realtimeSync._restDelete('goride_users/null');
+                    }
+                } catch (e) {}
+            }
+
+            // 3. Xóa ngay thẻ rác trên giao diện nếu đang hiển thị
+            document.querySelectorAll("[id^='approval-'], #driver-approvals .card").forEach(el => {
+                if (el.id === 'approval-' || el.id === 'approval-undefined' || el.id === 'approval-null' || el.innerText.includes('ID: \n') || el.innerText.includes('ID:  ') || (el.innerText.includes('Chờ duyệt') && el.innerText.includes('✉️ -- • 📞 --'))) {
+                    el.remove();
+                }
+            });
+
+            this.showToast('Đã xóa bỏ hoàn toàn hồ sơ tài xế không hợp lệ khỏi hệ thống!', 'info');
+            await this.loadDriverApprovals();
+            return;
+        }
+
         if (this.isProcessingApproval.has(driverId)) return;
         this.isProcessingApproval.add(driverId);
 
@@ -1824,8 +2070,8 @@ class AdminController {
                 this.saveStoredDrivers(drivers);
             }
 
-            // 5. Remove from pending list locally
-            pending = pending.filter(d => d.id !== driverId);
+            // 5. Remove from pending list locally & sanitize
+            pending = pending.filter(d => d && d.id && d.id !== driverId && d.id !== 'undefined' && d.id !== 'null' && ((d.name && d.name.trim()) || (d.phone && d.phone.trim()) || (d.email && d.email.trim() && d.email !== '--')));
             this.savePendingDrivers(pending);
 
             // 6. Synchronize status across Firebase Realtime Cloud
@@ -2077,7 +2323,7 @@ class AdminController {
         const trips = this.getStoredTrips();
         const tripCountMap = new Map();
         trips.forEach(t => {
-            if (t && t.status === 'completed') {
+            if (t && this.isCompletedTrip(t)) {
                 if (t.customerId) tripCountMap.set(t.customerId, (tripCountMap.get(t.customerId) || 0) + 1);
                 if (t.customerPhone) tripCountMap.set(t.customerPhone, (tripCountMap.get(t.customerPhone) || 0) + 1);
                 if (t.customerEmail) tripCountMap.set(t.customerEmail, (tripCountMap.get(t.customerEmail) || 0) + 1);
@@ -2096,48 +2342,48 @@ class AdminController {
 
             return `
                 <tr id="customer-row-${u.id}">
-                    <td style="font-family:monospace; font-weight:700; color:var(--color-gray-600); font-size:0.75rem;">#${this.escapeHtml(u.id || '--')}</td>
+                    <td style="font-family:monospace; font-weight:700; color:var(--color-gray-600); font-size:0.75rem; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="#${this.escapeHtml(u.id || '--')}">#${this.escapeHtml(u.id || '--')}</td>
                     <td>
                         <div style="display:flex; align-items:center; gap:8px;">
                             ${avatarHtml}
-                            <div>
-                                <div style="font-weight:700; color:#0f172a;">${this.escapeHtml(u.name || 'Người dùng')}</div>
-                                <div style="font-size:0.72rem; color:#64748b;">${this.escapeHtml(u.email || '--')}</div>
+                            <div style="min-width:0;">
+                                <div style="font-weight:700; color:#0f172a; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(u.name || 'Người dùng')}">${this.escapeHtml(u.name || 'Người dùng')}</div>
+                                <div style="font-size:0.72rem; color:#64748b; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(u.email || '--')}">${this.escapeHtml(u.email || '--')}</div>
                             </div>
                         </div>
                     </td>
-                    <td style="font-weight:600; font-family:monospace; color:#334155;">${this.escapeHtml(u.phone || '--')}</td>
-                    <td style="font-size:0.8rem; color:#475569;">${this.escapeHtml(u.email || '--')}</td>
+                    <td style="font-weight:600; font-family:monospace; color:#334155; white-space:nowrap;">${this.escapeHtml(u.phone || '--')}</td>
+                    <td style="font-size:0.8rem; color:#475569; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(u.email || '--')}">${this.escapeHtml(u.email || '--')}</td>
                     <td>
-                        <span class="badge ${isAdmin ? 'badge-danger' : 'badge-info'}" style="font-weight:700; font-size:0.72rem; padding:3px 8px;">
+                        <span class="badge ${isAdmin ? 'badge-danger' : 'badge-info'}" style="font-weight:700; font-size:0.72rem; padding:3px 8px; white-space:nowrap;">
                             ${isAdmin ? '👑 Quản trị viên' : '👤 Khách hàng'}
                         </span>
                     </td>
-                    <td style="font-weight:700; color:#0f766e; text-align:center;">${completedCount} chuyến</td>
+                    <td style="font-weight:700; color:#0f766e; text-align:center; white-space:nowrap;">${completedCount} chuyến</td>
                     <td>
-                        <span class="badge ${isLocked ? 'badge-danger' : 'badge-success'}" style="font-size:0.72rem; padding:3px 8px;">
+                        <span class="badge ${isLocked ? 'badge-danger' : 'badge-success'}" style="font-size:0.72rem; padding:3px 8px; white-space:nowrap;">
                             ${isLocked ? '🔒 Đã khóa' : '🟢 Hoạt động'}
                         </span>
                     </td>
-                    <td style="font-size:0.75rem; color:#64748b;">${createdDate}</td>
-                    <td style="text-align:right;">
-                        <div class="table-actions" style="display:flex; gap:6px; justify-content:flex-end;">
+                    <td style="font-size:0.75rem; color:#64748b; white-space:nowrap;">${createdDate}</td>
+                    <td class="td-actions" style="text-align:right;">
+                        <div class="table-actions" style="display:flex; gap:6px; justify-content:flex-end; align-items:center;">
                             <button type="button" class="btn btn-sm ${isAdmin ? 'btn-ghost' : 'btn-primary'}" 
-                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700;"
+                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700; white-space:nowrap;"
                                 onclick="adminController.toggleAdminRole('${u.id}')"
                                 title="${isAdmin ? 'Hạ quyền xuống Khách hàng' : 'Thăng cấp lên Quản trị viên (Admin)'}">
                                 ${isAdmin ? '🔻 Bỏ Admin' : '⭐ Quyền Admin'}
                             </button>
                             <button type="button" class="btn btn-sm ${isLocked ? 'btn-success' : 'btn-ghost'}"
-                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700;"
+                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700; white-space:nowrap;"
                                 onclick="adminController.toggleCustomerLock('${u.id}')"
                                 title="${isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản này'}">
                                 ${isLocked ? '🔓 Mở khóa' : '🔒 Khóa'}
                             </button>
-                            <button type="button" class="btn-action-edit" onclick="adminController.openEditCustomerModal('${u.id}')" title="Sửa thông tin">
+                            <button type="button" class="btn-action-edit" onclick="adminController.openEditCustomerModal('${u.id}')" title="Sửa thông tin" style="flex-shrink:0;">
                                 ✏️
                             </button>
-                            <button type="button" class="btn-action-delete" onclick="adminController.openDeleteModal('customer', '${u.id}')" title="Xóa tài khoản sạch hoàn toàn">
+                            <button type="button" class="btn-action-delete" onclick="adminController.openDeleteModal('customer', '${u.id}')" title="Xóa tài khoản sạch hoàn toàn" style="flex-shrink:0;">
                                 🗑️
                             </button>
                         </div>
@@ -2512,14 +2758,20 @@ class AdminController {
     }
 
     getStatusBadge(status) {
+        const s = String(status || '').toLowerCase().trim();
         const map = {
             'completed': { label: 'Hoàn thành', cls: 'badge-success' },
+            'finished': { label: 'Hoàn thành', cls: 'badge-success' },
+            'finish': { label: 'Hoàn thành', cls: 'badge-success' },
+            'done': { label: 'Hoàn thành', cls: 'badge-success' },
             'in_progress': { label: 'Đang di chuyển', cls: 'badge-primary' },
             'accepted': { label: 'Đã nhận', cls: 'badge-primary' },
             'requested': { label: 'Đang tìm xe', cls: 'badge-warning' },
-            'cancelled': { label: 'Đã hủy', cls: 'badge-danger' }
+            'offered': { label: 'Đang tìm xe', cls: 'badge-warning' },
+            'cancelled': { label: 'Đã hủy', cls: 'badge-danger' },
+            'canceled': { label: 'Đã hủy', cls: 'badge-danger' }
         };
-        return map[status] || { label: status || 'Chờ', cls: 'badge-info' };
+        return map[s] || { label: status || 'Chờ', cls: 'badge-info' };
     }
 
     escapeHtml(str) {

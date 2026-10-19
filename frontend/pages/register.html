@@ -8,8 +8,20 @@
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/responsive.css">
+    <style>
+        /* Strictly hide mobile bottom navigation on register page */
+        .bottom-nav,
+        #mobile-bottom-nav,
+        .mobile-only-flex.bottom-nav,
+        .goride-mobile-nav-bar {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    </style>
 </head>
-<body>
+<body class="auth-page">
     <div class="auth-layout">
         <div class="auth-container">
             <div class="auth-card">

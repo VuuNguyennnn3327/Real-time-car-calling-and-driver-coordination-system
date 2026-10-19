@@ -1073,10 +1073,10 @@ class App {
      * Strictly hidden for Admin and Driver roles, and strictly isolated to the trip's actual owner.
      */
     initActiveTripBanner() {
-        const path = window.location.pathname.toLowerCase();
-        const isCustomerPage = path.endsWith('customer.html');
-        const isDriverPage = path.endsWith('driver.html');
-        const isAdminPage = path.includes('admin.html');
+        const path = (window.location.pathname || '').toLowerCase();
+        const isCustomerPage = path.includes('customer.html') || path.endsWith('/customer') || path.endsWith('/customer.html') || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
+        const isDriverPage = path.includes('driver.html') || path.endsWith('/driver');
+        const isAdminPage = path.includes('admin.html') || path.endsWith('/admin');
         const isPagesDir = path.includes('/pages/');
         const customerUrl = isPagesDir ? 'customer.html' : 'pages/customer.html';
 
@@ -1098,8 +1098,9 @@ class App {
         const updateBanner = () => {
             let container = document.getElementById('goride-floating-active-trip');
 
-            // 1. Never show inside Admin or Driver portals
-            if (isAdminPage || isDriverPage) {
+            // 1. Strictly NEVER show inside Customer booking page, Admin or Driver portals
+            const onCustomerBookingPage = isCustomerPage || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
+            if (onCustomerBookingPage || isAdminPage || isDriverPage) {
                 if (container) container.remove();
                 return;
             }
@@ -1123,13 +1124,7 @@ class App {
                 return;
             }
 
-            // 4. Hide if on customer page and already in tracking view
-            if (isCustomerPage && window.customerAppController && window.customerAppController.currentView === 'tracking') {
-                if (container) container.remove();
-                return;
-            }
-
-            // 5. Check active trip strictly for the current customer (NEVER grab random trips from goride_admin_trips)
+            // 4. Check active trip strictly for the current customer (NEVER grab random trips from goride_admin_trips)
             let activeTrip = null;
             try {
                 const raw = localStorage.getItem('goride_active_trip');
@@ -1328,15 +1323,17 @@ class App {
     initMobileBottomNav() {
         if (typeof document === 'undefined') return;
 
-        const path = window.location.pathname.toLowerCase();
-        const isLogin = path.includes('login.html');
-        const isRegister = path.includes('register.html');
-        if (isLogin || isRegister) {
-            const existingNav = document.getElementById('mobile-bottom-nav') || document.querySelector('.bottom-nav');
-            if (existingNav) {
-                existingNav.style.setProperty('display', 'none', 'important');
-                existingNav.remove();
-            }
+        const path = (window.location.pathname || '').toLowerCase();
+        const href = (window.location.href || '').toLowerCase();
+        const hasAuthElements = !!document.querySelector('.auth-layout, .auth-container, .auth-card, #login-form, #register-form, .auth-page');
+        const isAuthUrl = path.includes('login') || href.includes('login') || path.includes('register') || href.includes('register');
+
+        if (hasAuthElements || isAuthUrl) {
+            const existingNavs = document.querySelectorAll('#mobile-bottom-nav, .bottom-nav, .goride-mobile-nav-bar');
+            existingNavs.forEach(navEl => {
+                navEl.style.setProperty('display', 'none', 'important');
+                navEl.remove();
+            });
             return;
         }
 

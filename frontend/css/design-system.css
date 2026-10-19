@@ -1144,7 +1144,7 @@ fieldset:disabled .btn {
   inset: -2px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-accent);
-  animation: statusPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  animation: statusPulse 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 .status-offline {
@@ -1161,20 +1161,16 @@ fieldset:disabled .btn {
   inset: -2px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-warning);
-  animation: statusPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+  animation: statusPulse 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 @keyframes statusPulse {
   0% {
     transform: scale(0.95);
-    opacity: 0.8;
+    opacity: 0.7;
   }
-  70% {
-    transform: scale(2.2);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(2.2);
+  60%, 100% {
+    transform: scale(1.45);
     opacity: 0;
   }
 }

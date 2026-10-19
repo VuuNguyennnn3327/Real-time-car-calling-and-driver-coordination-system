@@ -72,7 +72,7 @@
         border: 2px solid #ffffff;
       }
 
-      /* Pulsing ring for pins */
+      /* Pulsing ring for pins - calmed to a smooth, non-flickering beacon */
       .rtree-pulse {
         position: absolute;
         bottom: 2px;
@@ -80,22 +80,20 @@
         transform: translateX(-50%);
         width: 14px;
         height: 6px;
-        background: rgba(0, 0, 0, 0.3);
+        background: rgba(0, 0, 0, 0.22);
         border-radius: 50%;
-        animation: rtree-pulse-anim 1.8s infinite;
+        animation: rtree-pulse-anim 3.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        will-change: transform, opacity;
+        pointer-events: none;
       }
 
       @keyframes rtree-pulse-anim {
         0% {
-          transform: translateX(-50%) scale(0.8);
-          opacity: 0.8;
+          transform: translateX(-50%) scale(0.85);
+          opacity: 0.65;
         }
-        70% {
-          transform: translateX(-50%) scale(2.2);
-          opacity: 0;
-        }
-        100% {
-          transform: translateX(-50%) scale(0.8);
+        60%, 100% {
+          transform: translateX(-50%) scale(1.35);
           opacity: 0;
         }
       }
@@ -132,26 +130,28 @@
         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
       }
 
-      /* Active trip driver glowing radar halo */
+      /* Active trip driver glowing radar halo - smooth radiating ripple */
       .rtree-active-driver-halo {
         position: absolute;
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background: rgba(16, 185, 129, 0.2);
-        border: 2px solid rgba(16, 185, 129, 0.65);
-        animation: rtree-active-driver-pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1.5px solid rgba(16, 185, 129, 0.5);
+        animation: rtree-active-driver-pulse 3.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
         pointer-events: none;
         z-index: -1;
+        will-change: transform, opacity;
+        transform: translateZ(0);
       }
 
       @keyframes rtree-active-driver-pulse {
         0% {
-          transform: scale(0.6);
-          opacity: 0.95;
+          transform: scale(0.85);
+          opacity: 0.8;
         }
-        70%, 100% {
-          transform: scale(1.75);
+        65%, 100% {
+          transform: scale(1.4);
           opacity: 0;
         }
       }
@@ -847,7 +847,26 @@
     addPickupMarker(lat, lng, popupContent = 'Điểm đón') {
       if (!this.map) return null;
 
+      const labelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đón');
+      const popupHtml = `
+        <div class="rtree-popup-title" style="color: #10b981;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
+          ${labelText}
+        </div>
+        <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
+      `;
+
+      // Re-use existing marker if already on map: update position and popup smoothly without restarting DOM animation
       if (this.markers.pickup) {
+        try {
+          const curPos = this.markers.pickup.getLatLng();
+          if (Math.abs(curPos.lat - lat) < 0.00001 && Math.abs(curPos.lng - lng) < 0.00001) {
+            return this.markers.pickup;
+          }
+          this.markers.pickup.setLatLng([lat, lng]);
+          this.markers.pickup.setPopupContent(popupHtml);
+          return this.markers.pickup;
+        } catch (e) {}
         this.map.removeLayer(this.markers.pickup);
         this.markers.pickup = null;
       }
@@ -858,15 +877,6 @@
         title: 'Điểm đón',
         riseOnHover: true
       });
-
-      const labelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đón');
-      const popupHtml = `
-        <div class="rtree-popup-title" style="color: #10b981;">
-          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
-          ${labelText}
-        </div>
-        <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
-      `;
 
       marker.bindPopup(popupHtml, { className: 'rtree-popup', closeButton: true });
       marker.addTo(this.map);
@@ -885,7 +895,26 @@
     addDestinationMarker(lat, lng, popupContent = 'Điểm đến') {
       if (!this.map) return null;
 
+      const destLabelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đến');
+      const popupHtml = `
+        <div class="rtree-popup-title" style="color: #ef4444;">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>
+          ${destLabelText}
+        </div>
+        <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
+      `;
+
+      // Re-use existing marker if already on map: update position and popup smoothly without restarting DOM animation
       if (this.markers.destination) {
+        try {
+          const curPos = this.markers.destination.getLatLng();
+          if (Math.abs(curPos.lat - lat) < 0.00001 && Math.abs(curPos.lng - lng) < 0.00001) {
+            return this.markers.destination;
+          }
+          this.markers.destination.setLatLng([lat, lng]);
+          this.markers.destination.setPopupContent(popupHtml);
+          return this.markers.destination;
+        } catch (e) {}
         this.map.removeLayer(this.markers.destination);
         this.markers.destination = null;
       }
@@ -896,15 +925,6 @@
         title: 'Điểm đến',
         riseOnHover: true
       });
-
-      const destLabelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đến');
-      const popupHtml = `
-        <div class="rtree-popup-title" style="color: #ef4444;">
-          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>
-          ${destLabelText}
-        </div>
-        <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
-      `;
 
       marker.bindPopup(popupHtml, { className: 'rtree-popup', closeButton: true });
       marker.addTo(this.map);
@@ -1000,8 +1020,15 @@
         return this.addDriverMarker(driverKey, lat, lng, heading, metadata || {});
       }
 
-      // Update position
-      marker.setLatLng([lat, lng]);
+      // Update position only if changed beyond micro-jitter threshold
+      try {
+        const curLatLng = marker.getLatLng();
+        if (Math.abs(curLatLng.lat - lat) > 0.000005 || Math.abs(curLatLng.lng - lng) > 0.000005) {
+          marker.setLatLng([lat, lng]);
+        }
+      } catch (e) {
+        marker.setLatLng([lat, lng]);
+      }
 
       // Update metadata
       if (metadata) {
