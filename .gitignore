@@ -15,14 +15,9 @@ $RECYCLE.BIN/
 .system_generated/
 scratch/
 *scratch*
-*report*.md
-*REPORT*.md
-*summary*.md
-*ai*.md
-*AI*.md
-*walkthrough*.md
-*task*.md
+*.md
 !README.md
+!readme.md
 
 # Build outputs & C++ binaries
 build/
