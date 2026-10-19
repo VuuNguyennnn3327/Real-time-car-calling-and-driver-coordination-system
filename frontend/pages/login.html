@@ -78,6 +78,11 @@
     </div>
 
     <!-- Core Scripts -->
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../js/core/firebase-config.js"></script>
+    <script src="../js/core/realtime.js"></script>
     <script src="../js/core/api.js"></script>
     <script src="../js/core/session.js"></script>
     <script src="../js/core/router.js"></script>
@@ -147,37 +152,108 @@
                                 result = apiRes.data;
                             }
                         } catch (apiErr) {
-                            const isDemoOrAdmin = ['admin', 'adm_admin', 'admin@demo.com', 'admin@goride.vn', 'customer@demo.com', 'customer@goride.vn', 'driver@demo.com', 'driver@goride.vn'].includes(normInput);
-                            if (!isDemoOrAdmin && (apiErr instanceof ApiError || (apiErr.status !== undefined && apiErr.status > 0))) {
-                                throw new Error(apiErr.message || 'Đăng nhập không thành công.');
+                            // If backend is active and returns an explicit 401 Unauthorized, check offline accounts first
+                            if (apiErr instanceof ApiError && apiErr.status === 401) {
+                                const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                                const hasOffline = offlineUsers.some(u => 
+                                    (u.email && u.email.toLowerCase() === normInput) || 
+                                    (u.phone && u.phone === normInput)
+                                );
+                                if (!hasOffline) {
+                                    throw new Error(apiErr.message || 'Tài khoản hoặc mật khẩu không chính xác.');
+                                }
                             }
-                            console.warn('[GoRide Login] Authenticating via offline demo accounts / local storage:', apiErr.message);
+                            console.warn('[Navigo Login] Backend API unreachable or 404 (static hosting / Vercel), falling back to offline & demo accounts.');
                         }
                     }
 
-                    // 2. Offline / Demo authentication fallback
+                    // 2. Offline / Cloud authentication fallback
                     if (!result) {
-                        // Check local registered offline users first
                         const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-                        const matchedOffline = offlineUsers.find(u => 
+                        let matchedUser = offlineUsers.find(u => 
                             (u.email && u.email.toLowerCase() === normInput) || 
                             (u.name && u.name.toLowerCase() === normInput) ||
                             (u.phone && u.phone === normInput)
                         );
 
-                        if (matchedOffline) {
-                            if (matchedOffline.password && matchedOffline.password !== password) {
+                        // Cross-device Cloud check: If not in local offline users, query Firebase Cloud!
+                        if (!matchedUser && window.realtimeSync && window.realtimeSync.isAvailable()) {
+                            try {
+                                // 1. Check goride_users
+                                const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
+                                const allUsers = uSnap.val() || {};
+                                for (const k of Object.keys(allUsers)) {
+                                    const u = allUsers[k];
+                                    if (u && ((u.email && u.email.toLowerCase() === normInput) || (u.phone && u.phone === normInput) || (u.name && u.name.toLowerCase() === normInput))) {
+                                        matchedUser = u;
+                                        break;
+                                    }
+                                }
+
+                                // 2. Check goride_drivers if not found
+                                if (!matchedUser) {
+                                    const dSnap = await window.realtimeSync.db.ref('goride_drivers').once('value');
+                                    const allDrivers = dSnap.val() || {};
+                                    for (const k of Object.keys(allDrivers)) {
+                                        const d = allDrivers[k];
+                                        if (d && ((d.email && d.email.toLowerCase() === normInput) || (d.phone && d.phone === normInput))) {
+                                            matchedUser = { ...d, role: 'driver' };
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // 3. Check goride_pending_drivers if still not found
+                                if (!matchedUser) {
+                                    const pSnap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                                    const allPending = pSnap.val() || {};
+                                    for (const k of Object.keys(allPending)) {
+                                        const p = allPending[k];
+                                        if (p && ((p.email && p.email.toLowerCase() === normInput) || (p.phone && p.phone === normInput))) {
+                                            matchedUser = { ...p, role: 'driver', status: 'pending' };
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (fbErr) {
+                                console.warn('[Login] Firebase cloud query check warning:', fbErr.message);
+                            }
+                        }
+
+                        if (matchedUser) {
+                            // Check latest driver status from Firebase if applicable
+                            if (matchedUser.role === 'driver' && window.realtimeSync && window.realtimeSync.isAvailable()) {
+                                try {
+                                    const liveDSnap = await window.realtimeSync.db.ref(`goride_drivers/${matchedUser.id}`).once('value');
+                                    const liveD = liveDSnap.val();
+                                    if (liveD && liveD.status) {
+                                        matchedUser.status = liveD.status;
+                                    }
+                                } catch (e) {}
+                            }
+
+                            if (matchedUser.password && matchedUser.password !== password) {
                                 throw new Error('Mật khẩu không chính xác. Vui lòng kiểm tra lại.');
                             }
-                            if (matchedOffline.role === 'driver' && matchedOffline.status === 'pending') {
+                            if (matchedUser.role === 'driver' && matchedUser.status === 'pending') {
                                 throw new Error('Hồ sơ tài xế của bạn đang trong trạng thái CHỜ PHÊ DUYỆT bởi Quản trị viên (Admin). Vui lòng đợi Admin duyệt hồ sơ trước khi đăng nhập.');
                             }
-                            if (matchedOffline.role === 'driver' && matchedOffline.status === 'rejected') {
+                            if (matchedUser.role === 'driver' && matchedUser.status === 'rejected') {
                                 throw new Error('Hồ sơ đăng ký tài xế của bạn đã bị Quản trị viên từ chối.');
                             }
+
+                            // Cache into local offline users for subsequent instant loads
+                            const uIdx = offlineUsers.findIndex(u => u.id === matchedUser.id || (matchedUser.email && u.email === matchedUser.email));
+                            if (uIdx === -1) {
+                                offlineUsers.push(matchedUser);
+                            } else {
+                                offlineUsers[uIdx] = { ...offlineUsers[uIdx], ...matchedUser };
+                            }
+                            localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
+
                             result = {
-                                user: matchedOffline,
-                                token: `offline_token_${matchedOffline.id}_${Date.now()}`
+                                user: matchedUser,
+                                token: `cloud_token_${matchedUser.id}_${Date.now()}`
                             };
                         } else {
                             // Standard baseline & demo accounts (Full admin & user support)
@@ -305,7 +381,15 @@
                         window.location.href = 'customer.html';
                     }
                 } catch (err) {
-                    errorMsg.textContent = err.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+                    let displayMsg = 'Đăng nhập thất bại. Vui lòng thử lại.';
+                    if (typeof err === 'string') {
+                        displayMsg = err;
+                    } else if (err && typeof err.message === 'string' && err.message !== '[object Object]') {
+                        displayMsg = err.message;
+                    } else if (err && err.data) {
+                        displayMsg = typeof err.data.error === 'string' ? err.data.error : (typeof err.data.message === 'string' ? err.data.message : displayMsg);
+                    }
+                    errorMsg.textContent = displayMsg;
                     errorDiv.style.display = 'flex';
                 } finally {
                     btn.disabled = false;

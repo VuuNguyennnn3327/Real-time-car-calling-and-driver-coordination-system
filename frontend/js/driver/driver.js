@@ -454,11 +454,43 @@ class DriverController {
     window.addEventListener('session:update', () => {
       this.loadDriverProfileAndStats();
     });
+
+    // Tự động ngắt trạng thái trực tuyến khi tài xế đóng tab/trình duyệt
+    window.addEventListener('beforeunload', () => {
+      if (this.isOnline) {
+        localStorage.setItem('goride_driver_online_state', '0');
+        if (typeof realtimeSync !== 'undefined' && realtimeSync.isAvailable()) {
+          const user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+          const driverId = user?.id || 'drv_' + (user?.phone || '0901');
+          realtimeSync.setDriverOnline(driverId, false);
+        }
+      }
+    });
   }
 
   async setOnlineStatus(isOnline, showNotification = true) {
     this.isOnline = !!isOnline;
     localStorage.setItem('goride_driver_online_state', this.isOnline ? '1' : '0');
+
+    // Lấy tọa độ GPS thực tế từ thiết bị trước khi phát sóng lên Đám mây
+    if (this.isOnline && navigator.geolocation) {
+      try {
+        await new Promise((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              this.currentPosition.lat = pos.coords.latitude;
+              this.currentPosition.lng = pos.coords.longitude;
+              this.currentPosition.address = `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+              const addrEl = document.getElementById('driver-current-address');
+              if (addrEl) addrEl.textContent = this.currentPosition.address;
+              resolve();
+            },
+            () => resolve(),
+            { timeout: 3500, enableHighAccuracy: true }
+          );
+        });
+      } catch (e) {}
+    }
 
     try {
       if (typeof apiClient !== 'undefined') {

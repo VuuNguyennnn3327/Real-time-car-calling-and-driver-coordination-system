@@ -121,8 +121,20 @@ class ApiClient {
             }
 
             if (!response.ok) {
+                let errorMsg = `HTTP ${response.status}`;
+                if (typeof data === 'string' && data.trim()) {
+                    errorMsg = data.trim();
+                } else if (data && typeof data === 'object') {
+                    if (typeof data.error === 'string') {
+                        errorMsg = data.error;
+                    } else if (typeof data.error?.message === 'string') {
+                        errorMsg = data.error.message;
+                    } else if (typeof data.message === 'string') {
+                        errorMsg = data.message;
+                    }
+                }
                 throw new ApiError(
-                    data?.error || data?.message || `HTTP ${response.status}`,
+                    errorMsg,
                     response.status,
                     data
                 );

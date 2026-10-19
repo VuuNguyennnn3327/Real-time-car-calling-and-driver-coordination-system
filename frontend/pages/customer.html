@@ -12,6 +12,18 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
         /* Customer Portal Local Overrides */
+        /* Strictly suppress mobile bottom navigation on Customer Booking Portal */
+        body.customer-body .bottom-nav,
+        body.customer-body #mobile-bottom-nav,
+        .customer-body .bottom-nav,
+        .customer-body #mobile-bottom-nav {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            opacity: 0 !important;
+        }
+
         .goride-dialog-overlay {
             position: fixed;
             inset: 0;
@@ -140,11 +152,62 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
         }
 
-        /* Mobile viewport: Handled cleanly by bottom navigation bar */
+        /* Completely hide bottom navigation bar on Customer booking portal so it never covers booking action buttons */
+        #mobile-bottom-nav,
+        .bottom-nav,
+        nav.bottom-nav {
+            display: none !important;
+        }
+
+        /* Mobile viewport: Tối ưu nút đặt xe, header và ngăn chặn tràn lề */
         @media (max-width: 767px) {
-            #btn-desktop-history,
+            html, body {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+            }
+            .goride-desktop-customer-header {
+                padding: 8px 12px !important;
+                gap: 6px !important;
+            }
+            .goride-customer-header-right {
+                gap: 6px !important;
+            }
+            .goride-customer-brand {
+                font-size: 1.1rem !important;
+            }
+            #btn-desktop-history {
+                display: inline-flex !important;
+                padding: 6px 10px !important;
+                font-size: 0.78rem !important;
+            }
             #customer-profile-btn {
+                display: inline-flex !important;
+                padding: 6px 10px !important;
+                font-size: 0.78rem !important;
+            }
+            .goride-header-home-btn {
+                padding: 6px 10px !important;
+                font-size: 0.78rem !important;
+            }
+            .goride-customer-sidebar {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px) !important;
+            }
+            .goride-vehicle-sheet {
+                padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 24px) !important;
+            }
+            .goride-btn-solicitar {
+                margin-bottom: 12px !important;
+                position: relative !important;
+                z-index: 10 !important;
+            }
+        }
+        @media (max-width: 400px) {
+            #btn-desktop-history .btn-history-text,
+            .goride-header-home-btn span:last-child {
                 display: none !important;
+            }
+            #btn-desktop-history, #customer-profile-btn, .goride-header-home-btn {
+                padding: 5px 8px !important;
             }
         }
     </style>
@@ -315,33 +378,52 @@
                 <!-- VIEW 3: VEHICLE SELECTION & ROUTE PREVIEW (ref-04)             -->
                 <!-- ============================================================== -->
                 <div class="goride-view-layer" id="view-vehicle-select">
-                    <!-- Top Route Summary Bar (ref-04) -->
+                    <!-- Top Route Summary Bar (ref-04: 2-tier layout preventing address overlap) -->
                     <div class="goride-route-summary-bar">
-                        <button type="button" class="goride-back-btn" id="btn-back-to-pickup" title="Quay lại chọn lộ trình">
-                            ←
-                        </button>
-                        <div class="goride-route-stops-summary">
-                            <div class="goride-stop-pill">
-                                <span style="color:#0288d1;">●</span>
-                                <span id="route-sum-pickup">Điểm đón</span>
+                        <div class="goride-route-summary-main-row">
+                            <button type="button" class="goride-back-btn" id="btn-back-to-pickup" title="Quay lại chọn lộ trình">
+                                ←
+                            </button>
+                            <div class="goride-route-stops-summary">
+                                <div class="goride-stop-pill">
+                                    <span class="goride-stop-dot" style="color:#0288d1;">●</span>
+                                    <span id="route-sum-pickup" class="goride-stop-text">Điểm đón</span>
+                                </div>
+                                <div class="goride-stop-pill">
+                                    <span class="goride-stop-dot" style="color:#ef4444;">■</span>
+                                    <strong id="route-sum-dest" class="goride-stop-text">Điểm đến</strong>
+                                </div>
                             </div>
-                            <div class="goride-stop-pill">
-                                <span style="color:#ef4444;">■</span>
-                                <strong id="route-sum-dest">Điểm đến</strong>
+                            <button type="button" class="goride-change-route-btn" id="btn-change-route" title="Thay đổi điểm đón hoặc điểm đến">
+                                Thay đổi
+                            </button>
+                        </div>
+                        <div class="goride-route-summary-sub-row" id="route-summary-sub-row">
+                            <div id="route-distance-pill" class="goride-route-distance-pill" style="display:none;" title="Cự ly tính toán thực tế">
+                                <span>🛣️</span>
+                                <span id="route-distance-value">0.0 km</span>
+                            </div>
+                            <div class="goride-route-badge-live" id="route-badge-live">
+                                <span>⚡ Tuyến đường tối ưu</span>
                             </div>
                         </div>
-                        <div id="route-distance-pill" class="goride-route-distance-pill" style="display:none;" title="Cự ly tính toán thực tế">
-                            <span>🛣️</span>
-                            <span id="route-distance-value">0.0 km</span>
-                        </div>
-                        <button type="button" class="goride-change-route-btn" id="btn-change-route">
-                            Thay đổi
-                        </button>
                     </div>
 
-                    <!-- Sheet: Vehicle Selection List (ref-04) -->
-                    <div class="goride-vehicle-sheet">
-                        <div class="goride-sheet-handle"></div>
+                    <!-- Sheet: Vehicle Selection List (ref-04: Draggable & Collapsible to view map) -->
+                    <div class="goride-vehicle-sheet" id="goride-vehicle-sheet">
+                        <div class="goride-sheet-drag-handle-zone" id="goride-sheet-handle-zone" title="Kéo hoặc chạm để thu gọn / mở rộng">
+                            <div class="goride-sheet-handle"></div>
+                            <div class="goride-sheet-peek-bar" id="goride-sheet-peek-bar">
+                                <div class="goride-sheet-peek-info">
+                                    <span class="goride-sheet-peek-icon" id="goride-sheet-peek-icon">🚗</span>
+                                    <span class="goride-sheet-peek-title" id="goride-sheet-peek-title">Chọn loại xe &amp; Giá cước</span>
+                                </div>
+                                <div class="goride-sheet-peek-toggle" id="goride-sheet-peek-toggle">
+                                    <span class="goride-sheet-peek-hint" id="goride-sheet-peek-hint">Vuốt xuống để xem bản đồ</span>
+                                    <span class="goride-sheet-peek-chevron" id="goride-sheet-peek-chevron">▼</span>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Vehicle Choices List -->
                         <div class="goride-vehicle-list" id="vehicle-options-container">
@@ -531,9 +613,6 @@
 
         <!-- Toast Notifications -->
         <div class="toast-container" id="toast-container"></div>
-
-        <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
-        <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav"></nav>
     </div>
 
     <!-- Scripts -->

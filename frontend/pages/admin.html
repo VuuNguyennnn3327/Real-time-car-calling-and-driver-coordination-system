@@ -451,6 +451,149 @@
             background: #fecdd3;
             color: #be123c;
         }
+
+        /* Spatial Map Header System (Responsive & Anti-Squish) */
+        .admin-spatial-map-header {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .admin-spatial-map-title-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            width: 100%;
+        }
+        .admin-spatial-map-title {
+            margin: 0;
+            font-size: 1.08rem;
+            font-weight: 800;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .admin-map-badge {
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            padding: 3px 10px !important;
+            border-radius: 9999px !important;
+            white-space: nowrap !important;
+            flex-shrink: 0 !important;
+        }
+        .admin-spatial-map-sub-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            width: 100%;
+        }
+        .admin-spatial-map-sub-text {
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+        .admin-spatial-map-btn {
+            font-size: 0.78rem !important;
+            font-weight: 700 !important;
+            padding: 4px 12px !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            background: #ffffff !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+            flex-shrink: 0 !important;
+            transition: all 0.2s !important;
+        }
+        .admin-spatial-map-btn:hover {
+            border-color: #0288d1 !important;
+            color: #0288d1 !important;
+            background: #f0f9ff !important;
+        }
+
+        /* Mobile Layout & Anti-Overflow Protection for Admin */
+        @media (max-width: 640px) {
+            .app-header {
+                padding: 0 12px !important;
+                height: 52px !important;
+            }
+            .header-brand {
+                font-size: 1.1rem !important;
+            }
+            .app-header .badge-danger {
+                font-size: 0.68rem !important;
+                padding: 2px 6px !important;
+            }
+            #tab-dashboard,
+            #tab-recent-trips,
+            #tab-trips,
+            #tab-drivers {
+                padding: 12px 10px !important;
+            }
+            .page-header {
+                margin-bottom: 12px !important;
+            }
+            .page-header h2 {
+                font-size: 1.18rem !important;
+            }
+            .page-header p {
+                font-size: 0.78rem !important;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px !important;
+            }
+            .stat-card {
+                padding: 10px 12px !important;
+                gap: 4px !important;
+                border-radius: 12px !important;
+            }
+            .stat-card-icon {
+                width: 2rem !important;
+                height: 2rem !important;
+                font-size: 1.1rem !important;
+            }
+            .stat-card-value {
+                font-size: 1.25rem !important;
+                font-weight: 800 !important;
+                margin: 2px 0 !important;
+            }
+            .stat-card-label {
+                font-size: 0.74rem !important;
+            }
+            .stat-card-trend {
+                font-size: 0.68rem !important;
+            }
+            .admin-spatial-map-title {
+                font-size: 0.96rem !important;
+            }
+            .admin-map-canvas {
+                height: 330px !important;
+            }
+            .admin-filters {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 10px 12px !important;
+                gap: 8px !important;
+            }
+            .admin-filters input,
+            .admin-filters select {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .data-table-responsive {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                border-radius: 10px !important;
+            }
+            .admin-table th, .admin-table td {
+                padding: 8px 10px !important;
+                font-size: 0.76rem !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -590,20 +733,20 @@
 
                     <!-- Operational Map Section -->
                     <div class="dashboard-section" style="margin-top:var(--space-4);">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
-                            <div style="display:flex; align-items:center; gap:10px;">
-                                <h3 style="margin:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        <div class="admin-spatial-map-header">
+                            <div class="admin-spatial-map-title-row">
+                                <h3 class="admin-spatial-map-title">
                                     <span>🗺️</span>
-                                    <span>Bản đồ giám sát không gian (Spatial Map)</span>
+                                    <span>Bản đồ giám sát Spatial Map</span>
                                 </h3>
-                                <span id="admin-map-online-badge" class="badge badge-secondary" style="font-size:0.75rem; font-weight:700; padding:4px 10px;">⚪ Đang quét tài xế...</span>
+                                <span id="admin-map-online-badge" class="badge badge-secondary admin-map-badge">⚪ Đang quét xe...</span>
                             </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <button class="btn btn-sm btn-ghost" id="admin-map-locate-btn" onclick="adminController.focusOnOnlineDrivers()" style="font-size:0.8rem; font-weight:600; padding:5px 12px; border:1px solid var(--color-gray-300); border-radius:8px; background:#ffffff;">🎯 Định vị tài xế</button>
-                                <span style="font-size:0.8rem; color:var(--color-gray-500);">TP. Hồ Chí Minh &bull; Tọa độ GPS thời gian thực</span>
+                            <div class="admin-spatial-map-sub-row">
+                                <span class="admin-spatial-map-sub-text">📍 TP. Hồ Chí Minh &bull; GPS thực</span>
+                                <button class="btn btn-sm btn-ghost admin-spatial-map-btn" id="admin-map-locate-btn" onclick="adminController.focusOnOnlineDrivers()">🎯 Định vị xe</button>
                             </div>
                         </div>
-                        <div id="admin-map" style="height:440px; width:100%; border-radius:14px; border:1px solid var(--color-gray-200); overflow:hidden; position:relative; z-index:1; box-shadow:0 4px 12px rgba(0,0,0,0.04);"></div>
+                        <div id="admin-map" class="admin-map-canvas" style="height:420px; width:100%; border-radius:14px; border:1px solid var(--color-gray-200); overflow:hidden; position:relative; z-index:1; box-shadow:0 4px 12px rgba(0,0,0,0.04);"></div>
                     </div>
                 </div>
 
@@ -637,7 +780,7 @@
                     </div>
 
                     <!-- Recent Trips Data Table -->
-                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
+                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; box-shadow:0 2px 8px rgba(0,0,0,0.04);">
                         <table class="data-table admin-table" id="recent-trips-table">
                             <thead>
                                 <tr>
@@ -686,7 +829,7 @@
                     </div>
 
                     <!-- Trips Data Table -->
-                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow:hidden;">
+                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch;">
                         <table class="data-table admin-table">
                             <thead>
                                 <tr>
@@ -741,7 +884,7 @@
                             <h3 style="margin:0; font-size:1.1rem;">Danh sách tài xế hệ thống</h3>
                             <span style="font-size:0.82rem; color:var(--color-gray-500);" id="registered-drivers-count">Tổng cộng: 0 tài xế</span>
                         </div>
-                        <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow:hidden;">
+                        <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch;">
                             <table class="data-table admin-table">
                                 <thead>
                                     <tr>

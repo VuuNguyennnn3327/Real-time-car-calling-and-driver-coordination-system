@@ -3313,7 +3313,7 @@
    16. VEHICLE SELECTION BOTTOM SHEET (.goride-vehicle-sheet) (ref-04)
    ========================================================================== */
 
-/* Route Summary Floating Top Pill (ref-04) */
+/* Route Summary Floating Top Card (ref-04: 2-tier layout preventing address overlap) */
 .goride-route-summary-bar {
   position: absolute;
   top: 14px;
@@ -3322,12 +3322,20 @@
   z-index: 1000;
   background: #ffffff;
   border-radius: 18px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.16);
   padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.goride-route-summary-main-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
 }
 
 .goride-route-stops-summary {
@@ -3342,15 +3350,68 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #334155;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
-.goride-stop-pill strong {
+.goride-stop-pill .goride-stop-dot {
+  font-size: 0.75rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.goride-stop-pill .goride-stop-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+.goride-stop-pill strong.goride-stop-text {
   color: #0f172a;
+  font-weight: 700;
+}
+
+.goride-route-summary-sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+  width: 100%;
+}
+
+.goride-route-distance-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.goride-route-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0fdfa;
+  color: #0d9488;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .goride-change-route-btn {
@@ -3380,7 +3441,7 @@
   transform: scale(0.94);
 }
 
-/* Vehicle Selection Bottom Sheet (ref-04) */
+/* Vehicle Selection Bottom Sheet (ref-04: Draggable & Collapsible) */
 .goride-vehicle-sheet {
   position: absolute;
   bottom: 0;
@@ -3390,19 +3451,78 @@
   background: #ffffff;
   border-radius: 24px 24px 0 0;
   box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.16);
-  padding: 12px 18px 24px;
+  padding: 8px 18px 24px;
   display: flex;
   flex-direction: column;
   max-height: 58vh;
   overflow-y: auto;
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.goride-sheet-drag-handle-zone {
+  width: 100%;
+  padding: 6px 12px 10px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border-radius: 22px 22px 0 0;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 10px;
 }
 
 .goride-sheet-handle {
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
+  width: 44px;
+  height: 5px;
+  border-radius: 9999px;
   background: #cbd5e1;
-  margin: 0 auto 12px;
+  transition: background-color 0.2s ease, width 0.2s ease;
+}
+
+.goride-sheet-drag-handle-zone:hover .goride-sheet-handle,
+.goride-sheet-drag-handle-zone:active .goride-sheet-handle {
+  background: #94a3b8;
+  width: 52px;
+}
+
+.goride-sheet-peek-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.goride-sheet-peek-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.goride-sheet-peek-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: #0d9488;
+  font-weight: 600;
+  background: #f0fdfa;
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid #ccfbf1;
+}
+
+.goride-vehicle-sheet.is-collapsed {
+  transform: translateY(calc(100% - 66px)) !important;
+  overflow: hidden !important;
 }
 
 .goride-surge-banner,
@@ -4488,7 +4608,7 @@
   .goride-vehicle-sheet,
   .goride-driver-sheet {
     position: fixed;
-    bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+    bottom: 0 !important;
     left: 0;
     right: 0;
     z-index: 100;
@@ -4503,17 +4623,24 @@
 
   .goride-confirm-pickup-sheet {
     max-height: 48vh;
-    padding: 16px 18px 24px;
+    padding: 16px 18px calc(24px + env(safe-area-inset-bottom, 12px));
   }
 
   .goride-vehicle-sheet {
-    max-height: 52vh;
-    padding: 12px 16px 20px;
+    max-height: calc(64vh + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px 16px calc(24px + env(safe-area-inset-bottom, 12px)) !important;
+    transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  .goride-vehicle-sheet.is-collapsed {
+    transform: translateY(calc(100% - 66px)) !important;
+    overflow: hidden !important;
+    padding-bottom: 12px !important;
   }
 
   .goride-driver-sheet {
     max-height: 50vh;
-    padding: 14px 16px 20px;
+    padding: 14px 16px calc(24px + env(safe-area-inset-bottom, 12px));
     gap: 10px;
   }
 
@@ -4540,9 +4667,14 @@
   /* FAB Stack positioning above bottom sheets on mobile */
   .goride-map-fab-stack {
     position: fixed;
-    bottom: calc(52vh + 16px);
+    bottom: calc(54vh + 14px);
     right: 14px;
     z-index: 105;
+    transition: bottom 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .goride-customer-app.vehicle-sheet-collapsed .goride-map-fab-stack {
+    bottom: 84px !important;
   }
 }
 
@@ -5448,5 +5580,26 @@ a, a:hover, a:focus, a:active,
     width: calc(100% - 24px) !important;
   }
 }
+
+/* ==========================================================================
+   26. STRICT MOBILE BOTTOM NAVIGATION ELIMINATION ON CUSTOMER PORTAL
+   ========================================================================== */
+body.customer-body .bottom-nav,
+body.customer-body #mobile-bottom-nav,
+.customer-body .bottom-nav,
+.customer-body #mobile-bottom-nav,
+[data-page="customer"] .bottom-nav,
+[data-page="customer"] #mobile-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 
 

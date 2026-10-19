@@ -224,6 +224,16 @@ function purgeAllMockTrips() {
  * @param {number} [duration=3500] - Duration in ms before auto-dismiss
  */
 function showToast(message, type = 'info', duration = 3500) {
+    if (message && typeof message === 'object') {
+        message = message.message || message.error?.message || message.error || JSON.stringify(message);
+    }
+    if (typeof message !== 'string') {
+        message = String(message || '');
+    }
+    if (message === '[object Object]') {
+        message = 'Đã xảy ra lỗi kết nối hoặc xử lý. Vui lòng thử lại.';
+    }
+
     let container = document.getElementById('toast-container');
     if (!container) {
         container = document.createElement('div');
@@ -1161,9 +1171,13 @@ class App {
         const path = window.location.pathname.toLowerCase();
         const isLogin = path.includes('login.html');
         const isRegister = path.includes('register.html');
-        if (isLogin || isRegister) {
-            const existingNav = document.getElementById('mobile-bottom-nav');
-            if (existingNav) existingNav.style.display = 'none';
+        const isCustomer = path.includes('customer') || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
+        if (isLogin || isRegister || isCustomer) {
+            const existingNav = document.getElementById('mobile-bottom-nav') || document.querySelector('.bottom-nav');
+            if (existingNav) {
+                existingNav.style.setProperty('display', 'none', 'important');
+                existingNav.remove();
+            }
             return;
         }
 

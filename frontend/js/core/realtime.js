@@ -273,7 +273,9 @@ class RealtimeSyncManager {
      * @param {number} heading - Góc xoay xe (0 - 360 độ)
      */
     async updateDriverLocation(tripId, driverId, lat, lng, heading = 0) {
-        const loc = { lat: Number(lat), lng: Number(lng), heading: Number(heading), updatedAt: Date.now() };
+        const numLat = Number(lat);
+        const numLng = Number(lng);
+        const loc = { lat: numLat, lng: numLng, heading: Number(heading), updatedAt: Date.now() };
 
         if (this.isAvailable()) {
             try {
@@ -281,19 +283,37 @@ class RealtimeSyncManager {
                     this.db.ref(`goride_trips/${tripId}/driverLocation`).set(loc);
                 }
                 if (driverId) {
-                    this.db.ref(`goride_drivers/${driverId}/location`).set(loc);
+                    this.db.ref(`goride_drivers/${driverId}`).update({
+                        lat: numLat,
+                        lng: numLng,
+                        location: loc,
+                        updatedAt: new Date().toISOString()
+                    });
                 }
             } catch (err) {}
         }
 
         // LocalStorage broadcast
+        if (driverId) {
+            try {
+                const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+                if (onlineDrivers[driverId]) {
+                    onlineDrivers[driverId].lat = numLat;
+                    onlineDrivers[driverId].lng = numLng;
+                    onlineDrivers[driverId].location = loc;
+                    onlineDrivers[driverId].updatedAt = new Date().toISOString();
+                    localStorage.setItem('goride_online_drivers', JSON.stringify(onlineDrivers));
+                }
+            } catch (e) {}
+        }
+
         if (tripId) {
             try {
                 const active = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
                 if (active && active.id === tripId) {
                     active.driverLocation = loc;
-                    active.driverLat = lat;
-                    active.driverLng = lng;
+                    active.driverLat = numLat;
+                    active.driverLng = numLng;
                     localStorage.setItem('goride_active_trip', JSON.stringify(active));
                 }
             } catch (e) {}
@@ -343,10 +363,22 @@ class RealtimeSyncManager {
 
         if (this.isAvailable()) {
             try {
+                const driverRef = this.db.ref(`goride_drivers/${driverId}`);
                 if (isOnline) {
-                    await this.db.ref(`goride_drivers/${driverId}`).set(payload);
+                    await driverRef.set(payload);
+                    // Hook tự động ngắt kết nối khi tài xế tắt trình duyệt/tab:
+                    driverRef.onDisconnect().update({
+                        isOnline: false,
+                        status: 'offline',
+                        updatedAt: new Date().toISOString()
+                    });
                 } else {
-                    await this.db.ref(`goride_drivers/${driverId}`).update({ isOnline: false, status: 'offline' });
+                    driverRef.onDisconnect().cancel();
+                    await driverRef.update({
+                        isOnline: false,
+                        status: 'offline',
+                        updatedAt: new Date().toISOString()
+                    });
                 }
             } catch (err) {}
         }
@@ -365,14 +397,29 @@ class RealtimeSyncManager {
 
     /**
      * 8. Lắng nghe danh sách tất cả tài xế đang trực tuyến (cho Customer & Admin)
+     * Có bộ lọc TTL (2 phút): Chỉ trả về tài xế thực sự đang hoạt động, loại bỏ ghost driver.
      * @param {Function} callback 
      */
     listenOnlineDrivers(callback) {
+        const isLiveDriver = (d) => {
+            if (!d || d.isOnline !== true) return false;
+            const lastTime = d.location?.updatedAt || (d.updatedAt ? new Date(d.updatedAt).getTime() : 0);
+            // Nếu quá 2 phút không gửi tín hiệu thì coi như đã ngoại tuyến
+            if (lastTime && (Date.now() - lastTime > 120000)) return false;
+            return true;
+        };
+
+        const formatDriver = (d) => {
+            const lat = Number(d.location?.lat !== undefined ? d.location.lat : d.lat);
+            const lng = Number(d.location?.lng !== undefined ? d.location.lng : d.lng);
+            return { ...d, lat, lng };
+        };
+
         if (this.isAvailable()) {
             const driversRef = this.db.ref('goride_drivers');
             const handler = (snapshot) => {
                 const data = snapshot.val() || {};
-                const onlineList = Object.values(data).filter(d => d && d.isOnline);
+                const onlineList = Object.values(data).filter(isLiveDriver).map(formatDriver);
                 callback(onlineList);
             };
             driversRef.on('value', handler);
@@ -384,12 +431,37 @@ class RealtimeSyncManager {
             if (e.key === 'goride_online_drivers') {
                 try {
                     const data = JSON.parse(e.newValue || '{}');
-                    callback(Object.values(data).filter(d => d && d.isOnline));
+                    const list = Object.values(data).filter(isLiveDriver).map(formatDriver);
+                    callback(list);
                 } catch (e) {}
             }
         };
         window.addEventListener('storage', storageHandler);
         return () => window.removeEventListener('storage', storageHandler);
+    }
+
+    /**
+     * 9. Dọn dẹp các tài xế ma (stale ghost drivers) trên Firebase Realtime Database
+     */
+    async cleanStaleDrivers() {
+        if (!this.isAvailable()) return;
+        try {
+            const snap = await this.db.ref('goride_drivers').once('value');
+            const data = snap.val() || {};
+            const now = Date.now();
+            Object.entries(data).forEach(([key, driver]) => {
+                if (!driver) return;
+                const lastTime = driver.location?.updatedAt || (driver.updatedAt ? new Date(driver.updatedAt).getTime() : 0);
+                if (driver.isOnline && (!lastTime || (now - lastTime > 120000))) {
+                    this.db.ref(`goride_drivers/${key}`).update({
+                        isOnline: false,
+                        status: 'offline',
+                        updatedAt: new Date().toISOString()
+                    });
+                    console.log(`[RealtimeSync] Đã chuyển tài xế ma sang ngoại tuyến: ${driver.name || key}`);
+                }
+            });
+        } catch (e) {}
     }
 
     /* ==========================================================================

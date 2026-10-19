@@ -479,6 +479,9 @@ class CustomerAppController {
             }
         } else if (viewName === 'vehicle-select') {
             this.renderRouteOnMap();
+            if (typeof this.expandVehicleSheet === 'function') {
+                this.expandVehicleSheet();
+            }
         }
 
         if (typeof this.updatePersistentBanner === 'function') {
@@ -1017,6 +1020,178 @@ class CustomerAppController {
                 if (mAdmin) mAdmin.style.display = 'none';
             }
         } catch (e) {}
+
+        // Initialize draggable & collapsible bottom sheet for vehicle selection
+        this.setupVehicleSheetDrag();
+    }
+
+    /**
+     * Interactive draggable & collapsible bottom sheet for vehicle selection
+     * Allows user to pull/drag down or tap handle to view map freely,
+     * and pull/drag up or tap handle to expand and choose vehicle / book ride.
+     */
+    setupVehicleSheetDrag() {
+        const sheet = document.getElementById('goride-vehicle-sheet') || document.querySelector('.goride-vehicle-sheet');
+        const handleZone = document.getElementById('goride-sheet-handle-zone') || sheet?.querySelector('.goride-sheet-drag-handle-zone') || sheet?.querySelector('.goride-sheet-handle');
+        const appContainer = document.getElementById('customer-app') || document.body;
+        if (!sheet || !handleZone) return;
+
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let hasMoved = false;
+        let isCollapsed = false;
+
+        const updatePeekUI = () => {
+            const peekTitle = document.getElementById('goride-sheet-peek-title');
+            const peekIcon = document.getElementById('goride-sheet-peek-icon');
+            const peekHint = document.getElementById('goride-sheet-peek-hint');
+            const peekChevron = document.getElementById('goride-sheet-peek-chevron');
+
+            const currentVehicle = this.vehicleCatalog[this.selectedService] || this.vehicleCatalog.car4;
+            const fare = this.selectedVehicleFare || this.selectedOriginalFare || 45000;
+
+            if (peekTitle && currentVehicle) {
+                peekTitle.textContent = `${currentVehicle.name} • ${this.formatMoney(fare)}`;
+            }
+            if (peekIcon && currentVehicle) {
+                peekIcon.textContent = currentVehicle.icon || '🚗';
+            }
+            if (peekHint) {
+                peekHint.textContent = isCollapsed ? 'Vuốt lên để chọn xe & đặt chuyến' : 'Vuốt xuống để xem bản đồ';
+            }
+            if (peekChevron) {
+                peekChevron.textContent = isCollapsed ? '▲' : '▼';
+            }
+
+            if (isCollapsed) {
+                sheet.classList.add('is-collapsed');
+                appContainer.classList.add('vehicle-sheet-collapsed');
+            } else {
+                sheet.classList.remove('is-collapsed');
+                appContainer.classList.remove('vehicle-sheet-collapsed');
+            }
+        };
+
+        const setCollapsed = (collapsed) => {
+            isCollapsed = collapsed;
+            sheet.style.transition = 'transform 0.32s cubic-bezier(0.16, 1, 0.3, 1)';
+            sheet.style.transform = '';
+            updatePeekUI();
+
+            // Invalidate Leaflet map size so it centers smoothly
+            if (this.mapController && this.mapController.map) {
+                setTimeout(() => {
+                    this.mapController.map.invalidateSize({ animate: false });
+                }, 320);
+            }
+        };
+
+        // Touch drag handlers
+        handleZone.addEventListener('touchstart', (e) => {
+            if (e.touches.length !== 1) return;
+            startY = e.touches[0].clientY;
+            currentY = startY;
+            isDragging = true;
+            hasMoved = false;
+            sheet.style.transition = 'none';
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isDragging || e.touches.length !== 1) return;
+            currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+
+            if (Math.abs(deltaY) > 8) {
+                hasMoved = true;
+            }
+
+            if (!isCollapsed) {
+                // Expanded -> pulling down
+                if (deltaY > 0) {
+                    sheet.style.transform = `translateY(${deltaY}px)`;
+                } else {
+                    sheet.style.transform = `translateY(${deltaY * 0.25}px)`;
+                }
+            } else {
+                // Collapsed -> pulling up
+                if (deltaY < 0) {
+                    sheet.style.transform = `translateY(calc(100% - 66px + ${deltaY}px))`;
+                } else {
+                    sheet.style.transform = `translateY(calc(100% - 66px + ${deltaY * 0.25}px))`;
+                }
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            const deltaY = currentY - startY;
+
+            if (!isCollapsed) {
+                if (deltaY > 50) {
+                    setCollapsed(true);
+                } else {
+                    setCollapsed(false);
+                }
+            } else {
+                if (deltaY < -50) {
+                    setCollapsed(false);
+                } else {
+                    setCollapsed(true);
+                }
+            }
+        });
+
+        // Mouse drag support for desktop/testing
+        let isMouseDown = false;
+        handleZone.addEventListener('mousedown', (e) => {
+            startY = e.clientY;
+            currentY = startY;
+            isMouseDown = true;
+            hasMoved = false;
+            sheet.style.transition = 'none';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isMouseDown) return;
+            currentY = e.clientY;
+            const deltaY = currentY - startY;
+            if (Math.abs(deltaY) > 8) {
+                hasMoved = true;
+            }
+            if (!isCollapsed) {
+                if (deltaY > 0) sheet.style.transform = `translateY(${deltaY}px)`;
+            } else {
+                if (deltaY < 0) sheet.style.transform = `translateY(calc(100% - 66px + ${deltaY}px))`;
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!isMouseDown) return;
+            isMouseDown = false;
+            const deltaY = currentY - startY;
+            if (!isCollapsed) {
+                if (deltaY > 50) setCollapsed(true);
+                else setCollapsed(false);
+            } else {
+                if (deltaY < -50) setCollapsed(false);
+                else setCollapsed(true);
+            }
+        });
+
+        // Click / Tap toggle on handle zone
+        handleZone.addEventListener('click', () => {
+            if (hasMoved) return;
+            setCollapsed(!isCollapsed);
+        });
+
+        this.collapseVehicleSheet = () => setCollapsed(true);
+        this.expandVehicleSheet = () => setCollapsed(false);
+        this.updateVehicleSheetPeek = updatePeekUI;
+
+        // Initial UI update
+        updatePeekUI();
     }
 
     /**
@@ -1160,7 +1335,10 @@ class CustomerAppController {
             if (clearPickupBtn) clearPickupBtn.style.display = 'flex';
 
             const pSum = document.getElementById('route-sum-pickup');
-            if (pSum) pSum.textContent = location.name;
+            if (pSum) {
+                pSum.textContent = location.name;
+                pSum.title = location.address || location.name;
+            }
 
             // Reset calculated route
             this.currentRouteDistance = null;
@@ -1207,8 +1385,14 @@ class CustomerAppController {
         // Update summary texts in vehicle select view (ref-04)
         const pSum = document.getElementById('route-sum-pickup');
         const dSum = document.getElementById('route-sum-dest');
-        if (pSum) pSum.textContent = this.pickup ? this.pickup.name : 'Chưa chọn điểm đón';
-        if (dSum) dSum.textContent = this.destination.name;
+        if (pSum) {
+            pSum.textContent = this.pickup ? this.pickup.name : 'Chưa chọn điểm đón';
+            pSum.title = this.pickup ? (this.pickup.address || this.pickup.name) : '';
+        }
+        if (dSum) {
+            dSum.textContent = this.destination.name;
+            dSum.title = this.destination.address || this.destination.name;
+        }
 
         // If pickup not chosen yet, prompt user to select pickup
         if (!this.pickup) {
@@ -1368,6 +1552,9 @@ class CustomerAppController {
             } else {
                 btnText.textContent = `Đặt ${vehicle.name} • ${this.formatMoney(discountedFare || originalFare)}`;
             }
+        }
+        if (typeof this.updateVehicleSheetPeek === 'function') {
+            this.updateVehicleSheetPeek();
         }
     }
 
@@ -2500,8 +2687,10 @@ class CustomerAppController {
                                     (t.licensePlate && d.plate === t.licensePlate)
                                 );
                                 if (dEntry) {
-                                    if (typeof dEntry.lat === 'number') currentTrip.driverLat = dEntry.lat;
-                                    if (typeof dEntry.lng === 'number') currentTrip.driverLon = dEntry.lng;
+                                    const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
+                                    const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
+                                    if (!isNaN(dLat)) currentTrip.driverLat = dLat;
+                                    if (!isNaN(dLng)) currentTrip.driverLon = dLng;
                                     if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
                                 }
                             } catch (e) {}

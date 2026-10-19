@@ -30,6 +30,11 @@ class AdminController {
             purgeAllMockTrips();
         }
 
+        // Clean any stale / ghost drivers in Firebase Realtime Database immediately
+        if (window.realtimeSync && typeof window.realtimeSync.cleanStaleDrivers === 'function') {
+            window.realtimeSync.cleanStaleDrivers();
+        }
+
         // 1. Sync token with apiClient
         if (typeof sessionManager !== 'undefined' && sessionManager && sessionManager.getToken()) {
             if (typeof apiClient !== 'undefined' && apiClient) {
@@ -87,33 +92,41 @@ class AdminController {
 
     getStoredDrivers() {
         try {
-            const drivers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.DRIVERS));
-            if (Array.isArray(drivers)) return drivers;
+            let drivers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.DRIVERS));
+            if (!Array.isArray(drivers)) drivers = [];
 
             // Sync from registered offline users with role === 'driver' and approved/active
             const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
-            const realDrivers = users.filter(u => u.role === 'driver' && u.status === 'active').map(u => {
-                const vType = u.vehicle?.type || u.vehicleType || 'motorbike';
-                let vLabel = 'Ô tô 4 chỗ (Navigo Car)';
-                if (vType === 'bike' || vType === 'motorbike') vLabel = 'Xe máy (Navigo Bike)';
-                else if (vType === 'car7') vLabel = 'Ô tô 7 chỗ (Navigo XL)';
-                else if (vType === 'premium') vLabel = 'Xe sang (Navigo Plus)';
-                return {
-                    id: u.id,
-                    name: u.name,
-                    email: u.email,
-                    phone: u.phone,
-                    vehicleType: vType,
-                    vehicleTypeName: vLabel,
-                    plate: u.vehicle?.plate || u.licensePlate || '--',
-                    experience: u.vehicle?.experience || 2,
-                    status: 'active',
-                    createdAt: u.createdAt || new Date().toISOString()
-                };
+            const realDrivers = users.filter(u => u.role === 'driver' && u.status === 'active');
+            let hasNew = false;
+
+            realDrivers.forEach(u => {
+                if (!drivers.some(d => d.id === u.id || (u.email && d.email === u.email))) {
+                    const vType = u.vehicle?.type || u.vehicleType || 'motorbike';
+                    let vLabel = 'Ô tô 4 chỗ (Navigo Car)';
+                    if (vType === 'bike' || vType === 'motorbike') vLabel = 'Xe máy (Navigo Bike)';
+                    else if (vType === 'car7') vLabel = 'Ô tô 7 chỗ (Navigo XL)';
+                    else if (vType === 'premium') vLabel = 'Xe sang (Navigo Plus)';
+                    drivers.push({
+                        id: u.id,
+                        name: u.name,
+                        email: u.email,
+                        phone: u.phone,
+                        vehicleType: vType,
+                        vehicleTypeName: vLabel,
+                        plate: u.vehicle?.plate || u.licensePlate || '--',
+                        experience: u.vehicle?.experience || 2,
+                        status: 'active',
+                        createdAt: u.createdAt || new Date().toISOString()
+                    });
+                    hasNew = true;
+                }
             });
 
-            localStorage.setItem(this.STORAGE_KEYS.DRIVERS, JSON.stringify(realDrivers));
-            return realDrivers;
+            if (hasNew) {
+                localStorage.setItem(this.STORAGE_KEYS.DRIVERS, JSON.stringify(drivers));
+            }
+            return drivers;
         } catch {
             return [];
         }
@@ -270,6 +283,11 @@ class AdminController {
                             }
                         }
                     });
+
+                    // Real-time listener for pending driver registrations
+                    window.realtimeSync.db.ref('goride_pending_drivers').on('value', () => {
+                        this.loadDriverApprovals();
+                    });
                 } catch (e) {}
             }
         }
@@ -287,25 +305,35 @@ class AdminController {
 
     getOnlineDrivers() {
         const onlineDriversMap = new Map();
+        const now = Date.now();
+
+        const isValidOnline = (d) => {
+            if (!d || d.isOnline !== true) return false;
+            // TTL 120s: Lọc bỏ tài xế ma (stale drivers) không hoạt động quá 2 phút
+            const lastTime = d.location?.updatedAt || (d.updatedAt ? new Date(d.updatedAt).getTime() : 0);
+            if (lastTime && (now - lastTime > 120000)) return false;
+
+            // Luôn ưu tiên tọa độ GPS thực tế từ beacon d.location
+            const lat = Number(d.location?.lat !== undefined ? d.location.lat : d.lat);
+            const lng = Number(d.location?.lng !== undefined ? d.location.lng : d.lng);
+            if (isNaN(lat) || isNaN(lng) || (lat === 0 && lng === 0)) return false;
+
+            d.lat = lat;
+            d.lng = lng;
+            return true;
+        };
 
         // 1. Read goride_online_drivers dictionary/array
         try {
             const rawOnline = localStorage.getItem(this.STORAGE_KEYS.ONLINE_DRIVERS);
             if (rawOnline) {
                 const parsed = JSON.parse(rawOnline);
-                if (Array.isArray(parsed)) {
-                    parsed.forEach(d => {
-                        if (d && d.isOnline === true && typeof d.lat === 'number' && !isNaN(d.lat) && typeof d.lng === 'number' && !isNaN(d.lng)) {
-                            onlineDriversMap.set(d.id || d.phone || d.plate, d);
-                        }
-                    });
-                } else if (typeof parsed === 'object') {
-                    Object.values(parsed).forEach(d => {
-                        if (d && d.isOnline === true && typeof d.lat === 'number' && !isNaN(d.lat) && typeof d.lng === 'number' && !isNaN(d.lng)) {
-                            onlineDriversMap.set(d.id || d.phone || d.plate, d);
-                        }
-                    });
-                }
+                const list = Array.isArray(parsed) ? parsed : Object.values(parsed);
+                list.forEach(d => {
+                    if (isValidOnline(d)) {
+                        onlineDriversMap.set(d.id || d.phone || d.plate, d);
+                    }
+                });
             }
         } catch (err) {
             console.warn('[Admin] Error reading goride_online_drivers:', err);
@@ -315,13 +343,13 @@ class AdminController {
         try {
             const adminDrivers = this.getStoredDrivers();
             adminDrivers.forEach(d => {
-                if (d && d.isOnline === true && typeof d.lat === 'number' && !isNaN(d.lat) && typeof d.lng === 'number' && !isNaN(d.lng)) {
+                if (isValidOnline(d)) {
                     const key = d.id || d.phone || d.plate;
                     if (!onlineDriversMap.has(key)) {
                         onlineDriversMap.set(key, d);
                     } else {
                         const existing = onlineDriversMap.get(key);
-                        onlineDriversMap.set(key, { ...d, ...existing });
+                        onlineDriversMap.set(key, { ...d, ...existing, lat: d.lat, lng: d.lng });
                     }
                 }
             });
@@ -345,10 +373,10 @@ class AdminController {
                 badgeEl.style.color = '#ffffff';
                 badgeEl.innerHTML = '⚪ 0 tài xế trực tuyến';
             } else {
-                badgeEl.className = 'badge badge-success';
+                badgeEl.className = 'badge badge-success admin-map-badge';
                 badgeEl.style.backgroundColor = '#10b981';
                 badgeEl.style.color = '#ffffff';
-                badgeEl.innerHTML = `🟢 ${onlineDrivers.length} tài xế đang trực tuyến (GPS thực tế)`;
+                badgeEl.innerHTML = `🟢 ${onlineDrivers.length} tài xế trực tuyến`;
             }
         }
 
@@ -1107,7 +1135,19 @@ class AdminController {
             }
         }
 
-        // 2. Combine with real registered applicants in localStorage
+        // 2. Combine with real registered applicants in Firebase & localStorage
+        if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+            try {
+                const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                const cloudPending = snap.val() || {};
+                Object.values(cloudPending).forEach(cp => {
+                    if (cp && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                        pendingList.push(cp);
+                    }
+                });
+            } catch (e) {}
+        }
+
         const localPending = this.getPendingDrivers();
         localPending.forEach(lp => {
             if (!pendingList.some(p => p.id === lp.id || p.email === lp.email)) {
@@ -1220,9 +1260,37 @@ class AdminController {
                 }
             }
 
-            // 5. Remove from pending list
+            // 5. Remove from pending list & sync to Firebase
             pending = pending.filter(d => d.id !== driverId);
             this.savePendingDrivers(pending);
+
+            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                try {
+                    await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).remove();
+                    await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).update({
+                        status: approved ? 'active' : 'rejected',
+                        updatedAt: new Date().toISOString()
+                    });
+                    await window.realtimeSync.db.ref(`goride_users/${driverId}`).update({
+                        status: approved ? 'active' : 'rejected',
+                        updatedAt: new Date().toISOString()
+                    });
+                    if (applicant && applicant.email) {
+                        try {
+                            const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
+                            const allUsers = uSnap.val() || {};
+                            for (const k of Object.keys(allUsers)) {
+                                if (allUsers[k] && allUsers[k].email && allUsers[k].email.toLowerCase() === applicant.email.toLowerCase()) {
+                                    await window.realtimeSync.db.ref(`goride_users/${k}`).update({
+                                        status: approved ? 'active' : 'rejected',
+                                        updatedAt: new Date().toISOString()
+                                    });
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                } catch (e) {}
+            }
 
             this.showToast(approved 
                 ? `Đã phê duyệt tài xế thành công! Tài khoản đã được kích hoạt.` 

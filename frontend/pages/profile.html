@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hồ sơ cá nhân & Đối tác | Navigo</title>
+    <title>Hồ sơ cá nhân & Tài khoản | Navigo</title>
     <meta name="description" content="Quản lý thông tin tài khoản, trạng thái trực tuyến, đánh giá và thu nhập đối tác Navigo.">
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/layout.css">
@@ -19,36 +19,144 @@
         .profile-header {
             background: #ffffff;
             border-bottom: 1px solid var(--color-gray-200, #e2e8f0);
-            padding: 12px 20px;
+            padding: 10px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 8px;
             position: sticky;
             top: 0;
             z-index: 100;
             box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            box-sizing: border-box;
+            width: 100%;
         }
+        .profile-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex-shrink: 1;
+        }
+        .profile-header-brand {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .btn-header-back {
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            color: #334155;
+            cursor: pointer;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .btn-header-back:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .btn-header-logout {
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 6px 12px;
+            background: #ef4444;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-header-logout:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+        .btn-header-logout:active {
+            transform: scale(0.97);
+        }
+
+        /* Mobile Header Optimization - ZERO Overflow */
+        @media (max-width: 480px) {
+            .profile-header {
+                padding: 8px 10px;
+                gap: 6px;
+            }
+            .profile-header-left {
+                gap: 6px;
+            }
+            .btn-header-back {
+                padding: 5px 8px;
+                font-size: 0.8rem;
+            }
+            .btn-header-back .back-text {
+                display: none; /* Hide 'Quay lại' on tiny mobile to guarantee zero overflow */
+            }
+            .profile-header-brand span:first-child {
+                font-size: 1.15rem !important;
+            }
+            .profile-header-brand .brand-title {
+                font-size: 1.05rem !important;
+            }
+            #badge-user-role {
+                font-size: 0.68rem !important;
+                padding: 2px 6px !important;
+            }
+            .btn-header-logout {
+                padding: 6px 9px;
+                font-size: 0.78rem;
+                gap: 3px;
+            }
+        }
+
         .profile-container {
             max-width: 800px;
             width: 100%;
-            margin: 24px auto;
+            margin: 20px auto;
             padding: 0 16px 40px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
+            box-sizing: border-box;
         }
         .profile-card {
             background: #ffffff;
             border: 1px solid var(--color-gray-200, #e2e8f0);
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px 24px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            box-sizing: border-box;
+        }
+        .section-header-tag {
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.05em;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .avatar-uploader-wrap {
             position: relative;
             width: 100px;
             height: 100px;
-            margin: 0 auto 16px;
+            margin: 0 auto 14px;
         }
         .avatar-preview-img {
             width: 100%;
@@ -64,6 +172,7 @@
             justify-content: center;
             font-size: 2.2rem;
             font-weight: 800;
+            user-select: none;
         }
         .avatar-camera-btn {
             position: absolute;
@@ -90,7 +199,7 @@
             background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
             border: 1.5px solid #86efac;
             border-radius: 14px;
-            padding: 18px 20px;
+            padding: 16px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -104,34 +213,34 @@
         }
         .driver-kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
         }
         .kpi-tile {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
-            padding: 16px;
+            padding: 14px;
             text-align: center;
             box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
         .kpi-tile-val {
-            font-size: 1.45rem;
+            font-size: 1.35rem;
             font-weight: 800;
             color: #0f172a;
             margin: 4px 0 2px;
         }
         .kpi-tile-lbl {
-            font-size: 0.76rem;
+            font-size: 0.74rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             color: #64748b;
         }
         .btn-status-toggle {
-            padding: 9px 20px;
+            padding: 8px 18px;
             border-radius: 9999px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             font-weight: 700;
             cursor: pointer;
             border: none;
@@ -157,30 +266,82 @@
             background: #475569;
             transform: translateY(-1px);
         }
+        .admin-hub-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+        }
+        .admin-hub-card {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none !important;
+            color: #1e293b;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+        .admin-hub-card:hover {
+            border-color: #0288d1;
+            background: #f0f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(2, 136, 209, 0.12);
+        }
+        .admin-hub-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .admin-hub-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0;
+        }
+        .admin-hub-desc {
+            font-size: 0.76rem;
+            color: #64748b;
+            margin: 2px 0 0;
+        }
         @media (max-width: 640px) {
+            .profile-card {
+                padding: 16px 18px;
+            }
             .profile-container {
-                padding-bottom: 84px !important;
+                margin: 14px auto;
+                padding-bottom: 70px !important;
             }
         }
     </style>
 </head>
 <body class="profile-page-wrapper">
-    <!-- Header -->
+
+    <!-- Header (Optimized for Mobile with Zero Overflow) -->
     <header class="profile-header">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <button type="button" class="btn btn-sm btn-ghost" id="btn-back-nav" style="border:1px solid #cbd5e1; border-radius:8px; padding:6px 12px; font-weight:600; display:flex; align-items:center; gap:6px;">
-                <span>←</span>
-                <span>Quay lại</span>
+        <div class="profile-header-left">
+            <button type="button" class="btn-header-back" id="btn-back-nav" aria-label="Quay lại">
+                <span class="back-arrow">←</span>
+                <span class="back-text">Quay lại</span>
             </button>
-            <div style="display:flex; align-items:center; gap:6px;">
-                <span style="font-size:1.3rem;">🚗</span>
-                <span style="font-weight:800; font-size:1.15rem; color:var(--color-primary, #0288d1);">Navigo</span>
-                <span class="badge badge-info" id="badge-user-role" style="font-size:0.75rem; font-weight:700;">Hồ sơ</span>
+            <div class="profile-header-brand">
+                <span style="font-size:1.25rem;">🚗</span>
+                <span class="brand-title" style="font-weight:800; font-size:1.15rem; color:var(--color-primary, #0288d1);">Navigo</span>
+                <span class="badge badge-info" id="badge-user-role" style="font-size:0.72rem; font-weight:700;">Hồ sơ</span>
             </div>
         </div>
-        <div>
-            <button type="button" class="btn btn-sm btn-danger" data-action="logout" style="border-radius:8px; font-weight:600;">
-                🚪 Đăng xuất
+        <div class="profile-header-right">
+            <button type="button" class="btn-header-logout" data-action="logout">
+                <span>🚪</span>
+                <span>Đăng xuất</span>
             </button>
         </div>
     </header>
@@ -188,7 +349,7 @@
     <!-- Main Profile Container -->
     <main class="profile-container">
         
-        <!-- Profile Hero Card -->
+        <!-- CARD 1: PROFILE HERO (AVATAR, NAME, ROLE BADGE) -->
         <div class="profile-card" style="text-align:center;">
             <div class="avatar-uploader-wrap">
                 <div class="avatar-preview-img" id="profile-avatar-display">T</div>
@@ -198,29 +359,68 @@
                 <input type="file" id="profile-avatar-input" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;">
             </div>
             
-            <h2 id="profile-display-name" style="margin:0; font-size:1.35rem; color:#1e293b;">Tài xế Navigo</h2>
-            <div style="margin-top:4px; font-size:0.85rem; color:#64748b;" id="profile-display-email">vu03032007@gmail.com</div>
+            <h2 id="profile-display-name" style="margin:0; font-size:1.35rem; color:#1e293b;">Người dùng Navigo</h2>
+            <div style="margin-top:4px; font-size:0.85rem; color:#64748b;" id="profile-display-email">email@example.com</div>
             <div style="margin-top:8px;">
-                <span class="badge badge-primary" id="profile-display-badge" style="font-size:0.75rem; padding:4px 12px;">ĐỐI TÁC TÀI XẾ</span>
+                <span class="badge badge-primary" id="profile-display-badge" style="font-size:0.75rem; padding:4px 12px; font-weight:700;">TÀI KHOẢN HỆ THỐNG</span>
             </div>
             <div style="margin-top:10px; font-size:0.78rem; color:#94a3b8;">
                 Ảnh đại diện hỗ trợ JPG, PNG, WEBP lên đến 20MB
             </div>
         </div>
 
-        <!-- DRIVER SECTION (STATUS SWITCH + STATS & RATINGS) -->
-        <div id="driver-specific-section" style="display:none; flex-direction:column; gap:20px;">
+        <!-- CARD 2A: ADMIN WORKSPACE HUB (SHOWN ONLY TO ADMIN) -->
+        <div class="profile-card" id="admin-specific-section" style="display:none;">
+            <div class="section-header-tag">
+                <span>👑</span>
+                <span>Trung tâm Quản trị viên (Admin Hub)</span>
+            </div>
+            <div class="admin-hub-grid">
+                <a href="admin.html#dashboard" class="admin-hub-card">
+                    <div class="admin-hub-icon" style="background:#e0f2fe; color:#0288d1;">📊</div>
+                    <div>
+                        <div class="admin-hub-title">Bảng điều khiển</div>
+                        <div class="admin-hub-desc">KPI doanh thu, cuốc xe & tài xế</div>
+                    </div>
+                </a>
+                <a href="admin.html#map" class="admin-hub-card">
+                    <div class="admin-hub-icon" style="background:#ecfdf5; color:#10b981;">🗺️</div>
+                    <div>
+                        <div class="admin-hub-title">Bản đồ Spatial Map</div>
+                        <div class="admin-hub-desc">Giám sát tọa độ GPS xe thời gian thực</div>
+                    </div>
+                </a>
+                <a href="admin.html#drivers" class="admin-hub-card">
+                    <div class="admin-hub-icon" style="background:#fef3c7; color:#d97706;">📋</div>
+                    <div>
+                        <div class="admin-hub-title">Duyệt hồ sơ tài xế</div>
+                        <div class="admin-hub-desc">Phê duyệt đối tác mới đăng ký</div>
+                    </div>
+                </a>
+                <a href="admin.html#trips" class="admin-hub-card">
+                    <div class="admin-hub-icon" style="background:#f3e8ff; color:#7e22ce;">🚖</div>
+                    <div>
+                        <div class="admin-hub-title">Quản lý chuyến đi</div>
+                        <div class="admin-hub-desc">Toàn bộ lịch sử và trạng thái chuyến</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- CARD 2B: DRIVER STATUS & KPIS (SHOWN ONLY TO DRIVER) -->
+        <div id="driver-specific-section" style="display:none; flex-direction:column; gap:18px;">
             
-            <!-- 1. DRIVER ONLINE / OFFLINE TOGGLE IN PROFILE -->
+            <!-- Driver Status Toggle -->
             <div class="profile-card" style="padding:16px 20px;">
-                <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.05em; margin-bottom:12px;">
-                    Trạng thái trực tuyến & Phát sóng GPS
+                <div class="section-header-tag" style="margin-bottom:10px;">
+                    <span>📡</span>
+                    <span>Trạng thái trực tuyến & Phát sóng GPS</span>
                 </div>
                 <div class="driver-status-card" id="driver-status-container">
                     <div style="display:flex; align-items:center; gap:12px;">
                         <span id="profile-status-dot" style="width:12px; height:12px; border-radius:50%; background:#10b981; display:inline-block;"></span>
                         <div>
-                            <div id="profile-status-title" style="font-weight:700; font-size:1.05rem; color:#065f46;">Đang trực tuyến (Sẵn sàng nhận cuốc)</div>
+                            <div id="profile-status-title" style="font-weight:700; font-size:1.02rem; color:#065f46;">Đang trực tuyến (Sẵn sàng nhận cuốc)</div>
                             <div id="profile-status-desc" style="font-size:0.8rem; color:#047857; margin-top:2px;">Tọa độ GPS đang phát sóng tới khách hàng và Admin để quét chuyến tự động.</div>
                         </div>
                     </div>
@@ -233,19 +433,20 @@
                 </div>
             </div>
 
-            <!-- 2. DRIVER PERFORMANCE, RATINGS & TODAY EARNINGS -->
+            <!-- Driver Performance KPIs -->
             <div class="profile-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.05em;">
-                        Tổng quan đánh giá & Doanh thu
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                    <div class="section-header-tag" style="margin-bottom:0;">
+                        <span>📈</span>
+                        <span>Đánh giá & Thu nhập (Dữ liệu thật 100%)</span>
                     </div>
-                    <span style="font-size:0.8rem; color:#0288d1; font-weight:600;">Dữ liệu thật 100%</span>
+                    <span style="font-size:0.78rem; color:#0288d1; font-weight:700;">Hôm nay</span>
                 </div>
                 <div class="driver-kpi-grid">
                     <div class="kpi-tile">
                         <div class="kpi-tile-lbl">Đánh giá sao</div>
                         <div class="kpi-tile-val" style="color:#f59e0b;" id="profile-kpi-rating">5.0 ★</div>
-                        <span style="font-size:0.72rem; color:#10b981;">Xuất sắc</span>
+                        <span style="font-size:0.72rem; color:#10b981; font-weight:600;">Xuất sắc</span>
                     </div>
                     <div class="kpi-tile">
                         <div class="kpi-tile-lbl">Thu nhập hôm nay</div>
@@ -265,15 +466,16 @@
                 </div>
             </div>
 
-            <!-- 3. DRIVER VEHICLE DETAILS -->
+            <!-- Driver Vehicle Info -->
             <div class="profile-card">
-                <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.05em; margin-bottom:16px;">
-                    Thông tin phương tiện hoạt động
+                <div class="section-header-tag">
+                    <span>🚗</span>
+                    <span>Phương tiện đăng ký hoạt động</span>
                 </div>
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px;">
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
                     <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Loại phương tiện</label>
-                        <select id="profile-vehicle-type" class="form-select" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Phân loại phương tiện</label>
+                        <select id="profile-vehicle-type" class="form-select" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.88rem;">
                             <option value="motorbike">🛵 Xe máy (Navigo Bike)</option>
                             <option value="car4">🚗 Ô tô 4 chỗ (Navigo Car)</option>
                             <option value="premium">🚘 Xe sang 4 chỗ (Navigo Plus)</option>
@@ -282,106 +484,104 @@
                     </div>
                     <div>
                         <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Biển số xe</label>
-                        <input type="text" id="profile-vehicle-plate" class="form-input" placeholder="VD: 59-S3 889.24" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-weight:700; font-family:monospace;">
+                        <input type="text" id="profile-vehicle-plate" class="form-input" placeholder="VD: 59-S3 889.24" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-weight:700; font-family:monospace; font-size:0.88rem;">
                     </div>
                     <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Dòng xe / Đời xe</label>
-                        <input type="text" id="profile-vehicle-model" class="form-input" placeholder="VD: Honda Wave Alpha / Toyota Vios" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Dòng xe / Model</label>
+                        <input type="text" id="profile-vehicle-model" class="form-input" placeholder="VD: Honda Wave Alpha / Toyota Vios" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.88rem;">
                     </div>
                 </div>
             </div>
 
         </div>
 
-        <!-- USER BASIC DETAILS FORM -->
+        <!-- CARD 2C: CUSTOMER SUMMARY (SHOWN ONLY TO CUSTOMER) -->
+        <div class="profile-card" id="customer-specific-section" style="display:none;">
+            <div class="section-header-tag">
+                <span>🚕</span>
+                <span>Thông tin thành viên Khách hàng</span>
+            </div>
+            <div class="driver-kpi-grid">
+                <div class="kpi-tile">
+                    <div class="kpi-tile-lbl">Cuốc xe đã đi</div>
+                    <div class="kpi-tile-val" style="color:#0288d1;" id="customer-kpi-trips">0</div>
+                    <span style="font-size:0.72rem; color:#64748b;">Chuyến đi an toàn</span>
+                </div>
+                <div class="kpi-tile">
+                    <div class="kpi-tile-lbl">Hạng thành viên</div>
+                    <div class="kpi-tile-val" style="color:#f59e0b; font-size:1.15rem;">Thân thiết</div>
+                    <span style="font-size:0.72rem; color:#10b981; font-weight:600;">Navigo Silver</span>
+                </div>
+                <div class="kpi-tile">
+                    <div class="kpi-tile-lbl">Mã giảm giá</div>
+                    <div class="kpi-tile-val" style="color:#10b981; font-size:1.15rem;">2 Mã</div>
+                    <span style="font-size:0.72rem; color:#64748b;">Sẵn sàng áp dụng</span>
+                </div>
+            </div>
+            <div style="margin-top:14px; text-align:right;">
+                <a href="customer.html" class="btn btn-sm btn-primary" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:8px; padding:8px 16px;">
+                    <span>🚕</span>
+                    <span>Đặt chuyến xe mới ngay</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- CARD 3: USER PERSONAL INFO FORM -->
         <div class="profile-card">
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.05em; margin-bottom:16px;">
-                Thông tin cá nhân tài khoản
+            <div class="section-header-tag">
+                <span>📝</span>
+                <span>Thông tin tài khoản & Liên hệ</span>
             </div>
             
             <form id="profile-form" onsubmit="event.preventDefault(); saveProfileChanges();">
-                <div style="display:flex; flex-direction:column; gap:16px;">
+                <div style="display:flex; flex-direction:column; gap:14px;">
                     <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Họ và tên</label>
-                        <input type="text" id="input-profile-name" class="form-input" placeholder="Nhập họ và tên..." required style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Họ và tên <span style="color:var(--color-error);">*</span></label>
+                        <input type="text" id="input-profile-name" class="form-input" placeholder="Nhập họ và tên..." required style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem;">
                     </div>
 
                     <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Số điện thoại</label>
-                        <input type="tel" id="input-profile-phone" class="form-input" placeholder="VD: 0889378929" required style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1;">
+                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Số điện thoại <span style="color:var(--color-error);">*</span></label>
+                        <input type="tel" id="input-profile-phone" class="form-input" placeholder="VD: 0901234567" required style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem;">
                     </div>
 
                     <div>
                         <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Email (Cố định định danh)</label>
-                        <input type="email" id="input-profile-email" class="form-input" readonly style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b;">
+                        <input type="email" id="input-profile-email" class="form-input" readonly style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; font-size:0.95rem;">
                     </div>
 
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:10px;">
                         <span id="save-status-msg" style="font-size:0.85rem; color:#10b981; font-weight:600; display:none;">✓ Đã lưu thay đổi thành công!</span>
-                        <button type="submit" class="btn btn-primary" style="margin-left:auto; padding:10px 24px; border-radius:10px; font-weight:700;">
-                            💾 Lưu cập nhật hồ sơ
+                        <button type="submit" class="btn btn-primary" style="margin-left:auto; padding:10px 24px; border-radius:10px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                            <span>💾</span>
+                            <span>Lưu cập nhật hồ sơ</span>
                         </button>
                     </div>
                 </div>
             </form>
         </div>
 
-        <!-- Cloud Realtime Sync Card (Hidden from UI, runs silently in background) -->
+        <!-- Hidden Cloud Sync Drawer (Available if needed) -->
         <div id="cloud-realtime-sync-card" style="display:none !important;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:1.4rem;">☁️</span>
-                    <div>
-                        <div style="font-weight:700; font-size:0.95rem; color:#0f172a;">Đồng bộ Đám mây Realtime (Hai điện thoại khác nhau)</div>
-                        <div style="font-size:0.75rem; color:#64748b;" id="firebase-status-desc">Trạng thái: Đang kiểm tra...</div>
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="badge" id="firebase-status-badge" style="background:#e0f2fe; color:#0288d1; font-weight:700; padding:6px 12px; border-radius:20px;">Đang kiểm tra...</span>
-                    <button type="button" id="btn-toggle-firebase-setup" class="btn btn-sm btn-ghost" style="border:1px solid #cbd5e1; border-radius:8px; font-weight:600; font-size:0.78rem;">
-                        ⚙️ Cấu hình Firebase
-                    </button>
-                </div>
-            </div>
-
-            <!-- Expandable Config Drawer -->
-            <div id="firebase-config-drawer" style="display:none; margin-top:16px; padding-top:16px; border-top:1px dashed #cbd5e1;">
-                <p style="font-size:0.8rem; color:#475569; margin:0 0 10px;">
-                    Nhập thông tin Realtime Database từ Firebase Console để 2 điện thoại khác nhau kết nối nhận cuốc tức thì:
-                </p>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px;">
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Database URL (https://...firebasedatabase.app)</label>
-                        <input type="text" id="cfg-fb-dburl" class="form-input" placeholder="https://navigo-demo-default-rtdb.asia-southeast1.firebasedatabase.app" style="width:100%; font-size:0.8rem; padding:8px 10px; border-radius:6px; border:1px solid #cbd5e1;">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">API Key</label>
-                        <input type="text" id="cfg-fb-apikey" class="form-input" placeholder="AIzaSy..." style="width:100%; font-size:0.8rem; padding:8px 10px; border-radius:6px; border:1px solid #cbd5e1;">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Project ID</label>
-                        <input type="text" id="cfg-fb-projectid" class="form-input" placeholder="navigo-demo" style="width:100%; font-size:0.8rem; padding:8px 10px; border-radius:6px; border:1px solid #cbd5e1;">
-                    </div>
-                    <div>
-                        <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Auth Domain (tùy chọn)</label>
-                        <input type="text" id="cfg-fb-authdomain" class="form-input" placeholder="navigo-demo.firebaseapp.com" style="width:100%; font-size:0.8rem; padding:8px 10px; border-radius:6px; border:1px solid #cbd5e1;">
-                    </div>
-                </div>
-                <div style="display:flex; justify-content:flex-end; gap:8px;">
-                    <button type="button" id="btn-save-firebase-cfg" class="btn btn-sm btn-primary" style="padding:6px 16px; border-radius:8px; font-weight:700;">
-                        💾 Lưu & Kích hoạt kết nối
-                    </button>
-                </div>
+            <div id="firebase-status-badge"></div>
+            <div id="firebase-status-desc"></div>
+            <button id="btn-toggle-firebase-setup"></button>
+            <div id="firebase-config-drawer">
+                <input id="cfg-fb-dburl">
+                <input id="cfg-fb-apikey">
+                <input id="cfg-fb-projectid">
+                <input id="cfg-fb-authdomain">
+                <button id="btn-save-firebase-cfg"></button>
             </div>
         </div>
 
-        <!-- Quick Navigation Footer -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-            <a href="driver.html" id="link-portal-return" class="btn btn-ghost" style="border:1px solid #cbd5e1; border-radius:10px; font-weight:600; text-decoration:none;">
-                🚗 Quay về màn hình nhận chuyến
+        <!-- CARD 4: ACTIONS & LOGOUT FOOTER -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:4px;">
+            <a href="customer.html" id="link-portal-return" class="btn btn-ghost" style="border:1.5px solid #cbd5e1; border-radius:10px; font-weight:700; text-decoration:none; padding:10px 18px; color:#334155; background:#ffffff;">
+                🚗 Quay về màn hình làm việc
             </a>
-            <button type="button" class="btn btn-outline-danger" data-action="logout" style="border-radius:10px; font-weight:600;">
-                🚪 Đăng xuất khỏi tài khoản
+            <button type="button" class="btn btn-outline-danger" data-action="logout" style="border-radius:10px; font-weight:700; padding:10px 18px; border-width:1.5px;">
+                🚪 Đăng xuất tài khoản
             </button>
         </div>
 
@@ -412,17 +612,20 @@
             setupFirebaseConfigUI();
 
             // Setup back button
-            document.getElementById('btn-back-nav').addEventListener('click', () => {
-                if (window.history.length > 1) {
-                    window.history.back();
-                } else if (currentUser && currentUser.role === 'driver') {
-                    window.location.href = 'driver.html';
-                } else if (currentUser && currentUser.role === 'admin') {
-                    window.location.href = 'admin.html';
-                } else {
-                    window.location.href = 'customer.html';
-                }
-            });
+            const backBtn = document.getElementById('btn-back-nav');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else if (currentUser && currentUser.role === 'driver') {
+                        window.location.href = 'driver.html';
+                    } else if (currentUser && currentUser.role === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'customer.html';
+                    }
+                });
+            }
         });
 
         function loadUserProfileData() {
@@ -465,12 +668,20 @@
             const role = currentUser.role || 'customer';
             const roleBadge = document.getElementById('profile-display-badge');
             const topRoleBadge = document.getElementById('badge-user-role');
+            const returnBtn = document.getElementById('link-portal-return');
+
             if (role === 'driver') {
-                if (roleBadge) roleBadge.textContent = 'ĐỐI TÁC TÀI XẾ';
-                if (topRoleBadge) topRoleBadge.textContent = 'Tài xế';
+                if (roleBadge) { roleBadge.textContent = 'ĐỐI TÁC TÀI XẾ'; roleBadge.className = 'badge badge-primary'; }
+                if (topRoleBadge) { topRoleBadge.textContent = 'Tài xế'; topRoleBadge.className = 'badge badge-primary'; }
+                
                 document.getElementById('driver-specific-section').style.display = 'flex';
-                document.getElementById('link-portal-return').href = 'driver.html';
-                document.getElementById('link-portal-return').innerHTML = '🚗 Về màn hình nhận chuyến';
+                document.getElementById('admin-specific-section').style.display = 'none';
+                document.getElementById('customer-specific-section').style.display = 'none';
+
+                if (returnBtn) {
+                    returnBtn.href = 'driver.html';
+                    returnBtn.innerHTML = '🚗 Quay về màn hình nhận chuyến';
+                }
 
                 // Render driver vehicle details
                 const vType = currentUser.vehicle?.type || currentUser.vehicleType || 'motorbike';
@@ -490,30 +701,63 @@
                 // Load Driver Online State
                 isDriverOnline = localStorage.getItem('goride_driver_online_state') === '1';
                 renderDriverStatusUI();
+
             } else if (role === 'admin') {
                 if (roleBadge) { roleBadge.textContent = 'QUẢN TRỊ VIÊN HỆ THỐNG'; roleBadge.className = 'badge badge-danger'; }
                 if (topRoleBadge) { topRoleBadge.textContent = 'Admin'; topRoleBadge.className = 'badge badge-danger'; }
+                
+                document.getElementById('admin-specific-section').style.display = 'block';
                 document.getElementById('driver-specific-section').style.display = 'none';
-                document.getElementById('link-portal-return').href = 'admin.html';
-                document.getElementById('link-portal-return').innerHTML = '📊 Về trang Quản trị Admin';
+                document.getElementById('customer-specific-section').style.display = 'none';
+
+                if (returnBtn) {
+                    returnBtn.href = 'admin.html';
+                    returnBtn.innerHTML = '📊 Về trang Quản trị Admin';
+                }
+
             } else {
-                if (roleBadge) { roleBadge.textContent = 'KHÁCH HÀNG'; roleBadge.className = 'badge badge-success'; }
+                if (roleBadge) { roleBadge.textContent = 'KHÁCH HÀNG NAVIGO'; roleBadge.className = 'badge badge-success'; }
                 if (topRoleBadge) { topRoleBadge.textContent = 'Khách hàng'; topRoleBadge.className = 'badge badge-success'; }
+                
+                document.getElementById('customer-specific-section').style.display = 'block';
                 document.getElementById('driver-specific-section').style.display = 'none';
-                document.getElementById('link-portal-return').href = 'customer.html';
-                document.getElementById('link-portal-return').innerHTML = '🚗 Về màn hình đặt xe';
+                document.getElementById('admin-specific-section').style.display = 'none';
+
+                if (returnBtn) {
+                    returnBtn.href = 'customer.html';
+                    returnBtn.innerHTML = '🚕 Về màn hình Đặt xe';
+                }
+
+                loadCustomerStats();
             }
 
             // Render Avatar
             renderAvatar(currentUser.avatar || currentUser.avatar_path);
         }
 
+        function loadCustomerStats() {
+            let userTrips = [];
+            try {
+                userTrips = JSON.parse(localStorage.getItem('goride_user_trips') || '[]');
+                if (userTrips.length === 0) {
+                    const allTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                    userTrips = allTrips.filter(t => (t.customerPhone === currentUser.phone || t.customerId === currentUser.id || t.customerName === currentUser.name));
+                }
+            } catch(e) { userTrips = []; }
+
+            const tripsCountEl = document.getElementById('customer-kpi-trips');
+            if (tripsCountEl) {
+                tripsCountEl.textContent = userTrips.length;
+            }
+        }
+
         function renderAvatar(avatarSrc) {
             const avatarDisplay = document.getElementById('profile-avatar-display');
+            if (!avatarDisplay) return;
             if (avatarSrc) {
                 avatarDisplay.innerHTML = `<img src="${avatarSrc}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
             } else {
-                const initial = (currentUser.name || 'G').charAt(0).toUpperCase();
+                const initial = (currentUser.name || 'N').charAt(0).toUpperCase();
                 avatarDisplay.textContent = initial;
             }
         }
@@ -527,7 +771,7 @@
                         try {
                             let width = img.width;
                             let height = img.height;
-                            const maxDim = 800; // Optimal sharp avatar dimension
+                            const maxDim = 800;
 
                             if (width > maxDim || height > maxDim) {
                                 if (width > height) {
@@ -575,23 +819,22 @@
                     return;
                 }
 
-                showToast('Đang tối ưu và tải ảnh đại diện lên...', 'info');
+                showToast('Đang tối ưu và cập nhật ảnh đại diện...', 'info');
 
                 try {
                     const base64Img = await compressAvatarImage(file);
-                    renderAvatar(base64Img);
-
                     currentUser.avatar = base64Img;
                     currentUser.avatar_path = base64Img;
 
-                    // Persist across localStorage and sessionStorage for all pages
-                    const userStr = JSON.stringify(currentUser);
-                    localStorage.setItem('goride_user', userStr);
-                    localStorage.setItem('ride_rtree_user', userStr);
+                    renderAvatar(base64Img);
+
+                    // Persist locally
+                    localStorage.setItem('goride_user', JSON.stringify(currentUser));
+                    localStorage.setItem('ride_rtree_user', JSON.stringify(currentUser));
                     try {
-                        sessionStorage.setItem('ride_rtree_user', userStr);
-                        sessionStorage.setItem('goride_user', userStr);
-                    } catch (e) {}
+                        sessionStorage.setItem('ride_rtree_user', JSON.stringify(currentUser));
+                        sessionStorage.setItem('goride_user', JSON.stringify(currentUser));
+                    } catch(e) {}
 
                     if (typeof sessionManager !== 'undefined') {
                         if (typeof sessionManager.setUser === 'function') {
@@ -728,7 +971,7 @@
                 const vType = document.getElementById('profile-vehicle-type')?.value || currentUser.vehicleType || 'motorbike';
                 const vLabel = (vType === 'motorbike' || vType === 'bike') ? '🛵 Xe máy (Navigo Bike)' : (vType === 'premium' ? '🚘 Xe sang 4 chỗ (Navigo Plus)' : (vType === 'car7' ? '🚐 Ô tô 7 chỗ (Navigo XL)' : '🚗 Ô tô 4 chỗ (Navigo Car)'));
                 const plate = document.getElementById('profile-vehicle-plate')?.value || currentUser.licensePlate || '59-S3 889.24';
-                const model = document.getElementById('profile-vehicle-model')?.value || currentUser.vehicleModel || 'Honda Wave';
+                const model = document.getElementById('profile-vehicle-model')?.value || currentUser.vehicleModel || 'Toyota Vios 2024';
 
                 if (online) {
                     onlineDrivers[driverId] = {
@@ -739,11 +982,9 @@
                         vehicleTypeName: vLabel,
                         plate: plate,
                         model: model,
-                        lat: 10.7769,
-                        lng: 106.7009,
-                        address: 'TP. Hồ Chí Minh',
+                        lat: 10.776889,
+                        lng: 106.700806,
                         isOnline: true,
-                        status: 'available',
                         updatedAt: new Date().toISOString()
                     };
                 } else {
@@ -841,91 +1082,18 @@
             window.dispatchEvent(new CustomEvent('session:change', { detail: { user: currentUser } }));
 
             document.getElementById('profile-display-name').textContent = name;
+            
+            const msgEl = document.getElementById('save-status-msg');
+            if (msgEl) {
+                msgEl.style.display = 'inline-block';
+                setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+            }
+
             showToast('Đã lưu thông tin hồ sơ thành công!', 'success');
         }
 
         function setupFirebaseConfigUI() {
-            const badge = document.getElementById('firebase-status-badge');
-            const desc = document.getElementById('firebase-status-desc');
-            const toggleBtn = document.getElementById('btn-toggle-firebase-setup');
-            const drawer = document.getElementById('firebase-config-drawer');
-            const saveBtn = document.getElementById('btn-save-firebase-cfg');
-
-            const dbUrlInput = document.getElementById('cfg-fb-dburl');
-            const apiKeyInput = document.getElementById('cfg-fb-apikey');
-            const projIdInput = document.getElementById('cfg-fb-projectid');
-            const authDomainInput = document.getElementById('cfg-fb-authdomain');
-
-            const updateStatusDisplay = () => {
-                if (typeof realtimeSync !== 'undefined' && realtimeSync.isAvailable()) {
-                    if (badge) {
-                        badge.className = 'badge badge-success';
-                        badge.textContent = '🟢 Đã kết nối Cloud';
-                        badge.style.background = '#dcfce7';
-                        badge.style.color = '#15803d';
-                    }
-                    if (desc) {
-                        desc.textContent = 'Tất cả cuốc xe & vị trí GPS đang được đồng bộ đám mây tức thì giữa 2 điện thoại khác nhau.';
-                    }
-                } else {
-                    if (badge) {
-                        badge.className = 'badge';
-                        badge.textContent = '🔘 Chế độ Offline / 1 máy';
-                        badge.style.background = '#f1f5f9';
-                        badge.style.color = '#475569';
-                    }
-                    if (desc) {
-                        desc.textContent = 'Đang dùng bộ nhớ trình duyệt (Mở 2 tab cùng máy). Nhấn "Cấu hình Firebase" để kết nối 2 điện thoại thật.';
-                    }
-                }
-            };
-
-            // Pre-fill inputs from current config
-            if (typeof realtimeSync !== 'undefined') {
-                const cfg = realtimeSync.getConfig();
-                if (dbUrlInput) dbUrlInput.value = cfg.databaseURL || '';
-                if (apiKeyInput) apiKeyInput.value = cfg.apiKey || '';
-                if (projIdInput) projIdInput.value = cfg.projectId || '';
-                if (authDomainInput) authDomainInput.value = cfg.authDomain || '';
-            }
-
-            updateStatusDisplay();
-
-            if (toggleBtn && drawer) {
-                toggleBtn.addEventListener('click', () => {
-                    drawer.style.display = (drawer.style.display === 'none' || !drawer.style.display) ? 'block' : 'none';
-                });
-            }
-
-            if (saveBtn) {
-                saveBtn.addEventListener('click', () => {
-                    const dbUrl = dbUrlInput?.value.trim();
-                    const apiKey = apiKeyInput?.value.trim();
-                    const projId = projIdInput?.value.trim();
-                    const authDomain = authDomainInput?.value.trim();
-
-                    if (!dbUrl && !projId) {
-                        alert('Vui lòng nhập Database URL hoặc Project ID từ Firebase Console.');
-                        return;
-                    }
-
-                    if (typeof realtimeSync !== 'undefined') {
-                        realtimeSync.saveConfig({
-                            databaseURL: dbUrl,
-                            apiKey: apiKey,
-                            projectId: projId,
-                            authDomain: authDomain
-                        });
-                        updateStatusDisplay();
-                        showToast('Đã lưu cấu hình Firebase! Đang khởi tạo kết nối đám mây...', 'success');
-                        setTimeout(() => updateStatusDisplay(), 1000);
-                    }
-                });
-            }
-
-            window.addEventListener('realtime:connection', () => {
-                updateStatusDisplay();
-            });
+            // Keep silent in background
         }
 
         function showToast(msg, type = 'info') {
