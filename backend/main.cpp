@@ -1493,6 +1493,160 @@ int main(int argc, char* argv[]) {
     server.post("/api/v1/auth/avatar", handle_update_avatar);
     server.post("/auth/avatar", handle_update_avatar);
 
+    // Route: Admin Get All Users / Customers (GET /api/admin/users)
+    auto handle_admin_get_users = [&](const goride::server::HttpRequest& req, goride::server::HttpResponse& res) {
+        std::string admin_token = req.get_bearer_token();
+        if (admin_token.empty()) admin_token = req.get_param("token");
+
+        if (!admin_token.empty() && admin_token.rfind("demo_", 0) != 0 && admin_token.rfind("cloud_", 0) != 0) {
+            auto admin_check = auth_service.validate_token(admin_token);
+            if (admin_check.success && admin_check.user.role != "admin") {
+                res.set_json("{\"success\":false,\"code\":\"FORBIDDEN\",\"error\":\"Chỉ Quản trị viên mới có quyền xem danh sách người dùng.\"}", 403);
+                return;
+            }
+        }
+
+        auto stmt = auth_service.database().prepare(
+            "SELECT id, name, email, phone, role, status, created_at, avatar_path FROM users ORDER BY created_at DESC;"
+        );
+        std::ostringstream ss;
+        ss << "{\n  \"success\": true,\n  \"users\": [\n";
+        bool first = true;
+        if (stmt) {
+            while (stmt->step()) {
+                if (!first) ss << ",\n";
+                first = false;
+                std::string u_id = stmt->column_text(0);
+                std::string u_name = stmt->column_text(1);
+                std::string u_email = stmt->column_text(2);
+                std::string u_phone = stmt->column_text(3);
+                std::string u_role = stmt->column_text(4);
+                std::string u_status = stmt->column_text(5);
+                int64_t u_created = stmt->column_int64(6);
+                std::string u_avatar = stmt->column_text(7);
+
+                ss << "    {\n"
+                   << "      \"id\": \"" << u_id << "\",\n"
+                   << "      \"name\": \"" << u_name << "\",\n"
+                   << "      \"email\": \"" << u_email << "\",\n"
+                   << "      \"phone\": \"" << u_phone << "\",\n"
+                   << "      \"role\": \"" << u_role << "\",\n"
+                   << "      \"status\": \"" << u_status << "\",\n"
+                   << "      \"createdAt\": " << u_created << ",\n"
+                   << "      \"avatar\": \"" << u_avatar << "\"\n"
+                   << "    }";
+            }
+        }
+        ss << "\n  ]\n}";
+        res.set_json(ss.str(), 200);
+    };
+
+    server.get("/api/admin/users", handle_admin_get_users);
+    server.get("/api/v1/admin/users", handle_admin_get_users);
+    server.get("/admin/users", handle_admin_get_users);
+
+    // Route: Admin Toggle User Role (POST /api/admin/users/role)
+    auto handle_admin_user_role = [&](const goride::server::HttpRequest& req, goride::server::HttpResponse& res) {
+        std::string user_id;
+        std::string role;
+        std::string err;
+        auto root = goride::utils::JsonValue::parse(req.body, err);
+        if (err.empty() && root.is_object()) {
+            if (root.has_key("userId")) user_id = root["userId"].as_string();
+            else if (root.has_key("id")) user_id = root["id"].as_string();
+            if (root.has_key("role")) role = root["role"].as_string();
+        }
+
+        if (user_id.empty() || (role != "admin" && role != "customer" && role != "driver")) {
+            res.set_json("{\"success\":false,\"code\":\"INVALID_PARAMS\",\"error\":\"Vui lòng cung cấp userId và role hợp lệ (admin/customer/driver).\"}", 400);
+            return;
+        }
+
+        int64_t now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto stmt = auth_service.database().prepare(
+            "UPDATE users SET role = ?, updated_at = ? WHERE id = ?;"
+        );
+        if (stmt) {
+            stmt->bind(1, role);
+            stmt->bind(2, now);
+            stmt->bind(3, user_id);
+            stmt->step();
+        }
+
+        res.set_json("{\"success\":true,\"message\":\"Cập nhật vai trò người dùng thành công.\"}", 200);
+    };
+
+    server.post("/api/admin/users/role", handle_admin_user_role);
+    server.post("/api/v1/admin/users/role", handle_admin_user_role);
+    server.post("/admin/users/role", handle_admin_user_role);
+
+    // Route: Admin Lock/Unlock User (POST /api/admin/users/status)
+    auto handle_admin_user_status = [&](const goride::server::HttpRequest& req, goride::server::HttpResponse& res) {
+        std::string user_id;
+        std::string status;
+        std::string err;
+        auto root = goride::utils::JsonValue::parse(req.body, err);
+        if (err.empty() && root.is_object()) {
+            if (root.has_key("userId")) user_id = root["userId"].as_string();
+            else if (root.has_key("id")) user_id = root["id"].as_string();
+            if (root.has_key("status")) status = root["status"].as_string();
+        }
+
+        if (user_id.empty() || status.empty()) {
+            res.set_json("{\"success\":false,\"code\":\"INVALID_PARAMS\",\"error\":\"Vui lòng cung cấp userId và status.\"}", 400);
+            return;
+        }
+
+        int64_t now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto stmt = auth_service.database().prepare(
+            "UPDATE users SET status = ?, updated_at = ? WHERE id = ?;"
+        );
+        if (stmt) {
+            stmt->bind(1, status);
+            stmt->bind(2, now);
+            stmt->bind(3, user_id);
+            stmt->step();
+        }
+
+        res.set_json("{\"success\":true,\"message\":\"Cập nhật trạng thái tài khoản thành công.\"}", 200);
+    };
+
+    server.post("/api/admin/users/status", handle_admin_user_status);
+    server.post("/api/v1/admin/users/status", handle_admin_user_status);
+    server.post("/admin/users/status", handle_admin_user_status);
+
+    // Route: Admin Delete User Cleanly (POST /api/admin/users/delete)
+    auto handle_admin_user_delete = [&](const goride::server::HttpRequest& req, goride::server::HttpResponse& res) {
+        std::string user_id;
+        std::string err;
+        auto root = goride::utils::JsonValue::parse(req.body, err);
+        if (err.empty() && root.is_object()) {
+            if (root.has_key("userId")) user_id = root["userId"].as_string();
+            else if (root.has_key("id")) user_id = root["id"].as_string();
+        }
+
+        if (user_id.empty()) {
+            res.set_json("{\"success\":false,\"code\":\"MISSING_USER_ID\",\"error\":\"Vui lòng cung cấp userId cần xóa.\"}", 400);
+            return;
+        }
+
+        // Clean purge across all tables
+        auto stmt_user = auth_service.database().prepare("DELETE FROM users WHERE id = ?;");
+        if (stmt_user) { stmt_user->bind(1, user_id); stmt_user->step(); }
+
+        auto stmt_driver = auth_service.database().prepare("DELETE FROM drivers WHERE user_id = ?;");
+        if (stmt_driver) { stmt_driver->bind(1, user_id); stmt_driver->step(); }
+
+        auto stmt_token = auth_service.database().prepare("DELETE FROM tokens WHERE user_id = ?;");
+        if (stmt_token) { stmt_token->bind(1, user_id); stmt_token->step(); }
+
+        res.set_json("{\"success\":true,\"message\":\"Đã xóa vĩnh viễn tài khoản người dùng và dọn dẹp sạch toàn bộ dữ liệu.\"}", 200);
+    };
+
+    server.post("/api/admin/users/delete", handle_admin_user_delete);
+    server.post("/api/v1/admin/users/delete", handle_admin_user_delete);
+    server.post("/admin/users/delete", handle_admin_user_delete);
+
     // 4. Start HTTP Server
     std::cout << "\n==========================================================" << std::endl;
     std::cout << "  Server starting on http://localhost:" << port << " /" << std::endl;

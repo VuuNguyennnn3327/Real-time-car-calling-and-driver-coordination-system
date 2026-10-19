@@ -65,28 +65,28 @@
             background: #f1f5f9;
             color: #0f172a;
         }
-        .btn-header-logout {
-            border-radius: 8px;
+        .btn-profile-danger-logout {
+            border-radius: 10px;
             font-weight: 700;
-            font-size: 0.82rem;
-            padding: 6px 12px;
-            background: #ef4444;
-            color: #ffffff;
-            border: none;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            background: #ef4444 !important;
+            color: #ffffff !important;
+            border: none !important;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            gap: 8px;
+            box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             white-space: nowrap;
-            flex-shrink: 0;
         }
-        .btn-header-logout:hover {
-            background: #dc2626;
-            transform: translateY(-1px);
+        .btn-profile-danger-logout:hover {
+            background: #dc2626 !important;
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35) !important;
         }
-        .btn-header-logout:active {
+        .btn-profile-danger-logout:active {
             transform: scale(0.97);
         }
 
@@ -338,12 +338,6 @@
                 <span class="badge badge-info" id="badge-user-role" style="font-size:0.72rem; font-weight:700;">Hồ sơ</span>
             </div>
         </div>
-        <div class="profile-header-right">
-            <button type="button" class="btn-header-logout" data-action="logout">
-                <span>🚪</span>
-                <span>Đăng xuất</span>
-            </button>
-        </div>
     </header>
 
     <!-- Main Profile Container -->
@@ -509,12 +503,12 @@
                 </div>
                 <div class="kpi-tile">
                     <div class="kpi-tile-lbl">Hạng thành viên</div>
-                    <div class="kpi-tile-val" style="color:#f59e0b; font-size:1.15rem;">Thân thiết</div>
-                    <span style="font-size:0.72rem; color:#10b981; font-weight:600;">Navigo Silver</span>
+                    <div class="kpi-tile-val" style="color:#f59e0b; font-size:1.15rem;" id="customer-kpi-tier">Thành viên mới</div>
+                    <span style="font-size:0.72rem; color:#10b981; font-weight:600;" id="customer-kpi-tier-sub">Navigo Khởi đầu</span>
                 </div>
                 <div class="kpi-tile">
                     <div class="kpi-tile-lbl">Mã giảm giá</div>
-                    <div class="kpi-tile-val" style="color:#10b981; font-size:1.15rem;">2 Mã</div>
+                    <div class="kpi-tile-val" style="color:#10b981; font-size:1.15rem;" id="customer-kpi-promos">3 Mã</div>
                     <span style="font-size:0.72rem; color:#64748b;">Sẵn sàng áp dụng</span>
                 </div>
             </div>
@@ -580,8 +574,9 @@
             <a href="customer.html" id="link-portal-return" class="btn btn-ghost" style="border:1.5px solid #cbd5e1; border-radius:10px; font-weight:700; text-decoration:none; padding:10px 18px; color:#334155; background:#ffffff;">
                 🚗 Quay về màn hình làm việc
             </a>
-            <button type="button" class="btn btn-outline-danger" data-action="logout" style="border-radius:10px; font-weight:700; padding:10px 18px; border-width:1.5px;">
-                🚪 Đăng xuất tài khoản
+            <button type="button" id="btn-profile-bottom-logout" onclick="handleProfileLogout()" class="btn-profile-danger-logout" data-action="logout">
+                <span>🚪</span>
+                <span>Đăng xuất tài khoản</span>
             </button>
         </div>
 
@@ -606,6 +601,9 @@
         let isDriverOnline = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
+            if (typeof purgeAllMockTrips === 'function') {
+                purgeAllMockTrips();
+            }
             loadUserProfileData();
             setupAvatarUpload();
             setupStatusToggle();
@@ -626,7 +624,61 @@
                     }
                 });
             }
+
+            // Setup bottom logout button
+            const bottomLogoutBtn = document.getElementById('btn-profile-bottom-logout');
+            if (bottomLogoutBtn) {
+                bottomLogoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleProfileLogout();
+                });
+            }
+
+            // Real-time reactive updates when trips complete or cancel in other tabs
+            window.addEventListener('storage', (e) => {
+                if (e.key && (e.key.startsWith('goride_trips_') || e.key === 'goride_admin_trips' || e.key === 'goride_user_trips' || e.key === 'goride_driver_trips')) {
+                    if (currentUser && currentUser.role === 'driver') {
+                        loadDriverStats();
+                    } else if (currentUser && currentUser.role !== 'admin') {
+                        loadCustomerStats();
+                    }
+                }
+            });
         });
+
+        /**
+         * Global Logout Handler for Profile Page
+         * Clears all session states, local tokens, active trips, and redirects to login.html
+         */
+        function handleProfileLogout() {
+            try {
+                if (typeof apiClient !== 'undefined') {
+                    apiClient.logout().catch(() => {});
+                }
+                if (typeof sessionManager !== 'undefined') {
+                    sessionManager.logout();
+                }
+                try {
+                    sessionStorage.clear();
+                    localStorage.removeItem('goride_user');
+                    localStorage.removeItem('navigo_user');
+                    localStorage.removeItem('goride_token');
+                    localStorage.removeItem('navigo_token');
+                    localStorage.removeItem('ride_rtree_user');
+                    localStorage.removeItem('ride_rtree_token');
+                    localStorage.removeItem('goride_active_trip');
+                } catch(e) {}
+
+                if (typeof showToast === 'function') {
+                    showToast('Đã đăng xuất tài khoản thành công', 'info', 1500);
+                }
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 200);
+            } catch(err) {
+                window.location.href = 'login.html';
+            }
+        }
 
         function loadUserProfileData() {
             if (typeof sessionManager !== 'undefined' && sessionManager.isAuthenticated()) {
@@ -736,18 +788,93 @@
         }
 
         function loadCustomerStats() {
-            let userTrips = [];
+            let completedTrips = [];
+            const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => false);
+
             try {
-                userTrips = JSON.parse(localStorage.getItem('goride_user_trips') || '[]');
-                if (userTrips.length === 0) {
-                    const allTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                    userTrips = allTrips.filter(t => (t.customerPhone === currentUser.phone || t.customerId === currentUser.id || t.customerName === currentUser.name));
+                const candidates = [];
+                const keysToCheck = [];
+
+                if (currentUser) {
+                    if (currentUser.id) {
+                        keysToCheck.push(`goride_trips_${String(currentUser.id).trim().toLowerCase().replace(/[^a-z0-9_@.-]/gi, '_')}`);
+                    }
+                    if (currentUser.email) {
+                        keysToCheck.push(`goride_trips_${String(currentUser.email).trim().toLowerCase().replace(/[^a-z0-9_@.-]/gi, '_')}`);
+                    }
+                    if (currentUser.phone) {
+                        keysToCheck.push(`goride_trips_${String(currentUser.phone).trim().toLowerCase().replace(/[^a-z0-9_@.-]/gi, '_')}`);
+                    }
                 }
-            } catch(e) { userTrips = []; }
+                keysToCheck.push('goride_user_trips');
+
+                keysToCheck.forEach(k => {
+                    try {
+                        const raw = localStorage.getItem(k);
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            if (Array.isArray(parsed)) candidates.push(...parsed);
+                        }
+                    } catch (e) {}
+                });
+
+                try {
+                    const allTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                    const myAdminTrips = allTrips.filter(t => (
+                        (currentUser.phone && t.customerPhone === currentUser.phone) ||
+                        (currentUser.id && (t.customerId === currentUser.id || t.userId === currentUser.id)) ||
+                        (currentUser.name && t.customerName === currentUser.name) ||
+                        (currentUser.email && t.customerEmail === currentUser.email)
+                    ));
+                    candidates.push(...myAdminTrips);
+                } catch (e) {}
+
+                const tripMap = new Map();
+                candidates.forEach(t => {
+                    if (t && t.id && !tripMap.has(t.id)) tripMap.set(t.id, t);
+                });
+
+                // STRICT FILTER: ONLY count COMPLETED trips (never cancelled, requested, or mock trips!)
+                completedTrips = Array.from(tripMap.values()).filter(t => {
+                    if (checkMock(t)) return false;
+                    const st = String(t.status || '').toLowerCase().trim();
+                    return st === 'completed';
+                });
+            } catch(e) {
+                completedTrips = [];
+            }
 
             const tripsCountEl = document.getElementById('customer-kpi-trips');
             if (tripsCountEl) {
-                tripsCountEl.textContent = userTrips.length;
+                tripsCountEl.textContent = completedTrips.length;
+            }
+
+            // Update membership tier dynamically based on actual completed trips
+            const tierEl = document.getElementById('customer-kpi-tier');
+            const tierSubEl = document.getElementById('customer-kpi-tier-sub');
+            if (tierEl && tierSubEl) {
+                const count = completedTrips.length;
+                if (count >= 20) {
+                    tierEl.textContent = 'Bạch kim';
+                    tierEl.style.color = '#8b5cf6';
+                    tierSubEl.textContent = 'Navigo Platinum';
+                    tierSubEl.style.color = '#8b5cf6';
+                } else if (count >= 6) {
+                    tierEl.textContent = 'Vàng';
+                    tierEl.style.color = '#eab308';
+                    tierSubEl.textContent = 'Navigo Gold';
+                    tierSubEl.style.color = '#eab308';
+                } else if (count >= 1) {
+                    tierEl.textContent = 'Thân thiết';
+                    tierEl.style.color = '#f59e0b';
+                    tierSubEl.textContent = 'Navigo Silver';
+                    tierSubEl.style.color = '#10b981';
+                } else {
+                    tierEl.textContent = 'Thành viên mới';
+                    tierEl.style.color = '#0288d1';
+                    tierSubEl.textContent = 'Navigo Khởi đầu';
+                    tierSubEl.style.color = '#64748b';
+                }
             }
         }
 
@@ -868,18 +995,40 @@
 
         function loadDriverStats() {
             let trips = [];
+            const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => false);
+
             try {
-                trips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
-                if (trips.length === 0) {
-                    const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                    trips = adminTrips.filter(t => t.status === 'completed' && (!t.driverId || t.driverId === currentUser.id || t.driverName === currentUser.name));
+                const candidates = [];
+                const rawDriverTrips = localStorage.getItem('goride_driver_trips');
+                if (rawDriverTrips) {
+                    const parsed = JSON.parse(rawDriverTrips);
+                    if (Array.isArray(parsed)) candidates.push(...parsed);
                 }
+                const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                const driverAdminTrips = adminTrips.filter(t => 
+                    (t.driverId && (t.driverId === currentUser.id || t.driverId === currentUser.phone)) ||
+                    (t.driverName && t.driverName === currentUser.name) ||
+                    (t.driverPhone && t.driverPhone === currentUser.phone)
+                );
+                candidates.push(...driverAdminTrips);
+
+                const tripMap = new Map();
+                candidates.forEach(t => {
+                    if (t && t.id && !tripMap.has(t.id)) tripMap.set(t.id, t);
+                });
+
+                // STRICT: Driver trips must be COMPLETED and not mock (never count cancelled trips)
+                trips = Array.from(tripMap.values()).filter(t => {
+                    if (checkMock(t)) return false;
+                    const st = String(t.status || '').toLowerCase().trim();
+                    return st === 'completed';
+                });
             } catch(e) { trips = []; }
 
             const todayStr = new Date().toISOString().split('T')[0];
             const todayTrips = trips.filter(t => (t.completedAt || t.createdAt || '').startsWith(todayStr));
-            const todayEarnings = todayTrips.reduce((sum, t) => sum + (Number(t.fare) || 0), 0);
-            const totalDriverEarnings = trips.reduce((sum, t) => sum + (Number(t.fare) || 0), 0);
+            const todayEarnings = todayTrips.reduce((sum, t) => sum + (Number(t.fare || t.fareAmount) || 0), 0);
+            const totalDriverEarnings = trips.reduce((sum, t) => sum + (Number(t.fare || t.fareAmount) || 0), 0);
 
             const ratingEl = document.getElementById('profile-kpi-rating');
             const earnEl = document.getElementById('profile-kpi-earnings');

@@ -239,14 +239,14 @@ html, body {
     justify-content: space-around !important;
   }
 
-  body.customer-body .bottom-nav,
-  body.customer-body #mobile-bottom-nav,
-  .customer-body .bottom-nav,
-  .customer-body #mobile-bottom-nav {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-    height: 0 !important;
+  /* Ensure bottom nav is always visible, interactive, and aligned across all portals */
+  .bottom-nav,
+  .bottom-nav.mobile-only,
+  .bottom-nav.mobile-only-flex,
+  #mobile-bottom-nav {
+    display: flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
   }
 
   /* --- App Shell & Layout Adjustments --- */

@@ -210,8 +210,8 @@ class CustomerAppController {
                     type: 'motorbike',
                     name: 'Navigo Bike',
                     icon: '🛵',
-                    plate: '59-S3 889.24',
-                    model: 'Honda Wave Alpha',
+                    plate: '',
+                    model: 'Xe máy',
                     label: 'Xe máy (Navigo Bike)'
                 };
             case 'premium':
@@ -220,8 +220,8 @@ class CustomerAppController {
                     type: 'premium',
                     name: 'Navigo Plus',
                     icon: '🚘',
-                    plate: '51K-999.88',
-                    model: 'Mercedes-Benz C200',
+                    plate: '',
+                    model: 'Xe sang',
                     label: 'Xe sang (Navigo Plus)'
                 };
             case 'car7':
@@ -230,8 +230,8 @@ class CustomerAppController {
                     type: 'car7',
                     name: 'Navigo XL',
                     icon: '🚐',
-                    plate: '51H-777.36',
-                    model: 'Mitsubishi Xpander',
+                    plate: '',
+                    model: 'Ô tô 7 chỗ',
                     label: 'Ô tô 7 chỗ (Navigo XL)'
                 };
             case 'car4':
@@ -241,8 +241,8 @@ class CustomerAppController {
                     type: 'car4',
                     name: 'Navigo Car',
                     icon: '🚗',
-                    plate: '51G-889.24',
-                    model: 'Toyota Vios 2023',
+                    plate: '',
+                    model: 'Ô tô 4 chỗ',
                     label: 'Ô tô 4 chỗ (Navigo Car)'
                 };
         }
@@ -2263,8 +2263,16 @@ class CustomerAppController {
                 const raw = localStorage.getItem('goride_active_trip');
                 if (raw) {
                     const parsed = JSON.parse(raw);
+                    if (parsed && typeof isMockTrip === 'function' && isMockTrip(parsed)) {
+                        localStorage.removeItem('goride_active_trip');
+                        parsed = null;
+                    }
+                    if (parsed && parsed.driverName && (parsed.driverName.includes('Nguyễn Văn Thành') || parsed.driverName.includes('Trần Văn Bình'))) {
+                        localStorage.removeItem('goride_active_trip');
+                        parsed = null;
+                    }
                     const validStatuses = ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'];
-                    const tripTime = parsed.createdAt ? new Date(parsed.createdAt).getTime() : 0;
+                    const tripTime = parsed?.createdAt ? new Date(parsed.createdAt).getTime() : 0;
                     const isFresh = (Date.now() - tripTime) < (2 * 60 * 60 * 1000); // within 2 hours
                     if (parsed && parsed.status && validStatuses.includes(parsed.status.toUpperCase()) && isFresh) {
                         trip = parsed;
@@ -2400,6 +2408,24 @@ class CustomerAppController {
             const res = await apiClient.requestTrip(tripPayload);
             if (res && res.data && res.data.success && res.data.trip) {
                 const createdTrip = res.data.trip;
+                createdTrip.pickupCoords = [Number(this.pickup.lat), Number(this.pickup.lng)];
+                createdTrip.destinationCoords = [Number(this.destination.lat), Number(this.destination.lng)];
+                createdTrip.pickupLat = Number(this.pickup.lat);
+                createdTrip.pickupLon = Number(this.pickup.lng);
+                createdTrip.dropoffLat = Number(this.destination.lat);
+                createdTrip.dropoffLon = Number(this.destination.lng);
+                createdTrip.pickup = {
+                    name: this.pickup.name,
+                    address: this.pickup.address || this.pickup.name,
+                    lat: Number(this.pickup.lat),
+                    lng: Number(this.pickup.lng)
+                };
+                createdTrip.destination = {
+                    name: this.destination.name,
+                    address: this.destination.address || this.destination.name,
+                    lat: Number(this.destination.lat),
+                    lng: Number(this.destination.lng)
+                };
                 this.activeTrip = createdTrip;
                 this.activeTripId = createdTrip.id;
 
@@ -2414,6 +2440,12 @@ class CustomerAppController {
                         driverName: createdTrip.driverName || 'Chưa gán',
                         pickup: this.pickup.name,
                         destination: this.destination.name,
+                        pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
+                        destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
+                        pickupLat: Number(this.pickup.lat),
+                        pickupLon: Number(this.pickup.lng),
+                        dropoffLat: Number(this.destination.lat),
+                        dropoffLon: Number(this.destination.lng),
                         fare: estFare,
                         status: 'requested',
                         createdAt: new Date().toISOString()
@@ -2492,14 +2524,32 @@ class CustomerAppController {
                     status: 'REQUESTED',
                     customerName: currentUser?.name || 'Khách hàng Navigo',
                     customerPhone: currentUser?.phone || '0901234567',
-                    driverName: 'Chưa gán',
+                    driverName: null,
                     licensePlate: '',
                     vehicleModel: '',
                     driverRating: '5.0',
-                    driverLat: this.pickup.lat + 0.002,
-                    driverLon: this.pickup.lng + 0.002,
+                    driverLat: null,
+                    driverLon: null,
                     pickupName: this.pickup.name,
                     dropoffName: this.destination.name,
+                    pickupLat: Number(this.pickup.lat),
+                    pickupLon: Number(this.pickup.lng),
+                    dropoffLat: Number(this.destination.lat),
+                    dropoffLon: Number(this.destination.lng),
+                    pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
+                    destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
+                    pickup: {
+                        name: this.pickup.name,
+                        address: this.pickup.address || this.pickup.name,
+                        lat: Number(this.pickup.lat),
+                        lng: Number(this.pickup.lng)
+                    },
+                    destination: {
+                        name: this.destination.name,
+                        address: this.destination.address || this.destination.name,
+                        lat: Number(this.destination.lat),
+                        lng: Number(this.destination.lng)
+                    },
                     fareAmount: estFare,
                     originalFare: this.selectedOriginalFare || estFare,
                     promoCode: this.appliedPromo ? this.appliedPromo.code : null,
@@ -2520,6 +2570,12 @@ class CustomerAppController {
                         driverName: 'Chưa gán',
                         pickup: offlineTrip.pickupName,
                         destination: offlineTrip.dropoffName,
+                        pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
+                        destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
+                        pickupLat: Number(this.pickup.lat),
+                        pickupLon: Number(this.pickup.lng),
+                        dropoffLat: Number(this.destination.lat),
+                        dropoffLon: Number(this.destination.lng),
                         fare: estFare,
                         distance: (estDist / 1000).toFixed(1),
                         vehicleType: vInfo.type,
@@ -2539,6 +2595,8 @@ class CustomerAppController {
                         licensePlate: '',
                         vehicleModel: '',
                         driverRating: '5.0',
+                        driverLat: null,
+                        driverLon: null,
                         pickup: {
                             name: this.pickup.name,
                             address: this.pickup.address || this.pickup.name,
@@ -2573,51 +2631,8 @@ class CustomerAppController {
                 this.updateTrackingUI(offlineTrip);
                 this.startActiveTripPolling(offlineTrip.id);
 
-                // Fallback simulation only if no real driver accepts after 25s
-                const t0 = setTimeout(() => {
-                    if (this.activeTrip && this.activeTrip.id === offlineTrip.id && this.activeTrip.status === 'REQUESTED') {
-                        // Check if an approved driver exists in admin drivers that matches vehicle type
-                        const activeDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
-                        const matchingDriver = activeDrivers.find(d => this.isVehicleTypeMatch(vInfo.type, d.vehicleType));
-
-                        const driverName = matchingDriver?.name || 'Nguyễn Văn Thành (Đối tác)';
-                        const driverPlate = matchingDriver?.plate || vInfo.plate;
-                        const driverModel = matchingDriver?.model || matchingDriver?.vehicleModel || vInfo.model;
-
-                        offlineTrip.status = 'ACCEPTED';
-                        offlineTrip.driverName = driverName;
-                        offlineTrip.vehicleType = vInfo.type;
-                        offlineTrip.vehicleTypeName = vInfo.name;
-                        offlineTrip.vehicleIcon = vInfo.icon;
-                        offlineTrip.licensePlate = driverPlate;
-                        offlineTrip.vehicleModel = driverModel;
-                        this.updateTrackingUI(offlineTrip);
-                        this.showToast(`Tài xế đối tác ${driverName} (${vInfo.name}) đã nhận chuyến của bạn!`, 'success');
-                        try {
-                            const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                            const idx = adminTrips.findIndex(t => t.id === offlineTrip.id);
-                            if (idx !== -1) {
-                                adminTrips[idx].status = 'accepted';
-                                adminTrips[idx].driverName = driverName;
-                                adminTrips[idx].licensePlate = driverPlate;
-                                adminTrips[idx].vehicleType = vInfo.type;
-                                adminTrips[idx].vehicleModel = driverModel;
-                                localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
-                            }
-                            const aTrip = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
-                            aTrip.status = 'ACCEPTED';
-                            aTrip.driverName = driverName;
-                            aTrip.licensePlate = driverPlate;
-                            aTrip.vehicleModel = driverModel;
-                            aTrip.vehicleType = vInfo.type;
-                            aTrip.vehicleTypeName = vInfo.name;
-                            aTrip.vehicleIcon = vInfo.icon;
-                            localStorage.setItem('goride_active_trip', JSON.stringify(aTrip));
-                        } catch (e) {}
-                    }
-                }, 25000);
-
-                this.simulationTimers = [t0];
+                // 100% Real Dispatch Architecture: Wait strictly for real online drivers to accept
+                this.simulationTimers = [];
                 return;
             }
 
@@ -2729,7 +2744,12 @@ class CustomerAppController {
                     if (cloudTrip.driverLocation) {
                         this.activeTrip.driverLat = cloudTrip.driverLocation.lat;
                         this.activeTrip.driverLon = cloudTrip.driverLocation.lng;
+                        this.activeTrip.driverLng = cloudTrip.driverLocation.lng;
                         this.activeTrip.driverHeading = cloudTrip.driverLocation.heading;
+                    } else if (cloudTrip.driverLat && (cloudTrip.driverLng || cloudTrip.driverLon)) {
+                        this.activeTrip.driverLat = cloudTrip.driverLat;
+                        this.activeTrip.driverLon = cloudTrip.driverLon || cloudTrip.driverLng;
+                        this.activeTrip.driverLng = cloudTrip.driverLon || cloudTrip.driverLng;
                     }
 
                     this.updateTrackingUI(this.activeTrip);
@@ -2784,15 +2804,15 @@ class CustomerAppController {
                                 status: (t.status || 'requested').toUpperCase(),
                                 customerName: t.customerName || 'Khách hàng',
                                 driverName: t.driverName !== 'Chưa gán' ? t.driverName : null,
-                                licensePlate: t.licensePlate || '51G-889.24',
-                                vehicleModel: t.vehicleModel || 'GoRide',
+                                licensePlate: t.licensePlate || '',
+                                vehicleModel: t.vehicleModel || '',
                                 vehicleType: t.vehicleType || this.selectedService || 'motorbike',
                                 pickupName: t.pickup || this.pickup?.name,
                                 dropoffName: t.destination || this.destination?.name,
                                 fareAmount: Number(t.fare) || this.selectedVehicleFare || 45000,
                                 distanceMeters: (Number(t.distance) || 3) * 1000,
-                                driverLat: this.pickup ? this.pickup.lat + (t.status === 'arrived' ? 0 : 0.001) : 10.7725,
-                                driverLon: this.pickup ? this.pickup.lng + (t.status === 'arrived' ? 0 : 0.001) : 106.6980
+                                driverLat: (t.driverLat !== undefined && t.driverLat !== null) ? Number(t.driverLat) : null,
+                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : null
                             };
                             // Sync GPS and vehicleType from live driver broadcast
                             try {
@@ -2801,11 +2821,11 @@ class CustomerAppController {
                                     (t.driverName && d.name === t.driverName) || 
                                     (t.licensePlate && d.plate === t.licensePlate)
                                 );
-                                if (dEntry) {
+                                if (dEntry && dEntry.isOnline) {
                                     const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
                                     const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
-                                    if (!isNaN(dLat)) currentTrip.driverLat = dLat;
-                                    if (!isNaN(dLng)) currentTrip.driverLon = dLng;
+                                    if (!isNaN(dLat) && dLat !== 0) currentTrip.driverLat = dLat;
+                                    if (!isNaN(dLng) && dLng !== 0) currentTrip.driverLon = dLng;
                                     if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
                                 }
                             } catch (e) {}
@@ -2888,6 +2908,9 @@ class CustomerAppController {
         const searchingPanel = document.getElementById('tracking-searching-panel');
 
         if (status === 'REQUESTED' || status === 'OFFERED') {
+            if (this.mapController) {
+                this.mapController.clearMarkers('drivers');
+            }
             if (radar) radar.style.display = 'none';
             this.showRadarAtPickup(trip.pickupLat || (trip.pickup && trip.pickup.lat), trip.pickupLon || trip.pickupLng || (trip.pickup && (trip.pickup.lng || trip.pickup.lon)));
             if (driverSheet) driverSheet.style.display = 'none';
@@ -2937,7 +2960,7 @@ class CustomerAppController {
                 }
             }
 
-            // Update driver information from backend or driver profile (Support all ID variants)
+            // Update driver information from real backend or driver profile (Support all ID variants)
             const driverNameEl = document.getElementById('track-driver-name') || document.getElementById('driver-name');
             const driverPlateEl = document.getElementById('track-driver-plate') || document.getElementById('driver-vehicle');
             const driverModelEl = document.getElementById('track-driver-model');
@@ -2946,9 +2969,23 @@ class CustomerAppController {
             const tripVType = this.normalizeVehicleType(trip.vehicleType || trip.serviceType || this.selectedService || 'car4');
             const vDetails = this.getVehicleDetails(tripVType);
 
-            if (driverNameEl) driverNameEl.textContent = trip.driverName || 'Tài xế Navigo đối tác';
-            if (driverPlateEl) driverPlateEl.textContent = trip.licensePlate || vDetails.plate;
-            if (driverModelEl) driverModelEl.textContent = trip.vehicleModel ? `${vDetails.icon} ${trip.vehicleModel}` : `${vDetails.icon} ${vDetails.model}`;
+            if (driverNameEl) driverNameEl.textContent = trip.driverName || 'Tài xế GoRide đối tác';
+            if (driverPlateEl) {
+                if (trip.licensePlate) {
+                    driverPlateEl.textContent = trip.licensePlate;
+                    driverPlateEl.style.display = '';
+                } else {
+                    driverPlateEl.textContent = '';
+                    driverPlateEl.style.display = 'none';
+                }
+            }
+            if (driverModelEl) {
+                if (trip.vehicleModel) {
+                    driverModelEl.textContent = `${vDetails.icon} ${trip.vehicleModel}`;
+                } else {
+                    driverModelEl.textContent = `${vDetails.icon} ${vDetails.name}`;
+                }
+            }
             if (driverRatingEl) driverRatingEl.textContent = trip.driverRating ? `★ ${trip.driverRating}` : '★ 5.0';
 
             if (status === 'ACCEPTED') {
@@ -2964,25 +3001,31 @@ class CustomerAppController {
             }
 
             // Render real driver marker if position available
-            if (this.mapController && trip.driverLat && trip.driverLon) {
-                let vType = tripVType;
-                try {
-                    const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
-                    const dEntry = Object.values(onlineDrivers).find(d => 
-                        (trip.driverName && d.name === trip.driverName) || 
-                        (trip.licensePlate && d.plate === trip.licensePlate)
-                    );
-                    if (dEntry && dEntry.vehicleType) {
-                        vType = this.normalizeVehicleType(dEntry.vehicleType);
-                    }
-                } catch (e) {}
+            if (this.mapController) {
+                const dLat = (trip.driverLat !== undefined && trip.driverLat !== null) ? Number(trip.driverLat) : (trip.driverLocation ? Number(trip.driverLocation.lat) : null);
+                const dLon = (trip.driverLon !== undefined && trip.driverLon !== null) ? Number(trip.driverLon) : ((trip.driverLng !== undefined && trip.driverLng !== null) ? Number(trip.driverLng) : (trip.driverLocation ? Number(trip.driverLocation.lng) : null));
+                if (dLat !== null && dLon !== null && !isNaN(dLat) && !isNaN(dLon)) {
+                    let vType = tripVType;
+                    try {
+                        const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+                        const dEntry = Object.values(onlineDrivers).find(d => 
+                            (trip.driverName && d.name === trip.driverName) || 
+                            (trip.licensePlate && d.plate === trip.licensePlate)
+                        );
+                        if (dEntry && dEntry.vehicleType) {
+                            vType = this.normalizeVehicleType(dEntry.vehicleType);
+                        }
+                    } catch (e) {}
 
-                this.mapController.updateDriverMarker('active_driver', trip.driverLat, trip.driverLon, trip.driverHeading || 0, {
-                    name: trip.driverName || 'Tài xế',
-                    vehicle: `${vDetails.label} - ${trip.licensePlate || vDetails.plate}`,
-                    vehicleType: vType,
-                    isActive: true
-                });
+                    this.mapController.updateDriverMarker('active_driver', dLat, dLon, trip.driverHeading || 0, {
+                        name: trip.driverName || 'Tài xế',
+                        vehicle: `${vDetails.label}${trip.licensePlate ? ' - ' + trip.licensePlate : ''}`,
+                        vehicleType: vType,
+                        isActive: true
+                    });
+                } else {
+                    this.mapController.clearMarkers('drivers');
+                }
             }
         } else if (status === 'COMPLETED') {
             this.hideRadar();
@@ -3177,11 +3220,13 @@ class CustomerAppController {
      * Show Call Driver Simulated Dialog
      */
     showCallDialog() {
+        const dName = (this.activeTrip && this.activeTrip.driverName) ? this.activeTrip.driverName : 'Tài xế';
+        const dPhone = (this.activeTrip && (this.activeTrip.driverPhone || this.activeTrip.phone)) ? (this.activeTrip.driverPhone || this.activeTrip.phone) : '09xx xxx xxx';
         this.showDialog(`
             <div style="text-align:center; padding:10px 0;">
                 <div style="width:60px; height:60px; border-radius:50%; background:#ecfdf5; color:#059669; font-size:1.8rem; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">📞</div>
                 <h3 style="margin:0 0 4px; color:#0f172a;">Gọi cho tài xế <span style="font-size:0.75rem; color:#dc2626; font-weight:700;">[CHƯA HỖ TRỢ]</span></h3>
-                <p style="margin:0; font-size:0.9rem; color:#64748b;">Trần Văn Bình &bull; 0918 765 432</p>
+                <p style="margin:0; font-size:0.9rem; color:#64748b;">${this.escapeHtml(dName)} &bull; ${this.escapeHtml(dPhone)}</p>
                 <div style="background:#fef2f2; border:1px solid #fecaca; padding:10px 14px; border-radius:12px; margin:14px 0; font-size:0.8rem; color:#991b1b; line-height:1.4;">
                     ⚠️ <strong>Bản xem trước:</strong> Tính năng gọi thoại trực tiếp qua mạng viễn thông hiện chưa được triển khai. Hệ thống đang chờ tích hợp cổng VoIP từ Backend.
                 </div>
@@ -3197,12 +3242,13 @@ class CustomerAppController {
      * Show In-App Chat Simulated Dialog
      */
     showChatDialog() {
+        const dName = (this.activeTrip && this.activeTrip.driverName) ? this.activeTrip.driverName : 'Tài xế đối tác';
         this.showDialog(`
             <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:8px; margin-bottom:12px;">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <span style="font-size:1.2rem;">💬</span>
-                        <strong>Trần Văn Bình</strong>
+                        <strong>${this.escapeHtml(dName)}</strong>
                         <span class="badge badge-warning" style="font-size:0.65rem;">BẢN XEM TRƯỚC</span>
                     </div>
                     <button type="button" id="btn-close-chat" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">&times;</button>
@@ -3352,8 +3398,8 @@ class CustomerAppController {
                 vehicleName: vName,
                 driver: (tripData.driverName && tripData.driverName !== 'Chưa gán') ? {
                     name: tripData.driverName,
-                    plate: tripData.licensePlate || '51G-889.24',
-                    model: tripData.vehicleModel || 'GoRide Partner',
+                    plate: tripData.licensePlate || '',
+                    model: tripData.vehicleModel || (vName || 'GoRide'),
                     rating: tripData.driverRating || 5.0
                 } : (tripData.driver || null),
                 cancelReason: tripData.cancelReason || null,

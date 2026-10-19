@@ -9,6 +9,52 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        /* User Profile Button & Dropdown Styles */
+        .goride-home-user-menu-btn:hover {
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            transform: translateY(-1px);
+        }
+        .goride-user-menu-wrapper:hover #home-user-dropdown {
+            display: block !important;
+        }
+        #home-user-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 0;
+            right: 0;
+            height: 12px;
+        }
+
+        /* Mobile Bottom Nav & Home Page Viewport Optimizations */
+        @media (max-width: 1024px) {
+            #mobile-bottom-nav,
+            .bottom-nav {
+                display: flex !important;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                height: 58px !important;
+                background: #ffffff !important;
+                border-top: 1px solid #e2e8f0 !important;
+                z-index: 99999 !important;
+                align-items: center !important;
+                justify-content: space-around !important;
+                padding: 0 4px env(safe-area-inset-bottom, 0px) 4px !important;
+                box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+            }
+            .goride-home-content {
+                padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+            }
+        }
+    </style>
 </head>
 <body class="app-home-body">
     <!-- Desktop Top Navigation Bar (>= 1025px) -->
@@ -32,16 +78,48 @@
             </div>
 
             <div class="goride-desktop-nav-actions">
-                <!-- Auth / Profile -->
+                <!-- Guest: Login button -->
                 <div data-auth="guest">
-                    <a href="pages/login.html" class="btn btn-primary btn-sm" style="border-radius:18px; padding:6px 16px;">
+                    <a href="pages/login.html" class="btn btn-primary btn-sm" style="border-radius:18px; padding:7px 18px; font-weight:700;">
                         Đăng nhập
                     </a>
                 </div>
-                <div data-auth="user" style="display: none;">
-                    <a href="pages/profile.html" class="goride-user-avatar-btn" id="desktop-user-badge" data-user-avatar title="Hồ sơ cá nhân">
-                        <span>K</span>
+
+                <!-- Authenticated: User Avatar & Profile Navigation Pill -->
+                <div data-auth="user" class="goride-user-menu-wrapper" style="display: none; position: relative; align-items: center; gap: 8px;">
+                    <a href="pages/profile.html" class="goride-home-user-menu-btn" id="home-user-menu-btn" title="Hồ sơ cá nhân" style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 6px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:30px; cursor:pointer; transition:all 0.2s; text-decoration:none; color:inherit;">
+                        <div class="avatar avatar-sm" id="desktop-user-badge" data-user-avatar style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #00897b, #004d40); color:#fff; font-size:0.9rem; font-weight:800; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0; box-shadow:0 2px 6px rgba(0,137,123,0.25);">
+                            <span>U</span>
+                        </div>
+                        <span class="desktop-only" data-user-name style="font-weight:700; font-size:0.85rem; color:#0f172a; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Người dùng</span>
+                        <span class="chevron desktop-only" style="font-size:0.68rem; color:#64748b;">▼</span>
                     </a>
+                    <!-- User Dropdown Menu -->
+                    <div class="user-menu-dropdown" id="home-user-dropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; min-width:230px; background:#ffffff; border-radius:14px; box-shadow:0 12px 28px rgba(0,0,0,0.14), 0 4px 10px rgba(0,0,0,0.06); border:1px solid #e2e8f0; z-index:1000; overflow:hidden;">
+                        <div style="padding:14px; border-bottom:1px solid #f1f5f9; background:#f8fafc;">
+                            <div style="font-weight:800; font-size:0.9rem; color:#0f172a;" data-user-name>Người dùng</div>
+                            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;" data-user-email>user@demo.com</div>
+                            <span class="badge" data-user-role style="margin-top:6px; display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#e0f2fe; color:#0369a1;">Khách hàng</span>
+                        </div>
+                        <div style="padding:6px;">
+                            <a href="pages/profile.html" class="user-menu-item" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#334155; font-size:0.85rem; font-weight:600; text-decoration:none;">
+                                <span>👤</span> Hồ sơ cá nhân
+                            </a>
+                            <a href="pages/admin.html" id="home-dropdown-admin-link" class="user-menu-item" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#dc2626; font-size:0.85rem; font-weight:600; text-decoration:none;">
+                                <span>⚙️</span> Trung tâm Quản trị
+                            </a>
+                            <a href="pages/driver.html" id="home-dropdown-driver-link" class="user-menu-item" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#00897b; font-size:0.85rem; font-weight:600; text-decoration:none;">
+                                <span>🚗</span> Cổng nhận chuyến Tài xế
+                            </a>
+                            <a href="pages/customer.html#history" id="home-dropdown-history-link" class="user-menu-item" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#334155; font-size:0.85rem; font-weight:600; text-decoration:none;">
+                                <span>📋</span> Lịch sử chuyến đi
+                            </a>
+                            <div style="margin:4px 0; border-top:1px solid #f1f5f9;"></div>
+                            <a href="#" data-action="logout" class="user-menu-item" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#ef4444; font-size:0.85rem; font-weight:700; text-decoration:none;">
+                                <span>🚪</span> Đăng xuất
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -298,30 +376,79 @@
     <script src="js/core/demo-data.js"></script>
     <script src="js/core/app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Check session status and customize avatar/profile
-            if (typeof sessionManager !== 'undefined') {
-                const user = sessionManager.getCurrentUser();
-                const role = sessionManager.getRole?.() || (user ? user.role : null);
+        (function() {
+            function syncHomeAuthUI() {
+                let user = null;
+                if (typeof sessionManager !== 'undefined') {
+                    user = sessionManager.getCurrentUser();
+                }
+                if (!user) {
+                    try {
+                        const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
+                        if (raw && raw !== 'null' && raw !== 'undefined' && raw !== '{}') {
+                            user = JSON.parse(raw);
+                        }
+                    } catch (e) {}
+                }
 
-                // Role-based visibility across Desktop navbar
-                const driverLinks = [
-                    document.getElementById('nav-link-driver'),
-                    document.getElementById('m-pill-driver')
-                ];
-                const adminLinks = [
-                    document.getElementById('nav-link-admin'),
-                    document.getElementById('m-pill-admin')
-                ];
-                const customerLinks = [
-                    document.getElementById('nav-link-customer')
-                ];
-                const historyLinks = [
-                    document.getElementById('nav-link-history')
-                ];
-                const profileLinks = [
-                    document.getElementById('nav-link-profile')
-                ];
+                const isAuth = !!(user && (user.id || user.email));
+                const role = user ? (user.role || 'customer') : null;
+
+                // 1. Strictly toggle guest vs user elements across desktop & mobile
+                document.querySelectorAll('[data-auth="guest"]').forEach(el => {
+                    el.style.setProperty('display', isAuth ? 'none' : '', 'important');
+                });
+                document.querySelectorAll('[data-auth="user"]').forEach(el => {
+                    el.style.setProperty('display', isAuth ? 'flex' : 'none', 'important');
+                });
+
+                // 2. Populate User Profile Data (Name, Email, Role, Avatar)
+                if (isAuth && user) {
+                    document.querySelectorAll('[data-user-name]').forEach(el => {
+                        el.textContent = user.name || 'Người dùng';
+                    });
+                    document.querySelectorAll('[data-user-email]').forEach(el => {
+                        el.textContent = user.email || '';
+                    });
+                    document.querySelectorAll('[data-user-role]').forEach(el => {
+                        const roleLabels = { customer: 'Khách hàng', driver: 'Tài xế', admin: 'Quản trị viên' };
+                        el.textContent = roleLabels[user.role] || user.role;
+                    });
+
+                    const avatarSrc = user.avatar || user.avatar_path;
+                    document.querySelectorAll('[data-user-avatar]').forEach(el => {
+                        if (avatarSrc) {
+                            if (el.tagName && el.tagName.toLowerCase() === 'img') {
+                                el.src = avatarSrc;
+                                el.style.display = 'block';
+                            } else {
+                                el.innerHTML = `<img src="${avatarSrc}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; pointer-events:none;">`;
+                            }
+                        } else {
+                            const initial = (user.name || 'U').charAt(0).toUpperCase();
+                            if (el.tagName && el.tagName.toLowerCase() === 'img') {
+                                el.style.display = 'none';
+                            } else {
+                                el.innerHTML = `<span>${initial}</span>`;
+                            }
+                        }
+                    });
+
+                    // Dropdown portal shortcuts visibility based on role
+                    const adminDropLink = document.getElementById('home-dropdown-admin-link');
+                    const driverDropLink = document.getElementById('home-dropdown-driver-link');
+                    const historyDropLink = document.getElementById('home-dropdown-history-link');
+                    if (adminDropLink) adminDropLink.style.display = (role === 'admin') ? 'flex' : 'none';
+                    if (driverDropLink) driverDropLink.style.display = (role === 'driver') ? 'flex' : 'none';
+                    if (historyDropLink) historyDropLink.style.display = (role === 'customer') ? 'flex' : 'none';
+                }
+
+                // 3. Role-based visibility across Desktop navbar links
+                const driverLinks = [document.getElementById('nav-link-driver'), document.getElementById('m-pill-driver')];
+                const adminLinks = [document.getElementById('nav-link-admin'), document.getElementById('m-pill-admin')];
+                const customerLinks = [document.getElementById('nav-link-customer')];
+                const historyLinks = [document.getElementById('nav-link-history')];
+                const profileLinks = [document.getElementById('nav-link-profile')];
 
                 const setVisible = (elements, show) => {
                     elements.forEach(el => {
@@ -330,28 +457,24 @@
                 };
 
                 if (role === 'admin') {
-                    // Admin: Strictly HIDE "Đối tác tài xế" & Customer booking, SHOW "Quản trị" & Profile
                     setVisible(driverLinks, false);
                     setVisible(adminLinks, true);
                     setVisible(customerLinks, false);
                     setVisible(historyLinks, false);
                     setVisible(profileLinks, true);
                 } else if (role === 'driver') {
-                    // Driver: Show "Đối tác tài xế", hide "Quản trị" & Customer booking
                     setVisible(driverLinks, true);
                     setVisible(adminLinks, false);
                     setVisible(customerLinks, false);
                     setVisible(historyLinks, false);
                     setVisible(profileLinks, true);
                 } else if (role === 'customer') {
-                    // Customer: Show Booking, History, Profile; hide Driver & Admin
                     setVisible(driverLinks, false);
                     setVisible(adminLinks, false);
                     setVisible(customerLinks, true);
                     setVisible(historyLinks, true);
                     setVisible(profileLinks, true);
                 } else {
-                    // Guest / Not logged in: Show Booking & Driver signup; hide Admin, History, Profile
                     setVisible(driverLinks, true);
                     setVisible(adminLinks, false);
                     setVisible(customerLinks, true);
@@ -359,16 +482,64 @@
                     setVisible(profileLinks, false);
                 }
 
-                if (typeof app !== 'undefined' && app.updateAuthUI) {
-                    app.updateAuthUI();
+                // 4. Strictly synchronize Mobile Bottom Navigation matching role
+                if (typeof app !== 'undefined' && typeof app.initMobileBottomNav === 'function') {
+                    app.initMobileBottomNav();
                 }
             }
 
-            if (typeof app !== 'undefined') {
-                if (app.updateAuthUI) app.updateAuthUI();
-                if (app.initMobileBottomNav) app.initMobileBottomNav();
+            // Setup Home User Menu Direct Navigation & Dropdown
+            function setupHomeUserMenu() {
+                const menuBtn = document.getElementById('home-user-menu-btn');
+                const dropdown = document.getElementById('home-user-dropdown');
+                const wrapper = menuBtn ? (menuBtn.closest('.goride-user-menu-wrapper') || menuBtn.parentElement) : null;
+
+                if (menuBtn) {
+                    menuBtn.onclick = (e) => {
+                        // User explicitly requested: clicking profile button directs to profile.html
+                        window.location.href = 'pages/profile.html';
+                    };
+                }
+
+                if (wrapper && dropdown) {
+                    wrapper.addEventListener('mouseenter', () => {
+                        dropdown.style.display = 'block';
+                    });
+                    wrapper.addEventListener('mouseleave', () => {
+                        dropdown.style.display = 'none';
+                    });
+                    document.addEventListener('click', (e) => {
+                        if (!wrapper.contains(e.target)) {
+                            dropdown.style.display = 'none';
+                        }
+                    });
+                }
             }
-        });
+
+            // Run immediately
+            syncHomeAuthUI();
+
+            // Run on DOM ready
+            document.addEventListener('DOMContentLoaded', () => {
+                syncHomeAuthUI();
+                setupHomeUserMenu();
+                if (typeof app !== 'undefined') {
+                    if (app.updateAuthUI) app.updateAuthUI();
+                    if (app.initMobileBottomNav) app.initMobileBottomNav();
+                }
+            });
+
+            // Reactively re-sync on all storage and session events
+            ['load', 'pageshow', 'focus', 'session:login', 'session:update', 'session:logout', 'session:change'].forEach(evt => {
+                window.addEventListener(evt, () => syncHomeAuthUI());
+            });
+            window.addEventListener('storage', (e) => {
+                if (!e.key || e.key.includes('user') || e.key.includes('token')) {
+                    if (typeof sessionManager !== 'undefined') sessionManager._initFromStorage();
+                    syncHomeAuthUI();
+                }
+            });
+        })();
     </script>
 </body>
 </html>

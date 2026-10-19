@@ -177,11 +177,16 @@
                         );
 
                         // Cross-device Cloud check: If not in local offline users, query Firebase Cloud!
-                        if (!matchedUser && window.realtimeSync && window.realtimeSync.isAvailable()) {
+                        if (!matchedUser && window.realtimeSync) {
                             try {
                                 // 1. Check goride_users
-                                const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
-                                const allUsers = uSnap.val() || {};
+                                let allUsers = {};
+                                if (window.realtimeSync.isAvailable()) {
+                                    const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
+                                    allUsers = uSnap.val() || {};
+                                } else if (typeof window.realtimeSync._restGet === 'function') {
+                                    allUsers = await window.realtimeSync._restGet('goride_users') || {};
+                                }
                                 for (const k of Object.keys(allUsers)) {
                                     const u = allUsers[k];
                                     if (u && ((u.email && u.email.toLowerCase() === normInput) || (u.phone && u.phone === normInput) || (u.name && u.name.toLowerCase() === normInput))) {
@@ -192,8 +197,13 @@
 
                                 // 2. Check goride_drivers if not found
                                 if (!matchedUser) {
-                                    const dSnap = await window.realtimeSync.db.ref('goride_drivers').once('value');
-                                    const allDrivers = dSnap.val() || {};
+                                    let allDrivers = {};
+                                    if (window.realtimeSync.isAvailable()) {
+                                        const dSnap = await window.realtimeSync.db.ref('goride_drivers').once('value');
+                                        allDrivers = dSnap.val() || {};
+                                    } else if (typeof window.realtimeSync._restGet === 'function') {
+                                        allDrivers = await window.realtimeSync._restGet('goride_drivers') || {};
+                                    }
                                     for (const k of Object.keys(allDrivers)) {
                                         const d = allDrivers[k];
                                         if (d && ((d.email && d.email.toLowerCase() === normInput) || (d.phone && d.phone === normInput))) {
@@ -205,8 +215,13 @@
 
                                 // 3. Check goride_pending_drivers if still not found
                                 if (!matchedUser) {
-                                    const pSnap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
-                                    const allPending = pSnap.val() || {};
+                                    let allPending = {};
+                                    if (window.realtimeSync.isAvailable()) {
+                                        const pSnap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                                        allPending = pSnap.val() || {};
+                                    } else if (typeof window.realtimeSync._restGet === 'function') {
+                                        allPending = await window.realtimeSync._restGet('goride_pending_drivers') || {};
+                                    }
                                     for (const k of Object.keys(allPending)) {
                                         const p = allPending[k];
                                         if (p && ((p.email && p.email.toLowerCase() === normInput) || (p.phone && p.phone === normInput))) {

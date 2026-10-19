@@ -160,6 +160,12 @@ function isMockTrip(t) {
         return true;
     }
 
+    // Check fake/simulated driver names
+    const dName = String(t.driverName || '').toLowerCase();
+    if (dName.includes('nguyễn văn thành') || dName.includes('trần văn bình') || dName.includes('hoàng minh anh')) {
+        return true;
+    }
+
     return false;
 }
 
@@ -185,7 +191,41 @@ function purgeAllMockTrips() {
             try { sessionStorage.removeItem(k); } catch (e) {}
         });
 
-        // 2. Iterate through all keys in localStorage and clean mock trips
+        // 2. Clean active trip if it has mock/fake driver data
+        try {
+            const rawAct = localStorage.getItem('goride_active_trip');
+            if (rawAct) {
+                const act = JSON.parse(rawAct);
+                if (isMockTrip(act)) {
+                    localStorage.removeItem('goride_active_trip');
+                    console.log('[GoRide] Purged fake active trip from goride_active_trip');
+                }
+            }
+        } catch (e) {}
+
+        // 3. Clean fake drivers from goride_online_drivers
+        try {
+            const rawOnline = localStorage.getItem('goride_online_drivers');
+            if (rawOnline) {
+                const parsed = JSON.parse(rawOnline);
+                let changed = false;
+                const cleanDict = {};
+                const list = Array.isArray(parsed) ? parsed : Object.values(parsed);
+                list.forEach(d => {
+                    const name = String(d?.name || '').toLowerCase();
+                    if (!name.includes('trần văn bình') && !name.includes('nguyễn văn thành') && d?.id !== 'drv_d202') {
+                        cleanDict[d.id || d.phone || d.plate] = d;
+                    } else {
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    localStorage.setItem('goride_online_drivers', JSON.stringify(cleanDict));
+                }
+            }
+        } catch (e) {}
+
+        // 4. Iterate through all keys in localStorage and clean mock trips
         const allKeys = [];
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
@@ -543,6 +583,14 @@ class App {
             }
         }
 
+        // Update home dropdown menu role-based links
+        const adminDropLink = document.getElementById('home-dropdown-admin-link');
+        const driverDropLink = document.getElementById('home-dropdown-driver-link');
+        const historyDropLink = document.getElementById('home-dropdown-history-link');
+        if (adminDropLink) adminDropLink.style.display = (role === 'admin') ? 'flex' : 'none';
+        if (driverDropLink) driverDropLink.style.display = (role === 'driver') ? 'flex' : 'none';
+        if (historyDropLink) historyDropLink.style.display = (role === 'customer') ? 'flex' : 'none';
+
         // Fill dynamic user profile placeholders
         if (user) {
             // Safety sanitization: If a driver account has admin text, resolve real driver name
@@ -633,8 +681,8 @@ class App {
                 return;
             }
 
-            // User Profile modal triggers: [data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge
-            const profileTrigger = event.target.closest('[data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge');
+            // User Profile triggers: [data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #home-user-menu-btn
+            const profileTrigger = event.target.closest('[data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #home-user-menu-btn, .goride-home-user-menu-btn');
             if (profileTrigger && !profileTrigger.closest('[data-auth="guest"]')) {
                 event.preventDefault();
                 this.showProfileModal();
@@ -1183,8 +1231,7 @@ class App {
         const path = window.location.pathname.toLowerCase();
         const isLogin = path.includes('login.html');
         const isRegister = path.includes('register.html');
-        const isCustomer = path.endsWith('customer.html') || path.includes('/customer.html') || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
-        if (isLogin || isRegister || isCustomer) {
+        if (isLogin || isRegister) {
             const existingNav = document.getElementById('mobile-bottom-nav') || document.querySelector('.bottom-nav');
             if (existingNav) {
                 existingNav.style.setProperty('display', 'none', 'important');
@@ -1219,23 +1266,36 @@ class App {
         const isAdmin = path.includes('admin.html');
         const hash = (window.location.hash || '').replace('#', '').toLowerCase();
 
-        const isAuth = typeof sessionManager !== 'undefined' && sessionManager.isAuthenticated();
-        const role = (isAuth && sessionManager.getRole()) ? sessionManager.getRole() : 'guest';
+        let isAuth = typeof sessionManager !== 'undefined' && sessionManager.isAuthenticated();
+        let role = (isAuth && sessionManager.getRole()) ? sessionManager.getRole() : null;
+        if (!role) {
+            try {
+                const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
+                if (raw && raw !== 'null' && raw !== 'undefined' && raw !== '{}') {
+                    const u = JSON.parse(raw);
+                    if (u && (u.id || u.email)) {
+                        isAuth = true;
+                        role = u.role || 'customer';
+                    }
+                }
+            } catch (e) {}
+        }
+        if (!role) role = 'guest';
 
         const homeUrl = isPagesDir ? '../index.html' : 'index.html';
         const customerUrl = isPagesDir ? 'customer.html' : 'pages/customer.html';
         const driverUrl = isPagesDir ? 'driver.html' : 'pages/driver.html';
         const adminUrl = isPagesDir ? 'admin.html' : 'pages/admin.html';
         const loginUrl = isPagesDir ? 'login.html' : 'pages/login.html';
+        const profileUrl = isPagesDir ? 'profile.html' : 'pages/profile.html';
 
         let itemsHtml = '';
 
         if (role === 'driver') {
-            // DRIVER ROLE: Trang chủ, Nhận chuyến, Lịch sử, Thu nhập, Tài khoản
+            // DRIVER ROLE: Trang chủ, Nhận chuyến, Lịch sử, Thu nhập, Hồ sơ
             const isTabHome = isDriver && (hash === 'home' || hash === '' || !hash);
             const isTabTrips = isDriver && hash === 'trips';
             const isTabEarnings = isDriver && hash === 'earnings';
-            const isTabAccount = isDriver && hash === 'account';
 
             itemsHtml = `
                 <a href="${homeUrl}" class="bottom-nav-item ${isHome ? 'active' : ''}" id="bnav-driver-landing" title="Về trang chủ">
@@ -1254,16 +1314,16 @@ class App {
                     <span class="bottom-nav-icon">💰</span>
                     <span class="bottom-nav-label">Thu nhập</span>
                 </a>
-                <a href="${isPagesDir ? 'profile.html' : 'pages/profile.html'}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-driver-account">
+                <a href="${profileUrl}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-driver-account">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Hồ sơ</span>
                 </a>
             `;
         } else if (role === 'admin') {
-            // ADMIN ROLE: Trang chủ, Tổng quan, Gần đây, Chuyến xe, Tài xế, Hồ sơ
+            // ADMIN ROLE: Trang chủ, Tổng quan, Chuyến xe, Khách hàng, Tài xế, Hồ sơ
             const isTabDash = isAdmin && (hash === 'dashboard' || hash === '' || !hash);
-            const isTabRecent = isAdmin && hash === 'recent-trips';
             const isTabTrips = isAdmin && hash === 'trips';
+            const isTabCustomers = isAdmin && hash === 'customers';
             const isTabDrivers = isAdmin && hash === 'drivers';
 
             itemsHtml = `
@@ -1275,19 +1335,19 @@ class App {
                     <span class="bottom-nav-icon">📊</span>
                     <span class="bottom-nav-label">Tổng quan</span>
                 </a>
-                <a href="${isAdmin ? '#recent-trips' : adminUrl + '#recent-trips'}" class="bottom-nav-item ${isTabRecent ? 'active' : ''}" data-tab="recent-trips" id="bnav-admin-recent-trips">
-                    <span class="bottom-nav-icon">⏱️</span>
-                    <span class="bottom-nav-label">Gần đây</span>
-                </a>
                 <a href="${isAdmin ? '#trips' : adminUrl + '#trips'}" class="bottom-nav-item ${isTabTrips ? 'active' : ''}" data-tab="trips" id="bnav-admin-trips">
                     <span class="bottom-nav-icon">🛣️</span>
                     <span class="bottom-nav-label">Chuyến xe</span>
                 </a>
-                <a href="${isAdmin ? '#drivers' : adminUrl + '#drivers'}" class="bottom-nav-item ${isTabDrivers ? 'active' : ''}" data-tab="drivers" id="bnav-admin-drivers">
+                <a href="${isAdmin ? '#customers' : adminUrl + '#customers'}" class="bottom-nav-item ${isTabCustomers ? 'active' : ''}" data-tab="customers" id="bnav-admin-customers">
                     <span class="bottom-nav-icon">👥</span>
+                    <span class="bottom-nav-label">Khách hàng</span>
+                </a>
+                <a href="${isAdmin ? '#drivers' : adminUrl + '#drivers'}" class="bottom-nav-item ${isTabDrivers ? 'active' : ''}" data-tab="drivers" id="bnav-admin-drivers">
+                    <span class="bottom-nav-icon">👨‍✈️</span>
                     <span class="bottom-nav-label">Tài xế</span>
                 </a>
-                <a href="${isPagesDir ? 'profile.html' : 'pages/profile.html'}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-admin-account">
+                <a href="${profileUrl}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-admin-account">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Hồ sơ</span>
                 </a>
@@ -1310,7 +1370,7 @@ class App {
                     <span class="bottom-nav-icon">📋</span>
                     <span class="bottom-nav-label">Lịch sử</span>
                 </a>
-                <a href="${isPagesDir ? 'profile.html' : 'pages/profile.html'}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-cust-account">
+                <a href="${profileUrl}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-cust-account">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Hồ sơ</span>
                 </a>

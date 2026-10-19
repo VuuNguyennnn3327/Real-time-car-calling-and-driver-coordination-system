@@ -56,6 +56,7 @@ class AdminController {
 
         // 4. Setup cross-tab real-time listener for driver status & GPS updates
         this.setupRealtimeSync();
+        this.setupCloudSyncDiagnostics();
 
         // 5. Load Initial Dashboard Data & Tables
         await this.loadDashboard();
@@ -63,10 +64,12 @@ class AdminController {
         this.loadTripsTable();
         this.loadDriversList();
         this.loadDriverApprovals();
+        this.loadCustomers();
+        this.setupCustomerFilters();
 
         // 6. Handle URL Hash for tabs
         const hash = window.location.hash.replace('#', '');
-        if (hash && ['dashboard', 'recent-trips', 'trips', 'drivers'].includes(hash)) {
+        if (hash && ['dashboard', 'recent-trips', 'trips', 'drivers', 'customers'].includes(hash)) {
             this.switchTab(hash);
         }
 
@@ -309,8 +312,8 @@ class AdminController {
                 }
             });
 
-            // Also sync trips from Firebase if connected
-            if (window.realtimeSync.isAvailable && window.realtimeSync.isAvailable()) {
+            // Also sync trips, pending drivers, and users from Firebase with robust onReady callback
+            window.realtimeSync.onReady(() => {
                 try {
                     window.realtimeSync.db.ref('goride_trips').on('value', (snapshot) => {
                         const val = snapshot.val();
@@ -339,7 +342,7 @@ class AdminController {
                         }
                     });
 
-                    // Real-time listener for pending driver registrations
+                    // Real-time continuous listener for pending driver registrations
                     window.realtimeSync.db.ref('goride_pending_drivers').on('value', () => {
                         this.loadDriverApprovals();
                         this.loadDriversList();
@@ -347,8 +350,20 @@ class AdminController {
                             this.loadDashboard();
                         }
                     });
-                } catch (e) {}
-            }
+
+                    // Real-time continuous listener for user / customer account updates
+                    window.realtimeSync.db.ref('goride_users').on('value', () => {
+                        if (this.currentTab === 'customers') {
+                            this.loadCustomers();
+                        }
+                        if (this.currentTab === 'dashboard') {
+                            this.loadDashboard();
+                        }
+                    });
+                } catch (e) {
+                    console.warn('[Admin] Firebase realtime listeners attach warning:', e);
+                }
+            });
         }
 
         // Periodic light polling (every 3s) ensuring map stays live even across background tabs
@@ -360,6 +375,159 @@ class AdminController {
                 this.renderOnlineDriversOnMap();
             }
         }, 3000);
+    }
+
+    /* ==========================================================================
+       CLOUD REALTIME CROSS-DEVICE SYNC & DIAGNOSTICS (ANTI-401 PERMISSION DENIED)
+       ========================================================================== */
+
+    setupCloudSyncDiagnostics() {
+        const updatePill = (status, text) => {
+            const pill = document.getElementById('admin-cloud-status-pill');
+            const dot = document.getElementById('cloud-pill-dot');
+            const textEl = document.getElementById('cloud-pill-text');
+            const banner = document.getElementById('admin-cloud-alert-banner');
+            if (!pill || !dot || !textEl) return;
+
+            if (status === 'connected') {
+                pill.style.background = '#ecfdf5';
+                pill.style.borderColor = '#a7f3d0';
+                pill.style.color = '#047857';
+                dot.style.background = '#10b981';
+                textEl.textContent = text || 'Đám mây: Sẵn sàng';
+                if (banner) banner.style.display = 'none';
+            } else if (status === 'permission_denied') {
+                pill.style.background = '#fef2f2';
+                pill.style.borderColor = '#fecaca';
+                pill.style.color = '#b91c1c';
+                dot.style.background = '#ef4444';
+                textEl.textContent = '⚠️ Mở khóa Firebase (401)';
+                if (banner) banner.style.display = 'flex';
+            } else {
+                pill.style.background = '#f8fafc';
+                pill.style.borderColor = '#e2e8f0';
+                pill.style.color = '#64748b';
+                dot.style.background = '#94a3b8';
+                textEl.textContent = text || 'Đang kết nối đám mây...';
+            }
+        };
+
+        window.addEventListener('realtime:permission_denied', () => {
+            updatePill('permission_denied');
+        });
+
+        window.addEventListener('realtime:connection', (e) => {
+            if (e && e.detail && e.detail.online) {
+                if (!window.realtimeSync || !window.realtimeSync.permissionDenied) {
+                    updatePill('connected');
+                }
+            } else {
+                updatePill('offline', 'Ngoại tuyến');
+            }
+        });
+
+        // Initial light check
+        if (window.realtimeSync && typeof window.realtimeSync.testCloudConnection === 'function') {
+            window.realtimeSync.testCloudConnection().then(res => {
+                if (res.success) {
+                    updatePill('connected');
+                } else if (res.status === 401 || res.code === 'PERMISSION_DENIED') {
+                    updatePill('permission_denied');
+                }
+            }).catch(() => {});
+        }
+    }
+
+    openCloudModal() {
+        const input = document.getElementById('cloud-db-url');
+        if (input && window.realtimeSync) {
+            input.value = window.realtimeSync.databaseURL || window.realtimeSync.getConfig()?.databaseURL || '';
+        }
+        this.openModal('modal-cloud-sync');
+        this.testCloudConnectionFromAdmin();
+    }
+
+    async testCloudConnectionFromAdmin() {
+        const statusEl = document.getElementById('cloud-diagnostic-status');
+        const btn = document.getElementById('btn-test-cloud');
+        if (btn) { btn.disabled = true; btn.textContent = '⏳ Đang kiểm tra...'; }
+        if (statusEl) { statusEl.textContent = 'Đang gửi gói tin kiểm tra đọc & ghi tới Firebase Realtime Database...'; statusEl.style.color = '#475569'; }
+
+        if (window.realtimeSync && typeof window.realtimeSync.testCloudConnection === 'function') {
+            const res = await window.realtimeSync.testCloudConnection();
+            if (btn) { btn.disabled = false; btn.textContent = '⚡ Kiểm tra ngay'; }
+            if (res.success) {
+                if (statusEl) {
+                    statusEl.innerHTML = '<span style="color:#16a34a; font-weight:800;">🟢 KẾT NỐI HOÀN HẢO (200 OK)</span><br><span style="font-size:0.8rem; font-weight:normal; color:#475569;">Đám mây đang hoạt động tốt. Dữ liệu tài xế & khách hàng sẽ lập tức đồng bộ giữa mọi thiết bị.</span>';
+                }
+                const banner = document.getElementById('admin-cloud-alert-banner');
+                if (banner) banner.style.display = 'none';
+                const pill = document.getElementById('admin-cloud-status-pill');
+                if (pill) {
+                    pill.style.background = '#ecfdf5';
+                    pill.style.borderColor = '#a7f3d0';
+                    pill.style.color = '#047857';
+                    const dot = document.getElementById('cloud-pill-dot');
+                    const textEl = document.getElementById('cloud-pill-text');
+                    if (dot) dot.style.background = '#10b981';
+                    if (textEl) textEl.textContent = 'Đám mây: Sẵn sàng';
+                }
+                this.showToast('Kết nối đám mây thành công 100%!', 'success');
+            } else if (res.status === 401 || res.code === 'PERMISSION_DENIED') {
+                if (statusEl) {
+                    statusEl.innerHTML = '<span style="color:#dc2626; font-weight:800;">🔴 LỖI PHÂN QUYỀN (401 Permission Denied)</span><br><span style="font-size:0.8rem; font-weight:normal; color:#991b1b;">Firebase Rules đang chặn truy cập. Vui lòng làm theo hướng dẫn 3 bước màu cam bên dưới để mở Rules.</span>';
+                }
+                const banner = document.getElementById('admin-cloud-alert-banner');
+                if (banner) banner.style.display = 'flex';
+                const pill = document.getElementById('admin-cloud-status-pill');
+                if (pill) {
+                    pill.style.background = '#fef2f2';
+                    pill.style.borderColor = '#fecaca';
+                    pill.style.color = '#b91c1c';
+                    const dot = document.getElementById('cloud-pill-dot');
+                    const textEl = document.getElementById('cloud-pill-text');
+                    if (dot) dot.style.background = '#ef4444';
+                    if (textEl) textEl.textContent = '⚠️ Mở khóa Firebase (401)';
+                }
+                this.showToast('Firebase bị khóa quyền 401. Vui lòng cập nhật Rules!', 'error');
+            } else {
+                if (statusEl) {
+                    statusEl.innerHTML = `<span style="color:#d97706; font-weight:800;">🟡 CHƯA KẾT NỐI:</span> ${res.message || 'Lỗi mạng'}`;
+                }
+            }
+        }
+    }
+
+    saveCloudConfigFromAdmin(e) {
+        e.preventDefault();
+        const urlInput = document.getElementById('cloud-db-url');
+        const newUrl = (urlInput?.value || '').trim();
+        if (!newUrl) {
+            this.showToast('Vui lòng nhập Firebase Database URL hợp lệ.', 'error');
+            return;
+        }
+
+        if (window.realtimeSync && typeof window.realtimeSync.saveConfig === 'function') {
+            window.realtimeSync.saveConfig({ databaseURL: newUrl });
+            this.showToast('Đã lưu cấu hình Firebase mới! Đang kết nối lại...', 'success');
+            this.testCloudConnectionFromAdmin();
+        }
+    }
+
+    copyFirebaseRules() {
+        const rulesText = '{\n  "rules": {\n    ".read": true,\n    ".write": true\n  }\n}';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(rulesText);
+            this.showToast('Đã sao chép đoạn mã Rules vào bộ nhớ tạm!', 'success');
+        } else {
+            prompt('Sao chép đoạn mã Rules bên dưới:', rulesText);
+        }
+    }
+
+    async syncCustomersFromCloud() {
+        this.showToast('Đang kết nối đám mây để tải danh sách người dùng...', 'info');
+        await this.loadCustomers();
+        this.showToast('Đã đồng bộ dữ liệu người dùng mới nhất từ đám mây!', 'success');
     }
 
     getOnlineDrivers() {
@@ -605,7 +773,7 @@ class AdminController {
         });
 
         // Show/hide tabs
-        ['dashboard', 'recent-trips', 'trips', 'drivers'].forEach(t => {
+        ['dashboard', 'recent-trips', 'trips', 'drivers', 'customers'].forEach(t => {
             const el = document.getElementById('tab-' + t);
             if (el) el.style.display = (t === tabName) ? '' : 'none';
         });
@@ -626,6 +794,8 @@ class AdminController {
         } else if (tabName === 'drivers') {
             this.loadDriversList();
             this.loadDriverApprovals();
+        } else if (tabName === 'customers') {
+            this.loadCustomers();
         }
 
         // Close mobile drawer
@@ -1211,15 +1381,45 @@ class AdminController {
             }
         });
 
-        if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+        if (window.realtimeSync) {
             try {
-                const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
-                const cloudPending = snap.val() || {};
-                Object.values(cloudPending).forEach(cp => {
-                    if (cp && cp.status === 'pending' && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
-                        pendingList.push(cp);
+                if (window.realtimeSync.isAvailable()) {
+                    const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                    const cloudPending = snap.val() || {};
+                    Object.values(cloudPending).forEach(cp => {
+                        if (cp && cp.status === 'pending' && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                            pendingList.push(cp);
+                        }
+                    });
+                }
+                // Dual REST fallback for pending drivers
+                if (typeof window.realtimeSync._restGet === 'function') {
+                    const restData = await window.realtimeSync._restGet('goride_pending_drivers');
+                    if (restData && typeof restData === 'object') {
+                        Object.values(restData).forEach(cp => {
+                            if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                                pendingList.push(cp);
+                            }
+                        });
                     }
-                });
+                } else if (!window.realtimeSync.isAvailable()) {
+                    window.realtimeSync.onReady(async () => {
+                        try {
+                            const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                            const cloudPending = snap.val() || {};
+                            let hasNew = false;
+                            Object.values(cloudPending).forEach(cp => {
+                                if (cp && cp.status === 'pending' && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                                    pendingList.push(cp);
+                                    hasNew = true;
+                                }
+                            });
+                            if (hasNew) {
+                                this.loadDriverApprovals();
+                            }
+                        } catch (e) {}
+                    });
+                }
             } catch (e) {}
         }
 
@@ -1389,16 +1589,447 @@ class AdminController {
     }
 
     /* ==========================================================================
-       DELETE CONFIRMATION DIALOG (FOR TRIPS & DRIVERS)
+       CUSTOMER / USER ACCOUNT MANAGEMENT SYSTEM
+       ========================================================================== */
+
+    setupCustomerFilters() {
+        const searchInput = document.getElementById('customer-search-input');
+        const roleFilter = document.getElementById('customer-role-filter');
+        const statusFilter = document.getElementById('customer-status-filter');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', () => this.filterCustomers());
+        }
+        if (roleFilter) {
+            roleFilter.addEventListener('change', () => this.filterCustomers());
+        }
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => this.filterCustomers());
+        }
+    }
+
+    resetCustomerFilters() {
+        const searchInput = document.getElementById('customer-search-input');
+        const roleFilter = document.getElementById('customer-role-filter');
+        const statusFilter = document.getElementById('customer-status-filter');
+        if (searchInput) searchInput.value = '';
+        if (roleFilter) roleFilter.value = 'all';
+        if (statusFilter) statusFilter.value = 'all';
+        this.filterCustomers();
+    }
+
+    async getStoredCustomers() {
+        const userMap = new Map();
+
+        // 1. Fetch from C++ Backend API if reachable
+        if (typeof apiClient !== 'undefined') {
+            try {
+                const res = await apiClient.get('/admin/users');
+                if (res && res.data && Array.isArray(res.data.users)) {
+                    res.data.users.forEach(u => {
+                        if (u && u.id) userMap.set(u.id, u);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // 2. Query Firebase Realtime Cloud goride_users
+        if (window.realtimeSync) {
+            try {
+                if (window.realtimeSync.isAvailable()) {
+                    const snap = await window.realtimeSync.db.ref('goride_users').once('value');
+                    const cloudUsers = snap.val() || {};
+                    Object.values(cloudUsers).forEach(u => {
+                        if (u && (u.id || u.email)) {
+                            const key = u.id || u.email;
+                            userMap.set(key, { ...userMap.get(key), ...u });
+                        }
+                    });
+                }
+                // Dual REST fallback for customers
+                if (typeof window.realtimeSync._restGet === 'function') {
+                    const restUsers = await window.realtimeSync._restGet('goride_users');
+                    if (restUsers && typeof restUsers === 'object') {
+                        Object.values(restUsers).forEach(u => {
+                            if (u && (u.id || u.email)) {
+                                const key = u.id || u.email;
+                                userMap.set(key, { ...userMap.get(key), ...u });
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // 3. Query localStorage goride_offline_users
+        try {
+            const offline = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+            offline.forEach(u => {
+                if (u && (u.id || u.email)) {
+                    const key = u.id || u.email;
+                    userMap.set(key, { ...u, ...userMap.get(key) });
+                }
+            });
+        } catch (e) {}
+
+        // Baseline customer & admin accounts if not already included
+        const defaultAccounts = [
+            {
+                id: 'adm_admin',
+                name: 'Quản trị viên Hệ thống',
+                email: 'admin@navigo.vn',
+                phone: '0988888888',
+                role: 'admin',
+                status: 'active',
+                createdAt: '2025-01-01T00:00:00.000Z'
+            },
+            {
+                id: 'usr_c101',
+                name: 'Nguyễn Văn An',
+                email: 'customer@demo.com',
+                phone: '0901234567',
+                role: 'customer',
+                status: 'active',
+                createdAt: '2026-01-15T08:30:00.000Z'
+            }
+        ];
+        defaultAccounts.forEach(da => {
+            if (!userMap.has(da.id) && !userMap.has(da.email)) {
+                userMap.set(da.id, da);
+            }
+        });
+
+        return Array.from(userMap.values());
+    }
+
+    async loadCustomers() {
+        const tbody = document.getElementById('customers-table-body');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:28px; color:var(--color-gray-500);">Đang đồng bộ dữ liệu người dùng từ máy chủ và đám mây...</td></tr>';
+        }
+
+        this.cachedCustomers = await this.getStoredCustomers();
+        this.filterCustomers();
+        this.updateCustomerMetrics();
+    }
+
+    filterCustomers() {
+        if (!this.cachedCustomers) return;
+
+        const searchInput = document.getElementById('customer-search-input');
+        const roleFilter = document.getElementById('customer-role-filter');
+        const statusFilter = document.getElementById('customer-status-filter');
+
+        const query = (searchInput?.value || '').toLowerCase().trim();
+        const role = roleFilter?.value || 'all';
+        const status = statusFilter?.value || 'all';
+
+        const filtered = this.cachedCustomers.filter(c => {
+            const matchRole = (role === 'all') || (c.role === role);
+            const matchStatus = (status === 'all') || ((c.status || 'active') === status);
+            const matchQuery = !query ||
+                (c.name && c.name.toLowerCase().includes(query)) ||
+                (c.email && c.email.toLowerCase().includes(query)) ||
+                (c.phone && c.phone.includes(query)) ||
+                (c.id && c.id.toLowerCase().includes(query));
+            return matchRole && matchStatus && matchQuery;
+        });
+
+        this.renderCustomersTable(filtered);
+    }
+
+    updateCustomerMetrics() {
+        const list = this.cachedCustomers || [];
+        const activeCount = list.filter(c => (c.status || 'active') === 'active').length;
+        const lockedCount = list.filter(c => c.status === 'locked').length;
+        const adminCount = list.filter(c => c.role === 'admin').length;
+
+        const statTotal = document.getElementById('stat-total-customers');
+        const statActive = document.getElementById('stat-active-customers');
+        const statAdmin = document.getElementById('stat-admin-users');
+        const statLocked = document.getElementById('stat-locked-customers');
+        const sidebarCount = document.getElementById('sidebar-customers-count');
+
+        if (statTotal) statTotal.textContent = list.length;
+        if (statActive) statActive.textContent = activeCount;
+        if (statAdmin) statAdmin.textContent = adminCount;
+        if (statLocked) statLocked.textContent = lockedCount;
+        if (sidebarCount) sidebarCount.textContent = list.length;
+    }
+
+    renderCustomersTable(customers) {
+        const tbody = document.getElementById('customers-table-body');
+        if (!tbody) return;
+
+        if (!customers || customers.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center" style="padding:28px; color:var(--color-gray-500);">Không tìm thấy tài khoản người dùng phù hợp.</td></tr>';
+            return;
+        }
+
+        // Count completed trips per customer
+        const trips = this.getStoredTrips();
+        const tripCountMap = new Map();
+        trips.forEach(t => {
+            if (t && t.status === 'completed') {
+                if (t.customerId) tripCountMap.set(t.customerId, (tripCountMap.get(t.customerId) || 0) + 1);
+                if (t.customerPhone) tripCountMap.set(t.customerPhone, (tripCountMap.get(t.customerPhone) || 0) + 1);
+                if (t.customerEmail) tripCountMap.set(t.customerEmail, (tripCountMap.get(t.customerEmail) || 0) + 1);
+            }
+        });
+
+        tbody.innerHTML = customers.map(u => {
+            const isAdmin = u.role === 'admin';
+            const isLocked = u.status === 'locked';
+            const completedCount = tripCountMap.get(u.id) || tripCountMap.get(u.phone) || tripCountMap.get(u.email) || 0;
+            const createdDate = u.createdAt ? new Date(u.createdAt).toLocaleDateString('vi-VN') : '--';
+            const avatarInitial = (u.name || 'U').charAt(0).toUpperCase();
+            const avatarHtml = u.avatar || u.avatar_path
+                ? `<img src="${u.avatar || u.avatar_path}" alt="" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">`
+                : `<div class="avatar avatar-sm" style="width:32px; height:32px; border-radius:50%; background:${isAdmin ? '#ef4444' : '#0288d1'}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;">${avatarInitial}</div>`;
+
+            return `
+                <tr id="customer-row-${u.id}">
+                    <td style="font-family:monospace; font-weight:700; color:var(--color-gray-600); font-size:0.75rem;">#${this.escapeHtml(u.id || '--')}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            ${avatarHtml}
+                            <div>
+                                <div style="font-weight:700; color:#0f172a;">${this.escapeHtml(u.name || 'Người dùng')}</div>
+                                <div style="font-size:0.72rem; color:#64748b;">${this.escapeHtml(u.email || '--')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-weight:600; font-family:monospace; color:#334155;">${this.escapeHtml(u.phone || '--')}</td>
+                    <td style="font-size:0.8rem; color:#475569;">${this.escapeHtml(u.email || '--')}</td>
+                    <td>
+                        <span class="badge ${isAdmin ? 'badge-danger' : 'badge-info'}" style="font-weight:700; font-size:0.72rem; padding:3px 8px;">
+                            ${isAdmin ? '👑 Quản trị viên' : '👤 Khách hàng'}
+                        </span>
+                    </td>
+                    <td style="font-weight:700; color:#0f766e; text-align:center;">${completedCount} chuyến</td>
+                    <td>
+                        <span class="badge ${isLocked ? 'badge-danger' : 'badge-success'}" style="font-size:0.72rem; padding:3px 8px;">
+                            ${isLocked ? '🔒 Đã khóa' : '🟢 Hoạt động'}
+                        </span>
+                    </td>
+                    <td style="font-size:0.75rem; color:#64748b;">${createdDate}</td>
+                    <td style="text-align:right;">
+                        <div class="table-actions" style="display:flex; gap:6px; justify-content:flex-end;">
+                            <button type="button" class="btn btn-sm ${isAdmin ? 'btn-ghost' : 'btn-primary'}" 
+                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700;"
+                                onclick="adminController.toggleAdminRole('${u.id}')"
+                                title="${isAdmin ? 'Hạ quyền xuống Khách hàng' : 'Thăng cấp lên Quản trị viên (Admin)'}">
+                                ${isAdmin ? '🔻 Bỏ Admin' : '⭐ Quyền Admin'}
+                            </button>
+                            <button type="button" class="btn btn-sm ${isLocked ? 'btn-success' : 'btn-ghost'}"
+                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700;"
+                                onclick="adminController.toggleCustomerLock('${u.id}')"
+                                title="${isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản này'}">
+                                ${isLocked ? '🔓 Mở khóa' : '🔒 Khóa'}
+                            </button>
+                            <button type="button" class="btn-action-edit" onclick="adminController.openEditCustomerModal('${u.id}')" title="Sửa thông tin">
+                                ✏️
+                            </button>
+                            <button type="button" class="btn-action-delete" onclick="adminController.openDeleteModal('customer', '${u.id}')" title="Xóa tài khoản sạch hoàn toàn">
+                                🗑️
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async toggleAdminRole(userId) {
+        if (!userId) return;
+        const user = (this.cachedCustomers || []).find(c => c.id === userId);
+        if (!user) return;
+
+        const newRole = user.role === 'admin' ? 'customer' : 'admin';
+        const roleLabel = newRole === 'admin' ? 'Quản trị viên (Admin)' : 'Khách hàng';
+
+        if (!confirm(`Bạn có chắc muốn chuyển vai trò của tài khoản "${user.name}" thành ${roleLabel}?`)) {
+            return;
+        }
+
+        try {
+            user.role = newRole;
+
+            // 1. Update SQLite backend if available
+            if (typeof apiClient !== 'undefined') {
+                try {
+                    await apiClient.post('/admin/users/role', { userId, role: newRole });
+                } catch (e) {}
+            }
+
+            // 2. Update Firebase Realtime Cloud
+            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                try {
+                    await window.realtimeSync.db.ref(`goride_users/${userId}`).update({
+                        role: newRole,
+                        updatedAt: new Date().toISOString()
+                    });
+                } catch (e) {}
+            }
+
+            // 3. Update localStorage goride_offline_users
+            try {
+                const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                const idx = users.findIndex(u => u.id === userId || (user.email && u.email === user.email));
+                if (idx !== -1) {
+                    users[idx].role = newRole;
+                    localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+                }
+            } catch (e) {}
+
+            this.showToast(`Đã chuyển vai trò tài khoản thành ${roleLabel}!`, 'success');
+            this.filterCustomers();
+            this.updateCustomerMetrics();
+        } catch (err) {
+            this.showToast('Lỗi cập nhật quyền: ' + err.message, 'error');
+        }
+    }
+
+    async toggleCustomerLock(userId) {
+        if (!userId) return;
+        const user = (this.cachedCustomers || []).find(c => c.id === userId);
+        if (!user) return;
+
+        const newStatus = user.status === 'locked' ? 'active' : 'locked';
+        const statusLabel = newStatus === 'locked' ? 'Khóa' : 'Mở khóa';
+
+        try {
+            user.status = newStatus;
+
+            // 1. Update SQLite backend if available
+            if (typeof apiClient !== 'undefined') {
+                try {
+                    await apiClient.post('/admin/users/status', { userId, status: newStatus });
+                } catch (e) {}
+            }
+
+            // 2. Update Firebase Realtime Cloud
+            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                try {
+                    await window.realtimeSync.db.ref(`goride_users/${userId}`).update({
+                        status: newStatus,
+                        updatedAt: new Date().toISOString()
+                    });
+                } catch (e) {}
+            }
+
+            // 3. Update localStorage goride_offline_users
+            try {
+                const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                const idx = users.findIndex(u => u.id === userId || (user.email && u.email === user.email));
+                if (idx !== -1) {
+                    users[idx].status = newStatus;
+                    localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+                }
+            } catch (e) {}
+
+            this.showToast(`Đã ${statusLabel.toLowerCase()} tài khoản "${user.name}" thành công!`, 'success');
+            this.filterCustomers();
+            this.updateCustomerMetrics();
+        } catch (err) {
+            this.showToast('Lỗi thay đổi trạng thái: ' + err.message, 'error');
+        }
+    }
+
+    openAddCustomerModal() {
+        document.getElementById('modal-customer-title').textContent = 'Thêm tài khoản mới';
+        document.getElementById('customer-form-id').value = '';
+        document.getElementById('customer-form-name').value = '';
+        document.getElementById('customer-form-email').value = '';
+        document.getElementById('customer-form-phone').value = '';
+        document.getElementById('customer-form-role').value = 'customer';
+        document.getElementById('customer-form-status').value = 'active';
+        this.openModal('modal-customer');
+    }
+
+    openEditCustomerModal(userId) {
+        const user = (this.cachedCustomers || []).find(c => c.id === userId);
+        if (!user) return;
+
+        document.getElementById('modal-customer-title').textContent = 'Sửa thông tin tài khoản #' + userId;
+        document.getElementById('customer-form-id').value = user.id || '';
+        document.getElementById('customer-form-name').value = user.name || '';
+        document.getElementById('customer-form-email').value = user.email || '';
+        document.getElementById('customer-form-phone').value = user.phone || '';
+        document.getElementById('customer-form-role').value = user.role || 'customer';
+        document.getElementById('customer-form-status').value = user.status || 'active';
+        this.openModal('modal-customer');
+    }
+
+    async saveCustomer(e) {
+        e.preventDefault();
+        const id = document.getElementById('customer-form-id').value.trim();
+        const name = document.getElementById('customer-form-name').value.trim();
+        const email = document.getElementById('customer-form-email').value.trim();
+        const phone = document.getElementById('customer-form-phone').value.trim();
+        const role = document.getElementById('customer-form-role').value;
+        const status = document.getElementById('customer-form-status').value;
+
+        if (!name || !email || !phone) {
+            this.showToast('Vui lòng nhập đầy đủ các trường bắt buộc (*)', 'error');
+            return;
+        }
+
+        const isEdit = !!id;
+        const userId = isEdit ? id : `usr_${Date.now().toString(36)}`;
+        const customerData = {
+            id: userId,
+            name,
+            email,
+            phone,
+            role,
+            status,
+            updatedAt: new Date().toISOString()
+        };
+
+        if (!isEdit) {
+            customerData.createdAt = new Date().toISOString();
+        }
+
+        try {
+            // 1. Firebase Cloud Sync
+            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                await window.realtimeSync.db.ref(`goride_users/${userId}`).update(customerData);
+            }
+
+            // 2. localStorage Sync
+            const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+            const idx = users.findIndex(u => u.id === userId || (email && u.email === email));
+            if (idx !== -1) {
+                users[idx] = { ...users[idx], ...customerData };
+            } else {
+                users.unshift(customerData);
+            }
+            localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+
+            this.showToast(isEdit ? 'Đã cập nhật thông tin tài khoản!' : 'Đã tạo tài khoản người dùng mới thành công!', 'success');
+            this.closeModal('modal-customer');
+            await this.loadCustomers();
+        } catch (err) {
+            this.showToast('Lỗi lưu tài khoản: ' + err.message, 'error');
+        }
+    }
+
+    /* ==========================================================================
+       DELETE CONFIRMATION DIALOG (FOR TRIPS, DRIVERS & CUSTOMERS)
        ========================================================================== */
 
     openDeleteModal(type, id) {
         this.deleteTarget = { type, id };
         const msgEl = document.getElementById('delete-modal-msg');
         if (msgEl) {
-            msgEl.textContent = type === 'trip' 
-                ? `Bạn có chắc chắn muốn xóa chuyến đi #${id} khỏi hệ thống dữ liệu?`
-                : `Bạn có chắc chắn muốn xóa tài xế #${id} khỏi danh sách?`;
+            if (type === 'trip') {
+                msgEl.textContent = `Bạn có chắc chắn muốn xóa chuyến đi #${id} khỏi hệ thống dữ liệu?`;
+            } else if (type === 'driver') {
+                msgEl.textContent = `Bạn có chắc chắn muốn xóa tài xế #${id} khỏi danh sách?`;
+            } else if (type === 'customer') {
+                msgEl.textContent = `Bạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản #${id}? Toàn bộ dữ liệu của người dùng này trong hệ thống và đám mây sẽ bị xóa sạch hoàn toàn.`;
+            }
         }
 
         const confirmBtn = document.getElementById('btn-confirm-delete');
@@ -1409,7 +2040,7 @@ class AdminController {
         this.openModal('modal-delete');
     }
 
-    confirmDelete() {
+    async confirmDelete() {
         if (!this.deleteTarget) return;
         const { type, id } = this.deleteTarget;
 
@@ -1469,6 +2100,57 @@ class AdminController {
             this.loadDriverApprovals();
             this.loadDashboard();
             this.showToast(`Đã xóa tài xế #${id} thành công!`, 'info');
+        } else if (type === 'customer') {
+            try {
+                const targetCustomer = (this.cachedCustomers || []).find(c => c.id === id);
+
+                // 1. Delete from SQLite Backend API
+                if (typeof apiClient !== 'undefined') {
+                    try {
+                        await apiClient.post('/admin/users/delete', { userId: id });
+                    } catch (e) {}
+                }
+
+                // 2. Delete cleanly from Firebase Realtime Cloud via RealtimeSyncManager
+                if (window.realtimeSync && typeof window.realtimeSync.deleteUser === 'function') {
+                    await window.realtimeSync.deleteUser(id, targetCustomer?.email);
+                } else if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                    window.realtimeSync.db.ref(`goride_users/${id}`).remove();
+                    window.realtimeSync.db.ref(`goride_drivers/${id}`).remove();
+                    window.realtimeSync.db.ref(`goride_pending_drivers/${id}`).remove();
+                    window.realtimeSync.db.ref(`goride_online_drivers/${id}`).remove();
+                }
+
+                // 3. Purge cleanly from localStorage
+                let users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                users = users.filter(u => !(u && (u.id === id || (targetCustomer && targetCustomer.email && u.email === targetCustomer.email))));
+                localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+
+                let adminDrivers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.DRIVERS) || '[]');
+                adminDrivers = adminDrivers.filter(d => !(d && (d.id === id || (targetCustomer && targetCustomer.email && d.email === targetCustomer.email))));
+                localStorage.setItem(this.STORAGE_KEYS.DRIVERS, JSON.stringify(adminDrivers));
+
+                let pending = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PENDING) || '[]');
+                pending = pending.filter(p => !(p && (p.id === id || (targetCustomer && targetCustomer.email && p.email === targetCustomer.email))));
+                localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(pending));
+
+                let online = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.ONLINE_DRIVERS) || '{}');
+                delete online[id];
+                localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(online));
+
+                // Clean cached list
+                if (this.cachedCustomers) {
+                    this.cachedCustomers = this.cachedCustomers.filter(c => c.id !== id);
+                }
+
+                this.showToast(`Đã xóa vĩnh viễn tài khoản #${id} và dọn dẹp sạch toàn bộ database.`, 'info');
+                await this.loadCustomers();
+                this.loadDriversList();
+                this.loadDriverApprovals();
+                this.loadDashboard();
+            } catch (err) {
+                this.showToast('Lỗi xóa tài khoản: ' + err.message, 'error');
+            }
         }
 
         this.closeModal('modal-delete');

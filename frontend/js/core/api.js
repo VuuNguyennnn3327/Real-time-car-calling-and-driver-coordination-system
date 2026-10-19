@@ -11,11 +11,15 @@ const getDefaultBaseUrl = () => {
         if (window.NAVIGO_API_URL) return window.NAVIGO_API_URL;
         if (window.GORIDE_API_URL) return window.GORIDE_API_URL;
     }
-    // 2. Local development fallback
+    // 2. Local network development fallback (PC, phone on same Wi-Fi, emulator)
     if (typeof window !== 'undefined' && window.location) {
         const host = window.location.hostname;
-        if (host === 'localhost' || host === '127.0.0.1' || window.location.protocol === 'file:') {
-            return 'http://localhost:8080/api';
+        const port = window.location.port;
+        const isLocalNetwork = host === 'localhost' || host === '127.0.0.1' || window.location.protocol === 'file:' ||
+                               /^192\.168\./.test(host) || /^10\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host);
+        if (isLocalNetwork) {
+            if (port === '8080') return '/api';
+            return `http://${host || 'localhost'}:8080/api`;
         }
     }
     // 3. Vercel deployment fallback
@@ -229,6 +233,27 @@ class ApiClient {
      */
     async rejectDriver(driverId) {
         return this.post('/auth/approve-driver', { driverId, action: 'reject', approved: false });
+    }
+
+    /**
+     * Get list of all users/customers (Admin only)
+     */
+    async getUsers(params = {}) {
+        return this.get('/admin/users', { params });
+    }
+
+    /**
+     * Update user role (grant admin or customer) (Admin only)
+     */
+    async updateUserRole(userId, role) {
+        return this.post('/admin/users/role', { userId, role });
+    }
+
+    /**
+     * Cleanly delete user from database (Admin only)
+     */
+    async deleteUser(userId) {
+        return this.post('/admin/users/delete', { userId });
     }
 
     // -------------------------------------------------------------

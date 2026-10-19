@@ -688,6 +688,12 @@
             </div>
 
             <div class="admin-header-actions">
+                <!-- Realtime Cloud Cross-Device Status Pill -->
+                <div class="cloud-status-pill" id="admin-cloud-status-pill" onclick="adminController.openCloudModal()" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:9999px; background:#ecfdf5; border:1.5px solid #a7f3d0; color:#047857; font-size:0.8rem; font-weight:700; cursor:pointer; transition:all 0.2s;" title="Nhấn để kiểm tra và cấu hình đồng bộ đa thiết bị">
+                    <span class="pulse-dot" id="cloud-pill-dot" style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+                    <span id="cloud-pill-text">Đám mây: Sẵn sàng</span>
+                </div>
+
                 <!-- Separate "Về trang chủ" Button in Header -->
                 <a href="../index.html" class="admin-home-btn desktop-only" title="Truy cập giao diện người dùng Navigo">
                     <span>🏠</span>
@@ -711,6 +717,19 @@
                 </div>
             </div>
         </header>
+
+        <!-- Real-time Cloud Cross-Device Diagnostic Banner (Shows automatically if 401 permission denied) -->
+        <div id="admin-cloud-alert-banner" style="display:none; background:linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border-bottom:1.5px solid #fecaca; padding:10px 16px; color:#991b1b; font-size:0.85rem; align-items:center; justify-content:space-between; gap:12px; z-index:1500; position:relative;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size:1.2rem;">⚠️</span>
+                <span>
+                    <strong>CẢNH BÁO KẾT NỐI ĐA THIẾT BỊ:</strong> Firebase Realtime Cloud đang bị khóa quyền (401 Permission Denied). Yêu cầu duyệt tài xế & cuốc xe từ điện thoại từ xa không thể gửi về máy tính này.
+                </span>
+            </div>
+            <button type="button" class="btn btn-sm btn-danger" onclick="adminController.openCloudModal()" style="white-space:nowrap; font-weight:700; border-radius:8px; padding:4px 12px; cursor:pointer;">
+                ⚙️ Xem hướng dẫn mở khóa ngay
+            </button>
+        </div>
 
         <!-- Application Body: Sidebar + Main Content -->
         <div class="app-body">
@@ -740,6 +759,11 @@
                         <span class="nav-icon">👨‍✈️</span>
                         <span class="nav-label">Quản lý tài xế</span>
                         <span class="badge badge-warning nav-link-badge" id="sidebar-drivers-count" style="font-size:0.72rem;">0</span>
+                    </a>
+                    <a href="#customers" class="nav-item nav-link" data-tab="customers">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-label">Quản lý khách hàng</span>
+                        <span class="badge badge-success nav-link-badge" id="sidebar-customers-count" style="font-size:0.72rem;">0</span>
                     </a>
                 </nav>
 
@@ -991,6 +1015,103 @@
                     </div>
                 </div>
 
+                <!-- ==========================================
+                     TAB 5: CUSTOMER & ACCOUNT MANAGEMENT (P7)
+                     ========================================== -->
+                <div class="tab-panel" id="tab-customers" style="display:none;">
+                    <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-6); flex-wrap:wrap; gap:12px;">
+                        <div>
+                            <h2 style="margin:0 0 4px 0; font-size:1.6rem; font-weight:800; color:var(--color-primary); display:flex; align-items:center; gap:10px;">
+                                <span>👥</span> Quản lý Khách hàng & Người dùng
+                            </h2>
+                            <p style="margin:0; color:var(--color-gray-600); font-size:0.9rem;">
+                                Danh sách tài khoản khách hàng, thống kê số cuốc xe, phân quyền Quản trị viên và xóa dữ liệu triệt để.
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-outline" onclick="adminController.syncCustomersFromCloud()">
+                                <span>🔄</span> Đồng bộ đám mây
+                            </button>
+                            <button class="btn btn-primary" onclick="adminController.openAddCustomerModal()">
+                                <span>➕</span> Thêm tài khoản mới
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Customer KPI Summary Cards -->
+                    <div class="stats-grid" style="margin-bottom:var(--space-5);">
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#e0f2fe; color:#0284c7;">👥</div>
+                            <div class="stat-card-info">
+                                <span class="stat-card-value" id="stat-total-customers">0</span>
+                                <span class="stat-card-label">Tổng khách hàng</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#dcfce7; color:#16a34a;">✅</div>
+                            <div class="stat-card-info">
+                                <span class="stat-card-value" id="stat-active-customers">0</span>
+                                <span class="stat-card-label">Đang hoạt động</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#fef3c7; color:#d97706;">👑</div>
+                            <div class="stat-card-info">
+                                <span class="stat-card-value" id="stat-admin-users">0</span>
+                                <span class="stat-card-label">Quản trị viên</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-card-icon" style="background:#f1f5f9; color:#64748b;">🔒</div>
+                            <div class="stat-card-info">
+                                <span class="stat-card-value" id="stat-locked-customers">0</span>
+                                <span class="stat-card-label">Tài khoản bị khóa</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="admin-filters" style="display:flex; gap:12px; margin-bottom:var(--space-4); background:#fff; padding:12px 16px; border-radius:12px; border:1px solid var(--color-gray-200); align-items:center; flex-wrap:wrap;">
+                        <div style="flex:1; min-width:240px; position:relative;">
+                            <input type="text" id="customer-search-input" class="form-input" placeholder="🔍 Tìm theo Tên, Email, SĐT hoặc ID..." style="width:100%; border-radius:8px; padding-left:36px;">
+                            <span style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:14px; opacity:0.6;">🔍</span>
+                        </div>
+                        <select id="customer-role-filter" class="form-select" style="min-width:160px; border-radius:8px;">
+                            <option value="all">Tất cả vai trò</option>
+                            <option value="customer">Chỉ Khách hàng</option>
+                            <option value="admin">Quản trị viên (Admin)</option>
+                        </select>
+                        <select id="customer-status-filter" class="form-select" style="min-width:160px; border-radius:8px;">
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="active">Đang hoạt động (Active)</option>
+                            <option value="locked">Bị khóa (Locked)</option>
+                        </select>
+                        <button class="btn btn-ghost btn-sm" onclick="adminController.resetCustomerFilters()">Đặt lại</button>
+                    </div>
+
+                    <!-- Customers Table -->
+                    <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow-x:auto;">
+                        <table class="data-table admin-table">
+                            <thead>
+                                <tr>
+                                    <th>MÃ KHÁCH HÀNG</th>
+                                    <th>NGƯỜI DÙNG</th>
+                                    <th>SỐ ĐIỆN THOẠI</th>
+                                    <th>EMAIL</th>
+                                    <th>VAI TRÒ</th>
+                                    <th>CUỐC HOÀN THÀNH</th>
+                                    <th>TRẠNG THÁI</th>
+                                    <th>NGÀY THAM GIA</th>
+                                    <th style="text-align:right;">THAO TÁC</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customers-table-body">
+                                <tr><td colspan="9" class="text-center" style="padding:28px;">Đang tải danh sách người dùng...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </main>
         </div> <!-- .app-body -->
 
@@ -1118,6 +1239,130 @@
                         <button type="submit" class="btn btn-primary" id="btn-save-driver">Lưu tài xế</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- MODAL 4: CUSTOMER (ADD / EDIT) -->
+        <div class="admin-modal-overlay" id="modal-customer">
+            <div class="admin-modal-card">
+                <div class="admin-modal-header">
+                    <h3 id="modal-customer-title">Thêm tài khoản mới</h3>
+                    <button type="button" class="admin-modal-close" onclick="adminController.closeModal('modal-customer')">&times;</button>
+                </div>
+                <form id="form-customer" onsubmit="adminController.saveCustomer(event)">
+                    <div class="admin-modal-body">
+                        <input type="hidden" id="customer-form-id">
+                        
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="customer-form-name">Họ và tên <span style="color:var(--color-error);">*</span></label>
+                            <input type="text" id="customer-form-name" class="form-input" required placeholder="Ví dụ: Nguyễn Văn An">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="customer-form-email">Email <span style="color:var(--color-error);">*</span></label>
+                                <input type="email" id="customer-form-email" class="form-input" required placeholder="customer@example.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="customer-form-phone">Số điện thoại <span style="color:var(--color-error);">*</span></label>
+                                <input type="tel" id="customer-form-phone" class="form-input" required placeholder="0901234567">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                            <div class="form-group">
+                                <label class="form-label" for="customer-form-role">Vai trò quyền hạn <span style="color:var(--color-error);">*</span></label>
+                                <select id="customer-form-role" class="form-select">
+                                    <option value="customer" selected>Khách hàng (Customer)</option>
+                                    <option value="admin">Quản trị viên (Admin)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="customer-form-status">Trạng thái <span style="color:var(--color-error);">*</span></label>
+                                <select id="customer-form-status" class="form-select">
+                                    <option value="active" selected>Đang hoạt động (Active)</option>
+                                    <option value="locked">Bị khóa (Locked)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom:12px;" id="customer-form-password-group">
+                            <label class="form-label" for="customer-form-password">Mật khẩu <span id="customer-pwd-req" style="color:var(--color-error);">*</span></label>
+                            <input type="password" id="customer-form-password" class="form-input" placeholder="Nhập mật khẩu cho tài khoản">
+                        </div>
+                    </div>
+                    <div class="admin-modal-footer">
+                        <button type="button" class="btn btn-ghost" onclick="adminController.closeModal('modal-customer')">Hủy</button>
+                        <button type="submit" class="btn btn-primary" id="btn-save-customer">Lưu tài khoản</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL 5: CLOUD SYNC & CROSS-DEVICE DIAGNOSTIC -->
+        <div class="admin-modal-overlay" id="modal-cloud-sync">
+            <div class="admin-modal-card" style="max-width:580px;">
+                <div class="admin-modal-header" style="background:#f8fafc; border-bottom:1px solid #e2e8f0;">
+                    <h3 style="display:flex; align-items:center; gap:8px; margin:0; font-size:1.15rem; color:#0f172a;">
+                        <span>☁️</span> Kết nối Đa thiết bị (Cloud Realtime)
+                    </h3>
+                    <button type="button" class="admin-modal-close" onclick="adminController.closeModal('modal-cloud-sync')">&times;</button>
+                </div>
+                <div class="admin-modal-body" style="padding:20px;">
+                    <!-- Live Health Status Card -->
+                    <div style="background:#f1f5f9; border-radius:12px; padding:14px; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                        <div>
+                            <div style="font-size:0.75rem; text-transform:uppercase; color:#64748b; font-weight:700; letter-spacing:0.05em;">Trạng thái đồng bộ đám mây</div>
+                            <div id="cloud-diagnostic-status" style="font-weight:700; font-size:0.95rem; margin-top:2px; color:#0f172a;">
+                                Đang kiểm tra kết nối...
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-primary" id="btn-test-cloud" onclick="adminController.testCloudConnectionFromAdmin()">
+                            ⚡ Kiểm tra ngay
+                        </button>
+                    </div>
+
+                    <!-- Instructions to unlock Firebase rules (Fixes 401 Permission Denied) -->
+                    <div style="border:1.5px solid #fed7aa; background:#fffbeb; border-radius:12px; padding:14px; margin-bottom:16px;">
+                        <div style="display:flex; align-items:center; gap:6px; font-weight:700; color:#9a3412; font-size:0.9rem; margin-bottom:6px;">
+                            <span>🔑</span> HƯỚNG DẪN MỞ KHÓA FIREBASE (ĐỂ CÁC MÁY THẤY NHAU)
+                        </div>
+                        <p style="margin:0 0 8px 0; font-size:0.83rem; color:#78350f; line-height:1.45;">
+                            Khi triển khai lên domain hoặc dùng 2 thiết bị khác nhau, Firebase Realtime Database mặc định ở chế độ khóa (401). Để các thiết bị gửi nhận dữ liệu chung, chỉ cần 3 bước:
+                        </p>
+                        <ol style="margin:0 0 10px 0; padding-left:20px; font-size:0.82rem; color:#78350f; line-height:1.5;">
+                            <li>Truy cập <a href="https://console.firebase.google.com/" target="_blank" style="color:#c2410c; font-weight:700; text-decoration:underline;">Firebase Console</a> &rarr; Chọn dự án của bạn (ví dụ: <code>navigo-app-cc7cf</code>).</li>
+                            <li>Menu trái: Chọn <strong>Build &rarr; Realtime Database &rarr; Tab Rules (Quy tắc)</strong>.</li>
+                            <li>Dán đoạn mã quy tắc bên dưới rồi nhấn <strong>Publish (Xuất bản)</strong>:</li>
+                        </ol>
+                        <div style="position:relative; background:#1e293b; border-radius:8px; padding:10px 12px; color:#f8fafc; font-family:monospace; font-size:0.78rem; line-height:1.4;">
+                            <pre style="margin:0;">{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</pre>
+                            <button type="button" class="btn btn-sm" onclick="adminController.copyFirebaseRules()" style="position:absolute; right:8px; top:8px; padding:3px 8px; font-size:0.72rem; background:rgba(255,255,255,0.15); color:#fff; border:none; border-radius:4px; cursor:pointer;">
+                                📋 Sao chép mã
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Cloud Config Form (Database URL override) -->
+                    <form id="form-cloud-config" onsubmit="adminController.saveCloudConfigFromAdmin(event)">
+                        <div class="form-group" style="margin-bottom:12px;">
+                            <label class="form-label" for="cloud-db-url" style="font-weight:700; font-size:0.85rem;">Firebase Database URL:</label>
+                            <input type="url" id="cloud-db-url" class="form-input" style="font-family:monospace; font-size:0.82rem;" placeholder="https://your-project-default-rtdb.firebaseio.com">
+                            <span style="font-size:0.74rem; color:#64748b; margin-top:3px; display:block;">
+                                Mọi thiết bị (điện thoại khách, tài xế, máy tính admin) cần trỏ chung vào cùng Database URL này.
+                            </span>
+                        </div>
+                        <div style="display:flex; justify-content:flex-end; gap:8px;">
+                            <button type="button" class="btn btn-ghost" onclick="adminController.closeModal('modal-cloud-sync')">Đóng</button>
+                            <button type="submit" class="btn btn-primary">Lưu cấu hình</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 

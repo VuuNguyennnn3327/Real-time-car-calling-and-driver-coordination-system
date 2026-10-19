@@ -344,44 +344,17 @@
                     };
                 }
 
-                // 3. Save to Firebase Realtime Database
-                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                // 3. Save to Firebase Realtime Database Cloud (Cross-device instant sync)
+                if (window.realtimeSync) {
                     try {
-                        if (currentRole === 'customer') {
-                            await window.realtimeSync.db.ref('goride_users/' + userId).set(newUser);
-                        } else {
-                            // Driver pending registration
-                            await window.realtimeSync.db.ref('goride_pending_drivers/' + userId).set({
-                                id: userId,
-                                name: newUser.name,
-                                email: newUser.email,
-                                phone: newUser.phone,
-                                password: newUser.password,
-                                vehicleType: newUser.vehicleType,
-                                plate: newUser.licensePlate,
-                                licensePlate: newUser.licensePlate,
-                                experienceYears: newUser.experienceYears,
-                                status: 'pending',
-                                createdAt: newUser.createdAt
+                        // Chờ tối đa 2s nếu Firebase đang kết nối
+                        if (!window.realtimeSync.isAvailable()) {
+                            await new Promise(r => {
+                                window.realtimeSync.onReady(r);
+                                setTimeout(r, 2000);
                             });
-                            await window.realtimeSync.db.ref('goride_drivers/' + userId).set({
-                                id: userId,
-                                name: newUser.name,
-                                email: newUser.email,
-                                phone: newUser.phone,
-                                password: newUser.password,
-                                vehicleType: newUser.vehicleType,
-                                plate: newUser.licensePlate,
-                                licensePlate: newUser.licensePlate,
-                                status: 'pending',
-                                isOnline: false,
-                                walletBalance: 0,
-                                rating: 5.0,
-                                totalRides: 0,
-                                createdAt: newUser.createdAt
-                            });
-                            await window.realtimeSync.db.ref('goride_users/' + userId).set(newUser);
                         }
+                        await window.realtimeSync.registerUser(newUser);
                     } catch (fbSaveErr) {
                         console.warn('[Register] Firebase cloud sync warning:', fbSaveErr);
                     }
@@ -427,9 +400,19 @@
                 }
 
                 // 6. Success notification & redirect
-                successMsg.textContent = currentRole === 'driver'
-                    ? 'Đăng ký tài xế thành công! Hồ sơ của bạn đã được gửi lên hệ thống và đang CHỜ QUẢN TRỊ VIÊN (ADMIN) PHÊ DUYỆT. Vui lòng chờ Admin kích hoạt tài khoản.'
-                    : 'Đăng ký tài khoản thành công! Đang chuyển đến trang đăng nhập...';
+                let msg = '';
+                if (currentRole === 'driver') {
+                    if (newUser._syncedToCloud) {
+                        msg = 'Đăng ký tài xế thành công! Hồ sơ đã được đồng bộ lên Đám mây (Cloud) và đang chờ Quản trị viên (Admin) phê duyệt.';
+                    } else if (window.realtimeSync && window.realtimeSync.permissionDenied) {
+                        msg = 'Đăng ký tài xế thành công! Lưu ý: Firebase Realtime đang bị khóa (401), Admin cần mở Rules trên Firebase Console để duyệt hồ sơ giữa các thiết bị.';
+                    } else {
+                        msg = 'Đăng ký tài xế thành công! Hồ sơ đã được lưu và đang chờ Quản trị viên (Admin) phê duyệt.';
+                    }
+                } else {
+                    msg = 'Đăng ký tài khoản thành công! Đang chuyển đến trang đăng nhập...';
+                }
+                successMsg.textContent = msg;
                 successDiv.style.display = 'flex';
                 setTimeout(() => {
                     window.location.href = 'login.html';

@@ -857,12 +857,11 @@
         icon,
         title: 'Điểm đón',
         riseOnHover: true
-      });
-
+      const labelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đón');
       const popupHtml = `
         <div class="rtree-popup-title" style="color: #10b981;">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
-          ${popupContent}
+          ${labelText}
         </div>
         <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
       `;
@@ -896,10 +895,11 @@
         riseOnHover: true
       });
 
+      const destLabelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đến');
       const popupHtml = `
         <div class="rtree-popup-title" style="color: #ef4444;">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>
-          ${popupContent}
+          ${destLabelText}
         </div>
         <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
       `;

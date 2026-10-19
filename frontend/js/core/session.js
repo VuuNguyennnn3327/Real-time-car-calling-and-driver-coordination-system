@@ -27,19 +27,47 @@ class SessionManager {
             let rawUser = sessionStorage.getItem(SESSION_STORAGE_KEYS.USER);
             let token = sessionStorage.getItem(SESSION_STORAGE_KEYS.TOKEN);
 
-            // Fallback to localStorage for seamless cross-tab & refresh synchronization
-            if (!rawUser) {
-                rawUser = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
-                token = token || localStorage.getItem('navigo_token') || localStorage.getItem('ride_rtree_token');
-                if (rawUser) {
+            const isValidUserJson = (str) => {
+                if (!str || typeof str !== 'string') return false;
+                const trimmed = str.trim();
+                if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined' || trimmed === '{}') return false;
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    return parsed && typeof parsed === 'object' && (parsed.id || parsed.email || parsed.role);
+                } catch (e) {
+                    return false;
+                }
+            };
+
+            // Fallback to localStorage if sessionStorage is missing or corrupted
+            if (!isValidUserJson(rawUser)) {
+                const userKeys = ['navigo_user', 'goride_user', 'ride_rtree_user'];
+                for (const k of userKeys) {
+                    const candidate = localStorage.getItem(k);
+                    if (isValidUserJson(candidate)) {
+                        rawUser = candidate;
+                        break;
+                    }
+                }
+                const tokenKeys = ['navigo_token', 'goride_token', 'ride_rtree_token'];
+                for (const tk of tokenKeys) {
+                    const candidateTok = localStorage.getItem(tk);
+                    if (candidateTok && candidateTok !== 'null' && candidateTok !== 'undefined' && candidateTok.trim() !== '') {
+                        token = candidateTok;
+                        break;
+                    }
+                }
+                if (rawUser && isValidUserJson(rawUser)) {
                     try {
                         sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, rawUser);
                         if (token) sessionStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, token);
                     } catch (e) {}
+                } else {
+                    rawUser = null;
                 }
             }
 
-            if (rawUser) {
+            if (rawUser && isValidUserJson(rawUser)) {
                 this.currentUser = JSON.parse(rawUser);
                 this.token = token || null;
 
@@ -258,8 +286,15 @@ class SessionManager {
         try {
             sessionStorage.removeItem(SESSION_STORAGE_KEYS.USER);
             sessionStorage.removeItem(SESSION_STORAGE_KEYS.TOKEN);
+            sessionStorage.removeItem('goride_user');
+            sessionStorage.removeItem('navigo_user');
+            sessionStorage.removeItem('goride_token');
+            sessionStorage.removeItem('navigo_token');
+            sessionStorage.removeItem('ride_rtree_user');
+            sessionStorage.removeItem('ride_rtree_token');
             localStorage.removeItem('goride_user');
             localStorage.removeItem('navigo_user');
+            localStorage.removeItem('goride_token');
             localStorage.removeItem('navigo_token');
             localStorage.removeItem('ride_rtree_user');
             localStorage.removeItem('ride_rtree_token');

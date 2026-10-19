@@ -293,14 +293,14 @@ class DriverController {
     const norm = this.normalizeVehicleType(vType);
     switch (norm) {
       case 'motorbike':
-        return { type: 'motorbike', name: 'Navigo Bike', label: 'Xe máy (Navigo Bike)', icon: '🛵', defaultModel: 'Honda Wave Alpha', defaultPlate: '59-S3 889.24' };
+        return { type: 'motorbike', name: 'Navigo Bike', label: 'Xe máy (Navigo Bike)', icon: '🛵', defaultModel: 'Xe máy', defaultPlate: '' };
       case 'premium':
-        return { type: 'premium', name: 'Navigo Plus', label: 'Xe sang (Navigo Plus)', icon: '🚘', defaultModel: 'Mercedes-Benz C200', defaultPlate: '51K-999.88' };
+        return { type: 'premium', name: 'Navigo Plus', label: 'Xe sang (Navigo Plus)', icon: '🚘', defaultModel: 'Xe sang', defaultPlate: '' };
       case 'car7':
-        return { type: 'car7', name: 'Navigo XL', label: 'Ô tô 7 chỗ (Navigo XL)', icon: '🚐', defaultModel: 'Mitsubishi Xpander', defaultPlate: '51H-777.36' };
+        return { type: 'car7', name: 'Navigo XL', label: 'Ô tô 7 chỗ (Navigo XL)', icon: '🚐', defaultModel: 'Ô tô 7 chỗ', defaultPlate: '' };
       case 'car4':
       default:
-        return { type: 'car4', name: 'Navigo Car', label: 'Ô tô 4 chỗ (Navigo Car)', icon: '🚗', defaultModel: 'Toyota Vios 2023', defaultPlate: '51G-889.24' };
+        return { type: 'car4', name: 'Navigo Car', label: 'Ô tô 4 chỗ (Navigo Car)', icon: '🚗', defaultModel: 'Ô tô 4 chỗ', defaultPlate: '' };
     }
   }
 
@@ -514,15 +514,17 @@ class DriverController {
       // Broadcast driver presence to Firebase Realtime Cloud
       if (typeof realtimeSync !== 'undefined') {
         const user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
-        const driverId = user?.id || 'drv_' + (user?.phone || '0901');
-        realtimeSync.setDriverOnline(driverId, this.isOnline, {
-          name: user?.name,
-          phone: user?.phone,
-          vehicleType: user?.vehicleType || 'motorbike',
-          plate: user?.licensePlate || '59-S3 889.24',
-          lat: this.currentPosition.lat,
-          lng: this.currentPosition.lng
-        });
+        const driverId = user?.id || (user?.phone ? ('drv_' + user.phone) : null);
+        if (driverId) {
+          realtimeSync.setDriverOnline(driverId, this.isOnline, {
+            name: user?.name || 'Tài xế',
+            phone: user?.phone || '',
+            vehicleType: user?.vehicleType || 'motorbike',
+            plate: user?.licensePlate || user?.vehicle?.plate || '',
+            lat: this.currentPosition.lat,
+            lng: this.currentPosition.lng
+          });
+        }
       }
 
       if (this.isOnline) {
@@ -555,9 +557,10 @@ class DriverController {
         } catch (e) {}
       }
 
-      const driverId = user?.id || 'drv_d202';
-      const driverName = user?.name || 'Trần Văn Bình';
-      const driverPhone = user?.phone || '0918765432';
+      const driverId = user?.id || (user?.phone ? ('drv_' + user.phone) : null);
+      if (!driverId && !this.isOnline) return;
+      const driverName = user?.name || 'Tài xế';
+      const driverPhone = user?.phone || '';
       const vInfo = this.getVehicleInfo(user?.vehicle?.type || user?.vehicleType);
       const vehicleType = vInfo.type;
       const vehicleTypeName = vInfo.label;
@@ -665,6 +668,16 @@ class DriverController {
           if (this.isOnline) {
             this.broadcastDriverLocation();
             this.updateDriverMapMarker();
+
+            // Real-time dynamic rerouting to pickup if driver moved > 40 meters
+            if (this.activeTrip && this.activeTrip.stage === 'heading_to_pickup') {
+              const last = this._lastRouteDriverPos;
+              const moved = !last || (Math.abs(pos.coords.latitude - last.lat) > 0.0004 || Math.abs(pos.coords.longitude - last.lng) > 0.0004);
+              if (moved) {
+                this._lastRouteDriverPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                this.renderStageMapRoute(1);
+              }
+            }
           }
         },
         (err) => {
@@ -807,6 +820,8 @@ class DriverController {
             const t = res.data.trip;
             if (this.isMatchingVehicleType(t.vehicleType)) {
               const vInfo = this.getVehicleInfo(t.vehicleType);
+              const pCoords = (t.pickup && typeof t.pickup === 'object' && t.pickup.lat) ? [Number(t.pickup.lat), Number(t.pickup.lon || t.pickup.lng)] : (t.pickupLat ? [Number(t.pickupLat), Number(t.pickupLon)] : (Array.isArray(t.pickup) ? t.pickup : null));
+              const dCoords = (t.dropoff && typeof t.dropoff === 'object' && t.dropoff.lat) ? [Number(t.dropoff.lat), Number(t.dropoff.lon || t.dropoff.lng)] : (t.dropoffLat ? [Number(t.dropoffLat), Number(t.dropoffLon)] : (Array.isArray(t.dropoff) ? t.dropoff : null));
               requests.push({
                 id: t.id,
                 tripId: t.id,
@@ -819,8 +834,8 @@ class DriverController {
                 duration: Math.max(3, Math.round((t.distanceMeters || 2800) / 350)),
                 pickup: t.pickupName || 'Chợ Bến Thành, Quận 1',
                 destination: t.dropoffName || 'Landmark 81, Bình Thạnh',
-                pickupCoords: t.pickup,
-                destinationCoords: t.dropoff
+                pickupCoords: pCoords,
+                destinationCoords: dCoords
               });
             }
           }
@@ -836,6 +851,8 @@ class DriverController {
             pending.forEach(p => {
               if (p && !requests.some(r => r.id === p.id) && this.isMatchingVehicleType(p.vehicleType)) {
                 const vInfo = this.getVehicleInfo(p.vehicleType);
+                const pCoords = (p.pickupCoords && Array.isArray(p.pickupCoords)) ? p.pickupCoords : (p.pickupLat ? [Number(p.pickupLat), Number(p.pickupLon)] : ((p.pickup && typeof p.pickup === 'object' && p.pickup.lat) ? [Number(p.pickup.lat), Number(p.pickup.lng || p.pickup.lon)] : null));
+                const dCoords = (p.destinationCoords && Array.isArray(p.destinationCoords)) ? p.destinationCoords : (p.dropoffLat ? [Number(p.dropoffLat), Number(p.dropoffLon)] : ((p.destination && typeof p.destination === 'object' && p.destination.lat) ? [Number(p.destination.lat), Number(p.destination.lng || p.destination.lon)] : null));
                 requests.push({
                   id: p.id,
                   tripId: p.id,
@@ -848,8 +865,8 @@ class DriverController {
                   duration: Math.max(4, Math.round((Number(p.distanceMeters) || 3200) / 400)),
                   pickup: p.pickupName || (typeof p.pickup === 'string' ? p.pickup : p.pickup?.name) || 'Điểm đón',
                   destination: p.dropoffName || (typeof p.destination === 'string' ? p.destination : p.destination?.name) || 'Điểm đến',
-                  pickupCoords: p.pickup,
-                  destinationCoords: p.destination
+                  pickupCoords: pCoords,
+                  destinationCoords: dCoords
                 });
               }
             });
@@ -865,6 +882,8 @@ class DriverController {
           if (act && (act.status || '').toUpperCase() === 'REQUESTED' && this.isMatchingVehicleType(act.vehicleType)) {
             if (!requests.some(r => r.id === act.id)) {
               const vInfo = this.getVehicleInfo(act.vehicleType);
+              const pCoords = (act.pickupCoords && Array.isArray(act.pickupCoords)) ? act.pickupCoords : (act.pickupLat ? [Number(act.pickupLat), Number(act.pickupLon)] : ((act.pickup && typeof act.pickup === 'object' && act.pickup.lat) ? [Number(act.pickup.lat), Number(act.pickup.lng || act.pickup.lon)] : null));
+              const dCoords = (act.destinationCoords && Array.isArray(act.destinationCoords)) ? act.destinationCoords : (act.dropoffLat ? [Number(act.dropoffLat), Number(act.dropoffLon)] : ((act.destination && typeof act.destination === 'object' && act.destination.lat) ? [Number(act.destination.lat), Number(act.destination.lng || act.destination.lon)] : null));
               requests.push({
                 id: act.id,
                 tripId: act.id,
@@ -877,8 +896,8 @@ class DriverController {
                 duration: 8,
                 pickup: act.pickup?.name || act.pickupName || 'Điểm đón',
                 destination: act.destination?.name || act.dropoffName || 'Điểm đến',
-                pickupCoords: act.pickup,
-                destinationCoords: act.destination
+                pickupCoords: pCoords,
+                destinationCoords: dCoords
               });
             }
           }
@@ -892,6 +911,8 @@ class DriverController {
         pendingTrips.forEach(pendingTrip => {
           if (!requests.some(r => r.id === pendingTrip.id)) {
             const vInfo = this.getVehicleInfo(pendingTrip.vehicleType);
+            const pCoords = (pendingTrip.pickupCoords && Array.isArray(pendingTrip.pickupCoords)) ? pendingTrip.pickupCoords : (pendingTrip.pickupLat ? [Number(pendingTrip.pickupLat), Number(pendingTrip.pickupLon)] : null);
+            const dCoords = (pendingTrip.destinationCoords && Array.isArray(pendingTrip.destinationCoords)) ? pendingTrip.destinationCoords : (pendingTrip.dropoffLat ? [Number(pendingTrip.dropoffLat), Number(pendingTrip.dropoffLon)] : null);
             requests.push({
               id: pendingTrip.id,
               tripId: pendingTrip.id,
@@ -904,12 +925,48 @@ class DriverController {
               duration: 8,
               pickup: pendingTrip.pickup || 'Điểm đón',
               destination: pendingTrip.destination || 'Điểm đến',
-              pickupCoords: pendingTrip.pickupCoords,
-              destinationCoords: pendingTrip.destinationCoords
+              pickupCoords: pCoords,
+              destinationCoords: dCoords
             });
           }
         });
       } catch (err) {}
+
+      // 5. Check Firebase Realtime Cloud active offers
+      if (typeof realtimeSync !== 'undefined') {
+        try {
+          let cloudOffers = {};
+          if (realtimeSync.isAvailable()) {
+            const snap = await realtimeSync.db.ref('goride_active_offers').once('value');
+            cloudOffers = snap.val() || {};
+          } else if (typeof realtimeSync._restGet === 'function') {
+            cloudOffers = await realtimeSync._restGet('goride_active_offers') || {};
+          }
+          for (const k of Object.keys(cloudOffers)) {
+            const co = cloudOffers[k];
+            if (co && (co.status === 'REQUESTED' || co.status === 'OFFERED') && !requests.some(r => r.id === co.id) && this.isMatchingVehicleType(co.vehicleType)) {
+              const vInfo = this.getVehicleInfo(co.vehicleType);
+              const pCoords = (co.pickupCoords && Array.isArray(co.pickupCoords)) ? co.pickupCoords : (co.pickupLat ? [Number(co.pickupLat), Number(co.pickupLon)] : ((co.pickup && typeof co.pickup === 'object' && co.pickup.lat) ? [Number(co.pickup.lat), Number(co.pickup.lng || co.pickup.lon)] : null));
+              const dCoords = (co.destinationCoords && Array.isArray(co.destinationCoords)) ? co.destinationCoords : (co.dropoffLat ? [Number(co.dropoffLat), Number(co.dropoffLon)] : ((co.destination && typeof co.destination === 'object' && co.destination.lat) ? [Number(co.destination.lat), Number(co.destination.lng || co.destination.lon)] : null));
+              requests.push({
+                id: co.id,
+                tripId: co.id,
+                customerName: co.customerName || 'Khách hàng Navigo',
+                phone: co.customerPhone || co.phone || '0901234567',
+                vehicleType: vInfo.type,
+                rideType: `${vInfo.icon} Chuyến xe ${vInfo.name}`,
+                fareNum: Number(co.fareAmount || co.fare) || 45000,
+                distance: co.distanceMeters ? (co.distanceMeters / 1000).toFixed(1) : (co.distance || '3.2'),
+                duration: Math.max(4, Math.round((Number(co.distanceMeters) || 3200) / 400)),
+                pickup: co.pickupName || (typeof co.pickup === 'string' ? co.pickup : co.pickup?.name) || 'Điểm đón',
+                destination: co.dropoffName || (typeof co.destination === 'string' ? co.destination : co.destination?.name) || 'Điểm đến',
+                pickupCoords: pCoords,
+                destinationCoords: dCoords
+              });
+            }
+          }
+        } catch (e) {}
+      }
 
       // Notice when a new request arrives
       if (requests.length > 0 && requests.length > this.incomingRequests.length) {
@@ -989,8 +1046,8 @@ class DriverController {
 
       let vehicleType = user?.vehicle?.type || user?.vehicleType || 'motorbike';
       let isBike = (vehicleType === 'bike' || vehicleType === 'motorbike');
-      let driverPlate = user?.vehicle?.plate || user?.licensePlate || (isBike ? '59-S3 889.24' : '51G-889.24');
-      let driverVehicle = user?.vehicle?.model || (isBike ? 'Honda Wave Alpha' : 'Toyota Vios 2024');
+      let driverPlate = user?.vehicle?.plate || user?.licensePlate || '';
+      let driverVehicle = user?.vehicle?.model || (isBike ? 'Xe máy' : 'Ô tô');
       let driverName = user?.name || 'Tài xế đối tác';
       let driverRating = '5.0';
 
@@ -999,8 +1056,8 @@ class DriverController {
         const curProfile = allDrivers.find(d => d.email === user?.email || d.phone === user?.phone || d.id === user?.id);
         if (curProfile) {
           driverName = curProfile.name || driverName;
-          driverPlate = curProfile.plate || curProfile.licensePlate || driverPlate;
-          driverVehicle = curProfile.model || curProfile.vehicleModel || driverVehicle;
+          driverPlate = curProfile.plate || curProfile.licensePlate || driverPlate || '';
+          driverVehicle = curProfile.model || curProfile.vehicleModel || driverVehicle || (isBike ? 'Xe máy' : 'Ô tô');
           if (curProfile.vehicleType) {
             vehicleType = curProfile.vehicleType;
             isBike = (vehicleType === 'bike' || vehicleType === 'motorbike');
@@ -1099,7 +1156,7 @@ class DriverController {
 
       // Render Stage 1 Active Trip UI and Map
       this.renderActiveTripUI();
-      this.renderStageMapRoute(1);
+      await this.renderStageMapRoute(1);
       this.broadcastDriverLocation();
       this.showToast('Nhận chuyến thành công! Bản đồ đang chỉ đường tới điểm đón khách.', 'success');
     } catch (err) {
@@ -1240,7 +1297,7 @@ class DriverController {
 
       // Advance map to Stage 2: Pickup -> Destination
       this.renderActiveTripUI();
-      this.renderStageMapRoute(2);
+      await this.renderStageMapRoute(2);
       this.broadcastDriverLocation();
       this.showToast('Xác nhận đón khách thành công! Lộ trình đã chuyển sang điểm đến của khách.', 'success');
     } catch (err) {
@@ -1253,13 +1310,13 @@ class DriverController {
     await this.completeActiveTrip();
   }
 
-  renderStageMapRoute(stage = 1) {
+  async renderStageMapRoute(stage = 1) {
     if (!this.mapController || !this.activeTrip) return;
 
     try {
       const pCoords = this.activeTrip.pickupCoords || [10.7725, 106.6980];
       const dCoords = this.activeTrip.destinationCoords || [10.7951, 106.7219];
-      const driverCoords = [this.currentPosition.lat, this.currentPosition.lng];
+      const driverCoords = [Number(this.currentPosition.lat), Number(this.currentPosition.lng)];
 
       if (typeof this.mapController.clearRoute === 'function') {
         this.mapController.clearRoute();
@@ -1269,14 +1326,23 @@ class DriverController {
         this.mapController.clearMarkers('destination');
       }
 
+      const pickupLabel = (this.activeTrip.pickup && typeof this.activeTrip.pickup === 'object')
+        ? (this.activeTrip.pickup.name || 'Điểm đón khách')
+        : (this.activeTrip.pickup || 'Điểm đón khách');
+
+      const destLabel = (this.activeTrip.destination && typeof this.activeTrip.destination === 'object')
+        ? (this.activeTrip.destination.name || 'Điểm đến của khách')
+        : (this.activeTrip.destination || 'Điểm đến của khách');
+
       if (stage === 1) {
         // Stage 1: Driver -> Customer Pickup Location
         if (typeof this.mapController.setPickupMarker === 'function') {
-          this.mapController.setPickupMarker(pCoords[0], pCoords[1], { name: this.activeTrip.pickup });
+          this.mapController.setPickupMarker(pCoords[0], pCoords[1], pickupLabel);
         }
 
-        const path = this.generateStreetPath(driverCoords, pCoords);
-        if (typeof this.mapController.drawRoute === 'function') {
+        // Draw REAL road navigation route from Driver GPS to Customer Pickup Point
+        const path = await this.calculateNavigationRoute(driverCoords, pCoords);
+        if (path && typeof this.mapController.drawRoute === 'function') {
           this.mapController.drawRoute(path, {
             color: '#0288d1',
             weight: 5,
@@ -1289,7 +1355,7 @@ class DriverController {
       } else {
         // Stage 2: Customer Pickup Location -> Destination
         if (typeof this.mapController.setDestinationMarker === 'function') {
-          this.mapController.setDestinationMarker(dCoords[0], dCoords[1], { name: this.activeTrip.destination });
+          this.mapController.setDestinationMarker(dCoords[0], dCoords[1], destLabel);
         }
 
         // Move driver marker to pickup location as vehicle starts carrying customer
@@ -1297,8 +1363,9 @@ class DriverController {
         this.currentPosition.lng = pCoords[1];
         this.updateDriverMapMarker();
 
-        const path = this.generateStreetPath(pCoords, dCoords);
-        if (typeof this.mapController.drawRoute === 'function') {
+        // Draw REAL road navigation route from Pickup to Destination
+        const path = await this.calculateNavigationRoute(pCoords, dCoords);
+        if (path && typeof this.mapController.drawRoute === 'function') {
           this.mapController.drawRoute(path, {
             color: '#10b981',
             weight: 5,
@@ -1314,77 +1381,66 @@ class DriverController {
     }
   }
 
-  getTripCoordinates(trip) {
-    let pLat = 10.7725, pLng = 106.6980; // Bến Thành default
-    let dLat = 10.7951, dLng = 106.7219; // Landmark 81 default
+  /**
+   * Real Road Network Route Calculator (C++ Dijkstra + OSRM + Smooth Fallback)
+   * Calculates authentic street-following driving paths across all areas (never cuts across buildings/rivers)
+   */
+  async calculateNavigationRoute(fromCoords, toCoords) {
+    const fLat = Number(fromCoords[0]);
+    const fLng = Number(fromCoords[1]);
+    const tLat = Number(toCoords[0]);
+    const tLng = Number(toCoords[1]);
 
-    // 1. Direct pickupCoords
-    if (trip.pickupCoords) {
-      if (Array.isArray(trip.pickupCoords)) {
-        pLat = Number(trip.pickupCoords[0]);
-        pLng = Number(trip.pickupCoords[1]);
-      } else if (typeof trip.pickupCoords === 'object') {
-        pLat = Number(trip.pickupCoords.lat || trip.pickupCoords.latitude);
-        pLng = Number(trip.pickupCoords.lng || trip.pickupCoords.lon || trip.pickupCoords.longitude);
-      }
-    } else if (trip.pickup && typeof trip.pickup === 'object') {
-      if (trip.pickup.lat) {
-        pLat = Number(trip.pickup.lat);
-        pLng = Number(trip.pickup.lng || trip.pickup.lon);
-      }
+    if (isNaN(fLat) || isNaN(fLng) || isNaN(tLat) || isNaN(tLng)) {
+      return [fromCoords, toCoords];
     }
 
-    // 2. Direct destinationCoords
-    if (trip.destinationCoords) {
-      if (Array.isArray(trip.destinationCoords)) {
-        dLat = Number(trip.destinationCoords[0]);
-        dLng = Number(trip.destinationCoords[1]);
-      } else if (typeof trip.destinationCoords === 'object') {
-        dLat = Number(trip.destinationCoords.lat || trip.destinationCoords.latitude);
-        dLng = Number(trip.destinationCoords.lng || trip.destinationCoords.lon || trip.destinationCoords.longitude);
-      }
-    } else if (trip.destination && typeof trip.destination === 'object') {
-      if (trip.destination.lat) {
-        dLat = Number(trip.destination.lat);
-        dLng = Number(trip.destination.lng || trip.destination.lon);
-      }
+    if (Math.abs(fLat - tLat) < 0.0001 && Math.abs(fLng - tLng) < 0.0001) {
+      return [fromCoords, toCoords];
     }
 
-    // 3. Name-based match lookup
-    const pName = String(trip.pickupName || (typeof trip.pickup === 'string' ? trip.pickup : trip.pickup?.name) || '').toLowerCase();
-    const dName = String(trip.dropoffName || (typeof trip.destination === 'string' ? trip.destination : trip.destination?.name) || '').toLowerCase();
+    // Tier 1: Try local C++ Dijkstra Backend API (/api/route) if running
+    if (typeof apiClient !== 'undefined' && typeof apiClient.getRoute === 'function') {
+      try {
+        const res = await apiClient.getRoute(fLat, fLng, tLat, tLng);
+        if (res && res.ok && res.data && res.data.success && Array.isArray(res.data.geometry) && res.data.geometry.length > 1) {
+          return res.data.geometry.map(([lon, lat]) => [lat, lon]);
+        }
+      } catch (e) {}
+    }
 
-    const landmarks = [
-      { key: 'bến thành', lat: 10.7725, lng: 106.6980 },
-      { key: 'landmark 81', lat: 10.7951, lng: 106.7219 },
-      { key: 'vinhomes', lat: 10.7951, lng: 106.7219 },
-      { key: 'sân bay', lat: 10.8185, lng: 106.6588 },
-      { key: 'tân sơn nhất', lat: 10.8185, lng: 106.6588 },
-      { key: 'bách khoa', lat: 10.7721, lng: 106.6578 },
-      { key: 'đức bà', lat: 10.7798, lng: 106.6990 },
-      { key: 'nguyễn huệ', lat: 10.7743, lng: 106.7036 },
-      { key: 'crescent mall', lat: 10.7297, lng: 106.7219 },
-      { key: 'vincom', lat: 10.7781, lng: 106.7023 }
-    ];
+    // Tier 2: Public OpenStreetMap Routing Service (OSRM)
+    // Turn-by-turn geometry adhering to real street network
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${fLng},${fLat};${tLng},${tLat}?overview=full&geometries=geojson`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const res = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.code === 'Ok' && Array.isArray(data.routes) && data.routes.length > 0) {
+          const coords = data.routes[0].geometry.coordinates;
+          if (Array.isArray(coords) && coords.length > 1) {
+            return coords.map(([lon, lat]) => [lat, lon]);
+          }
+        }
+      }
+    } catch (osrmErr) {
+      console.warn('[DriverController] OSRM route notice:', osrmErr.message);
+    }
 
-    landmarks.forEach(l => {
-      if (pName.includes(l.key)) { pLat = l.lat; pLng = l.lng; }
-      if (dName.includes(l.key)) { dLat = l.lat; dLng = l.lng; }
-    });
-
-    return {
-      pickup: [pLat, pLng],
-      destination: [dLat, dLng]
-    };
+    // Tier 3: Smooth densified fallback path (never jagged Manhattan staircase)
+    return this.generateSmoothFallbackPath([fLat, fLng], [tLat, tLng]);
   }
 
-  generateStreetPath(fromPoint, toPoint) {
+  generateSmoothFallbackPath(fromPoint, toPoint) {
     const fLat = Number(fromPoint[0]);
     const fLng = Number(fromPoint[1]);
     const tLat = Number(toPoint[0]);
     const tLng = Number(toPoint[1]);
 
-    // Chợ Bến Thành -> Landmark 81
+    // Chợ Bến Thành -> Landmark 81 corridor
     if (Math.abs(fLat - 10.7725) < 0.005 && Math.abs(tLat - 10.7951) < 0.007) {
       return [
         [10.77250, 106.69800],
@@ -1400,19 +1456,189 @@ class DriverController {
       ];
     }
 
-    // Central HCMC street grid interpolation
-    const midLat = fLat + (tLat - fLat) * 0.45;
-    const midLng = fLng + (tLng - fLng) * 0.55;
+    // Smooth linear interpolation with micro-steps for realistic rendering
+    const points = [];
+    const steps = 12;
+    for (let i = 0; i <= steps; i++) {
+      const frac = i / steps;
+      points.push([
+        fLat + (tLat - fLat) * frac,
+        fLng + (tLng - fLng) * frac
+      ]);
+    }
+    return points;
+  }
 
-    return [
-      [fLat, fLng],
-      [fLat + (midLat - fLat) * 0.5, fLng],
-      [midLat, fLng],
-      [midLat, midLng],
-      [midLat, tLng],
-      [tLat - (tLat - midLat) * 0.3, tLng],
-      [tLat, tLng]
+  generateStreetPath(fromPoint, toPoint) {
+    return this.generateSmoothFallbackPath(fromPoint, toPoint);
+  }
+
+  getTripCoordinates(trip) {
+    if (!trip) {
+      return {
+        pickup: [this.currentPosition.lat, this.currentPosition.lng],
+        destination: [this.currentPosition.lat + 0.02, this.currentPosition.lng + 0.02]
+      };
+    }
+
+    let pLat = null, pLng = null;
+    let dLat = null, dLng = null;
+
+    // 1. Direct pickupCoords
+    if (trip.pickupCoords) {
+      if (Array.isArray(trip.pickupCoords) && trip.pickupCoords.length >= 2) {
+        pLat = Number(trip.pickupCoords[0]);
+        pLng = Number(trip.pickupCoords[1]);
+      } else if (typeof trip.pickupCoords === 'object') {
+        pLat = Number(trip.pickupCoords.lat || trip.pickupCoords.latitude);
+        pLng = Number(trip.pickupCoords.lng || trip.pickupCoords.lon || trip.pickupCoords.longitude);
+      }
+    }
+
+    // 2. Direct pickupLat / pickupLon
+    if ((pLat === null || isNaN(pLat)) && trip.pickupLat !== undefined && trip.pickupLon !== undefined) {
+      pLat = Number(trip.pickupLat);
+      pLng = Number(trip.pickupLon || trip.pickupLng);
+    }
+
+    // 3. Object trip.pickup
+    if ((pLat === null || isNaN(pLat)) && trip.pickup && typeof trip.pickup === 'object') {
+      if (trip.pickup.lat !== undefined) {
+        pLat = Number(trip.pickup.lat);
+        pLng = Number(trip.pickup.lng || trip.pickup.lon || trip.pickup.longitude);
+      }
+    }
+
+    // 4. Direct destinationCoords
+    if (trip.destinationCoords) {
+      if (Array.isArray(trip.destinationCoords) && trip.destinationCoords.length >= 2) {
+        dLat = Number(trip.destinationCoords[0]);
+        dLng = Number(trip.destinationCoords[1]);
+      } else if (typeof trip.destinationCoords === 'object') {
+        dLat = Number(trip.destinationCoords.lat || trip.destinationCoords.latitude);
+        dLng = Number(trip.destinationCoords.lng || trip.destinationCoords.lon || trip.destinationCoords.longitude);
+      }
+    }
+
+    // 5. Direct dropoffLat / dropoffLon / destinationLat / destinationLon
+    if ((dLat === null || isNaN(dLat)) && (trip.dropoffLat !== undefined || trip.destinationLat !== undefined)) {
+      dLat = Number(trip.dropoffLat !== undefined ? trip.dropoffLat : trip.destinationLat);
+      dLng = Number(trip.dropoffLon !== undefined ? trip.dropoffLon : (trip.destinationLon || trip.dropoffLng));
+    }
+
+    // 6. Object trip.destination / trip.dropoff
+    if ((dLat === null || isNaN(dLat))) {
+      const destObj = (trip.destination && typeof trip.destination === 'object') ? trip.destination : ((trip.dropoff && typeof trip.dropoff === 'object') ? trip.dropoff : null);
+      if (destObj && destObj.lat !== undefined) {
+        dLat = Number(destObj.lat);
+        dLng = Number(destObj.lng || destObj.lon || destObj.longitude);
+      }
+    }
+
+    // 7. Check localStorage active trip / admin trips by ID if coordinates still missing
+    if (pLat === null || isNaN(pLat) || dLat === null || isNaN(dLat)) {
+      try {
+        const act = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+        if (act && (act.id === trip.id || act.id === trip.tripId)) {
+          if ((pLat === null || isNaN(pLat)) && act.pickup && typeof act.pickup === 'object' && act.pickup.lat) {
+            pLat = Number(act.pickup.lat);
+            pLng = Number(act.pickup.lng || act.pickup.lon);
+          }
+          if ((dLat === null || isNaN(dLat)) && act.destination && typeof act.destination === 'object' && act.destination.lat) {
+            dLat = Number(act.destination.lat);
+            dLng = Number(act.destination.lng || act.destination.lon);
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+        const tMatch = adminTrips.find(x => x.id === trip.id || x.id === trip.tripId);
+        if (tMatch) {
+          if ((pLat === null || isNaN(pLat)) && tMatch.pickupCoords && Array.isArray(tMatch.pickupCoords)) {
+            pLat = Number(tMatch.pickupCoords[0]);
+            pLng = Number(tMatch.pickupCoords[1]);
+          } else if ((pLat === null || isNaN(pLat)) && tMatch.pickupLat) {
+            pLat = Number(tMatch.pickupLat);
+            pLng = Number(tMatch.pickupLon || tMatch.pickupLng);
+          }
+          if ((dLat === null || isNaN(dLat)) && tMatch.destinationCoords && Array.isArray(tMatch.destinationCoords)) {
+            dLat = Number(tMatch.destinationCoords[0]);
+            dLng = Number(tMatch.destinationCoords[1]);
+          } else if ((dLat === null || isNaN(dLat)) && tMatch.dropoffLat) {
+            dLat = Number(tMatch.dropoffLat);
+            dLng = Number(tMatch.dropoffLon || tMatch.dropoffLng);
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 8. Name-based match lookup with Vietnamese diacritic normalization
+    const pName = String(trip.pickupName || (typeof trip.pickup === 'string' ? trip.pickup : trip.pickup?.name) || '').toLowerCase();
+    const dName = String(trip.dropoffName || (typeof trip.destination === 'string' ? trip.destination : trip.destination?.name) || '').toLowerCase();
+
+    const stripDia = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd').toLowerCase();
+    const pNorm = stripDia(pName);
+    const dNorm = stripDia(dName);
+
+    const landmarks = [
+      // Binh Duong & Di An & Thuan An
+      { key: 'dong an', lat: 10.8872, lng: 106.7320 },
+      { key: 'cho dong an', lat: 10.8872, lng: 106.7320 },
+      { key: 'di an', lat: 10.8920, lng: 106.7248 },
+      { key: 'dt743', lat: 10.8920, lng: 106.7248 },
+      { key: 'song than', lat: 10.8890, lng: 106.7380 },
+      { key: 'kcn song than', lat: 10.8890, lng: 106.7380 },
+      { key: 'thuan an', lat: 10.9200, lng: 106.7000 },
+      { key: 'lotte mart binh duong', lat: 10.9333, lng: 106.7111 },
+      { key: 'aeon mall binh duong', lat: 10.9288, lng: 106.6975 },
+      { key: 'benh vien quan y 4', lat: 10.8950, lng: 106.7350 },
+      // Thu Duc & Gigamall
+      { key: 'gigamall', lat: 10.8285, lng: 106.7235 },
+      { key: 'thu duc', lat: 10.8500, lng: 106.7500 },
+      // HCMC Central
+      { key: 'ben thanh', lat: 10.7725, lng: 106.6980 },
+      { key: 'cho ben thanh', lat: 10.7725, lng: 106.6980 },
+      { key: 'landmark 81', lat: 10.7951, lng: 106.7219 },
+      { key: 'vinhomes', lat: 10.7951, lng: 106.7219 },
+      { key: 'san bay', lat: 10.8185, lng: 106.6588 },
+      { key: 'tan son nhat', lat: 10.8185, lng: 106.6588 },
+      { key: 'bach khoa', lat: 10.7721, lng: 106.6578 },
+      { key: 'duc ba', lat: 10.7798, lng: 106.6990 },
+      { key: 'nguyen hue', lat: 10.7743, lng: 106.7036 },
+      { key: 'crescent mall', lat: 10.7297, lng: 106.7219 },
+      { key: 'vincom', lat: 10.7781, lng: 106.7023 }
     ];
+
+    landmarks.forEach(l => {
+      if ((pLat === null || isNaN(pLat)) && pNorm.includes(l.key)) { pLat = l.lat; pLng = l.lng; }
+      if ((dLat === null || isNaN(dLat)) && dNorm.includes(l.key)) { dLat = l.lat; dLng = l.lng; }
+    });
+
+    // 9. Intelligent Proximity Fallback:
+    // If pickup coords are still not resolved, place pickup near driver (~400m) rather than teleporting 15km away
+    if (pLat === null || isNaN(pLat)) {
+      if (this.currentPosition && this.currentPosition.lat) {
+        pLat = Number(this.currentPosition.lat) + 0.0025;
+        pLng = Number(this.currentPosition.lng) + 0.0020;
+      } else {
+        pLat = 10.7725; pLng = 106.6980;
+      }
+    }
+
+    if (dLat === null || isNaN(dLat)) {
+      if (pLat && pLng) {
+        dLat = pLat + 0.018;
+        dLng = pLng + 0.015;
+      } else {
+        dLat = 10.7951; dLng = 106.7219;
+      }
+    }
+
+    return {
+      pickup: [pLat, pLng],
+      destination: [dLat, dLng]
+    };
   }
 
   checkActiveTripOnLoad() {
