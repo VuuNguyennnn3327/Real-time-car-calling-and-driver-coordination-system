@@ -19,7 +19,8 @@ class AdminController {
             DRIVERS: 'goride_admin_drivers',
             ONLINE_DRIVERS: 'goride_online_drivers',
             PENDING: 'goride_pending_drivers',
-            USERS: 'goride_offline_users'
+            USERS: 'goride_offline_users',
+            DELETED_TRIPS: 'goride_deleted_trip_ids'
         };
     }
 
@@ -76,11 +77,30 @@ class AdminController {
        STORAGE ACCESSORS (100% REAL DATA - NO FAKE SEEDS)
        ========================================================================== */
 
+    getDeletedTripIds() {
+        try {
+            const ids = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.DELETED_TRIPS));
+            return Array.isArray(ids) ? ids : [];
+        } catch {
+            return [];
+        }
+    }
+
+    addDeletedTripId(id) {
+        if (!id) return;
+        const ids = this.getDeletedTripIds();
+        if (!ids.includes(id)) {
+            ids.push(id);
+            localStorage.setItem(this.STORAGE_KEYS.DELETED_TRIPS, JSON.stringify(ids));
+        }
+    }
+
     getStoredTrips() {
         try {
             const trips = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.TRIPS)) || [];
+            const deletedIds = new Set(this.getDeletedTripIds());
             const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => ['trip_vn_101', 'trip_vn_102', 'trip_vn_103', 'trip_vn_104'].includes(t?.id));
-            return trips.filter(t => !checkMock(t));
+            return trips.filter(t => t && t.id && !deletedIds.has(t.id) && !checkMock(t));
         } catch {
             return [];
         }
@@ -138,8 +158,30 @@ class AdminController {
 
     getPendingDrivers() {
         try {
-            const list = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PENDING));
-            return Array.isArray(list) ? list : [];
+            let list = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PENDING));
+            if (!Array.isArray(list)) list = [];
+
+            // Merge any pending driver applications from goride_offline_users
+            const offlineUsers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+            offlineUsers.forEach(u => {
+                if (u && u.role === 'driver' && u.status === 'pending') {
+                    if (!list.some(p => p.id === u.id || (u.email && p.email === u.email))) {
+                        list.unshift({
+                            id: u.id,
+                            name: u.name,
+                            email: u.email,
+                            phone: u.phone,
+                            vehicleType: u.vehicleType || u.vehicle?.type || 'motorbike',
+                            plate: u.licensePlate || u.plate || u.vehicle?.plate || '--',
+                            experienceYears: u.experienceYears || u.experience || 1,
+                            status: 'pending',
+                            createdAt: u.createdAt || new Date().toISOString()
+                        });
+                    }
+                }
+            });
+
+            return list;
         } catch {
             return [];
         }
@@ -198,7 +240,7 @@ class AdminController {
     setupRealtimeSync() {
         // Cross-tab real-time listener for driver online/offline & GPS updates & user profile updates
         window.addEventListener('storage', (e) => {
-            if (e.key === 'goride_user' || e.key === 'ride_rtree_user') {
+            if (e.key === 'goride_user' || e.key === 'ride_rtree_user' || e.key === 'navigo_user') {
                 if (typeof sessionManager !== 'undefined') {
                     sessionManager._initFromStorage();
                 }
@@ -208,7 +250,13 @@ class AdminController {
                 if (this.currentTab === 'dashboard') {
                     this.updateDriverMetrics();
                 }
-            } else if (e.key === this.STORAGE_KEYS.TRIPS) {
+            } else if (e.key === this.STORAGE_KEYS.PENDING || e.key === this.STORAGE_KEYS.USERS) {
+                this.loadDriverApprovals();
+                this.loadDriversList();
+                if (this.currentTab === 'dashboard') {
+                    this.loadDashboard();
+                }
+            } else if (e.key === this.STORAGE_KEYS.TRIPS || e.key === this.STORAGE_KEYS.DELETED_TRIPS) {
                 if (this.currentTab === 'dashboard') {
                     this.loadDashboard();
                 } else if (this.currentTab === 'recent-trips') {
@@ -267,11 +315,18 @@ class AdminController {
                     window.realtimeSync.db.ref('goride_trips').on('value', (snapshot) => {
                         const val = snapshot.val();
                         if (val && typeof val === 'object') {
-                            const cloudTrips = Object.values(val);
+                            const deletedIds = new Set(this.getDeletedTripIds());
+                            // Purge any deleted trips from Firebase
+                            Object.keys(val).forEach(tripKey => {
+                                if (deletedIds.has(tripKey)) {
+                                    window.realtimeSync.db.ref('goride_trips/' + tripKey).remove();
+                                }
+                            });
+                            const cloudTrips = Object.values(val).filter(t => t && t.id && !deletedIds.has(t.id));
                             const localTrips = this.getStoredTrips();
                             const tripMap = new Map();
-                            localTrips.forEach(t => { if (t && t.id) tripMap.set(t.id, t); });
-                            cloudTrips.forEach(t => { if (t && t.id) tripMap.set(t.id, { ...tripMap.get(t.id), ...t }); });
+                            localTrips.forEach(t => { if (t && t.id && !deletedIds.has(t.id)) tripMap.set(t.id, t); });
+                            cloudTrips.forEach(t => { if (t && t.id && !deletedIds.has(t.id)) tripMap.set(t.id, { ...tripMap.get(t.id), ...t }); });
                             const merged = Array.from(tripMap.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
                             this.saveStoredTrips(merged);
                             if (this.currentTab === 'dashboard') {
@@ -287,6 +342,10 @@ class AdminController {
                     // Real-time listener for pending driver registrations
                     window.realtimeSync.db.ref('goride_pending_drivers').on('value', () => {
                         this.loadDriverApprovals();
+                        this.loadDriversList();
+                        if (this.currentTab === 'dashboard') {
+                            this.loadDashboard();
+                        }
                     });
                 } catch (e) {}
             }
@@ -597,17 +656,23 @@ class AdminController {
     }
 
     setupUserMenu() {
-        const menuBtn = document.getElementById('user-menu-btn');
-        const dropdown = document.getElementById('user-menu-dropdown');
-        if (menuBtn && dropdown) {
-            menuBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isHidden = dropdown.style.display === 'none' || !dropdown.style.display;
-                dropdown.style.display = isHidden ? 'block' : 'none';
-            });
-            document.addEventListener('click', () => {
-                dropdown.style.display = 'none';
-            });
+        if (!this._userMenuBound) {
+            this._userMenuBound = true;
+            const menuBtn = document.getElementById('user-menu-btn');
+            const dropdown = document.getElementById('user-menu-dropdown');
+            if (menuBtn && dropdown) {
+                menuBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isHidden = dropdown.style.display === 'none' || !dropdown.style.display;
+                    dropdown.style.display = isHidden ? 'block' : 'none';
+                });
+                document.addEventListener('click', (e) => {
+                    if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.style.display = 'none';
+                    }
+                });
+            }
         }
         if (typeof sessionManager !== 'undefined') {
             const user = sessionManager.getUser();
@@ -691,7 +756,10 @@ class AdminController {
             if (tripsBadge) tripsBadge.textContent = trips.length;
 
             const driversBadge = document.getElementById('sidebar-drivers-count');
-            if (driversBadge) driversBadge.textContent = drivers.length;
+            if (driversBadge) {
+                const pending = this.getPendingDrivers();
+                driversBadge.textContent = pending.length > 0 ? `${drivers.length} (${pending.length} chờ)` : drivers.length;
+            }
 
             // Render Recent Trips Table
             this.loadRecentTripsTable();
@@ -1136,26 +1204,32 @@ class AdminController {
         }
 
         // 2. Combine with real registered applicants in Firebase & localStorage
+        const localPending = this.getPendingDrivers();
+        localPending.forEach(lp => {
+            if (!pendingList.some(p => p.id === lp.id || (lp.email && p.email === lp.email))) {
+                pendingList.push(lp);
+            }
+        });
+
         if (window.realtimeSync && window.realtimeSync.isAvailable()) {
             try {
                 const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
                 const cloudPending = snap.val() || {};
                 Object.values(cloudPending).forEach(cp => {
-                    if (cp && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                    if (cp && cp.status === 'pending' && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
                         pendingList.push(cp);
                     }
                 });
             } catch (e) {}
         }
 
-        const localPending = this.getPendingDrivers();
-        localPending.forEach(lp => {
-            if (!pendingList.some(p => p.id === lp.id || p.email === lp.email)) {
-                pendingList.push(lp);
-            }
-        });
-
         if (badge) badge.textContent = pendingList.length;
+
+        const sidebarDriversBadge = document.getElementById('sidebar-drivers-count');
+        if (sidebarDriversBadge) {
+            const drivers = this.getStoredDrivers();
+            sidebarDriversBadge.textContent = pendingList.length > 0 ? `${drivers.length} (${pendingList.length} chờ)` : drivers.length;
+        }
 
         // If no real applicants, show clean empty state (ZERO fake mock applicants!)
         if (pendingList.length === 0) {
@@ -1340,17 +1414,59 @@ class AdminController {
         const { type, id } = this.deleteTarget;
 
         if (type === 'trip') {
+            this.addDeletedTripId(id);
+
             let trips = this.getStoredTrips();
-            trips = trips.filter(t => t.id !== id);
+            trips = trips.filter(t => t && t.id !== id);
             this.saveStoredTrips(trips);
+
+            // Clean active trip if matching
+            try {
+                const activeTrip = JSON.parse(localStorage.getItem('goride_active_trip'));
+                if (activeTrip && (activeTrip.id === id || activeTrip.tripId === id)) {
+                    localStorage.removeItem('goride_active_trip');
+                }
+            } catch (e) {}
+
+            // Permanently remove from Firebase Cloud
+            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                try {
+                    window.realtimeSync.db.ref('goride_trips/' + id).remove();
+                } catch (e) {}
+            }
+
             this.loadTripsTable();
+            this.loadRecentTripsTable();
             this.loadDashboard();
-            this.showToast(`Đã xóa chuyến đi #${id} thành công!`, 'info');
+            this.showToast(`Đã xóa vĩnh viễn chuyến đi #${id}!`, 'info');
         } else if (type === 'driver') {
             let drivers = this.getStoredDrivers();
-            drivers = drivers.filter(d => d.id !== id);
+            drivers = drivers.filter(d => d && d.id !== id);
             this.saveStoredDrivers(drivers);
+
+            // Also clean from pending, offline users, online, and Firebase
+            try {
+                let pending = this.getPendingDrivers();
+                pending = pending.filter(d => d && d.id !== id);
+                this.savePendingDrivers(pending);
+
+                let users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                users = users.filter(u => u && u.id !== id);
+                localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+
+                let online = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.ONLINE_DRIVERS) || '{}');
+                delete online[id];
+                localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(online));
+
+                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
+                    window.realtimeSync.db.ref('goride_drivers/' + id).remove();
+                    window.realtimeSync.db.ref('goride_pending_drivers/' + id).remove();
+                    window.realtimeSync.db.ref('goride_online_drivers/' + id).remove();
+                }
+            } catch (e) {}
+
             this.loadDriversList();
+            this.loadDriverApprovals();
             this.loadDashboard();
             this.showToast(`Đã xóa tài xế #${id} thành công!`, 'info');
         }

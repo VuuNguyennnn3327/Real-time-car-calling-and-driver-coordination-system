@@ -359,15 +359,14 @@
                     setVisible(profileLinks, false);
                 }
 
-                if (user) {
-                    if (typeof app !== 'undefined' && app.updateAuthUI) {
-                        app.updateAuthUI();
-                    }
+                if (typeof app !== 'undefined' && app.updateAuthUI) {
+                    app.updateAuthUI();
                 }
             }
 
-            if (typeof app !== 'undefined' && app.initMobileBottomNav) {
-                app.initMobileBottomNav();
+            if (typeof app !== 'undefined') {
+                if (app.updateAuthUI) app.updateAuthUI();
+                if (app.initMobileBottomNav) app.initMobileBottomNav();
             }
         });
     </script>

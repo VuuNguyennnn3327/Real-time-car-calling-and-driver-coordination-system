@@ -445,18 +445,30 @@ class App {
 
         // Guest only elements (e.g. login/register buttons in header)
         document.querySelectorAll('[data-auth="guest"]').forEach(el => {
-            el.style.display = isAuth ? 'none' : '';
+            if (isAuth) {
+                el.style.setProperty('display', 'none', 'important');
+            } else {
+                el.style.removeProperty('display');
+            }
         });
 
         // Authenticated user only elements (e.g. user menu, dashboard links)
         document.querySelectorAll('[data-auth="user"]').forEach(el => {
-            el.style.display = isAuth ? '' : 'none';
+            if (isAuth) {
+                el.style.setProperty('display', 'flex', 'important');
+            } else {
+                el.style.setProperty('display', 'none', 'important');
+            }
         });
 
         // Role-filtered elements (e.g. data-auth-role="admin")
         document.querySelectorAll('[data-auth-role]').forEach(el => {
             const allowedRoles = el.getAttribute('data-auth-role').split(',').map(r => r.trim());
-            el.style.display = (isAuth && allowedRoles.includes(role)) ? '' : 'none';
+            if (isAuth && allowedRoles.includes(role)) {
+                el.style.removeProperty('display');
+            } else {
+                el.style.setProperty('display', 'none', 'important');
+            }
         });
 
         // Dynamic Role-based Navigation Visibility:
@@ -621,8 +633,8 @@ class App {
                 return;
             }
 
-            // User Profile modal triggers: [data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #user-menu-btn
-            const profileTrigger = event.target.closest('[data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #user-menu-btn');
+            // User Profile modal triggers: [data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge
+            const profileTrigger = event.target.closest('[data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge');
             if (profileTrigger && !profileTrigger.closest('[data-auth="guest"]')) {
                 event.preventDefault();
                 this.showProfileModal();
@@ -1171,7 +1183,7 @@ class App {
         const path = window.location.pathname.toLowerCase();
         const isLogin = path.includes('login.html');
         const isRegister = path.includes('register.html');
-        const isCustomer = path.includes('customer') || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
+        const isCustomer = path.endsWith('customer.html') || path.includes('/customer.html') || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
         if (isLogin || isRegister || isCustomer) {
             const existingNav = document.getElementById('mobile-bottom-nav') || document.querySelector('.bottom-nav');
             if (existingNav) {

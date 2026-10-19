@@ -27,15 +27,32 @@ class SessionManager {
             let rawUser = sessionStorage.getItem(SESSION_STORAGE_KEYS.USER);
             let token = sessionStorage.getItem(SESSION_STORAGE_KEYS.TOKEN);
 
-            // Fallback to localStorage for seamless cross-tab synchronization (e.g. customer & driver tabs)
+            // Fallback to localStorage for seamless cross-tab & refresh synchronization
             if (!rawUser) {
                 rawUser = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
                 token = token || localStorage.getItem('navigo_token') || localStorage.getItem('ride_rtree_token');
+                if (rawUser) {
+                    try {
+                        sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, rawUser);
+                        if (token) sessionStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, token);
+                    } catch (e) {}
+                }
             }
 
             if (rawUser) {
                 this.currentUser = JSON.parse(rawUser);
                 this.token = token || null;
+
+                // Keep localStorage in sync so new tabs & homepage immediately see user session
+                try {
+                    localStorage.setItem('navigo_user', rawUser);
+                    localStorage.setItem('goride_user', rawUser);
+                    localStorage.setItem('ride_rtree_user', rawUser);
+                    if (this.token) {
+                        localStorage.setItem('navigo_token', this.token);
+                        localStorage.setItem('ride_rtree_token', this.token);
+                    }
+                } catch (e) {}
 
                 // Sync latest avatar/name from localStorage if profile was updated for the SAME user
                 try {
@@ -159,8 +176,10 @@ class SessionManager {
             sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
             sessionStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, this.token);
             localStorage.setItem('goride_user', JSON.stringify(this.currentUser));
+            localStorage.setItem('navigo_user', JSON.stringify(this.currentUser));
             localStorage.setItem('ride_rtree_user', JSON.stringify(this.currentUser));
             localStorage.setItem('ride_rtree_token', this.token);
+            localStorage.setItem('navigo_token', this.token);
         } catch (error) {
             console.error('[SessionManager] Error saving to storage:', error);
         }
@@ -192,6 +211,7 @@ class SessionManager {
         try {
             sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
             localStorage.setItem('goride_user', JSON.stringify(this.currentUser));
+            localStorage.setItem('navigo_user', JSON.stringify(this.currentUser));
             localStorage.setItem('ride_rtree_user', JSON.stringify(this.currentUser));
         } catch (error) {
             console.error('[SessionManager] Error updating user in storage:', error);
@@ -217,6 +237,7 @@ class SessionManager {
         try {
             sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
             localStorage.setItem('goride_user', JSON.stringify(this.currentUser));
+            localStorage.setItem('navigo_user', JSON.stringify(this.currentUser));
             localStorage.setItem('ride_rtree_user', JSON.stringify(this.currentUser));
         } catch (error) {
             console.error('[SessionManager] Error saving setUser to storage:', error);
@@ -238,6 +259,8 @@ class SessionManager {
             sessionStorage.removeItem(SESSION_STORAGE_KEYS.USER);
             sessionStorage.removeItem(SESSION_STORAGE_KEYS.TOKEN);
             localStorage.removeItem('goride_user');
+            localStorage.removeItem('navigo_user');
+            localStorage.removeItem('navigo_token');
             localStorage.removeItem('ride_rtree_user');
             localStorage.removeItem('ride_rtree_token');
         } catch (error) {

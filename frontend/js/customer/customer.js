@@ -50,6 +50,7 @@ class CustomerAppController {
         this.activeTrip = null;
         this.trackingInterval = null;
         this.driverCarMarker = null;
+        this.radarMarker = null;
         this.simulationTimers = [];
 
         // Phase 2A.3: Real Route State from C++ Dijkstra Backend
@@ -375,6 +376,97 @@ class CustomerAppController {
     }
 
     /**
+     * Display green scanning radar pulse centered directly on customer pickup marker on Leaflet map
+     * Automatically smooth-zooms to customer pickup coordinates (zoom: 16)
+     */
+    showRadarAtPickup(lat, lng) {
+        if (!this.mapController || !this.mapController.map) return;
+
+        let pLat = Number(lat);
+        let pLng = Number(lng);
+
+        if (isNaN(pLat) || isNaN(pLng)) {
+            if (this.pickup && this.pickup.lat && this.pickup.lng) {
+                pLat = Number(this.pickup.lat);
+                pLng = Number(this.pickup.lng);
+            } else if (this.activeTrip) {
+                pLat = Number(this.activeTrip.pickupLat || (this.activeTrip.pickup && this.activeTrip.pickup.lat));
+                pLng = Number(this.activeTrip.pickupLon || this.activeTrip.pickupLng || (this.activeTrip.pickup && (this.activeTrip.pickup.lng || this.activeTrip.pickup.lon)));
+            }
+        }
+
+        if (isNaN(pLat) || isNaN(pLng)) return;
+
+        // Hide static screen-center overlay
+        const staticRadar = document.getElementById('tracking-radar');
+        if (staticRadar) staticRadar.style.display = 'none';
+
+        // Ensure pickup marker is visible on map
+        if (typeof this.mapController.addPickupMarker === 'function') {
+            this.mapController.addPickupMarker(pLat, pLng, (this.pickup && this.pickup.name) || 'Điểm đón của bạn');
+        }
+
+        // If radar marker already exists at this exact position, don't recreate
+        if (this.radarMarker) {
+            try {
+                const curPos = this.radarMarker.getLatLng();
+                if (Math.abs(curPos.lat - pLat) < 0.00001 && Math.abs(curPos.lng - pLng) < 0.00001) {
+                    return;
+                }
+            } catch (e) {}
+            this.hideRadar();
+        }
+
+        // Custom Leaflet DivIcon anchored directly on map coordinates
+        if (typeof L !== 'undefined' && L.divIcon) {
+            const radarIcon = L.divIcon({
+                className: 'goride-radar-leaflet-marker',
+                iconSize: [240, 240],
+                iconAnchor: [120, 120],
+                html: `
+                    <div class="goride-radar-marker-wrap">
+                        <div class="goride-radar-pulse"></div>
+                        <div class="goride-radar-pulse goride-radar-pulse-2"></div>
+                        <div class="goride-radar-text">
+                            <span class="goride-radar-dot"></span> Đang tìm kiếm tài xế gần bạn nhất...
+                        </div>
+                    </div>
+                `
+            });
+
+            this.radarMarker = L.marker([pLat, pLng], {
+                icon: radarIcon,
+                zIndexOffset: 300,
+                interactive: false
+            }).addTo(this.mapController.map);
+        }
+
+        // Smoothly zoom map to customer pickup location
+        try {
+            this.mapController.map.invalidateSize({ animate: false });
+            if (typeof this.mapController.map.flyTo === 'function') {
+                this.mapController.map.flyTo([pLat, pLng], 16, { duration: 0.9 });
+            } else if (typeof this.mapController.setView === 'function') {
+                this.mapController.setView(pLat, pLng, 16);
+            }
+        } catch (e) {}
+    }
+
+    /**
+     * Remove map-anchored radar pulse marker
+     */
+    hideRadar() {
+        if (this.radarMarker && this.mapController && this.mapController.map) {
+            try {
+                this.mapController.map.removeLayer(this.radarMarker);
+            } catch (e) {}
+            this.radarMarker = null;
+        }
+        const staticRadar = document.getElementById('tracking-radar');
+        if (staticRadar) staticRadar.style.display = 'none';
+    }
+
+    /**
      * Switch visible flow view layer
      * @param {'search' | 'pickup-confirm' | 'vehicle-select' | 'tracking' | 'history'} viewName
      */
@@ -443,10 +535,26 @@ class CustomerAppController {
             centerPin.style.display = viewName === 'pickup-confirm' ? 'flex' : 'none';
         }
 
-        // Radar pulse overlay on map (only in tracking mode initially)
-        const radar = document.getElementById('tracking-radar');
-        if (radar) {
-            radar.style.display = viewName === 'tracking' ? 'flex' : 'none';
+        // Radar pulse overlay on map (anchored to customer pickup coordinates)
+        const staticRadar = document.getElementById('tracking-radar');
+        if (staticRadar) {
+            staticRadar.style.display = 'none';
+        }
+
+        if (viewName === 'tracking') {
+            const isSearching = !this.activeTrip || this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED';
+            if (isSearching) {
+                this.showRadarAtPickup();
+            } else {
+                this.hideRadar();
+            }
+        } else {
+            this.hideRadar();
+        }
+
+        const btnTrackRecenter = document.getElementById('btn-track-recenter');
+        if (btnTrackRecenter) {
+            btnTrackRecenter.style.display = viewName === 'tracking' ? 'flex' : 'none';
         }
 
         // Trigger map invalidate size on view transitions for responsive desktop/mobile
@@ -904,6 +1012,25 @@ class CustomerAppController {
             btnTrackHome.addEventListener('click', () => {
                 // Exit to homepage without cancelling active ride
                 window.location.href = '../index.html';
+            });
+        }
+
+        const btnTrackRecenter = document.getElementById('btn-track-recenter');
+        if (btnTrackRecenter) {
+            btnTrackRecenter.addEventListener('click', () => {
+                if (this.activeTrip && this.activeTrip.driverLat && this.activeTrip.driverLon && this.mapController && this.mapController.map) {
+                    try {
+                        this.mapController.map.flyTo([Number(this.activeTrip.driverLat), Number(this.activeTrip.driverLon)], 16, { duration: 0.8 });
+                    } catch (e) {
+                        this.mapController.setView(Number(this.activeTrip.driverLat), Number(this.activeTrip.driverLon), 16);
+                    }
+                } else if (this.pickup && this.mapController && this.mapController.map) {
+                    try {
+                        this.mapController.map.flyTo([Number(this.pickup.lat), Number(this.pickup.lng)], 16, { duration: 0.8 });
+                    } catch (e) {
+                        this.mapController.setView(Number(this.pickup.lat), Number(this.pickup.lng), 16);
+                    }
+                }
             });
         }
 
@@ -2130,40 +2257,25 @@ class CustomerAppController {
             }
         }
 
-        // 2. Check localStorage goride_active_trip
+        // 2. Check localStorage goride_active_trip specifically for this customer
         if (!trip) {
             try {
                 const raw = localStorage.getItem('goride_active_trip');
                 if (raw) {
                     const parsed = JSON.parse(raw);
                     const validStatuses = ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'];
-                    if (parsed && parsed.status && validStatuses.includes(parsed.status.toUpperCase())) {
+                    const tripTime = parsed.createdAt ? new Date(parsed.createdAt).getTime() : 0;
+                    const isFresh = (Date.now() - tripTime) < (2 * 60 * 60 * 1000); // within 2 hours
+                    if (parsed && parsed.status && validStatuses.includes(parsed.status.toUpperCase()) && isFresh) {
                         trip = parsed;
+                    } else {
+                        // Stale or expired active trip, clean it up
+                        localStorage.removeItem('goride_active_trip');
                     }
                 }
-            } catch (e) {}
-        }
-
-        // 3. Fallback check in goride_admin_trips
-        if (!trip) {
-            try {
-                const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                const found = adminTrips.find(t => ['requested', 'offered', 'accepted', 'arrived', 'in_progress'].includes(t.status?.toLowerCase()));
-                if (found) {
-                    trip = {
-                        id: found.id,
-                        status: found.status.toUpperCase(),
-                        customerName: found.customerName || 'Khách hàng',
-                        driverName: found.driverName !== 'Chưa gán' ? found.driverName : null,
-                        licensePlate: found.licensePlate || '51G-889.24',
-                        vehicleModel: found.vehicleModel || 'GoRide',
-                        pickup: { name: found.pickup || 'Điểm đón', lat: 10.7725, lng: 106.6980 },
-                        destination: { name: found.destination || 'Điểm đến', lat: 10.7798, lng: 106.6990 },
-                        fareAmount: Number(found.fare) || 45000,
-                        distanceMeters: (Number(found.distance) || 3) * 1000
-                    };
-                }
-            } catch (e) {}
+            } catch (e) {
+                try { localStorage.removeItem('goride_active_trip'); } catch (err) {}
+            }
         }
 
         if (trip) {
@@ -2342,6 +2454,7 @@ class CustomerAppController {
                 }
 
                 this.switchView('tracking');
+                this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
                 this.updateTrackingUI(createdTrip);
                 this.startActiveTripPolling(createdTrip.id);
                 this.showToast('Yêu cầu đặt xe thành công! Đang phát tín hiệu tìm tài xế gần nhất...', 'success');
@@ -2456,6 +2569,7 @@ class CustomerAppController {
                 }
 
                 this.switchView('tracking');
+                this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
                 this.updateTrackingUI(offlineTrip);
                 this.startActiveTripPolling(offlineTrip.id);
 
@@ -2563,6 +2677,7 @@ class CustomerAppController {
             clearInterval(this.trackingInterval);
             this.trackingInterval = null;
         }
+        this.hideRadar();
 
         const searchingPanel = document.getElementById('tracking-searching-panel');
         if (searchingPanel) searchingPanel.style.display = 'none';
@@ -2773,7 +2888,8 @@ class CustomerAppController {
         const searchingPanel = document.getElementById('tracking-searching-panel');
 
         if (status === 'REQUESTED' || status === 'OFFERED') {
-            if (radar) radar.style.display = 'flex';
+            if (radar) radar.style.display = 'none';
+            this.showRadarAtPickup(trip.pickupLat || (trip.pickup && trip.pickup.lat), trip.pickupLon || trip.pickupLng || (trip.pickup && (trip.pickup.lng || trip.pickup.lon)));
             if (driverSheet) driverSheet.style.display = 'none';
             if (searchingPanel) {
                 searchingPanel.style.display = 'block';
@@ -2802,6 +2918,7 @@ class CustomerAppController {
             }
         } else if (status === 'ACCEPTED' || status === 'ARRIVED' || status === 'IN_PROGRESS') {
             if (radar) radar.style.display = 'none';
+            this.hideRadar();
             if (searchingPanel) searchingPanel.style.display = 'none';
             if (driverSheet) driverSheet.style.display = 'flex';
 
@@ -2868,6 +2985,7 @@ class CustomerAppController {
                 });
             }
         } else if (status === 'COMPLETED') {
+            this.hideRadar();
             if (prog1) prog1.classList.add('active');
             if (prog2) prog2.classList.add('active');
             if (prog3) prog3.classList.add('active');
@@ -2879,6 +2997,7 @@ class CustomerAppController {
             }
             this.completeTrip(trip);
         } else if (status === 'CANCELLED') {
+            this.hideRadar();
             if (this.trackingInterval) {
                 clearInterval(this.trackingInterval);
                 this.trackingInterval = null;
@@ -2901,6 +3020,7 @@ class CustomerAppController {
      * Real Trip Completion Modal with Fare Receipt & Rating
      */
     completeTrip(trip) {
+        this.hideRadar();
         try {
             localStorage.removeItem('goride_active_trip');
         } catch (e) {}
@@ -3030,6 +3150,7 @@ class CustomerAppController {
      * Reset booking state for subsequent rides
      */
     resetBookingState() {
+        this.hideRadar();
         if (this.trackingInterval) {
             clearInterval(this.trackingInterval);
             this.trackingInterval = null;
