@@ -1060,7 +1060,21 @@ class AdminController {
                 if (typeof sessionManager !== 'undefined') {
                     sessionManager.logout();
                 }
-                window.location.href = 'login.html';
+                try {
+                    localStorage.setItem('goride_logged_out', '1');
+                    sessionStorage.setItem('goride_logged_out', '1');
+                    sessionStorage.clear();
+                    const clearKeys = [
+                        'goride_user', 'navigo_user', 'ride_rtree_user',
+                        'goride_token', 'navigo_token', 'ride_rtree_token',
+                        'user', 'token', 'currentUser', 'auth_user',
+                        'goride_active_trip', 'goride_pending_trip_offers'
+                    ];
+                    clearKeys.forEach(k => {
+                        try { localStorage.removeItem(k); } catch (e) {}
+                    });
+                } catch (e) {}
+                window.location.href = '../index.html';
             });
         });
     }

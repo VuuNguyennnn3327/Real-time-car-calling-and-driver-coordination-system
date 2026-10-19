@@ -169,7 +169,7 @@ class Router {
                 return this.resolvePath('admin');
             case 'customer':
             default:
-                return this.resolvePath('customer');
+                return this.resolvePath('home');
         }
     }
 

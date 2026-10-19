@@ -408,8 +408,8 @@
                         if (role === 'driver' && targetKey === 'driver') {
                             window.location.href = 'driver.html';
                             return;
-                        } else if (role === 'customer' && targetKey === 'customer') {
-                            window.location.href = 'customer.html';
+                        } else if (role === 'customer' && targetKey === 'profile') {
+                            window.location.href = 'profile.html';
                             return;
                         }
                     }
@@ -417,8 +417,10 @@
                     // Default role-based routing
                     if (role === 'driver') {
                         window.location.href = 'driver.html';
+                    } else if (role === 'admin') {
+                        window.location.href = 'admin.html';
                     } else {
-                        window.location.href = 'customer.html';
+                        window.location.href = '../index.html';
                     }
                 } catch (err) {
                     let displayMsg = 'Đăng nhập thất bại. Vui lòng thử lại.';

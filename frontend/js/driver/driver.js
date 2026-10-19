@@ -184,7 +184,21 @@ class DriverController {
         if (typeof sessionManager !== 'undefined') {
           sessionManager.logout();
         }
-        window.location.href = 'login.html';
+        try {
+          localStorage.setItem('goride_logged_out', '1');
+          sessionStorage.setItem('goride_logged_out', '1');
+          sessionStorage.clear();
+          const clearKeys = [
+            'goride_user', 'navigo_user', 'ride_rtree_user',
+            'goride_token', 'navigo_token', 'ride_rtree_token',
+            'user', 'token', 'currentUser', 'auth_user',
+            'goride_active_trip', 'goride_pending_trip_offers'
+          ];
+          clearKeys.forEach(k => {
+            try { localStorage.removeItem(k); } catch(e) {}
+          });
+        } catch(e) {}
+        window.location.href = '../index.html';
       });
     });
   }
@@ -306,17 +320,13 @@ class DriverController {
   }
 
   getCurrentDriverUser() {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
+      return null;
+    }
     let user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
     if (!user) {
       try {
         user = JSON.parse(localStorage.getItem('goride_user') || localStorage.getItem('user') || 'null');
-      } catch (e) {}
-    }
-    if (!user) {
-      try {
-        const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-        const found = offlineUsers.find(u => u.role === 'driver');
-        if (found) user = found;
       } catch (e) {}
     }
     return user;

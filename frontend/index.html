@@ -383,12 +383,16 @@
                     user = sessionManager.getCurrentUser();
                 }
                 if (!user) {
-                    try {
-                        const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
-                        if (raw && raw !== 'null' && raw !== 'undefined' && raw !== '{}') {
-                            user = JSON.parse(raw);
-                        }
-                    } catch (e) {}
+                    if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
+                        user = null;
+                    } else {
+                        try {
+                            const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
+                            if (raw && raw !== 'null' && raw !== 'undefined' && raw !== '{}') {
+                                user = JSON.parse(raw);
+                            }
+                        } catch (e) {}
+                    }
                 }
 
                 const isAuth = !!(user && (user.id || user.email));
@@ -488,16 +492,18 @@
                 }
             }
 
-            // Setup Home User Menu Direct Navigation & Dropdown
+            // Setup Home User Menu Dropdown Toggle
             function setupHomeUserMenu() {
                 const menuBtn = document.getElementById('home-user-menu-btn');
                 const dropdown = document.getElementById('home-user-dropdown');
                 const wrapper = menuBtn ? (menuBtn.closest('.goride-user-menu-wrapper') || menuBtn.parentElement) : null;
 
-                if (menuBtn) {
+                if (menuBtn && dropdown) {
                     menuBtn.onclick = (e) => {
-                        // User explicitly requested: clicking profile button directs to profile.html
-                        window.location.href = 'pages/profile.html';
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const isShown = dropdown.style.display === 'block';
+                        dropdown.style.display = isShown ? 'none' : 'block';
                     };
                 }
 
@@ -534,7 +540,7 @@
                 window.addEventListener(evt, () => syncHomeAuthUI());
             });
             window.addEventListener('storage', (e) => {
-                if (!e.key || e.key.includes('user') || e.key.includes('token')) {
+                if (!e.key || e.key.includes('user') || e.key.includes('token') || e.key.includes('logged_out')) {
                     if (typeof sessionManager !== 'undefined') sessionManager._initFromStorage();
                     syncHomeAuthUI();
                 }

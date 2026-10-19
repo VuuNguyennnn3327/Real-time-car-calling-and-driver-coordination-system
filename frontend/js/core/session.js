@@ -24,6 +24,11 @@ class SessionManager {
      */
     _initFromStorage() {
         try {
+            if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
+                this.currentUser = null;
+                this.token = null;
+                return;
+            }
             let rawUser = sessionStorage.getItem(SESSION_STORAGE_KEYS.USER);
             let token = sessionStorage.getItem(SESSION_STORAGE_KEYS.TOKEN);
 
@@ -41,29 +46,33 @@ class SessionManager {
 
             // Fallback to localStorage if sessionStorage is missing or corrupted
             if (!isValidUserJson(rawUser)) {
-                const userKeys = ['navigo_user', 'goride_user', 'ride_rtree_user'];
-                for (const k of userKeys) {
-                    const candidate = localStorage.getItem(k);
-                    if (isValidUserJson(candidate)) {
-                        rawUser = candidate;
-                        break;
-                    }
-                }
-                const tokenKeys = ['navigo_token', 'goride_token', 'ride_rtree_token'];
-                for (const tk of tokenKeys) {
-                    const candidateTok = localStorage.getItem(tk);
-                    if (candidateTok && candidateTok !== 'null' && candidateTok !== 'undefined' && candidateTok.trim() !== '') {
-                        token = candidateTok;
-                        break;
-                    }
-                }
-                if (rawUser && isValidUserJson(rawUser)) {
-                    try {
-                        sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, rawUser);
-                        if (token) sessionStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, token);
-                    } catch (e) {}
-                } else {
+                if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
                     rawUser = null;
+                } else {
+                    const userKeys = ['navigo_user', 'goride_user', 'ride_rtree_user'];
+                    for (const k of userKeys) {
+                        const candidate = localStorage.getItem(k);
+                        if (isValidUserJson(candidate)) {
+                            rawUser = candidate;
+                            break;
+                        }
+                    }
+                    const tokenKeys = ['navigo_token', 'goride_token', 'ride_rtree_token'];
+                    for (const tk of tokenKeys) {
+                        const candidateTok = localStorage.getItem(tk);
+                        if (candidateTok && candidateTok !== 'null' && candidateTok !== 'undefined' && candidateTok.trim() !== '') {
+                            token = candidateTok;
+                            break;
+                        }
+                    }
+                    if (rawUser && isValidUserJson(rawUser)) {
+                        try {
+                            sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, rawUser);
+                            if (token) sessionStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, token);
+                        } catch (e) {}
+                    } else {
+                        rawUser = null;
+                    }
                 }
             }
 
@@ -147,6 +156,11 @@ class SessionManager {
      * @returns {Object|null} User data object or null if not authenticated
      */
     getCurrentUser() {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
+            this.currentUser = null;
+            this.token = null;
+            return null;
+        }
         if (!this.currentUser) {
             this._initFromStorage();
         }
@@ -166,6 +180,9 @@ class SessionManager {
      * @returns {boolean}
      */
     isAuthenticated() {
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
+            return false;
+        }
         return !!this.getCurrentUser();
     }
 
@@ -201,6 +218,8 @@ class SessionManager {
         this.token = token;
 
         try {
+            localStorage.removeItem('goride_logged_out');
+            sessionStorage.removeItem('goride_logged_out');
             sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
             sessionStorage.setItem(SESSION_STORAGE_KEYS.TOKEN, this.token);
             localStorage.setItem('goride_user', JSON.stringify(this.currentUser));
@@ -271,6 +290,8 @@ class SessionManager {
         };
 
         try {
+            localStorage.removeItem('goride_logged_out');
+            sessionStorage.removeItem('goride_logged_out');
             sessionStorage.setItem(SESSION_STORAGE_KEYS.USER, JSON.stringify(this.currentUser));
             localStorage.setItem('goride_user', JSON.stringify(this.currentUser));
             localStorage.setItem('navigo_user', JSON.stringify(this.currentUser));
@@ -292,22 +313,29 @@ class SessionManager {
         this.token = null;
 
         try {
-            sessionStorage.removeItem(SESSION_STORAGE_KEYS.USER);
-            sessionStorage.removeItem(SESSION_STORAGE_KEYS.TOKEN);
-            sessionStorage.removeItem('goride_user');
-            sessionStorage.removeItem('navigo_user');
-            sessionStorage.removeItem('goride_token');
-            sessionStorage.removeItem('navigo_token');
-            sessionStorage.removeItem('ride_rtree_user');
-            sessionStorage.removeItem('ride_rtree_token');
-            localStorage.removeItem('goride_user');
-            localStorage.removeItem('navigo_user');
-            localStorage.removeItem('goride_token');
-            localStorage.removeItem('navigo_token');
-            localStorage.removeItem('ride_rtree_user');
-            localStorage.removeItem('ride_rtree_token');
-            localStorage.removeItem('goride_active_trip');
-            localStorage.removeItem('goride_pending_trip_offers');
+            localStorage.setItem('goride_logged_out', '1');
+            sessionStorage.setItem('goride_logged_out', '1');
+            const clearKeys = [
+                SESSION_STORAGE_KEYS.USER,
+                SESSION_STORAGE_KEYS.TOKEN,
+                'goride_user',
+                'navigo_user',
+                'ride_rtree_user',
+                'goride_token',
+                'navigo_token',
+                'ride_rtree_token',
+                'user',
+                'token',
+                'currentUser',
+                'auth_user',
+                'goride_active_trip',
+                'goride_pending_trip_offers'
+            ];
+            clearKeys.forEach(k => {
+                try { localStorage.removeItem(k); } catch (e) {}
+                try { sessionStorage.removeItem(k); } catch (e) {}
+            });
+            try { sessionStorage.clear(); } catch (e) {}
         } catch (error) {
             console.error('[SessionManager] Error clearing storage:', error);
         }

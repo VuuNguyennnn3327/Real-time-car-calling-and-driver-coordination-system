@@ -681,8 +681,8 @@ class App {
                 return;
             }
 
-            // User Profile triggers: [data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #home-user-menu-btn
-            const profileTrigger = event.target.closest('[data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #home-user-menu-btn, .goride-home-user-menu-btn');
+            // User Profile triggers: [data-action="profile"]
+            const profileTrigger = event.target.closest('[data-action="profile"]');
             if (profileTrigger && !profileTrigger.closest('[data-auth="guest"]')) {
                 event.preventDefault();
                 this.showProfileModal();
@@ -1057,14 +1057,48 @@ class App {
         if (typeof sessionManager !== 'undefined') {
             sessionManager.logout();
         }
+        try {
+            localStorage.setItem('goride_logged_out', '1');
+            sessionStorage.setItem('goride_logged_out', '1');
+            const clearKeys = [
+                'ride_rtree_user', 'ride_rtree_token',
+                'goride_user', 'goride_token',
+                'navigo_user', 'navigo_token',
+                'user', 'token', 'currentUser', 'auth_user',
+                'goride_active_trip', 'goride_pending_trip_offers'
+            ];
+            clearKeys.forEach(k => {
+                try { localStorage.removeItem(k); } catch (e) {}
+                try { sessionStorage.removeItem(k); } catch (e) {}
+            });
+            try { sessionStorage.clear(); } catch (e) {}
+        } catch (e) {}
+
         showToast('Đã đăng xuất thành công', 'info', 2000);
-        setTimeout(() => {
-            if (typeof router !== 'undefined') {
-                router.navigate('login');
-            } else {
-                window.location.href = 'login.html';
+
+        const currentPath = (window.location.pathname || '').toLowerCase();
+        const isHomePage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || !currentPath.includes('.html');
+
+        if (isHomePage) {
+            // Immediately update homepage UI to guest mode: restore "Đăng nhập" button and hide avatar
+            if (typeof syncHomeAuthUI === 'function') {
+                syncHomeAuthUI();
             }
-        }, 300);
+            if (typeof this.updateAuthUI === 'function') {
+                this.updateAuthUI();
+            }
+            const dropdown = document.getElementById('home-user-dropdown');
+            if (dropdown) dropdown.style.display = 'none';
+            const modal = document.getElementById('profile-modal');
+            if (modal) modal.style.display = 'none';
+            const activeTripBanner = document.getElementById('goride-active-trip-banner');
+            if (activeTripBanner) activeTripBanner.remove();
+        } else {
+            setTimeout(() => {
+                const isPagesDir = currentPath.includes('/pages/');
+                window.location.href = isPagesDir ? '../index.html' : 'index.html';
+            }, 300);
+        }
     }
 
     /**

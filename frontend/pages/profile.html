@@ -659,24 +659,28 @@
                     sessionManager.logout();
                 }
                 try {
+                    localStorage.setItem('goride_logged_out', '1');
+                    sessionStorage.setItem('goride_logged_out', '1');
                     sessionStorage.clear();
-                    localStorage.removeItem('goride_user');
-                    localStorage.removeItem('navigo_user');
-                    localStorage.removeItem('goride_token');
-                    localStorage.removeItem('navigo_token');
-                    localStorage.removeItem('ride_rtree_user');
-                    localStorage.removeItem('ride_rtree_token');
-                    localStorage.removeItem('goride_active_trip');
+                    const clearKeys = [
+                        'goride_user', 'navigo_user', 'ride_rtree_user',
+                        'goride_token', 'navigo_token', 'ride_rtree_token',
+                        'user', 'token', 'currentUser', 'auth_user',
+                        'goride_active_trip', 'goride_pending_trip_offers'
+                    ];
+                    clearKeys.forEach(k => {
+                        try { localStorage.removeItem(k); } catch(e) {}
+                    });
                 } catch(e) {}
 
                 if (typeof showToast === 'function') {
                     showToast('Đã đăng xuất tài khoản thành công', 'info', 1500);
                 }
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    window.location.href = '../index.html';
                 }, 200);
             } catch(err) {
-                window.location.href = 'login.html';
+                window.location.href = '../index.html';
             }
         }
 
