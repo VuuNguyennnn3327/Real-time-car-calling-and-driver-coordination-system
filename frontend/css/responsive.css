@@ -119,7 +119,8 @@ html, body {
 @media (min-width: 641px) and (max-width: 1024px) {
   /* Visibility toggles */
   .desktop-only,
-  .desktop-only-flex {
+  .desktop-only-flex,
+  .header-nav {
     display: none !important;
   }
 

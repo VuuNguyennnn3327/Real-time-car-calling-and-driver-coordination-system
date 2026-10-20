@@ -210,6 +210,7 @@
                                 } else if (typeof window.realtimeSync._restGet === 'function') {
                                     allUsers = await window.realtimeSync._restGet('goride_users') || {};
                                 }
+
                                 for (const k of Object.keys(allUsers)) {
                                     const u = allUsers[k];
                                     if (u && ((u.email && u.email.toLowerCase() === normInput) || (u.phone && u.phone === normInput) || (u.name && u.name.toLowerCase() === normInput))) {
@@ -227,6 +228,7 @@
                                     } else if (typeof window.realtimeSync._restGet === 'function') {
                                         allDrivers = await window.realtimeSync._restGet('goride_drivers') || {};
                                     }
+
                                     for (const k of Object.keys(allDrivers)) {
                                         const d = allDrivers[k];
                                         if (d && ((d.email && d.email.toLowerCase() === normInput) || (d.phone && d.phone === normInput))) {
@@ -245,6 +247,7 @@
                                     } else if (typeof window.realtimeSync._restGet === 'function') {
                                         allPending = await window.realtimeSync._restGet('goride_pending_drivers') || {};
                                     }
+
                                     for (const k of Object.keys(allPending)) {
                                         const p = allPending[k];
                                         if (p && ((p.email && p.email.toLowerCase() === normInput) || (p.phone && p.phone === normInput))) {

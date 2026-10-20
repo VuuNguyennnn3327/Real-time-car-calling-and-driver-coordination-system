@@ -499,12 +499,8 @@ class DriverController {
           }
         } catch (e) {}
       });
-    } catch (e) {
-      console.warn('[Driver] setupCloudTripsListener notice:', e);
-    }
+    } catch (e) {}
   }
-
-  updateDriverMapMarker() {
     if (!this.mapController) return;
 
     if (!this.isOnline) {
@@ -1347,6 +1343,16 @@ class DriverController {
         activeObj.driverLon = this.currentPosition.lng;
         localStorage.setItem('goride_active_trip', JSON.stringify(activeObj));
 
+        // Instant cross-tab broadcast to customer portal (0ms delay)
+        try {
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('goride_trip_channel');
+            bc.postMessage({ type: 'TRIP_UPDATED', trip: activeObj });
+            bc.close();
+          }
+          window.dispatchEvent(new CustomEvent('goride:trip_updated', { detail: activeObj }));
+        } catch (e) {}
+
         // 3. Clear pending offers
         localStorage.removeItem('goride_pending_trip_offers');
       } catch (err) {}
@@ -1500,6 +1506,16 @@ class DriverController {
         } catch (e) {}
         activeObj.status = 'IN_PROGRESS';
         localStorage.setItem('goride_active_trip', JSON.stringify(activeObj));
+
+        // Instant cross-tab broadcast to customer portal (0ms delay)
+        try {
+          if (typeof BroadcastChannel !== 'undefined') {
+            const bc = new BroadcastChannel('goride_trip_channel');
+            bc.postMessage({ type: 'TRIP_UPDATED', trip: activeObj });
+            bc.close();
+          }
+          window.dispatchEvent(new CustomEvent('goride:trip_updated', { detail: activeObj }));
+        } catch (e) {}
       } catch (e) {}
 
       // Broadcast to Firebase Realtime Cloud
@@ -1967,6 +1983,16 @@ class DriverController {
       } catch (e) {}
       activeObj.status = 'COMPLETED';
       localStorage.setItem('goride_active_trip', JSON.stringify(activeObj));
+
+      // Instant cross-tab broadcast to customer portal (0ms delay)
+      try {
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('goride_trip_channel');
+          bc.postMessage({ type: 'TRIP_UPDATED', trip: activeObj });
+          bc.close();
+        }
+        window.dispatchEvent(new CustomEvent('goride:trip_updated', { detail: activeObj }));
+      } catch (e) {}
     } catch (e) {}
 
     // 4.1 Firebase Realtime Cloud Update

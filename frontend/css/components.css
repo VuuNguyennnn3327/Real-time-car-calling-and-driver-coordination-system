@@ -3850,14 +3850,13 @@
   background: #10b981;
   box-shadow: 0 0 6px #10b981;
   animation: goride-dot-blink 2s infinite ease-in-out;
-  display: inline-block;
-  flex-shrink: 0;
 }
 
 @keyframes goride-dot-blink {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.4; transform: scale(0.85); }
 }
+
 
 /* Driver Sheet Card (ref-05/06) */
 .goride-driver-sheet {

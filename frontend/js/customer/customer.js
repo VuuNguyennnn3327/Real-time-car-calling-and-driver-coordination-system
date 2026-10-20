@@ -382,6 +382,13 @@ class CustomerAppController {
     showRadarAtPickup(lat, lng) {
         if (!this.mapController || !this.mapController.map) return;
 
+        // Status Guard: NEVER display or recreate radar pulse marker if trip has already been accepted or is active
+        const curStatus = String((this.activeTrip && this.activeTrip.status) || '').toUpperCase().trim();
+        if (this.activeTrip && ['ACCEPTED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(curStatus)) {
+            this.hideRadar();
+            return;
+        }
+
         let pLat = Number(lat);
         let pLng = Number(lng);
 
@@ -456,7 +463,7 @@ class CustomerAppController {
     }
 
     /**
-     * Remove map-anchored radar pulse marker
+     * Remove map-anchored radar pulse marker and purge any lingering radar DOM elements
      */
     hideRadar() {
         this._hasCenteredRadar = false;
@@ -466,6 +473,10 @@ class CustomerAppController {
             } catch (e) {}
             this.radarMarker = null;
         }
+        // Force-remove any leaflet radar marker elements that might have been left in DOM
+        try {
+            document.querySelectorAll('.goride-radar-leaflet-marker').forEach(el => el.remove());
+        } catch (e) {}
         const staticRadar = document.getElementById('tracking-radar');
         if (staticRadar) staticRadar.style.display = 'none';
     }
@@ -546,11 +557,25 @@ class CustomerAppController {
         }
 
         if (viewName === 'tracking') {
-            const isSearching = !this.activeTrip || this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED';
-            if (isSearching) {
+            const curStatus = String((this.activeTrip && this.activeTrip.status) || '').toUpperCase().trim();
+            const isSearching = (!this.activeTrip && !this.pickup) || curStatus === 'REQUESTED' || curStatus === 'OFFERED';
+            const searchingPanel = document.getElementById('tracking-searching-panel');
+            const driverSheet = document.getElementById('tracking-driver-sheet');
+
+            if (isSearching && (!this.activeTrip || curStatus === 'REQUESTED' || curStatus === 'OFFERED')) {
                 this.showRadarAtPickup();
+                if (searchingPanel) searchingPanel.style.display = 'block';
+                if (driverSheet) driverSheet.style.display = 'none';
             } else {
                 this.hideRadar();
+                if (searchingPanel) {
+                    searchingPanel.style.display = 'none';
+                    searchingPanel.style.setProperty('display', 'none', 'important');
+                }
+                if (driverSheet) {
+                    driverSheet.style.display = 'flex';
+                    driverSheet.style.setProperty('display', 'flex', 'important');
+                }
             }
         } else {
             this.hideRadar();
@@ -1152,8 +1177,144 @@ class CustomerAppController {
             }
         } catch (e) {}
 
+        // Cross-tab real-time sync with Driver & Admin portals (0ms reactive wakeup)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips') {
+                this.handleStorageTripUpdate(e.key, e.newValue);
+            }
+        });
+
+        // BroadcastChannel for instant zero-lag cross-tab synchronization
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                this.tripBroadcastChannel = new BroadcastChannel('goride_trip_channel');
+                this.tripBroadcastChannel.onmessage = (event) => {
+                    if (event && event.data && event.data.trip) {
+                        this.handleImmediateTripUpdate(event.data.trip);
+                    }
+                };
+            }
+        } catch (e) {}
+
+        // Window custom events for same-tab updates
+        window.addEventListener('goride:trip_updated', (e) => {
+            if (e.detail) {
+                this.handleImmediateTripUpdate(e.detail);
+            }
+        });
+
         // Initialize draggable & collapsible bottom sheet for vehicle selection
         this.setupVehicleSheetDrag();
+    }
+
+    /**
+     * Cross-tab storage change handler for instantaneous trip status updates
+     */
+    handleStorageTripUpdate(key, rawValue) {
+        if (!this.activeTripId && !this.activeTrip) {
+            try {
+                const storedActive = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                if (storedActive && storedActive.id && ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes(String(storedActive.status || '').toUpperCase())) {
+                    this.activeTrip = storedActive;
+                    this.activeTripId = storedActive.id;
+                }
+            } catch (e) {}
+        }
+        if (!this.activeTripId && !this.activeTrip) return;
+
+        try {
+            let updatedTrip = null;
+            if (key === 'goride_active_trip' && rawValue) {
+                const parsed = JSON.parse(rawValue);
+                if (parsed && (parsed.id === this.activeTripId || !this.activeTripId)) {
+                    updatedTrip = parsed;
+                }
+            } else if (key === 'goride_admin_trips' && rawValue) {
+                const trips = JSON.parse(rawValue);
+                if (Array.isArray(trips)) {
+                    const match = trips.find(t => t.id === this.activeTripId);
+                    if (match) {
+                        updatedTrip = {
+                            id: match.id,
+                            status: String(match.status || '').toUpperCase(),
+                            customerName: match.customerName || 'Khách hàng',
+                            driverName: match.driverName !== 'Chưa gán' ? match.driverName : null,
+                            licensePlate: match.licensePlate || '',
+                            vehicleModel: match.vehicleModel || '',
+                            vehicleType: match.vehicleType || this.selectedService || 'motorbike',
+                            pickupName: match.pickup || this.pickup?.name,
+                            dropoffName: match.destination || this.destination?.name,
+                            fareAmount: Number(match.fare) || this.selectedVehicleFare || 45000,
+                            distanceMeters: (Number(match.distance) || 3) * 1000,
+                            driverLat: (match.driverLat !== undefined && match.driverLat !== null) ? Number(match.driverLat) : null,
+                            driverLon: (match.driverLon !== undefined && match.driverLon !== null) ? Number(match.driverLon) : null
+                        };
+                    }
+                }
+            }
+
+            if (updatedTrip && updatedTrip.status) {
+                this.handleImmediateTripUpdate(updatedTrip);
+            }
+        } catch (err) {
+            console.warn('[CustomerApp] Storage trip update sync warning:', err);
+        }
+    }
+
+    /**
+     * Immediate trip update handler without waiting for polling interval
+     */
+    handleImmediateTripUpdate(tripData) {
+        if (!tripData) return;
+
+        const STATUS_RANKS = {
+            'REQUESTED': 1,
+            'OFFERED': 2,
+            'ACCEPTED': 3,
+            'ARRIVED': 4,
+            'IN_PROGRESS': 5,
+            'COMPLETED': 6,
+            'CANCELLED': 7
+        };
+
+        const prevStatus = String((this.activeTrip && this.activeTrip.status) || 'REQUESTED').toUpperCase().trim();
+        const incomingStatus = String(tripData.status || '').toUpperCase().trim();
+
+        // Monotonicity Guard: NEVER downgrade from higher rank (e.g. ACCEPTED) back to lower (e.g. REQUESTED)
+        const prevRank = STATUS_RANKS[prevStatus] || 0;
+        const incomingRank = STATUS_RANKS[incomingStatus] || 0;
+
+        let finalStatus = incomingStatus;
+        if (incomingRank > 0 && prevRank > 0 && incomingRank < prevRank && incomingStatus !== 'CANCELLED') {
+            finalStatus = prevStatus;
+        }
+
+        this.activeTrip = {
+            ...(this.activeTrip || {}),
+            ...tripData,
+            status: finalStatus
+        };
+        if (tripData.id) this.activeTripId = tripData.id;
+
+        // Immediately update UI and cancel searching radar/panel
+        this.updateTrackingUI(this.activeTrip);
+
+        // Immediate Toast alerts on state transitions
+        if (prevStatus === 'REQUESTED' && (finalStatus === 'ACCEPTED' || finalStatus === 'ARRIVED')) {
+            this.showToast(`Tài xế ${this.activeTrip.driverName || 'đối tác'} đã nhận chuyến! Đang đến đón bạn.`, 'success', 5000);
+        } else if (prevStatus === 'ACCEPTED' && finalStatus === 'ARRIVED') {
+            this.showToast('Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.', 'info', 4500);
+        } else if (prevStatus === 'ARRIVED' && finalStatus === 'IN_PROGRESS') {
+            this.showToast('Chuyến xe bắt đầu lăn bánh...', 'info', 4000);
+        } else if (finalStatus === 'COMPLETED') {
+            if (this.trackingInterval) {
+                clearInterval(this.trackingInterval);
+                this.trackingInterval = null;
+            }
+            this.completeTrip(this.activeTrip);
+        } else if (finalStatus === 'CANCELLED') {
+            this.cancelPendingBooking();
+        }
     }
 
     /**
@@ -2266,7 +2427,7 @@ class CustomerAppController {
             try {
                 const raw = localStorage.getItem('goride_active_trip');
                 if (raw) {
-                    const parsed = JSON.parse(raw);
+                    let parsed = JSON.parse(raw);
                     if (parsed && typeof isMockTrip === 'function' && isMockTrip(parsed)) {
                         localStorage.removeItem('goride_active_trip');
                         parsed = null;
@@ -2792,6 +2953,16 @@ class CustomerAppController {
             });
         }
 
+        const STATUS_RANKS = {
+            'REQUESTED': 1,
+            'OFFERED': 2,
+            'ACCEPTED': 3,
+            'ARRIVED': 4,
+            'IN_PROGRESS': 5,
+            'COMPLETED': 6,
+            'CANCELLED': 7
+        };
+
         let pollCount = 0;
         this.trackingInterval = setInterval(async () => {
             pollCount++;
@@ -2804,52 +2975,88 @@ class CustomerAppController {
                         const res = await apiClient.getActiveTrip();
                         if (res && res.data && res.data.has_active_trip && res.data.trip) {
                             currentTrip = res.data.trip;
+                            if (currentTrip.status) {
+                                currentTrip.status = String(currentTrip.status).toUpperCase().trim();
+                            }
                         }
                     } catch (e) {}
                 }
 
                 // 2. Real-time shared storage sync (cross-tab with Driver portal)
-                if (!currentTrip) {
-                    try {
-                        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                        const t = adminTrips.find(x => x.id === tripId);
-                        if (t) {
+                try {
+                    // Check goride_active_trip directly
+                    const activeRaw = localStorage.getItem('goride_active_trip');
+                    if (activeRaw) {
+                        const act = JSON.parse(activeRaw);
+                        if (act && (act.id === tripId || !tripId) && act.status) {
+                            const actStatus = String(act.status).toUpperCase().trim();
+                            const curStatus = currentTrip ? String(currentTrip.status || '').toUpperCase().trim() : '';
+                            const actRank = STATUS_RANKS[actStatus] || 0;
+                            const curRank = STATUS_RANKS[curStatus] || 0;
+
+                            // If localStorage has higher progress status (e.g. driver accepted), prefer it!
+                            if (actRank > curRank || !currentTrip) {
+                                currentTrip = { ...(currentTrip || {}), ...act, status: actStatus };
+                            }
+                        }
+                    }
+
+                    // Check goride_admin_trips
+                    const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                    const t = adminTrips.find(x => x.id === tripId);
+                    if (t) {
+                        const tStatus = String(t.status || 'requested').toUpperCase().trim();
+                        const curStatus = currentTrip ? String(currentTrip.status || '').toUpperCase().trim() : '';
+                        const tRank = STATUS_RANKS[tStatus] || 0;
+                        const curRank = STATUS_RANKS[curStatus] || 0;
+
+                        if (tRank > curRank || !currentTrip) {
                             currentTrip = {
+                                ...(currentTrip || {}),
                                 id: t.id,
-                                status: (t.status || 'requested').toUpperCase(),
+                                status: tStatus,
                                 customerName: t.customerName || 'Khách hàng',
-                                driverName: t.driverName !== 'Chưa gán' ? t.driverName : null,
-                                licensePlate: t.licensePlate || '',
-                                vehicleModel: t.vehicleModel || '',
-                                vehicleType: t.vehicleType || this.selectedService || 'motorbike',
+                                driverName: t.driverName !== 'Chưa gán' ? t.driverName : (currentTrip?.driverName || null),
+                                licensePlate: t.licensePlate || currentTrip?.licensePlate || '',
+                                vehicleModel: t.vehicleModel || currentTrip?.vehicleModel || '',
+                                vehicleType: t.vehicleType || currentTrip?.vehicleType || this.selectedService || 'motorbike',
                                 pickupName: t.pickup || this.pickup?.name,
                                 dropoffName: t.destination || this.destination?.name,
-                                fareAmount: Number(t.fare) || this.selectedVehicleFare || 45000,
+                                fareAmount: Number(t.fare) || currentTrip?.fareAmount || this.selectedVehicleFare || 45000,
                                 distanceMeters: (Number(t.distance) || 3) * 1000,
-                                driverLat: (t.driverLat !== undefined && t.driverLat !== null) ? Number(t.driverLat) : null,
-                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : null
+                                driverLat: (t.driverLat !== undefined && t.driverLat !== null) ? Number(t.driverLat) : (currentTrip?.driverLat || null),
+                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : (currentTrip?.driverLon || null)
                             };
-                            // Sync GPS and vehicleType from live driver broadcast
-                            try {
-                                const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
-                                const dEntry = Object.values(onlineDrivers).find(d => 
-                                    (t.driverName && d.name === t.driverName) || 
-                                    (t.licensePlate && d.plate === t.licensePlate)
-                                );
-                                if (dEntry && dEntry.isOnline) {
-                                    const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
-                                    const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
-                                    if (!isNaN(dLat) && dLat !== 0) currentTrip.driverLat = dLat;
-                                    if (!isNaN(dLng) && dLng !== 0) currentTrip.driverLon = dLng;
-                                    if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
-                                }
-                            } catch (e) {}
                         }
-                    } catch (e) {}
-                }
+                    }
+
+                    // Sync GPS and vehicleType from live driver broadcast
+                    if (currentTrip && currentTrip.driverName) {
+                        const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+                        const dEntry = Object.values(onlineDrivers).find(d => 
+                            (currentTrip.driverName && d.name === currentTrip.driverName) || 
+                            (currentTrip.licensePlate && d.plate === currentTrip.licensePlate)
+                        );
+                        if (dEntry && dEntry.isOnline) {
+                            const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
+                            const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
+                            if (!isNaN(dLat) && dLat !== 0) currentTrip.driverLat = dLat;
+                            if (!isNaN(dLng) && dLng !== 0) currentTrip.driverLon = dLng;
+                            if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
+                        }
+                    }
+                } catch (e) {}
 
                 if (currentTrip) {
-                    const prevStatus = this.activeTrip ? this.activeTrip.status : 'REQUESTED';
+                    const prevStatus = String((this.activeTrip && this.activeTrip.status) || 'REQUESTED').toUpperCase().trim();
+                    let curStatus = String(currentTrip.status || '').toUpperCase().trim();
+
+                    // Monotonicity Guard: NEVER downgrade from higher state (e.g. ACCEPTED) back to lower (e.g. REQUESTED)
+                    if ((STATUS_RANKS[curStatus] || 0) < (STATUS_RANKS[prevStatus] || 0) && curStatus !== 'CANCELLED') {
+                        curStatus = prevStatus;
+                        currentTrip.status = prevStatus;
+                    }
+
                     this.activeTrip = currentTrip;
                     this.activeTripId = currentTrip.id;
 
@@ -2857,7 +3064,7 @@ class CustomerAppController {
                     try {
                         const existing = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
                         existing.id = currentTrip.id;
-                        existing.status = (currentTrip.status || 'REQUESTED').toUpperCase();
+                        existing.status = curStatus;
                         if (currentTrip.driverName && currentTrip.driverName !== 'Chưa gán') existing.driverName = currentTrip.driverName;
                         if (currentTrip.licensePlate) existing.licensePlate = currentTrip.licensePlate;
                         if (currentTrip.vehicleModel) existing.vehicleModel = currentTrip.vehicleModel;
@@ -2868,17 +3075,17 @@ class CustomerAppController {
 
                     this.updateTrackingUI(currentTrip, pollCount);
 
-                    if (prevStatus === 'REQUESTED' && (currentTrip.status === 'ACCEPTED' || currentTrip.status === 'ARRIVED')) {
+                    if (prevStatus === 'REQUESTED' && (curStatus === 'ACCEPTED' || curStatus === 'ARRIVED')) {
                         this.showToast(`Tài xế ${currentTrip.driverName || 'đối tác'} đã nhận chuyến! Đang đến đón bạn.`, 'success', 5000);
-                    } else if (prevStatus === 'ACCEPTED' && currentTrip.status === 'ARRIVED') {
+                    } else if (prevStatus === 'ACCEPTED' && curStatus === 'ARRIVED') {
                         this.showToast('Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.', 'info', 4500);
-                    } else if (prevStatus === 'ARRIVED' && currentTrip.status === 'IN_PROGRESS') {
+                    } else if (prevStatus === 'ARRIVED' && curStatus === 'IN_PROGRESS') {
                         this.showToast('Chuyến xe bắt đầu lăn bánh...', 'info', 4000);
-                    } else if (currentTrip.status === 'COMPLETED') {
+                    } else if (curStatus === 'COMPLETED') {
                         clearInterval(this.trackingInterval);
                         this.trackingInterval = null;
                         this.completeTrip(currentTrip);
-                    } else if (currentTrip.status === 'CANCELLED') {
+                    } else if (curStatus === 'CANCELLED') {
                         this.cancelPendingBooking();
                     }
                 } else if (pollCount > 8 && !this.activeTrip) {
@@ -2898,23 +3105,25 @@ class CustomerAppController {
             } catch (err) {
                 console.warn('[CustomerApp] Active trip poll warning:', err.message);
             }
-        }, 3500);
+        }, 1500);
     }
 
     /**
      * Update tracking UI components according to real backend trip state
      */
     updateTrackingUI(trip, pollCount = 0) {
+        if (!trip) return;
         const radar = document.getElementById('tracking-radar');
         const driverSheet = document.getElementById('tracking-driver-sheet');
         const statusText = document.getElementById('tracking-status-text');
+        const statusIcon = document.getElementById('tracking-status-icon');
         const prog1 = document.getElementById('prog-step-1');
         const prog2 = document.getElementById('prog-step-2');
         const prog3 = document.getElementById('prog-step-3');
         const prog4 = document.getElementById('prog-step-4');
         const cancelBtn = document.getElementById('btn-cancel-trip') || document.querySelector('[data-action="cancel-ride"]');
 
-        const status = trip.status;
+        const status = String(trip.status || '').toUpperCase().trim();
 
         // Reset progress steps
         [prog1, prog2, prog3, prog4].forEach(p => p && p.classList.remove('active'));
@@ -2928,7 +3137,9 @@ class CustomerAppController {
             }
             if (radar) radar.style.display = 'none';
             this.showRadarAtPickup(trip.pickupLat || (trip.pickup && trip.pickup.lat), trip.pickupLon || trip.pickupLng || (trip.pickup && (trip.pickup.lng || trip.pickup.lon)));
-            if (driverSheet) driverSheet.style.display = 'none';
+            if (driverSheet) {
+                driverSheet.style.display = 'none';
+            }
             if (searchingPanel) {
                 searchingPanel.style.display = 'block';
                 const sPickup = document.getElementById('searching-pickup-text');
@@ -2936,6 +3147,8 @@ class CustomerAppController {
                 if (sPickup) sPickup.textContent = trip.pickupName || (this.pickup && this.pickup.name) || '--';
                 if (sDropoff) sDropoff.textContent = trip.dropoffName || (this.destination && this.destination.name) || '--';
             }
+
+            if (statusIcon) statusIcon.textContent = '📡';
 
             // Cancellation is PERMITTED during REQUESTED / OFFERED
             if (cancelBtn) {
@@ -2957,8 +3170,15 @@ class CustomerAppController {
         } else if (status === 'ACCEPTED' || status === 'ARRIVED' || status === 'IN_PROGRESS') {
             if (radar) radar.style.display = 'none';
             this.hideRadar();
-            if (searchingPanel) searchingPanel.style.display = 'none';
-            if (driverSheet) driverSheet.style.display = 'flex';
+            if (searchingPanel) {
+                searchingPanel.style.display = 'none';
+                searchingPanel.style.setProperty('display', 'none', 'important');
+            }
+            if (driverSheet) {
+                driverSheet.style.display = 'flex';
+                driverSheet.style.setProperty('display', 'flex', 'important');
+            }
+            if (statusIcon) statusIcon.textContent = '🚗';
 
             // Cancellation is allowed when driver is en route or at pickup. Only forbidden when vehicle is in progress.
             if (cancelBtn) {
