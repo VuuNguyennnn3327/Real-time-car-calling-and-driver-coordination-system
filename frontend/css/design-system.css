@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 /**
  * RIDE-RTREE Design System
  * Core CSS Foundation for Ride-Hailing Web Application
@@ -9,19 +11,31 @@
    ========================================================================== */
 
 :root {
+  /* --- Navigo Core Brand Tokens --- */
+  --gsm-teal-50:  #e6f7f6;
+  --gsm-teal-100: #ccefee;
+  --gsm-teal-300: #66ceca;
+  --gsm-teal-500: #00b1a9;
+  --gsm-teal-600: #009e96;
+  --gsm-teal-700: #007d77;
+  --gsm-navy-900: #0f2d3c;
+  --gsm-navy-800: #1b365d;
+  --gsm-navy-700: #24487a;
+  --gsm-navy-50:  #f0f4f8;
+
   /* --- Primary & Brand Colors --- */
-  --color-primary: #1a73e8;
-  --color-primary-hover: #1557b0;
-  --color-primary-active: #0d47a1;
-  --color-primary-light: #e8f0fe;
-  --color-primary-border: #8ab4f8;
-  --color-primary-focus: rgba(26, 115, 232, 0.25);
+  --color-primary: #00b1a9;
+  --color-primary-hover: #009e96;
+  --color-primary-active: #007d77;
+  --color-primary-light: #e6f7f6;
+  --color-primary-border: #66ceca;
+  --color-primary-focus: rgba(0, 177, 169, 0.25);
 
   /* --- Secondary & Dark Neutral --- */
-  --color-secondary: #1a1a2e;
-  --color-secondary-hover: #121220;
-  --color-secondary-active: #0a0a14;
-  --color-secondary-light: #2d2d44;
+  --color-secondary: #0f2d3c;
+  --color-secondary-hover: #091e28;
+  --color-secondary-active: #051219;
+  --color-secondary-light: #163a4d;
   --color-secondary-text: #ffffff;
 
   /* --- Accent Green --- */
@@ -59,12 +73,12 @@
   --color-success-focus: rgba(67, 160, 71, 0.25);
 
   /* --- Info Cyan/Blue --- */
-  --color-info: #0288d1;
-  --color-info-hover: #0277bd;
-  --color-info-active: #01579b;
-  --color-info-light: #e1f5fe;
-  --color-info-border: #81d4fa;
-  --color-info-text: #01579b;
+  --color-info: #00b1a9;
+  --color-info-hover: #009e96;
+  --color-info-active: #007d77;
+  --color-info-light: #e6f7f6;
+  --color-info-border: #66ceca;
+  --color-info-text: #007d77;
   --color-info-focus: rgba(2, 136, 209, 0.25);
 
   /* --- Neutral Grayscale --- */
@@ -96,7 +110,8 @@
   --color-border-focus: #1a73e8;
 
   /* --- Typography --- */
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
   --font-size-xs: 0.75rem;    /* 12px */
@@ -181,10 +196,12 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 body {
-  font-family: var(--font-sans);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-regular);
   line-height: var(--line-height-normal);
@@ -264,6 +281,48 @@ button, input, optgroup, select, textarea {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
+/* ==========================================================================
+   UNIVERSAL DRAGGABLE SCROLLBAR SYSTEM
+   Fixes invisible / un-draggable scrollbars on PC, Mac, Tablet & Mobile
+   ========================================================================== */
+/* WebKit & Chromium (Chrome, Edge, Safari, Opera, Brave, Responsively App) */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid #f1f5f9;
+  cursor: grab;
+  transition: background-color 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00b1a9;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #0d9488;
+  cursor: grabbing;
+}
+
+/* Firefox standard scrollbars */
+html, body, * {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Touch momentum scrolling for iOS/Android/Tablets */
+html, body, .app, .app-main, .driver-app-main, .data-table-responsive, [style*="overflow"] {
+  -webkit-overflow-scrolling: touch;
+}
 
 /* ==========================================================================
    3. BUTTON COMPONENT
@@ -321,21 +380,21 @@ fieldset:disabled .btn {
 
 /* Primary Button (Brand Emerald Teal Gradient) */
 .btn-primary {
-  background: linear-gradient(135deg, #00897b 0%, #00695c 100%);
+  background: linear-gradient(135deg, #00b1a9 0%, #007d77 100%);
   color: var(--color-white);
   border-color: transparent;
   box-shadow: 0 4px 14px rgba(0, 137, 123, 0.35);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #009688 0%, #00796b 100%);
+  background: linear-gradient(135deg, #009688 0%, #009e96 100%);
   color: var(--color-white);
   box-shadow: 0 8px 22px rgba(0, 137, 123, 0.48);
   transform: translateY(-2px);
 }
 
 .btn-primary:active:not(:disabled) {
-  background: #004d40;
+  background: #0f2d3c;
   box-shadow: 0 2px 6px rgba(0, 137, 123, 0.3);
 }
 
@@ -368,8 +427,8 @@ fieldset:disabled .btn {
 
 .btn-outline:hover:not(:disabled) {
   background-color: #f0fdfa;
-  border-color: #00897b;
-  color: #00897b;
+  border-color: #00b1a9;
+  color: #00b1a9;
   box-shadow: 0 4px 14px rgba(0, 137, 123, 0.16);
   transform: translateY(-2px);
 }
@@ -1144,7 +1203,7 @@ fieldset:disabled .btn {
   inset: -2px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-accent);
-  animation: statusPulse 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: statusPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
 .status-offline {
@@ -1161,16 +1220,20 @@ fieldset:disabled .btn {
   inset: -2px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-warning);
-  animation: statusPulse 3.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  animation: statusPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
 @keyframes statusPulse {
   0% {
     transform: scale(0.95);
-    opacity: 0.7;
+    opacity: 0.8;
   }
-  60%, 100% {
-    transform: scale(1.45);
+  70% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.2);
     opacity: 0;
   }
 }
@@ -1345,4 +1408,328 @@ fieldset:disabled .btn {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+
+/* ==========================================================================
+   16. UNIVERSAL INTUITIVE VISUAL FEEDBACK & INTERACTION HIGHLIGHT SYSTEM
+   Tính trực quan nổi bật: Làm nổi bật mọi ô, thẻ, nút, chức năng đang trỏ tới
+   ========================================================================== */
+
+/* Universal interactive elements transition */
+.gsm-2x2-card,
+.gsm-duo-card,
+.gsm-service-card,
+.gsm-food-card,
+.gsm-verify-id-card,
+.gsm-race-card,
+.gsm-list-row,
+.gsm-trip-card,
+.gsm-notif-card,
+.goride-vehicle-card,
+.vehicle-card,
+.service-option,
+.kpi-card,
+.earnings-kpi-card,
+.driver-req-card,
+.active-trip-card,
+.suggestion-item,
+.card-interactive,
+.gsm-vtab,
+.vehicle-tab-item,
+.gsm-filter-pill,
+.filter-pill,
+.gsm-pc-nav-link,
+.header-nav .nav-link,
+.admin-nav-item,
+.bottom-nav-item,
+.gsm-nav-btn {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.22s ease,
+              color 0.18s ease !important;
+}
+
+/* 1. Mọi thẻ chức năng & ô chọn khi trỏ tới (Hover Highlight) */
+.gsm-2x2-card:hover,
+.gsm-duo-card:hover,
+.gsm-service-card:hover,
+.gsm-food-card:hover,
+.gsm-verify-id-card:hover,
+.gsm-race-card:hover,
+.gsm-list-row:hover,
+.gsm-trip-card:hover,
+.gsm-notif-card:hover,
+.goride-vehicle-card:hover,
+.vehicle-card:hover,
+.service-option:hover,
+.kpi-card:hover,
+.stat-card:hover,
+.earnings-kpi-card:hover,
+.driver-req-card:hover,
+.suggestion-item:hover,
+.card-interactive:hover,
+.activity-card:hover,
+.promo-card:hover,
+.gsm-promo-card:hover,
+.eco-card:hover,
+.trip-card:hover,
+.driver-card:hover,
+.cloud-status-pill:hover,
+.admin-home-btn:hover,
+.user-menu-item:hover,
+.user-menu-trigger:hover,
+.app-sidebar .nav-item:hover {
+  transform: translateY(-3px) scale(1.012) !important;
+  border-color: #00b1a9 !important;
+  box-shadow: 0 10px 28px rgba(0, 177, 169, 0.2), 0 2px 8px rgba(15, 45, 60, 0.08) !important;
+  cursor: pointer !important;
+  z-index: 10;
+}
+
+/* 2. Mọi ô chức năng khi ĐANG ĐƯỢC CHỌN (Active / Selected / Focused State) */
+.gsm-2x2-card.active,
+.gsm-2x2-card.selected,
+.gsm-duo-card.active,
+.gsm-duo-card.selected,
+.goride-vehicle-card.selected,
+.goride-vehicle-card.active,
+.vehicle-card.selected,
+.vehicle-card.active,
+.service-option.active,
+.service-option.selected,
+.gsm-vtab.active,
+.vehicle-tab-item.active,
+.gsm-notif-tab.active,
+.gsm-filter-pill.active,
+.filter-pill.active,
+.app-sidebar .nav-item.active,
+.nav-item.nav-link.active,
+.stat-card.active,
+[aria-selected="true"] {
+  border-color: #00b1a9 !important;
+  background: linear-gradient(135deg, rgba(0, 177, 169, 0.09) 0%, rgba(16, 185, 129, 0.07) 100%) !important;
+  box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.28), 0 8px 24px rgba(0, 177, 169, 0.18) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Table Rows Highlight on Hover */
+table tbody tr:hover,
+.data-table tbody tr:hover,
+.admin-table tbody tr:hover {
+  background-color: rgba(0, 177, 169, 0.05) !important;
+  box-shadow: inset 3.5px 0 0 #00b1a9 !important;
+  transition: background 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+/* 3. Navigation Links (Desktop Navbar, Mobile Bottom Nav, Header Nav) */
+.gsm-pc-nav-link:hover,
+.header-nav .nav-link:hover,
+.admin-nav-item:hover {
+  color: #007d77 !important;
+  background: rgba(0, 177, 169, 0.1) !important;
+  transform: translateY(-1.5px) !important;
+}
+
+.gsm-pc-nav-link.active,
+.header-nav .nav-link.active,
+.admin-nav-item.active {
+  color: #007d77 !important;
+  font-weight: 800 !important;
+  background: rgba(0, 177, 169, 0.15) !important;
+  border-bottom: 2.5px solid #00b1a9 !important;
+  box-shadow: 0 4px 12px rgba(0, 177, 169, 0.15) !important;
+}
+
+.bottom-nav-item:hover,
+.gsm-nav-btn:hover {
+  background: rgba(0, 177, 169, 0.1) !important;
+  transform: translateY(-2px) !important;
+}
+
+.bottom-nav-item.active,
+.gsm-nav-btn.active {
+  color: #00b1a9 !important;
+  font-weight: 800 !important;
+}
+
+.bottom-nav-item.active .bottom-nav-icon,
+.gsm-nav-btn.active span {
+  transform: scale(1.18) !important;
+}
+
+/* 4. Buttons (Buttons hover, active, focus) */
+.btn:hover,
+.gsm-btn-primary-cta:hover,
+.gsm-trip-rebook-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(0, 177, 169, 0.3) !important;
+  filter: brightness(1.05) !important;
+}
+
+.btn:active,
+.gsm-btn-primary-cta:active,
+.gsm-trip-rebook-btn:active {
+  transform: scale(0.97) translateY(0) !important;
+}
+
+/* 5. Inputs & Form Fields (Hover & Focus Highlight Glow) */
+input.form-input:hover,
+input.search-input:hover,
+select.form-input:hover,
+textarea.form-input:hover,
+.gsm-top-search-pill:hover,
+.search-input-wrapper:hover {
+  border-color: #00b1a9 !important;
+  box-shadow: 0 0 0 2px rgba(0, 177, 169, 0.12) !important;
+}
+
+input.form-input:focus,
+input.search-input:focus,
+input:focus-visible,
+select.form-input:focus,
+textarea.form-input:focus {
+  border-color: #00b1a9 !important;
+  box-shadow: 0 0 0 3.5px rgba(0, 177, 169, 0.22), 0 2px 8px rgba(0, 177, 169, 0.1) !important;
+  outline: none !important;
+}
+
+/* 6. Quick Vehicle Selection Tabs (🛵 Xe máy, 🚗 Ô tô 4c, 🚐 Ô tô 7c, 🚘 Xe sang, 📦 Giao hàng) */
+.gsm-vtab:hover {
+  border-color: #00b1a9 !important;
+  background: #f0fdfa !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 177, 169, 0.16) !important;
+}
+
+.gsm-vtab.active {
+  border-color: #00b1a9 !important;
+  background: #e6f7f6 !important;
+  color: #007d77 !important;
+  font-weight: 800 !important;
+  box-shadow: 0 0 0 2.5px rgba(0, 177, 169, 0.3), 0 4px 14px rgba(0, 177, 169, 0.2) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ==========================================================================
+   17. TABLET & MOBILE RESPONSIVE PRECISE HARMONIZATION
+   ========================================================================== */
+
+/* Tablet & Desktop: Keep mobile floating bottom nav accessible at center bottom */
+@media (min-width: 768px) {
+  .bottom-nav.mobile-only,
+  #mobile-bottom-nav.mobile-only {
+    display: none !important;
+  }
+}
+
+/* Tablet Optimization (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .gsm-pc-navbar {
+    display: flex !important;
+    padding: 0 16px !important;
+    height: 58px !important;
+  }
+  .gsm-pc-nav-links {
+    gap: 6px !important;
+  }
+  .gsm-pc-nav-link {
+    font-size: 0.85rem !important;
+    padding: 6px 10px !important;
+  }
+  .gsm-desktop-wide-canvas {
+    display: none !important;
+  }
+  .gsm-screen-wrapper {
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Mobile Optimization (< 768px) */
+@media (max-width: 767px) {
+  .gsm-pc-navbar {
+    display: none !important;
+  }
+  .bottom-nav,
+  .gsm-floating-bottom-nav,
+  #mobile-bottom-nav {
+    display: flex !important;
+  }
+  .gsm-desktop-wide-canvas {
+    display: none !important;
+  }
+  .gsm-screen-wrapper {
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+}
+
+
+/* ==========================================================================
+   INTER FONT GUARANTEE (EVERY CORNER)
+   ========================================================================== */
+*, *::before, *::after,
+html, body,
+input, button, select, textarea, optgroup,
+h1, h2, h3, h4, h5, h6, p, span, a, label, li, td, th, div {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+body, button, input, select, textarea,
+.btn, .form-input, .nav-link, .gsm-pc-nav-link, .badge, .card,
+.modal, .toast, .stat-card, .table {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+}
+
+code, kbd, samp, pre, .font-mono, .monospace {
+  font-family: var(--font-mono, monospace) !important;
+}
+
+/* Universal Floating Bottom Navigation Bar (Centered on Mobile, Tablet & PC Desktop) */
+.gsm-floating-bottom-nav,
+body .gsm-floating-bottom-nav,
+body.gsm-home-page .gsm-floating-bottom-nav {
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  max-width: calc(100vw - 24px) !important;
+  height: auto !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding: 0 !important;
+  z-index: 2147483640 !important;
+  pointer-events: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+.gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+body .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+body .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+  pointer-events: auto !important;
+}
+
+/* Strictly hide bottom navigation on customer booking portal */
+body.gsm-booking-page .gsm-floating-bottom-nav,
+body.customer-body .gsm-floating-bottom-nav,
+[data-page="customer"] .gsm-floating-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }

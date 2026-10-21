@@ -22,12 +22,12 @@ const ROUTES = {
         file: 'register.html',
         title: 'Đăng ký tài khoản - Navigo',
         requiresAuth: false,
-        guestOnly: true
+        guestOnly: false
     },
     customer: {
         name: 'customer',
         file: 'customer.html',
-        title: 'Đặt xe | Navigo',
+        title: 'Đặt xe thuần điện | Navigo',
         requiresAuth: false
     },
     driver: {
@@ -169,7 +169,7 @@ class Router {
                 return this.resolvePath('admin');
             case 'customer':
             default:
-                return this.resolvePath('home');
+                return this.resolvePath('customer');
         }
     }
 
@@ -191,7 +191,15 @@ class Router {
             document.title = currentRoute.title;
         }
 
+        // Register page should NEVER auto-redirect to dashboard - user explicitly wants to create an account
+        if (currentPageKey === 'register') {
+            return true;
+        }
+
         // Session check (client-side demo session)
+        if (typeof sessionManager !== 'undefined') {
+            sessionManager._initFromStorage();
+        }
         const isAuth = typeof sessionManager !== 'undefined' ? sessionManager.isAuthenticated() : false;
         const currentRole = isAuth && typeof sessionManager !== 'undefined' ? sessionManager.getRole() : null;
 
@@ -203,10 +211,15 @@ class Router {
             return false;
         }
 
-        // 2. If page is guest only (e.g. login/register) and user is ALREADY logged in
-        // Allow staying on login page if explicitly switching account (?switch=true)
+        // 2. If page is guest only (e.g. login) and user is ALREADY logged in
+        // Allow staying on login page if explicitly switching account (?switch=true) or logging out (?logout=true)
         const urlParams = new URLSearchParams(window.location.search);
-        const isSwitchingAccount = urlParams.get('switch') === 'true';
+        const isSwitchingAccount = urlParams.get('switch') === 'true' || urlParams.get('logout') === 'true';
+
+        // If explicitly opened after logout, ensure session is fully cleared
+        if (urlParams.get('logout') === 'true' && typeof sessionManager !== 'undefined') {
+            sessionManager.logout();
+        }
 
         if (currentRoute.guestOnly && isAuth && !isSwitchingAccount) {
             console.info(`[Router Guard] User already authenticated as ${currentRole}. Redirecting to dashboard.`);

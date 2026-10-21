@@ -2,1320 +2,1348 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hồ sơ cá nhân & Tài khoản | Navigo</title>
-    <meta name="description" content="Quản lý thông tin tài khoản, trạng thái trực tuyến, đánh giá và thu nhập đối tác Navigo.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Tài khoản cá nhân — Navigo</title>
+    <meta name="description" content="Quản lý thông tin tài khoản, ví thanh toán, ưu đãi và hành trình xanh Navigo Race.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/design-system.css">
-    <link rel="stylesheet" href="../css/layout.css">
-    <link rel="stylesheet" href="../css/components.css">
-    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="../css/gsm-app.css">
     <style>
-        .profile-page-wrapper {
-            min-height: 100vh;
-            background: #f8fafc;
-            display: flex;
-            flex-direction: column;
-        }
-        .profile-header {
-            background: #ffffff;
-            border-bottom: 1px solid var(--color-gray-200, #e2e8f0);
-            padding: 10px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-            box-sizing: border-box;
+        .gsm-profile-page-wrapper {
             width: 100%;
-        }
-        .profile-header-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-            flex-shrink: 1;
-        }
-        .profile-header-brand {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-        .btn-header-back {
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 6px 12px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            max-width: 680px;
+            margin: 0 auto;
             background: #ffffff;
-            color: #334155;
-            cursor: pointer;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: all 0.2s;
-            font-size: 0.85rem;
-            flex-shrink: 0;
+            min-height: 100vh;
+            padding: 16px 20px 100px;
+            box-sizing: border-box;
         }
-        .btn-header-back:hover {
+
+        @media (min-width: 1025px) {
+            html, body.gsm-theme {
+                background: #f1f5f9 !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+            .gsm-profile-page-wrapper {
+                margin: 24px auto 40px auto;
+                border-radius: 28px;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 12px 40px rgba(15, 45, 60, 0.08);
+                padding: 24px 28px 100px;
+            }
+        }
+
+        .gsm-edit-icon-badge {
             background: #f1f5f9;
-            color: #0f172a;
-        }
-        .btn-profile-danger-logout {
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            padding: 10px 20px;
-            background: #ef4444 !important;
-            color: #ffffff !important;
-            border: none !important;
-            cursor: pointer;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            box-shadow: 0 3px 10px rgba(239, 68, 68, 0.3);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            white-space: nowrap;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-left: 6px;
         }
-        .btn-profile-danger-logout:hover {
-            background: #dc2626 !important;
-            transform: translateY(-1.5px);
-            box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35) !important;
+
+        @keyframes gsmPulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
-        .btn-profile-danger-logout:active {
+        .gsm-pulse-green {
+            animation: gsmPulse 2s infinite;
+        }
+
+        @keyframes gsmDropdownFade {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .gsm-dropdown-fade {
+            animation: gsmDropdownFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .gsm-account-badge {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .gsm-account-badge:hover {
+            transform: translateY(-1px);
+        }
+        .gsm-account-badge:active {
             transform: scale(0.97);
         }
 
-        /* Mobile Header Optimization - ZERO Overflow */
-        @media (max-width: 480px) {
-            .profile-header {
-                padding: 8px 10px;
-                gap: 6px;
-            }
-            .profile-header-left {
-                gap: 6px;
-            }
-            .btn-header-back {
-                padding: 5px 8px;
-                font-size: 0.8rem;
-            }
-            .btn-header-back .back-text {
-                display: none; /* Hide 'Quay lại' on tiny mobile to guarantee zero overflow */
-            }
-            .profile-header-brand span:first-child {
-                font-size: 1.15rem !important;
-            }
-            .profile-header-brand .brand-title {
-                font-size: 1.05rem !important;
-            }
-            #badge-user-role {
-                font-size: 0.68rem !important;
-                padding: 2px 6px !important;
-            }
-            .btn-header-logout {
-                padding: 6px 9px;
-                font-size: 0.78rem;
-                gap: 3px;
-            }
+        /* Floating Navigation Bar: prominently float on top across all pages */
+        .gsm-floating-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            pointer-events: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
-
-        .profile-container {
-            max-width: 800px;
-            width: 100%;
-            margin: 20px auto;
-            padding: 0 16px 40px;
-            display: flex;
-            flex-direction: column;
-            gap: 18px;
-            box-sizing: border-box;
-        }
-        .profile-card {
-            background: #ffffff;
-            border: 1px solid var(--color-gray-200, #e2e8f0);
-            border-radius: 16px;
-            padding: 20px 24px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            box-sizing: border-box;
-        }
-        .section-header-tag {
-            font-size: 0.75rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #64748b;
-            letter-spacing: 0.05em;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .avatar-uploader-wrap {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 14px;
-        }
-        .avatar-preview-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #ffffff;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
-            background: linear-gradient(135deg, #0288d1 0%, #01579b 100%);
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.2rem;
-            font-weight: 800;
-            user-select: none;
-        }
-        .avatar-camera-btn {
-            position: absolute;
-            bottom: 2px;
-            right: 2px;
-            background: #0288d1;
-            color: #ffffff;
-            border: 2.5px solid #ffffff;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            transition: all 0.2s ease;
-        }
-        .avatar-camera-btn:hover {
-            background: #026aa7;
-            transform: scale(1.1);
-        }
-        .driver-status-card {
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border: 1.5px solid #86efac;
-            border-radius: 14px;
-            padding: 16px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            transition: all 0.3s ease;
-        }
-        .driver-status-card.is-offline {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border-color: #cbd5e1;
-        }
-        .driver-kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 12px;
-        }
-        .kpi-tile {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-        .kpi-tile-val {
-            font-size: 1.35rem;
-            font-weight: 800;
-            color: #0f172a;
-            margin: 4px 0 2px;
-        }
-        .kpi-tile-lbl {
-            font-size: 0.74rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
-        }
-        .btn-status-toggle {
-            padding: 8px 18px;
-            border-radius: 9999px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-        }
-        .btn-status-toggle.online {
-            background: #10b981;
-            color: #ffffff;
-        }
-        .btn-status-toggle.online:hover {
-            background: #059669;
-            transform: translateY(-1px);
-        }
-        .btn-status-toggle.offline {
-            background: #64748b;
-            color: #ffffff;
-        }
-        .btn-status-toggle.offline:hover {
-            background: #475569;
-            transform: translateY(-1px);
-        }
-        .admin-hub-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-        }
-        .admin-hub-card {
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            text-decoration: none !important;
-            color: #1e293b;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-        }
-        .admin-hub-card:hover {
-            border-color: #0288d1;
-            background: #f0f9ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(2, 136, 209, 0.12);
-        }
-        .admin-hub-icon {
-            font-size: 1.5rem;
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-        .admin-hub-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: #0f172a;
-            margin: 0;
-        }
-        .admin-hub-desc {
-            font-size: 0.76rem;
-            color: #64748b;
-            margin: 2px 0 0;
-        }
-        @media (max-width: 640px) {
-            .profile-card {
-                padding: 16px 18px;
-            }
-            .profile-container {
-                margin: 14px auto;
-                padding-bottom: 70px !important;
-            }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            pointer-events: auto !important;
         }
     </style>
 </head>
-<body class="profile-page-wrapper">
+<body class="gsm-theme">
+    <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
+            </div>
+        </a>
 
-    <!-- Header (Optimized for Mobile with Zero Overflow) -->
-    <header class="profile-header">
-        <div class="profile-header-left">
-            <button type="button" class="btn-header-back" id="btn-back-nav" aria-label="Quay lại">
-                <span class="back-arrow">←</span>
-                <span class="back-text">Quay lại</span>
-            </button>
-            <div class="profile-header-brand">
-                <span style="font-size:1.25rem;">🚗</span>
-                <span class="brand-title" style="font-weight:800; font-size:1.15rem; color:var(--color-primary, #0288d1);">Navigo</span>
-                <span class="badge badge-info" id="badge-user-role" style="font-size:0.72rem; font-weight:700;">Hồ sơ</span>
+        <div class="gsm-pc-nav-links">
+            <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
+            <a href="customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
+            <a href="customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
+            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
+            <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div data-auth="guest" style="display:flex; align-items:center; gap:8px;">
+                <a href="login.html" class="gsm-btn-primary-cta" style="height:36px; padding:0 16px; border-radius:9999px; text-decoration:none; font-size:0.85rem;">
+                    Đăng nhập
+                </a>
+                <a href="register.html" style="height:36px; padding:0 14px; border-radius:9999px; text-decoration:none; font-size:0.85rem; font-weight:700; color:#0f2d3c; border:1px solid #cbd5e1; display:flex; align-items:center;">
+                    Đăng ký
+                </a>
+            </div>
+            <div data-auth="user" style="display:none; align-items:center; gap:10px;">
+                <a href="profile.html" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:#0f2d3c; font-weight:700; font-size:0.9rem;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:#e6f7f6; color:#00b1a9; display:flex; align-items:center; justify-content:center; font-weight:800;" data-user-avatar>U</div>
+                    <span data-user-name>Người dùng</span>
+                </a>
+                <button type="button" data-action="logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.82rem;">
+                    Đăng xuất
+                </button>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Profile Container -->
-    <main class="profile-container">
+    <!-- Unified Clean Profile Container (Everything neatly in-page) -->
+    <div class="gsm-profile-page-wrapper">
+        <!-- 1. User Header Row with Account Role Identification (Admin / Driver / Customer) -->
+        <div class="gsm-profile-user-card" style="padding-top:8px; display:flex; align-items:center; justify-content:space-between; gap:12px; position:relative;">
+            <div style="display:flex; align-items:center; gap:14px; flex:1; min-width:0;">
+                <div class="gsm-profile-avatar-circle" id="profile-avatar-initials" style="flex-shrink:0;">U</div>
+                <div style="flex:1; min-width:0;">
+                    <div class="gsm-profile-user-name" style="display:flex; align-items:center; gap:6px;">
+                        <span id="profile-display-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Người dùng Navigo</span>
+                        <span class="gsm-edit-icon-badge" id="btn-edit-user-name" title="Chỉnh sửa tên" style="cursor:pointer; flex-shrink:0;">✎</span>
+                    </div>
+                    <div class="gsm-profile-user-phone" style="display:flex; align-items:center; gap:6px;">
+                        <span id="profile-display-phone">0900 000 000</span>
+                        <span class="gsm-edit-icon-badge" id="btn-edit-user-phone" title="Chỉnh sửa số điện thoại" style="cursor:pointer; flex-shrink:0; font-size:0.7rem;">✎</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Khung Nhận Biết Tài Khoản (Vị trí ô đỏ đánh dấu: Admin, Tài xế, Khách hàng) -->
+            <div id="profile-account-badge-slot" style="flex-shrink:0; position:relative;">
+                <!-- Rendered dynamically by JavaScript based on active account role -->
+            </div>
+        </div>
+
+        <!-- 2. ID Verification Card -->
+        <div class="gsm-verify-id-card" onclick="window.showNavigoModal({ title: 'Xác thực danh tính', message: 'Tính năng xác thực tài khoản qua CCCD gắn chip & VNeID đang được xử lý bảo mật.', icon: '🪪', confirmText: 'Đã hiểu', showCancel: false });" style="cursor:pointer;">
+            <div class="gsm-verify-id-icon">🪪</div>
+            <div style="flex:1;">
+                <div class="gsm-verify-id-title">Xác thực danh tính</div>
+                <div class="gsm-verify-id-sub">Bảo vệ quyền lợi tài khoản và mở khóa các đặc quyền cao cấp</div>
+            </div>
+            <span style="color:#94a3b8; font-weight:700; font-size:1.1rem;">›</span>
+        </div>
+
+        <!-- 2.1 DRIVER VEHICLE MANAGEMENT CARD (Only for role === 'driver') -->
+        <div id="profile-driver-vehicle-section"></div>
+
+        <!-- 2.2 COUNTERPARTY AVERAGE RATING SECTION (Trung bình cộng đánh giá của đối phương) -->
+        <div id="profile-counterparty-rating-section"></div>
+
         
-        <!-- CARD 1: PROFILE HERO (AVATAR, NAME, ROLE BADGE) -->
-        <div class="profile-card" style="text-align:center;">
-            <div class="avatar-uploader-wrap">
-                <div class="avatar-preview-img" id="profile-avatar-display">T</div>
-                <label for="profile-avatar-input" class="avatar-camera-btn" title="Tải ảnh mới (lên đến 20MB)">
-                    <span style="font-size:13px;">📷</span>
-                </label>
-                <input type="file" id="profile-avatar-input" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;">
+            <!-- 4. Duo Cards: Gia đình / Doanh nghiệp -->
+        <div class="gsm-duo-cards-row" style="margin-bottom:20px;">
+            <div class="gsm-duo-card" onclick="window.showNavigoModal({ title: 'Gia đình Navigo', message: 'Tạo nhóm gia đình để chia sẻ voucher giảm giá và thanh toán chuyến đi chung tiện lợi.', icon: '👨‍👩‍👧‍👦', confirmText: 'Đã hiểu', showCancel: false });" style="cursor:pointer;">
+                <div class="gsm-duo-card-title">Gia đình</div>
+                <div class="gsm-duo-card-icon">👨‍👩‍👧‍👦</div>
             </div>
-            
-            <h2 id="profile-display-name" style="margin:0; font-size:1.35rem; color:#1e293b;">Người dùng Navigo</h2>
-            <div style="margin-top:4px; font-size:0.85rem; color:#64748b;" id="profile-display-email">email@example.com</div>
-            <div style="margin-top:8px;">
-                <span class="badge badge-primary" id="profile-display-badge" style="font-size:0.75rem; padding:4px 12px; font-weight:700;">TÀI KHOẢN HỆ THỐNG</span>
-            </div>
-            <div style="margin-top:10px; font-size:0.78rem; color:#94a3b8;">
-                Ảnh đại diện hỗ trợ JPG, PNG, WEBP lên đến 20MB
+            <div class="gsm-duo-card" onclick="window.showNavigoModal({ title: 'Doanh nghiệp Navigo', message: 'Quản lý chi phí công tác, đặt xe cho nhân viên và xuất hóa đơn điện tử tự động qua email.', icon: '💼', confirmText: 'Đã hiểu', showCancel: false });" style="cursor:pointer;">
+                <div class="gsm-duo-card-title">Doanh nghiệp</div>
+                <div class="gsm-duo-card-icon">💼</div>
             </div>
         </div>
 
-        <!-- CARD 2A: ADMIN WORKSPACE HUB (SHOWN ONLY TO ADMIN) -->
-        <div class="profile-card" id="admin-specific-section" style="display:none;">
-            <div class="section-header-tag">
-                <span>👑</span>
-                <span>Trung tâm Quản trị viên (Admin Hub)</span>
+        <!-- 5. Action Grids 2x2 (Tác vụ) -->
+        <div class="gsm-section-header-title">Tác vụ</div>
+        <div class="gsm-2x2-grid" style="margin-bottom:18px;">
+            <div class="gsm-2x2-card" onclick="window.location.href='customer.html'" style="cursor:pointer;">
+                <div class="gsm-2x2-icon">💳</div>
+                <div>Phương thức thanh toán</div>
             </div>
-            <div class="admin-hub-grid">
-                <a href="admin.html#dashboard" class="admin-hub-card">
-                    <div class="admin-hub-icon" style="background:#e0f2fe; color:#0288d1;">📊</div>
-                    <div>
-                        <div class="admin-hub-title">Bảng điều khiển</div>
-                        <div class="admin-hub-desc">KPI doanh thu, cuốc xe & tài xế</div>
-                    </div>
-                </a>
-                <a href="admin.html#map" class="admin-hub-card">
-                    <div class="admin-hub-icon" style="background:#ecfdf5; color:#10b981;">🗺️</div>
-                    <div>
-                        <div class="admin-hub-title">Bản đồ Spatial Map</div>
-                        <div class="admin-hub-desc">Giám sát tọa độ GPS xe thời gian thực</div>
-                    </div>
-                </a>
-                <a href="admin.html#drivers" class="admin-hub-card">
-                    <div class="admin-hub-icon" style="background:#fef3c7; color:#d97706;">📋</div>
-                    <div>
-                        <div class="admin-hub-title">Duyệt hồ sơ tài xế</div>
-                        <div class="admin-hub-desc">Phê duyệt đối tác mới đăng ký</div>
-                    </div>
-                </a>
-                <a href="admin.html#trips" class="admin-hub-card">
-                    <div class="admin-hub-icon" style="background:#f3e8ff; color:#7e22ce;">🚖</div>
-                    <div>
-                        <div class="admin-hub-title">Quản lý chuyến đi</div>
-                        <div class="admin-hub-desc">Toàn bộ lịch sử và trạng thái chuyến</div>
-                    </div>
-                </a>
+            <div class="gsm-2x2-card" onclick="window.location.href='customer.html'" style="cursor:pointer;">
+                <div class="gsm-2x2-icon">📍</div>
+                <div>Địa chỉ đã lưu</div>
             </div>
         </div>
 
-        <!-- CARD 2B: DRIVER STATUS & KPIS (SHOWN ONLY TO DRIVER) -->
-        <div id="driver-specific-section" style="display:none; flex-direction:column; gap:18px;">
-            
-            <!-- Driver Status Toggle -->
-            <div class="profile-card" style="padding:16px 20px;">
-                <div class="section-header-tag" style="margin-bottom:10px;">
-                    <span>📡</span>
-                    <span>Trạng thái trực tuyến & Phát sóng GPS</span>
-                </div>
-                <div class="driver-status-card" id="driver-status-container">
-                    <div style="display:flex; align-items:center; gap:12px;">
-                        <span id="profile-status-dot" style="width:12px; height:12px; border-radius:50%; background:#10b981; display:inline-block;"></span>
-                        <div>
-                            <div id="profile-status-title" style="font-weight:700; font-size:1.02rem; color:#065f46;">Đang trực tuyến (Sẵn sàng nhận cuốc)</div>
-                            <div id="profile-status-desc" style="font-size:0.8rem; color:#047857; margin-top:2px;">Tọa độ GPS đang phát sóng tới khách hàng và Admin để quét chuyến tự động.</div>
-                        </div>
-                    </div>
-                    <div>
-                        <button type="button" class="btn-status-toggle online" id="btn-toggle-driver-status">
-                            <span id="btn-toggle-icon">🟢</span>
-                            <span id="btn-toggle-text">Đang trực tuyến</span>
-                        </button>
-                    </div>
-                </div>
+        <!-- 6. Action Grids 2x2 (Tiện ích) -->
+        <div class="gsm-section-header-title">Tiện ích</div>
+        <div class="gsm-2x2-grid" style="margin-bottom:24px;">
+            <div class="gsm-2x2-card" onclick="window.location.href='notifications.html'" style="cursor:pointer;">
+                <div class="gsm-2x2-icon">🎟️</div>
+                <div>Ưu đãi & Khuyến mãi</div>
             </div>
-
-            <!-- Driver Performance KPIs -->
-            <div class="profile-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                    <div class="section-header-tag" style="margin-bottom:0;">
-                        <span>📈</span>
-                        <span>Đánh giá & Thu nhập (Dữ liệu thật 100%)</span>
-                    </div>
-                    <span style="font-size:0.78rem; color:#0288d1; font-weight:700;">Hôm nay</span>
-                </div>
-                <div class="driver-kpi-grid">
-                    <div class="kpi-tile">
-                        <div class="kpi-tile-lbl">Đánh giá sao</div>
-                        <div class="kpi-tile-val" style="color:#f59e0b;" id="profile-kpi-rating">5.0 ★</div>
-                        <span style="font-size:0.72rem; color:#10b981; font-weight:600;">Xuất sắc</span>
-                    </div>
-                    <div class="kpi-tile">
-                        <div class="kpi-tile-lbl">Thu nhập hôm nay</div>
-                        <div class="kpi-tile-val" style="color:#10b981;" id="profile-kpi-earnings">0 ₫</div>
-                        <span style="font-size:0.72rem; color:#64748b;">Cước phí thực nhận</span>
-                    </div>
-                    <div class="kpi-tile">
-                        <div class="kpi-tile-lbl">Tổng số chuyến</div>
-                        <div class="kpi-tile-val" style="color:#0288d1;" id="profile-kpi-trips">0</div>
-                        <span style="font-size:0.72rem; color:#64748b;">Chuyến hoàn thành</span>
-                    </div>
-                    <div class="kpi-tile">
-                        <div class="kpi-tile-lbl">Số dư ví khả dụng</div>
-                        <div class="kpi-tile-val" style="color:#8b5cf6;" id="profile-kpi-wallet">0 ₫</div>
-                        <span style="font-size:0.72rem; color:#64748b;">Ví tài xế Navigo</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Driver Vehicle Info -->
-            <div class="profile-card">
-                <div class="section-header-tag">
-                    <span>🚗</span>
-                    <span>Phương tiện đăng ký hoạt động</span>
-                </div>
-                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Phân loại phương tiện</label>
-                        <select id="profile-vehicle-type" class="form-select" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.88rem;">
-                            <option value="motorbike">🛵 Xe máy (Navigo Bike)</option>
-                            <option value="car4">🚗 Ô tô 4 chỗ (Navigo Car)</option>
-                            <option value="premium">🚘 Xe sang 4 chỗ (Navigo Plus)</option>
-                            <option value="car7">🚐 Ô tô 7 chỗ (Navigo XL)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Biển số xe</label>
-                        <input type="text" id="profile-vehicle-plate" class="form-input" placeholder="VD: 59-S3 889.24" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-weight:700; font-family:monospace; font-size:0.88rem;">
-                    </div>
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Dòng xe / Model</label>
-                        <input type="text" id="profile-vehicle-model" class="form-input" placeholder="VD: Honda Wave Alpha / Toyota Vios" style="width:100%; padding:9px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.88rem;">
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- CARD 2C: CUSTOMER SUMMARY (SHOWN ONLY TO CUSTOMER) -->
-        <div class="profile-card" id="customer-specific-section" style="display:none;">
-            <div class="section-header-tag">
-                <span>🚕</span>
-                <span>Thông tin thành viên Khách hàng</span>
-            </div>
-            <div class="driver-kpi-grid">
-                <div class="kpi-tile">
-                    <div class="kpi-tile-lbl">Cuốc xe đã đi</div>
-                    <div class="kpi-tile-val" style="color:#0288d1;" id="customer-kpi-trips">0</div>
-                    <span style="font-size:0.72rem; color:#64748b;">Chuyến đi an toàn</span>
-                </div>
-                <div class="kpi-tile">
-                    <div class="kpi-tile-lbl">Hạng thành viên</div>
-                    <div class="kpi-tile-val" style="color:#f59e0b; font-size:1.15rem;" id="customer-kpi-tier">Thành viên mới</div>
-                    <span style="font-size:0.72rem; color:#10b981; font-weight:600;" id="customer-kpi-tier-sub">Navigo Khởi đầu</span>
-                </div>
-                <div class="kpi-tile">
-                    <div class="kpi-tile-lbl">Mã giảm giá</div>
-                    <div class="kpi-tile-val" style="color:#10b981; font-size:1.15rem;" id="customer-kpi-promos">3 Mã</div>
-                    <span style="font-size:0.72rem; color:#64748b;">Sẵn sàng áp dụng</span>
-                </div>
-            </div>
-            <div style="margin-top:14px; text-align:right;">
-                <a href="customer.html" class="btn btn-sm btn-primary" style="display:inline-flex; align-items:center; gap:6px; font-weight:700; border-radius:8px; padding:8px 16px;">
-                    <span>🚕</span>
-                    <span>Đặt chuyến xe mới ngay</span>
-                </a>
+            <div class="gsm-2x2-card" onclick="window.showNavigoModal({ title: 'Hội viên Navigo Club', message: 'Bạn đang là hội viên Hạng Bạc (Silver) với 420 điểm tích lũy. Cần thêm 580 điểm để lên Hạng Vàng.', icon: '👑', confirmText: 'Đã hiểu', showCancel: false });" style="cursor:pointer;">
+                <div class="gsm-2x2-icon">👑</div>
+                <div>Hội viên Navigo Club</div>
             </div>
         </div>
 
-        <!-- CARD 3: USER PERSONAL INFO FORM -->
-        <div class="profile-card">
-            <div class="section-header-tag">
-                <span>📝</span>
-                <span>Thông tin tài khoản & Liên hệ</span>
-            </div>
-            
-            <form id="profile-form" onsubmit="event.preventDefault(); saveProfileChanges();">
-                <div style="display:flex; flex-direction:column; gap:14px;">
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Họ và tên <span style="color:var(--color-error);">*</span></label>
-                        <input type="text" id="input-profile-name" class="form-input" placeholder="Nhập họ và tên..." required style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem;">
-                    </div>
-
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Số điện thoại <span style="color:var(--color-error);">*</span></label>
-                        <input type="tel" id="input-profile-phone" class="form-input" placeholder="VD: 0901234567" required style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.95rem;">
-                    </div>
-
-                    <div>
-                        <label style="font-size:0.82rem; font-weight:600; color:#475569; display:block; margin-bottom:6px;">Email (Cố định định danh)</label>
-                        <input type="email" id="input-profile-email" class="form-input" readonly style="width:100%; padding:10px 14px; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; color:#64748b; font-size:0.95rem;">
-                    </div>
-
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:10px;">
-                        <span id="save-status-msg" style="font-size:0.85rem; color:#10b981; font-weight:600; display:none;">✓ Đã lưu thay đổi thành công!</span>
-                        <button type="submit" class="btn btn-primary" style="margin-left:auto; padding:10px 24px; border-radius:10px; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
-                            <span>💾</span>
-                            <span>Lưu cập nhật hồ sơ</span>
-                        </button>
-                    </div>
+        <!-- 7. List Sections: Hỗ trợ & Hợp tác -->
+        <div class="gsm-section-header-title">Hỗ trợ & Hợp tác</div>
+        <div class="gsm-list-section" style="margin-bottom:24px;">
+            <div class="gsm-list-row" onclick="window.showNavigoModal({ title: 'Hỗ trợ khẩn cấp SOS', message: 'Bạn có muốn gọi ngay tới tổng đài hỗ trợ 24/7 của Navigo: 1900 2088?', icon: '🆘', confirmText: 'Gọi ngay', cancelText: 'Hủy', onConfirm: () => window.location.href='tel:19002088' });" style="cursor:pointer;">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">🆘</span>
+                    <span>Trung tâm trợ giúp & SOS</span>
                 </div>
-            </form>
-        </div>
-
-        <!-- Hidden Cloud Sync Drawer (Available if needed) -->
-        <div id="cloud-realtime-sync-card" style="display:none !important;">
-            <div id="firebase-status-badge"></div>
-            <div id="firebase-status-desc"></div>
-            <button id="btn-toggle-firebase-setup"></button>
-            <div id="firebase-config-drawer">
-                <input id="cfg-fb-dburl">
-                <input id="cfg-fb-apikey">
-                <input id="cfg-fb-projectid">
-                <input id="cfg-fb-authdomain">
-                <button id="btn-save-firebase-cfg"></button>
+                <span class="gsm-list-row-arrow">›</span>
+            </div>
+            <div class="gsm-list-row" onclick="window.location.href='driver.html'" style="cursor:pointer;">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">🚗</span>
+                    <span id="profile-driver-row-label">Trở thành tài xế Navigo</span>
+                </div>
+                <span class="gsm-list-row-arrow">›</span>
+            </div>
+            <div class="gsm-list-row" onclick="window.showNavigoModal({ title: 'Hợp tác doanh nghiệp', message: 'Liên hệ phòng hợp tác kinh doanh Navigo: partner@navigo.vn (Hotline: 028 7300 8899).', icon: '🏢', confirmText: 'Đã hiểu', showCancel: false });" style="cursor:pointer;">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">🏢</span>
+                    <span>Đăng ký đối tác doanh nghiệp</span>
+                </div>
+                <span class="gsm-list-row-arrow">›</span>
+            </div>
+            <div class="gsm-list-row" onclick="window.showNavigoModal({ title: 'Góp ý dịch vụ', message: 'Ý kiến đóng góp của bạn giúp Navigo nâng cao chất lượng dịch vụ mỗi ngày!', icon: '💬', confirmText: 'Gửi đánh giá', cancelText: 'Đóng' });" style="cursor:pointer;">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">💬</span>
+                    <span>Đóng góp ý kiến dịch vụ</span>
+                </div>
+                <span class="gsm-list-row-arrow">›</span>
             </div>
         </div>
 
-        <!-- CARD 4: ACTIONS & LOGOUT FOOTER -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:4px;">
-            <a href="customer.html" id="link-portal-return" class="btn btn-ghost" style="border:1.5px solid #cbd5e1; border-radius:10px; font-weight:700; text-decoration:none; padding:10px 18px; color:#334155; background:#ffffff;">
-                🚗 Quay về màn hình làm việc
+        <!-- 8. List Sections: Cài đặt chung -->
+        <div class="gsm-section-header-title">Cài đặt chung</div>
+        <div class="gsm-list-section" style="margin-bottom:28px;">
+            <div class="gsm-list-row" onclick="window.showNavigoModal({ title: 'Cài đặt bảo mật', message: 'Xác thực sinh trắc học FaceID / Vân tay đã được kích hoạt an toàn trên thiết bị này.', icon: '⚙️', confirmText: 'Đã hiểu', showCancel: false });" style="cursor:pointer;">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">⚙️</span>
+                    <span>Cài đặt tài khoản & Bảo mật</span>
+                </div>
+                <span class="gsm-list-row-arrow">›</span>
+            </div>
+            <div class="gsm-list-row">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">🌐</span>
+                    <span>Ngôn ngữ</span>
+                </div>
+                <span style="font-size:0.85rem; color:#64748b; font-weight:600;">Tiếng Việt ›</span>
+            </div>
+            <div class="gsm-list-row" onclick="window.showNavigoModal({ title: 'Điều khoản & Chính sách', message: 'Navigo cam kết bảo vệ 100% dữ liệu cá nhân theo Quy định bảo vệ dữ liệu cá nhân số 13/2023/NĐ-CP.', icon: '📄', confirmText: 'Đồng ý', showCancel: false });" style="cursor:pointer;">
+                <div class="gsm-list-row-left">
+                    <span class="gsm-list-row-icon">📄</span>
+                    <span>Điều khoản & Chính sách Navigo</span>
+                </div>
+                <span class="gsm-list-row-arrow">›</span>
+            </div>
+        </div>
+
+        <!-- 9. Logout Button (triggers Liquid Glass confirm modal) -->
+        <button type="button" class="gsm-btn-logout-row" id="btn-logout-account" data-action="logout" style="margin-bottom:24px;">
+            Đăng xuất
+        </button>
+
+        <!-- 10. Ministry of Industry and Trade Badges -->
+        <div class="gsm-bct-badges-row">
+            <div class="gsm-bct-badge blue">
+                <span>✓</span>
+                <span>ĐÃ THÔNG BÁO BỘ CÔNG THƯƠNG</span>
+            </div>
+            <div class="gsm-bct-badge red">
+                <span>★</span>
+                <span>ĐÃ ĐĂNG KÝ BỘ CÔNG THƯƠNG</span>
+            </div>
+        </div>
+
+        <!-- 11. Version text -->
+        <div class="gsm-app-version-text" style="margin-bottom:10px;">
+            Phiên bản v5.12.0 (437) — Navigo Platform 100% Thuần Điện
+        </div>
+    </div>
+
+        <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
             </a>
-            <button type="button" id="btn-profile-bottom-logout" onclick="handleProfileLogout()" class="btn-profile-danger-logout" data-action="logout">
-                <span>🚪</span>
-                <span>Đăng xuất tài khoản</span>
-            </button>
+            <a href="activity.html" class="gsm-nav-btn " title="Hoạt động">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </a>
+            <a href="notifications.html" class="gsm-nav-btn " title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot"></span>
+                </div>
+            </a>
+            <a href="profile.html" class="gsm-nav-btn active" title="Tài khoản">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
         </div>
 
-    </main>
-
-    <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
-    <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav"></nav>
-
-    <div class="toast-container" id="toast-container"></div>
+        <!-- Separate Circular Floating Glass Trophy Orb -->
+        <a href="#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
 
     <!-- Scripts -->
     <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="../js/core/firebase-config.js"></script>
-    <script src="../js/core/realtime.js"></script>
     <script src="../js/core/api.js"></script>
     <script src="../js/core/session.js"></script>
-    <script src="../js/core/app.js"></script>
+    <script src="../js/core/notifications.js"></script>
+    <script src="../js/core/realtime.js"></script>
+
+    <!-- Dedicated Profile Controller: Account Role Badges & Driver Active Toggle -->
     <script>
-        let currentUser = null;
-        let isDriverOnline = false;
+        // 1. Render Account Identification Badge & User Profile
+        function renderProfileAccountBadge() {
+            const badgeSlot = document.getElementById('profile-account-badge-slot');
+            if (!badgeSlot) return;
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (typeof purgeAllMockTrips === 'function') {
-                purgeAllMockTrips();
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+
+            if (!user) {
+                badgeSlot.innerHTML = `
+                    <a href="login.html?redirect=profile.html" class="gsm-account-badge" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:9999px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:0.8rem; font-weight:800; text-decoration:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+                        <span>🔒</span>
+                        <span>Đăng nhập</span>
+                    </a>
+                `;
+                return;
             }
-            loadUserProfileData();
-            setupAvatarUpload();
-            setupStatusToggle();
-            setupFirebaseConfigUI();
 
-            // Setup back button
-            const backBtn = document.getElementById('btn-back-nav');
-            if (backBtn) {
-                backBtn.addEventListener('click', () => {
-                    if (window.history.length > 1) {
-                        window.history.back();
-                    } else if (currentUser && currentUser.role === 'driver') {
-                        window.location.href = 'driver.html';
-                    } else if (currentUser && currentUser.role === 'admin') {
+            const nameEl = document.getElementById('profile-display-name');
+            if (nameEl && user.name) nameEl.textContent = user.name;
+            const phoneEl = document.getElementById('profile-display-phone');
+            if (phoneEl && user.phone) phoneEl.textContent = user.phone;
+            const avatarEl = document.getElementById('profile-avatar-initials');
+            if (avatarEl && user.name) avatarEl.textContent = (user.name.charAt(0) || 'U').toUpperCase();
+
+            const role = (user.role || 'customer').toLowerCase();
+            const driverRowLabel = document.getElementById('profile-driver-row-label');
+
+            if (role === 'admin') {
+                // ADMIN BADGE
+                badgeSlot.innerHTML = `
+                    <div class="gsm-account-badge" onclick="handleAdminBadgeClick()" title="Tài khoản Quản trị viên" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:9999px; background:linear-gradient(135deg, #0f2d3c 0%, #1e3a8a 100%); color:#fbbf24; border:1.5px solid rgba(251, 191, 36, 0.45); font-size:0.8rem; font-weight:800; box-shadow:0 4px 12px rgba(15,45,60,0.22); cursor:pointer; user-select:none;">
+                        <span style="font-size:0.95rem;">🛡️</span>
+                        <span>Quản trị viên</span>
+                    </div>
+                `;
+                if (driverRowLabel) driverRowLabel.textContent = 'Trở thành tài xế Navigo';
+            } else if (role === 'driver') {
+                // DRIVER BADGE WITH ON/OFF TOGGLE STATUS
+                const isOnline = localStorage.getItem('goride_driver_online_state') === '1';
+                badgeSlot.innerHTML = `
+                    <div class="gsm-role-badge-wrapper" style="position:relative;">
+                        <div id="driver-status-badge" class="gsm-account-badge" onclick="toggleDriverActiveDropdown(event)" title="Nhấn để bật/tắt trạng thái hoạt động" style="display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:9999px; background:${isOnline ? '#ecfdf5' : '#f8fafc'}; color:${isOnline ? '#047857' : '#64748b'}; border:1.5px solid ${isOnline ? '#10b981' : '#cbd5e1'}; font-size:0.82rem; font-weight:800; cursor:pointer; user-select:none; box-shadow:${isOnline ? '0 4px 14px rgba(16,185,129,0.2)' : '0 2px 6px rgba(0,0,0,0.06)'};">
+                            <span style="font-size:1rem;">🚗</span>
+                            <span>Tài xế</span>
+                            <span style="display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:9999px; background:${isOnline ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.18)'}; font-size:0.75rem;">
+                                <span class="${isOnline ? 'gsm-pulse-green' : ''}" style="width:7px; height:7px; border-radius:50%; background:${isOnline ? '#10b981' : '#94a3b8'}; display:inline-block;"></span>
+                                <span>${isOnline ? 'Bật' : 'Nghỉ'}</span>
+                            </span>
+                            <span style="font-size:0.7rem; opacity:0.7;">▼</span>
+                        </div>
+
+                        <!-- Dropdown panel with Action Buttons -->
+                        <div id="driver-active-panel" class="gsm-dropdown-fade" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:#ffffff; border:1.5px solid #cbd5e1; border-radius:18px; padding:16px; box-shadow:0 14px 35px rgba(15,45,60,0.2); z-index:999; width:260px; box-sizing:border-box;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+                                <span style="font-size:0.78rem; font-weight:800; color:#64748b; text-transform:uppercase; letter-spacing:0.5px;">Trạng thái tài xế</span>
+                                <span style="font-size:0.75rem; font-weight:800; color:${isOnline ? '#10b981' : '#64748b'};">${isOnline ? '🟢 Đang hoạt động' : '⚪ Đang tạm nghỉ'}</span>
+                            </div>
+                            <p style="font-size:0.8rem; color:#64748b; margin:0 0 14px; line-height:1.4;">
+                                ${isOnline ? 'Hệ thống đang phát tín hiệu qua R-Tree để kết nối các cuốc xe gần bạn nhất.' : 'Bạn đang tắt nhận cuốc. Bật hoạt động khi sẵn sàng chở khách.'}
+                            </p>
+
+                            <!-- Nút BẬT / TẮT TRẠNG THÁI HOẠT ĐỘNG -->
+                            <button type="button" id="btn-toggle-driver-online" onclick="toggleDriverOnlineStatus(event)" style="width:100%; height:42px; border-radius:12px; border:none; font-weight:800; font-size:0.88rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; background:${isOnline ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)'}; color:#ffffff; box-shadow:${isOnline ? '0 4px 14px rgba(239,68,68,0.35)' : '0 4px 14px rgba(16,185,129,0.35)'};">
+                                <span>${isOnline ? '⚪' : '🟢'}</span>
+                                <span>${isOnline ? 'Tắt trạng thái hoạt động' : 'Bật trạng thái hoạt động'}</span>
+                            </button>
+
+                            <a href="driver.html" style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:10px; font-size:0.82rem; font-weight:700; color:#00b1a9; text-decoration:none; padding:8px 0; border-top:1px solid #f1f5f9;">
+                                <span>🗺️ Mở Cổng Tài Xế (Bản đồ)</span>
+                                <span>→</span>
+                            </a>
+                        </div>
+                    </div>
+                `;
+                if (driverRowLabel) driverRowLabel.textContent = 'Cổng Đối tác Tài xế (Bản đồ nhận cuốc)';
+            } else {
+                // CUSTOMER BADGE
+                badgeSlot.innerHTML = `
+                    <div class="gsm-account-badge" onclick="handleCustomerBadgeClick()" title="Tài khoản Khách hàng" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:9999px; background:#e6f7f6; color:#007d77; border:1.5px solid #bbf2ee; font-size:0.8rem; font-weight:800; box-shadow:0 2px 8px rgba(0,177,169,0.12); cursor:pointer; user-select:none;">
+                        <span style="font-size:0.95rem;">👤</span>
+                        <span>Khách hàng</span>
+                    </div>
+                `;
+                if (driverRowLabel) driverRowLabel.textContent = 'Trở thành tài xế Navigo';
+            }
+        }
+
+        // 2. Toggle Dropdown Panel for Driver
+        function toggleDriverActiveDropdown(e) {
+            if (e) e.stopPropagation();
+            const panel = document.getElementById('driver-active-panel');
+            if (!panel) return;
+            panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // Close panel on outside click
+        document.addEventListener('click', (e) => {
+            const panel = document.getElementById('driver-active-panel');
+            const badge = document.getElementById('driver-status-badge');
+            if (panel && panel.style.display === 'block') {
+                if (!panel.contains(e.target) && (!badge || !badge.contains(e.target))) {
+                    panel.style.display = 'none';
+                }
+            }
+        });
+
+        // 3. Toggle Driver Online / Offline Status
+        function toggleDriverOnlineStatus(e) {
+            if (e) e.stopPropagation();
+            const curOnline = localStorage.getItem('goride_driver_online_state') === '1';
+            const newOnline = !curOnline;
+
+            // Persist across localStorage keys
+            localStorage.setItem('goride_driver_online_state', newOnline ? '1' : '0');
+            localStorage.setItem('navigo_driver_online_state', newOnline ? '1' : '0');
+
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            if (user && typeof sessionManager !== 'undefined') {
+                sessionManager.updateUser({ isOnline: newOnline });
+            }
+
+            // Sync with admin drivers table
+            try {
+                const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+                if (user) {
+                    const idx = adminDrivers.findIndex(d => (d.email && d.email === user.email) || (d.id && d.id === user.id) || (d.phone && d.phone === user.phone));
+                    if (idx !== -1) {
+                        adminDrivers[idx].isOnline = newOnline;
+                        localStorage.setItem('goride_admin_drivers', JSON.stringify(adminDrivers));
+                    }
+                }
+            } catch (err) {}
+
+            // Sync with Firebase Realtime Cloud if loaded
+            if (typeof window.realtimeSync !== 'undefined' && user && user.id) {
+                window.realtimeSync.updateUserProfile(user.id, { isOnline: newOnline });
+                if (typeof apiClient !== 'undefined') {
+                    apiClient.updateDriverStatus(newOnline).catch(() => {});
+                }
+                window.realtimeSync.setDriverOnline(user.id, newOnline, {
+                    name: user.name,
+                    phone: user.phone,
+                    role: 'driver'
+                });
+            }
+
+            // Close dropdown
+            const panel = document.getElementById('driver-active-panel');
+            if (panel) panel.style.display = 'none';
+
+            // Re-render badge immediately
+            renderProfileAccountBadge();
+
+            // Broadcast storage & custom event
+            window.dispatchEvent(new CustomEvent('driver:online-change', { detail: { isOnline: newOnline } }));
+            window.dispatchEvent(new Event('storage'));
+
+            // Liquid Glass Feedback Notification
+            if (typeof window.showNavigoModal === 'function') {
+                if (newOnline) {
+                    window.showNavigoModal({
+                        title: 'Đã Bật Hoạt Động',
+                        message: 'Bạn đang ở trạng thái Trực Tuyến và sẵn sàng nhận cuốc xe! Hệ thống Navigo sẽ tự động phát tín hiệu kết nối khi có khách hàng đặt xe gần bạn.',
+                        icon: '🟢',
+                        confirmText: 'Đến Cổng Tài Xế',
+                        cancelText: 'Ở lại trang này',
+                        onConfirm: () => {
+                            window.location.href = 'driver.html';
+                        }
+                    });
+                } else {
+                    window.showNavigoModal({
+                        title: 'Đã Tắt Hoạt Động',
+                        message: 'Bạn đã chuyển sang chế độ Tạm Nghỉ. Hệ thống sẽ tạm dừng phân bổ cuốc xe mới.',
+                        icon: '⚪',
+                        confirmText: 'Đã hiểu',
+                        showCancel: false
+                    });
+                }
+            }
+        }
+
+        // 4. Modal for Admin Badge
+        function handleAdminBadgeClick() {
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Tài khoản Quản trị viên',
+                    message: 'Bạn đang đăng nhập với tư cách Quản trị viên (Admin). Bạn có toàn quyền quản trị mạng lưới xe, tài xế, khách hàng và phát hành thông báo ưu đãi.',
+                    icon: '🛡️',
+                    confirmText: 'Vào trang Quản trị',
+                    cancelText: 'Đóng',
+                    onConfirm: () => {
                         window.location.href = 'admin.html';
-                    } else {
+                    }
+                });
+            }
+        }
+
+        // 5. Modal for Customer Badge
+        function handleCustomerBadgeClick() {
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Tài khoản Khách hàng',
+                    message: 'Tài khoản Khách hàng Navigo được hưởng các đặc quyền tích điểm xanh Navigo Race, giảm giá ngày lễ và trải nghiệm di chuyển thuần điện êm ái.',
+                    icon: '👤',
+                    confirmText: 'Đặt xe ngay',
+                    cancelText: 'Đóng',
+                    onConfirm: () => {
                         window.location.href = 'customer.html';
                     }
                 });
             }
-
-            // Setup bottom logout button
-            const bottomLogoutBtn = document.getElementById('btn-profile-bottom-logout');
-            if (bottomLogoutBtn) {
-                bottomLogoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    handleProfileLogout();
-                });
-            }
-
-            // Real-time reactive updates when trips complete or cancel in other tabs
-            window.addEventListener('storage', (e) => {
-                if (e.key && (e.key.startsWith('goride_trips_') || e.key === 'goride_admin_trips' || e.key === 'goride_user_trips' || e.key === 'goride_driver_trips')) {
-                    if (currentUser && currentUser.role === 'driver') {
-                        loadDriverStats();
-                    } else if (currentUser && currentUser.role !== 'admin') {
-                        loadCustomerStats();
-                    }
-                }
-            });
-        });
-
-        /**
-         * Global Logout Handler for Profile Page
-         * Clears all session states, local tokens, active trips, and redirects to login.html
-         */
-        function handleProfileLogout() {
-            try {
-                if (typeof apiClient !== 'undefined') {
-                    apiClient.logout().catch(() => {});
-                }
-                if (typeof sessionManager !== 'undefined') {
-                    sessionManager.logout();
-                }
-                try {
-                    localStorage.setItem('goride_logged_out', '1');
-                    sessionStorage.setItem('goride_logged_out', '1');
-                    sessionStorage.clear();
-                    const clearKeys = [
-                        'goride_user', 'navigo_user', 'ride_rtree_user',
-                        'goride_token', 'navigo_token', 'ride_rtree_token',
-                        'user', 'token', 'currentUser', 'auth_user',
-                        'goride_active_trip', 'goride_pending_trip_offers'
-                    ];
-                    clearKeys.forEach(k => {
-                        try { localStorage.removeItem(k); } catch(e) {}
-                    });
-                } catch(e) {}
-
-                if (typeof showToast === 'function') {
-                    showToast('Đã đăng xuất tài khoản thành công', 'info', 1500);
-                }
-                setTimeout(() => {
-                    window.location.href = '../index.html';
-                }, 200);
-            } catch(err) {
-                window.location.href = '../index.html';
-            }
         }
 
-        function loadUserProfileData() {
-            if (typeof sessionManager !== 'undefined' && sessionManager.isAuthenticated()) {
-                currentUser = sessionManager.getCurrentUser() || sessionManager.getUser();
-            } else {
-                try {
-                    currentUser = JSON.parse(localStorage.getItem('goride_user') || localStorage.getItem('user') || 'null');
-                } catch(e) {}
-            }
-
-            if (!currentUser) {
-                window.location.href = 'login.html';
-                return;
-            }
-
-            // Sync with admin drivers / offline users if driver
-            if (currentUser.role === 'driver') {
-                try {
-                    const allDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
-                    const found = allDrivers.find(d => d.email === currentUser.email || d.phone === currentUser.phone || d.id === currentUser.id);
-                    if (found) {
-                        currentUser.name = found.name || currentUser.name;
-                        currentUser.phone = found.phone || currentUser.phone;
-                        currentUser.vehicleType = found.vehicleType || currentUser.vehicleType;
-                        currentUser.licensePlate = found.plate || found.licensePlate || currentUser.licensePlate;
-                        currentUser.vehicleModel = found.model || found.vehicleModel || currentUser.vehicleModel;
-                        currentUser.rating = found.rating || currentUser.rating;
+        // 6. Edit User Name & Phone Number (Persisted directly to Database)
+        function initUserNameEdit() {
+            const btnEdit = document.getElementById('btn-edit-user-name');
+            if (!btnEdit) return;
+            btnEdit.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+                const curName = user ? (user.name || '') : '';
+                const newName = prompt('Nhập tên hiển thị mới của bạn:', curName);
+                if (newName && newName.trim() && newName.trim() !== curName) {
+                    const trimmed = newName.trim();
+                    if (typeof sessionManager !== 'undefined') {
+                        sessionManager.updateUser({ name: trimmed });
                     }
-                } catch(e) {}
-            }
-
-            // Render Hero
-            document.getElementById('profile-display-name').textContent = currentUser.name || 'Người dùng Navigo';
-            document.getElementById('profile-display-email').textContent = currentUser.email || '--';
-            document.getElementById('input-profile-name').value = currentUser.name || '';
-            document.getElementById('input-profile-phone').value = currentUser.phone || '';
-            document.getElementById('input-profile-email').value = currentUser.email || '';
-
-            const role = currentUser.role || 'customer';
-            const roleBadge = document.getElementById('profile-display-badge');
-            const topRoleBadge = document.getElementById('badge-user-role');
-            const returnBtn = document.getElementById('link-portal-return');
-
-            if (role === 'driver') {
-                if (roleBadge) { roleBadge.textContent = 'ĐỐI TÁC TÀI XẾ'; roleBadge.className = 'badge badge-primary'; }
-                if (topRoleBadge) { topRoleBadge.textContent = 'Tài xế'; topRoleBadge.className = 'badge badge-primary'; }
-                
-                document.getElementById('driver-specific-section').style.display = 'flex';
-                document.getElementById('admin-specific-section').style.display = 'none';
-                document.getElementById('customer-specific-section').style.display = 'none';
-
-                if (returnBtn) {
-                    returnBtn.href = 'driver.html';
-                    returnBtn.innerHTML = '🚗 Quay về màn hình nhận chuyến';
-                }
-
-                // Render driver vehicle details
-                const vType = currentUser.vehicle?.type || currentUser.vehicleType || 'motorbike';
-                const vPlate = currentUser.vehicle?.plate || currentUser.licensePlate || (vType === 'motorbike' ? '59-S3 889.24' : '51G-889.24');
-                const vModel = currentUser.vehicle?.model || currentUser.vehicleModel || (vType === 'motorbike' ? 'Honda Wave Alpha' : 'Toyota Vios 2024');
-
-                const vTypeSelect = document.getElementById('profile-vehicle-type');
-                if (vTypeSelect) vTypeSelect.value = (vType === 'bike' ? 'motorbike' : vType);
-                const plateInput = document.getElementById('profile-vehicle-plate');
-                if (plateInput) plateInput.value = vPlate;
-                const modelInput = document.getElementById('profile-vehicle-model');
-                if (modelInput) modelInput.value = vModel;
-
-                // Load Driver Stats & Earnings
-                loadDriverStats();
-
-                // Load Driver Online State
-                isDriverOnline = localStorage.getItem('goride_driver_online_state') === '1';
-                renderDriverStatusUI();
-
-            } else if (role === 'admin') {
-                if (roleBadge) { roleBadge.textContent = 'QUẢN TRỊ VIÊN HỆ THỐNG'; roleBadge.className = 'badge badge-danger'; }
-                if (topRoleBadge) { topRoleBadge.textContent = 'Admin'; topRoleBadge.className = 'badge badge-danger'; }
-                
-                document.getElementById('admin-specific-section').style.display = 'block';
-                document.getElementById('driver-specific-section').style.display = 'none';
-                document.getElementById('customer-specific-section').style.display = 'none';
-
-                if (returnBtn) {
-                    returnBtn.href = 'admin.html';
-                    returnBtn.innerHTML = '📊 Về trang Quản trị Admin';
-                }
-
-            } else {
-                if (roleBadge) { roleBadge.textContent = 'KHÁCH HÀNG NAVIGO'; roleBadge.className = 'badge badge-success'; }
-                if (topRoleBadge) { topRoleBadge.textContent = 'Khách hàng'; topRoleBadge.className = 'badge badge-success'; }
-                
-                document.getElementById('customer-specific-section').style.display = 'block';
-                document.getElementById('driver-specific-section').style.display = 'none';
-                document.getElementById('admin-specific-section').style.display = 'none';
-
-                if (returnBtn) {
-                    returnBtn.href = 'customer.html';
-                    returnBtn.innerHTML = '🚕 Về màn hình Đặt xe';
-                }
-
-                loadCustomerStats();
-            }
-
-            // Render Avatar
-            renderAvatar(currentUser.avatar || currentUser.avatar_path);
-        }
-
-        function loadCustomerStats() {
-            let completedTrips = [];
-            const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => false);
-
-            try {
-                const candidates = [];
-                const keysToCheck = [];
-
-                if (currentUser) {
-                    if (currentUser.id) {
-                        keysToCheck.push(`goride_trips_${String(currentUser.id).trim().toLowerCase().replace(/[^a-z0-9_@.-]/gi, '_')}`);
-                    }
-                    if (currentUser.email) {
-                        keysToCheck.push(`goride_trips_${String(currentUser.email).trim().toLowerCase().replace(/[^a-z0-9_@.-]/gi, '_')}`);
-                    }
-                    if (currentUser.phone) {
-                        keysToCheck.push(`goride_trips_${String(currentUser.phone).trim().toLowerCase().replace(/[^a-z0-9_@.-]/gi, '_')}`);
-                    }
-                }
-                keysToCheck.push('goride_user_trips');
-
-                keysToCheck.forEach(k => {
                     try {
-                        const raw = localStorage.getItem(k);
-                        if (raw) {
-                            const parsed = JSON.parse(raw);
-                            if (Array.isArray(parsed)) candidates.push(...parsed);
+                        const offUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                        const uIdx = offUsers.findIndex(u => u.id === user.id || u.email === user.email);
+                        if (uIdx !== -1) {
+                            offUsers[uIdx].name = trimmed;
+                            localStorage.setItem('goride_offline_users', JSON.stringify(offUsers));
                         }
                     } catch (e) {}
-                });
 
-                try {
-                    const allTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                    const myAdminTrips = allTrips.filter(t => (
-                        (currentUser.phone && t.customerPhone === currentUser.phone) ||
-                        (currentUser.id && (t.customerId === currentUser.id || t.userId === currentUser.id)) ||
-                        (currentUser.name && t.customerName === currentUser.name) ||
-                        (currentUser.email && t.customerEmail === currentUser.email)
-                    ));
-                    candidates.push(...myAdminTrips);
-                } catch (e) {}
+                    // Persist to Database (Firebase RTDB Cloud)
+                    if (typeof window.realtimeSync !== 'undefined' && user && user.id) {
+                        await window.realtimeSync.updateUserProfile(user.id, { name: trimmed });
+                    }
+                    if (typeof apiClient !== 'undefined') {
+                        apiClient.updateProfile({ name: trimmed }).catch(() => {});
+                    }
 
-                const tripMap = new Map();
-                candidates.forEach(t => {
-                    if (t && t.id && !tripMap.has(t.id)) tripMap.set(t.id, t);
-                });
-
-                // STRICT FILTER: ONLY count COMPLETED trips (never cancelled, requested, or mock trips!)
-                completedTrips = Array.from(tripMap.values()).filter(t => {
-                    if (checkMock(t)) return false;
-                    const st = String(t.status || '').toLowerCase().trim();
-                    return st === 'completed' || st === 'finished' || st === 'finish' || st === 'done';
-                });
-            } catch(e) {
-                completedTrips = [];
-            }
-
-            const tripsCountEl = document.getElementById('customer-kpi-trips');
-            if (tripsCountEl) {
-                tripsCountEl.textContent = completedTrips.length;
-            }
-
-            // Update membership tier dynamically based on actual completed trips
-            const tierEl = document.getElementById('customer-kpi-tier');
-            const tierSubEl = document.getElementById('customer-kpi-tier-sub');
-            if (tierEl && tierSubEl) {
-                const count = completedTrips.length;
-                if (count >= 20) {
-                    tierEl.textContent = 'Bạch kim';
-                    tierEl.style.color = '#8b5cf6';
-                    tierSubEl.textContent = 'Navigo Platinum';
-                    tierSubEl.style.color = '#8b5cf6';
-                } else if (count >= 6) {
-                    tierEl.textContent = 'Vàng';
-                    tierEl.style.color = '#eab308';
-                    tierSubEl.textContent = 'Navigo Gold';
-                    tierSubEl.style.color = '#eab308';
-                } else if (count >= 1) {
-                    tierEl.textContent = 'Thân thiết';
-                    tierEl.style.color = '#f59e0b';
-                    tierSubEl.textContent = 'Navigo Silver';
-                    tierSubEl.style.color = '#10b981';
-                } else {
-                    tierEl.textContent = 'Thành viên mới';
-                    tierEl.style.color = '#0288d1';
-                    tierSubEl.textContent = 'Navigo Khởi đầu';
-                    tierSubEl.style.color = '#64748b';
+                    const nameEl = document.getElementById('profile-display-name');
+                    if (nameEl) nameEl.textContent = trimmed;
+                    const avatarEl = document.getElementById('profile-avatar-initials');
+                    if (avatarEl) avatarEl.textContent = (trimmed.charAt(0) || 'U').toUpperCase();
+                    if (typeof window.showNavigoModal === 'function') {
+                        window.showNavigoModal({
+                            title: 'Cập nhật thành công',
+                            message: 'Tên của bạn đã được đổi thành "' + trimmed + '" và đã lưu vào cơ sở dữ liệu.',
+                            icon: '✓',
+                            confirmText: 'Đã hiểu',
+                            showCancel: false
+                        });
+                    }
                 }
-            }
-        }
-
-        function renderAvatar(avatarSrc) {
-            const avatarDisplay = document.getElementById('profile-avatar-display');
-            if (!avatarDisplay) return;
-            if (avatarSrc) {
-                avatarDisplay.innerHTML = `<img src="${avatarSrc}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block;">`;
-            } else {
-                const initial = (currentUser.name || 'N').charAt(0).toUpperCase();
-                avatarDisplay.textContent = initial;
-            }
-        }
-
-        function compressAvatarImage(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        try {
-                            let width = img.width;
-                            let height = img.height;
-                            const maxDim = 800;
-
-                            if (width > maxDim || height > maxDim) {
-                                if (width > height) {
-                                    height = Math.round((height * maxDim) / width);
-                                    width = maxDim;
-                                } else {
-                                    width = Math.round((width * maxDim) / height);
-                                    height = maxDim;
-                                }
-                            }
-
-                            const canvas = document.createElement('canvas');
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.imageSmoothingEnabled = true;
-                            ctx.imageSmoothingQuality = 'high';
-                            ctx.drawImage(img, 0, 0, width, height);
-
-                            const mimeType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-                            const compressedBase64 = canvas.toDataURL(mimeType, 0.88);
-                            resolve(compressedBase64);
-                        } catch (err) {
-                            resolve(e.target.result);
-                        }
-                    };
-                    img.onerror = () => reject(new Error('Không thể đọc định dạng ảnh'));
-                    img.src = e.target.result;
-                };
-                reader.onerror = () => reject(new Error('Lỗi đọc tệp ảnh'));
-                reader.readAsDataURL(file);
             });
         }
 
-        function setupAvatarUpload() {
-            const avatarInput = document.getElementById('profile-avatar-input');
-            if (!avatarInput) return;
-
-            avatarInput.addEventListener('change', async (e) => {
-                const file = e.target.files && e.target.files[0];
-                if (!file) return;
-
-                if (file.size > 20 * 1024 * 1024) {
-                    alert('Kích thước ảnh vượt quá giới hạn 20MB. Vui lòng chọn ảnh nhẹ hơn.');
-                    return;
-                }
-
-                showToast('Đang tối ưu và cập nhật ảnh đại diện...', 'info');
-
-                try {
-                    const base64Img = await compressAvatarImage(file);
-                    currentUser.avatar = base64Img;
-                    currentUser.avatar_path = base64Img;
-
-                    renderAvatar(base64Img);
-
-                    // Persist locally
-                    localStorage.setItem('goride_user', JSON.stringify(currentUser));
-                    localStorage.setItem('ride_rtree_user', JSON.stringify(currentUser));
-                    try {
-                        sessionStorage.setItem('ride_rtree_user', JSON.stringify(currentUser));
-                        sessionStorage.setItem('goride_user', JSON.stringify(currentUser));
-                    } catch(e) {}
-
+        function initUserPhoneEdit() {
+            const btnEdit = document.getElementById('btn-edit-user-phone');
+            if (!btnEdit) return;
+            btnEdit.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+                if (!user) return;
+                const curPhone = user.phone || '';
+                const newPhone = prompt('Nhập số điện thoại mới của bạn:', curPhone);
+                if (newPhone && newPhone.trim() && newPhone.trim() !== curPhone) {
+                    const trimmed = newPhone.trim().replace(/\s+/g, '');
+                    if (!/^0\d{9,10}$/.test(trimmed)) {
+                        alert('Số điện thoại không hợp lệ. Vui lòng nhập 10-11 số bắt đầu bằng số 0.');
+                        return;
+                    }
                     if (typeof sessionManager !== 'undefined') {
-                        if (typeof sessionManager.setUser === 'function') {
-                            sessionManager.setUser(currentUser);
-                        } else if (typeof sessionManager.updateUser === 'function') {
-                            sessionManager.updateUser({ avatar: base64Img, avatar_path: base64Img });
+                        sessionManager.updateUser({ phone: trimmed });
+                    }
+                    try {
+                        const offUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                        const uIdx = offUsers.findIndex(u => u.id === user.id || u.email === user.email);
+                        if (uIdx !== -1) {
+                            offUsers[uIdx].phone = trimmed;
+                            localStorage.setItem('goride_offline_users', JSON.stringify(offUsers));
                         }
+                    } catch (e) {}
+
+                    // Persist to Database (Firebase RTDB Cloud)
+                    if (typeof window.realtimeSync !== 'undefined' && user && user.id) {
+                        await window.realtimeSync.updateUserProfile(user.id, { phone: trimmed });
+                    }
+                    if (typeof apiClient !== 'undefined') {
+                        apiClient.updateProfile({ phone: trimmed }).catch(() => {});
                     }
 
-                    // Sync to offline users list
-                    try {
-                        const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-                        const idx = offlineUsers.findIndex(u => u.id === currentUser.id || u.email === currentUser.email);
-                        if (idx !== -1) {
-                            offlineUsers[idx].avatar = base64Img;
-                            offlineUsers[idx].avatar_path = base64Img;
-                            localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
-                        }
-                    } catch(err) {}
-
-                    // Broadcast reactive events to other tabs and app shell
-                    window.dispatchEvent(new CustomEvent('session:update', { detail: { user: currentUser } }));
-                    window.dispatchEvent(new CustomEvent('session:change', { detail: { user: currentUser } }));
-
-                    showToast('Đã cập nhật ảnh đại diện thành công!', 'success');
-                } catch (err) {
-                    showToast('Lỗi xử lý ảnh: ' + (err.message || 'Không xác định'), 'error');
+                    const phoneEl = document.getElementById('profile-display-phone');
+                    if (phoneEl) phoneEl.textContent = trimmed;
+                    if (typeof window.showNavigoModal === 'function') {
+                        window.showNavigoModal({
+                            title: 'Cập nhật thành công',
+                            message: 'Số điện thoại của bạn đã được đổi thành "' + trimmed + '" và đã lưu vào cơ sở dữ liệu.',
+                            icon: '✓',
+                            confirmText: 'Đã hiểu',
+                            showCancel: false
+                        });
+                    }
                 }
             });
         }
 
-        function loadDriverStats() {
-            let trips = [];
-            const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => false);
+        // 7. Render & Sync Navigo Race Eco Stats (Điểm sự kiện)
+        let ecoUnsub = null;
+        function renderEcoRaceStats() {
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
+            const storageKey = 'navigo_eco_stats_' + userKey;
 
-            const myId = String(currentUser?.id || '').trim().toLowerCase();
-            const myPhone = String(currentUser?.phone || '').trim().toLowerCase();
-            const myEmail = String(currentUser?.email || '').trim().toLowerCase();
-            const myName = String(currentUser?.name || '').trim().toLowerCase();
-            const myPlate = String(currentUser?.vehicle?.plate || currentUser?.licensePlate || currentUser?.plate || '').trim().toLowerCase();
-
-            const isTripForDriver = (t) => {
-                if (!t) return false;
-                const tId = String(t.driverId || '').trim().toLowerCase();
-                const tPhone = String(t.driverPhone || '').trim().toLowerCase();
-                const tEmail = String(t.driverEmail || '').trim().toLowerCase();
-                const tName = String(t.driverName || '').trim().toLowerCase();
-                const tPlate = String(t.licensePlate || t.plate || '').trim().toLowerCase();
-
-                if (myId && (tId === myId || tId === 'drv_' + myId || myId === 'drv_' + tId)) return true;
-                if (myPhone && (tPhone === myPhone || tId === 'drv_' + myPhone)) return true;
-                if (myEmail && tEmail && tEmail === myEmail) return true;
-                if (myPlate && myPlate !== '--' && tPlate && tPlate === myPlate) return true;
-                if (myName && !myName.includes('quản trị') && !myName.includes('admin') && tName && tName === myName) return true;
-                return false;
-            };
-
-            const getFare = (t) => {
-                if (!t) return 0;
-                const raw = (t.fare !== undefined && t.fare !== null) ? t.fare 
-                          : ((t.fareAmount !== undefined && t.fareAmount !== null) ? t.fareAmount 
-                          : ((t.price !== undefined && t.price !== null) ? t.price 
-                          : ((t.totalFare !== undefined && t.totalFare !== null) ? t.totalFare : 0)));
-                if (typeof raw === 'number') return isNaN(raw) ? 0 : raw;
-                if (typeof raw === 'string') {
-                    const clean = raw.replace(/[^\d]/g, '');
-                    const val = Number(clean);
-                    return isNaN(val) ? 0 : val;
-                }
-                return 0;
-            };
-
+            let stats = null;
             try {
-                const candidates = [];
-                // 1. Driver-specific storage
-                const myKey = currentUser?.id || currentUser?.phone || 'default';
+                stats = JSON.parse(localStorage.getItem(storageKey) || 'null');
+            } catch (e) {}
+
+            // Fallback: Nếu chưa có trong eco_stats, tổng hợp từ lịch sử các cuốc xe thực tế
+            if (!stats || typeof stats !== 'object') {
                 try {
-                    const specific = JSON.parse(localStorage.getItem(`goride_driver_trips_${myKey}`) || '[]');
-                    if (Array.isArray(specific)) candidates.push(...specific);
-                } catch (e) {}
+                    const trips = JSON.parse(localStorage.getItem('goride_trips_' + userKey) || '[]');
+                    const completedTrips = trips.filter(t => t.status === 'completed');
+                    let totalMeters = 0;
+                    completedTrips.forEach(t => {
+                        totalMeters += Number(t.distanceMeters || (Number(t.distance) || 3) * 1000);
+                    });
+                    const totalKm = Number((totalMeters / 1000).toFixed(1));
+                    stats = {
+                        totalKm: totalKm,
+                        co2Kg: Number((totalKm * 0.15).toFixed(1)),
+                        trees: Math.max(0, Math.floor(totalKm / 5)),
+                        greenFundVnd: Math.round(totalKm * 500),
+                        eventPoints: Math.round(totalKm * 10),
+                        tripsCompleted: completedTrips.length,
+                        medal: totalKm < 10 ? 'Người Khởi Đầu' : (totalKm < 50 ? 'Người Ươm Mầm' : (totalKm < 150 ? 'Sứ Giả Xanh' : 'Hiệp Sĩ Môi Trường')),
+                        medalIcon: totalKm < 10 ? '🥉' : (totalKm < 50 ? '🥈' : (totalKm < 150 ? '🥇' : '🏆'))
+                    };
+                    localStorage.setItem(storageKey, JSON.stringify(stats));
+                } catch (e) {
+                    stats = {
+                        totalKm: 0,
+                        co2Kg: 0,
+                        trees: 0,
+                        greenFundVnd: 0,
+                        eventPoints: 0,
+                        medal: 'Người Khởi Đầu',
+                        medalIcon: '🥉'
+                    };
+                }
+            }
 
-                // 2. Global driver trips, filtered to this driver
-                const rawDriverTrips = localStorage.getItem('goride_driver_trips');
-                if (rawDriverTrips) {
-                    const parsed = JSON.parse(rawDriverTrips);
-                    if (Array.isArray(parsed)) {
-                        parsed.forEach(t => { if (isTripForDriver(t)) candidates.push(t); });
+            const iconEl = document.getElementById('eco-race-medal-icon');
+            const titleEl = document.getElementById('eco-race-medal-title');
+            const co2El = document.getElementById('eco-race-co2-pill');
+            const treesEl = document.getElementById('eco-race-trees-val');
+            const fundEl = document.getElementById('eco-race-fund-val');
+            const kmEl = document.getElementById('eco-race-km-val');
+
+            if (iconEl) iconEl.textContent = stats.medalIcon || '🥉';
+            if (titleEl) titleEl.textContent = stats.medal || 'Người Khởi Đầu';
+            if (co2El) co2El.textContent = (stats.co2Kg || 0) + ' KG';
+            if (treesEl) treesEl.textContent = stats.trees || 0;
+            if (fundEl) fundEl.textContent = (stats.greenFundVnd || 0).toLocaleString('vi-VN') + ' VNĐ';
+            if (kmEl) kmEl.textContent = (stats.totalKm || 0) + ' KM';
+
+            // Gắn lắng nghe realtime cloud qua Firebase
+            if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.listenEcoStats === 'function' && !ecoUnsub) {
+                ecoUnsub = realtimeSync.listenEcoStats(userKey, (cloudStats) => {
+                    if (cloudStats && typeof cloudStats === 'object') {
+                        localStorage.setItem(storageKey, JSON.stringify(cloudStats));
+                        renderEcoRaceStats();
                     }
-                }
-
-                // 3. Admin trips, filtered to this driver
-                const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                if (Array.isArray(adminTrips)) {
-                    adminTrips.forEach(t => { if (isTripForDriver(t)) candidates.push(t); });
-                }
-
-                const tripMap = new Map();
-                candidates.forEach(t => {
-                    if (t && t.id && !tripMap.has(t.id)) tripMap.set(t.id, t);
                 });
-
-                // STRICT: Driver trips must be COMPLETED and not mock (never count cancelled trips)
-                trips = Array.from(tripMap.values()).filter(t => {
-                    if (checkMock(t)) return false;
-                    const st = String(t.status || '').toLowerCase().trim();
-                    return st === 'completed' || st === 'finished' || st === 'finish' || st === 'done';
-                });
-            } catch(e) { trips = []; }
-
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayTrips = trips.filter(t => (t.completedAt || t.createdAt || '').startsWith(todayStr));
-            const todayEarnings = todayTrips.reduce((sum, t) => sum + getFare(t), 0);
-            const totalDriverEarnings = trips.reduce((sum, t) => sum + getFare(t), 0);
-
-            const ratingEl = document.getElementById('profile-kpi-rating');
-            const earnEl = document.getElementById('profile-kpi-earnings');
-            const tripsEl = document.getElementById('profile-kpi-trips');
-            const walletEl = document.getElementById('profile-kpi-wallet');
-
-            if (ratingEl) ratingEl.textContent = (currentUser?.rating ? currentUser.rating + ' ★' : '5.0 ★');
-            if (earnEl) earnEl.textContent = todayEarnings.toLocaleString('vi-VN') + ' ₫';
-            if (tripsEl) tripsEl.textContent = trips.length;
-            if (walletEl) {
-                let balance = 0;
-                if (typeof currentUser?.walletBalance === 'number' && currentUser.walletBalance !== 350000 && currentUser.walletBalance !== 1450000) {
-                    balance = currentUser.walletBalance;
-                } else {
-                    balance = totalDriverEarnings;
-                    if (currentUser) {
-                        currentUser.walletBalance = balance;
-                        try {
-                            localStorage.setItem('goride_user', JSON.stringify(currentUser));
-                        } catch(e) {}
-                    }
-                }
-                walletEl.textContent = Number(balance || 0).toLocaleString('vi-VN') + ' ₫';
             }
         }
 
-        function setupStatusToggle() {
-            const toggleBtn = document.getElementById('btn-toggle-driver-status');
-            if (!toggleBtn) return;
+        // 8. Modal Chi Tiết Tiến Độ Navigo Race (Điểm sự kiện)
+        function showNavigoRaceDetailsModal() {
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
+            let stats = null;
+            try {
+                stats = JSON.parse(localStorage.getItem('navigo_eco_stats_' + userKey) || 'null');
+            } catch (e) {}
 
-            toggleBtn.addEventListener('click', () => {
-                isDriverOnline = !isDriverOnline;
-                localStorage.setItem('goride_driver_online_state', isDriverOnline ? '1' : '0');
+            if (!stats) {
+                stats = {
+                    totalKm: 0,
+                    co2Kg: 0,
+                    trees: 0,
+                    greenFundVnd: 0,
+                    eventPoints: 0,
+                    medal: 'Người Khởi Đầu',
+                    medalIcon: '🥉'
+                };
+            }
 
-                // Broadcast driver online state
-                updateDriverOnlinePresence(isDriverOnline);
-                renderDriverStatusUI();
+            const totalKm = stats.totalKm || 0;
+            const nextMilestone = totalKm < 10 ? 10 : (totalKm < 50 ? 50 : (totalKm < 150 ? 150 : 300));
+            const nextRank = totalKm < 10 ? 'Người Ươm Mầm (10km)' : (totalKm < 50 ? 'Sứ Giả Xanh (50km)' : (totalKm < 150 ? 'Hiệp Sĩ Môi Trường (150km)' : 'Huyền Thoại Xanh'));
+            const progressPct = Math.min(100, Math.round((totalKm / nextMilestone) * 100));
 
-                showToast(isDriverOnline ? 'Bạn đã chuyển sang trạng thái TRỰC TUYẾN!' : 'Bạn đã chuyển sang trạng thái NGOẠI TUYẾN.', isDriverOnline ? 'success' : 'info');
-            });
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Tiến độ Navigo Race 2024',
+                    message: 'Mỗi km di chuyển bằng xe thuần điện Navigo tương ứng với 0.15kg CO₂ được cắt giảm, tích lũy 10 điểm sự kiện và đóng góp vào Quỹ Vì Tương Lai Xanh.\n\n' +
+                             '• Danh hiệu: ' + (stats.medalIcon || '🥉') + ' ' + (stats.medal || 'Người Khởi Đầu') + '\n' +
+                             '• Tổng điểm sự kiện: ' + (stats.eventPoints || 0) + ' điểm\n' +
+                             '• Quãng đường thuần điện: ' + totalKm + ' / ' + nextMilestone + ' km (' + progressPct + '%)\n' +
+                             '• CO₂ đã cắt giảm: ' + (stats.co2Kg || 0) + ' KG\n' +
+                             '• Cây xanh đóng góp: ' + (stats.trees || 0) + ' cây\n' +
+                             '• Đóng góp Quỹ Xanh: ' + (stats.greenFundVnd || 0).toLocaleString('vi-VN') + ' VNĐ\n' +
+                             '• Cột mốc tiếp theo: ' + nextRank,
+                    icon: '🏆',
+                    confirmText: 'Đặt xe tích điểm',
+                    cancelText: 'Đóng',
+                    onConfirm: () => {
+                        window.location.href = 'customer.html';
+                    }
+                });
+            }
         }
 
-        function renderDriverStatusUI() {
-            const container = document.getElementById('driver-status-container');
-            const dot = document.getElementById('profile-status-dot');
-            const title = document.getElementById('profile-status-title');
-            const desc = document.getElementById('profile-status-desc');
-            const toggleBtn = document.getElementById('btn-toggle-driver-status');
-            const toggleIcon = document.getElementById('btn-toggle-icon');
-            const toggleText = document.getElementById('btn-toggle-text');
 
+        // =========================================================================
+        // DRIVER VEHICLE MANAGEMENT & COUNTERPARTY AVERAGE RATING CONTROLLER
+        // =========================================================================
+
+        let selectedVehicleTypeToChange = 'car4';
+
+        function renderDriverVehicleSection() {
+            const container = document.getElementById('profile-driver-vehicle-section');
             if (!container) return;
 
-            if (isDriverOnline) {
-                container.className = 'driver-status-card';
-                dot.style.background = '#10b981';
-                title.style.color = '#065f46';
-                title.textContent = '🟢 Đang trực tuyến (Sẵn sàng nhận cuốc)';
-                desc.style.color = '#047857';
-                desc.textContent = 'Tọa độ GPS đang phát sóng tới khách hàng và Admin để quét chuyến tự động.';
-                toggleBtn.className = 'btn-status-toggle online';
-                toggleIcon.textContent = '🟢';
-                toggleText.textContent = 'Đang trực tuyến';
-            } else {
-                container.className = 'driver-status-card is-offline';
-                dot.style.background = '#64748b';
-                title.style.color = '#334155';
-                title.textContent = '🔴 Ngoại tuyến (Đang nghỉ)';
-                desc.style.color = '#64748b';
-                desc.textContent = 'Hệ thống đã tạm dừng phát sóng định vị. Bấm nút bên cạnh để mở nhận cuốc xe.';
-                toggleBtn.className = 'btn-status-toggle offline';
-                toggleIcon.textContent = '🔘';
-                toggleText.textContent = 'Bật trực tuyến';
-            }
-        }
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            const role = (user?.role || 'customer').toLowerCase();
 
-        function updateDriverOnlinePresence(online) {
-            try {
-                let onlineDrivers = {};
-                try {
-                    onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
-                    if (Array.isArray(onlineDrivers)) {
-                        const dMap = {};
-                        onlineDrivers.forEach(d => { if (d && d.id) dMap[d.id] = d; });
-                        onlineDrivers = dMap;
-                    }
-                } catch(e) { onlineDrivers = {}; }
-
-                const driverId = currentUser.id || 'drv_' + (currentUser.phone || '0901');
-                const vType = document.getElementById('profile-vehicle-type')?.value || currentUser.vehicleType || 'motorbike';
-                const vLabel = (vType === 'motorbike' || vType === 'bike') ? '🛵 Xe máy (Navigo Bike)' : (vType === 'premium' ? '🚘 Xe sang 4 chỗ (Navigo Plus)' : (vType === 'car7' ? '🚐 Ô tô 7 chỗ (Navigo XL)' : '🚗 Ô tô 4 chỗ (Navigo Car)'));
-                const plate = document.getElementById('profile-vehicle-plate')?.value || currentUser.licensePlate || '59-S3 889.24';
-                const model = document.getElementById('profile-vehicle-model')?.value || currentUser.vehicleModel || 'Toyota Vios 2024';
-
-                if (online) {
-                    onlineDrivers[driverId] = {
-                        id: driverId,
-                        name: currentUser.name,
-                        phone: currentUser.phone,
-                        vehicleType: vType,
-                        vehicleTypeName: vLabel,
-                        plate: plate,
-                        model: model,
-                        lat: 10.776889,
-                        lng: 106.700806,
-                        isOnline: true,
-                        updatedAt: new Date().toISOString()
-                    };
-                } else {
-                    delete onlineDrivers[driverId];
-                }
-                localStorage.setItem('goride_online_drivers', JSON.stringify(onlineDrivers));
-
-                // Also update admin drivers
-                const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
-                const idx = adminDrivers.findIndex(d => d.id === driverId || d.phone === currentUser.phone);
-                if (idx !== -1) {
-                    adminDrivers[idx].isOnline = online;
-                    adminDrivers[idx].vehicleType = vType;
-                    adminDrivers[idx].plate = plate;
-                    adminDrivers[idx].model = model;
-                    adminDrivers[idx].updatedAt = new Date().toISOString();
-                    localStorage.setItem('goride_admin_drivers', JSON.stringify(adminDrivers));
-                }
-            } catch(e) {}
-        }
-
-        function saveProfileChanges() {
-            const name = document.getElementById('input-profile-name').value.trim();
-            const phone = document.getElementById('input-profile-phone').value.trim();
-
-            if (!name || !phone) {
-                alert('Vui lòng điền đầy đủ Họ và tên và Số điện thoại.');
+            if (role !== 'driver') {
+                container.innerHTML = '';
+                container.style.display = 'none';
                 return;
             }
 
-            currentUser.name = name;
-            currentUser.phone = phone;
+            container.style.display = 'block';
 
-            if (currentUser.role === 'driver') {
-                const vType = document.getElementById('profile-vehicle-type').value;
-                const plate = document.getElementById('profile-vehicle-plate').value.trim();
-                const model = document.getElementById('profile-vehicle-model').value.trim();
+            // Get vehicle info
+            let vType = user?.vehicle?.type || user?.vehicleType || 'car4';
+            let vPlate = user?.vehicle?.plate || user?.licensePlate || '51G-889.24';
+            let vModel = user?.vehicle?.model || 'Navigo Car E-Series';
 
-                currentUser.vehicleType = vType;
-                currentUser.licensePlate = plate;
-                currentUser.vehicleModel = model;
-                currentUser.vehicle = {
-                    type: vType,
-                    plate: plate,
-                    model: model
-                };
-
-                // Sync to admin drivers
-                try {
-                    const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
-                    const idx = adminDrivers.findIndex(d => d.email === currentUser.email || d.phone === currentUser.phone || d.id === currentUser.id);
-                    if (idx !== -1) {
-                        adminDrivers[idx].name = name;
-                        adminDrivers[idx].phone = phone;
-                        adminDrivers[idx].vehicleType = vType;
-                        adminDrivers[idx].plate = plate;
-                        adminDrivers[idx].model = model;
-                        localStorage.setItem('goride_admin_drivers', JSON.stringify(adminDrivers));
-                    }
-                } catch(e) {}
-
-                // If online, update presence
-                if (isDriverOnline) {
-                    updateDriverOnlinePresence(true);
-                }
-            }
-
-            // Persist session & offline users
-            const userStr = JSON.stringify(currentUser);
-            localStorage.setItem('goride_user', userStr);
-            localStorage.setItem('ride_rtree_user', userStr);
+            // Sync from admin drivers if available
             try {
-                sessionStorage.setItem('ride_rtree_user', userStr);
-                sessionStorage.setItem('goride_user', userStr);
+                const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+                const curD = adminDrivers.find(d => d.id === user.id || d.email === user.email || d.phone === user.phone);
+                if (curD) {
+                    if (curD.vehicleType) vType = curD.vehicleType;
+                    if (curD.plate || curD.licensePlate) vPlate = curD.plate || curD.licensePlate;
+                    if (curD.model || curD.vehicleModel) vModel = curD.model || curD.vehicleModel;
+                }
             } catch (e) {}
 
-            if (typeof sessionManager !== 'undefined') {
-                if (typeof sessionManager.setUser === 'function') {
-                    sessionManager.setUser(currentUser);
-                } else if (typeof sessionManager.updateUser === 'function') {
-                    sessionManager.updateUser(currentUser);
-                }
-            }
+            const vCatalog = {
+                car4: { name: 'Ô tô 4 chỗ (Navigo Car)', icon: '🚗', defaultModel: 'Navigo Car E-Series', defaultPlate: '51G-889.24', tag: 'Tiêu chuẩn 4 chỗ' },
+                car7: { name: 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)', icon: '🚐', defaultModel: 'Navigo 7-Seats Plus', defaultPlate: '51H-778.66', tag: 'Rộng rãi 7 chỗ' },
+                premium: { name: 'Xe sang VIP (Navigo Luxury)', icon: '🚘', defaultModel: 'Navigo Luxury VIP', defaultPlate: '51K-999.88', tag: 'Dịch vụ cao cấp VIP' },
+                motorbike: { name: 'Xe máy điện (Navigo Bike)', icon: '🛵', defaultModel: 'Navigo Bike E-Scooter', defaultPlate: '59-S2 899.24', tag: 'Xe 2 bánh thuần điện' },
+                delivery: { name: 'Giao hàng siêu tốc (Navigo Delivery)', icon: '📦', defaultModel: 'Navigo Delivery E-Box', defaultPlate: '59-S2 788.12', tag: 'Vận chuyển hỏa tốc' }
+            };
+
+            const curCfg = vCatalog[vType] || vCatalog.car4;
+            vModel = vModel || curCfg.defaultModel;
+            vPlate = vPlate || curCfg.defaultPlate;
+
+            container.innerHTML = `
+                <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-radius:20px; padding:18px 20px; margin-bottom:18px; box-shadow:0 4px 18px rgba(15,45,60,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:46px; height:46px; border-radius:14px; background:#e0f2fe; color:#0288d1; display:flex; align-items:center; justify-content:center; font-size:1.6rem; box-shadow:0 2px 8px rgba(2,136,209,0.15);">
+                                ${curCfg.icon}
+                            </div>
+                            <div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <span style="font-size:0.75rem; font-weight:800; color:#0288d1; text-transform:uppercase; letter-spacing:0.5px;">Phương tiện hoạt động</span>
+                                    <span style="font-size:0.72rem; padding:2px 8px; border-radius:9999px; background:#f0fdf4; color:#16a34a; font-weight:700; border:1px solid #bbf7d0;">${curCfg.tag}</span>
+                                </div>
+                                <h3 style="margin:2px 0 0; font-size:1.05rem; font-weight:800; color:#0f2d3c;">${curCfg.name}</h3>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-open-change-vehicle" onclick="openChangeVehicleModal()" style="border:1.5px solid #00b1a9; background:#e6f7f6; color:#007d77; padding:7px 14px; border-radius:9999px; font-size:0.82rem; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.15s ease; box-shadow:0 2px 6px rgba(0,177,169,0.15);">
+                            <span>🔄</span>
+                            <span>Đổi loại xe</span>
+                        </button>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#f8fafc; border-radius:14px; padding:12px 14px; border:1px solid #f1f5f9; margin-bottom:10px;">
+                        <div>
+                            <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Dòng xe (Model)</div>
+                            <div style="font-size:0.92rem; font-weight:800; color:#1e293b; margin-top:2px;">${vModel}</div>
+                        </div>
+                        <div>
+                            <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">Biển kiểm soát</div>
+                            <div style="font-size:0.92rem; font-weight:800; color:#0288d1; font-family:monospace; margin-top:2px;">${vPlate}</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.75rem; color:#64748b; padding-top:4px;">
+                        <span style="display:inline-flex; align-items:center; gap:5px;">
+                            <span style="width:7px; height:7px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                            <span>Hệ thống tự động khớp lệnh cuốc xe cùng loại</span>
+                        </span>
+                        <span style="color:#00b1a9; font-weight:700; cursor:pointer;" onclick="openChangeVehicleModal()">Thay đổi ›</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openChangeVehicleModal() {
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            let currentType = user?.vehicle?.type || user?.vehicleType || 'car4';
+            let currentPlate = user?.vehicle?.plate || user?.licensePlate || '';
 
             try {
-                const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-                const idx = offlineUsers.findIndex(u => u.email === currentUser.email || u.id === currentUser.id);
-                if (idx !== -1) {
-                    offlineUsers[idx] = { ...offlineUsers[idx], ...currentUser };
-                    localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
+                const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+                const curD = adminDrivers.find(d => d.id === user?.id || d.email === user?.email || d.phone === user?.phone);
+                if (curD) {
+                    if (curD.vehicleType) currentType = curD.vehicleType;
+                    if (curD.plate || curD.licensePlate) currentPlate = curD.plate || curD.licensePlate;
                 }
-            } catch(e) {}
+            } catch (e) {}
 
-            window.dispatchEvent(new CustomEvent('session:update', { detail: { user: currentUser } }));
-            window.dispatchEvent(new CustomEvent('session:change', { detail: { user: currentUser } }));
+            selectedVehicleTypeToChange = currentType;
 
-            document.getElementById('profile-display-name').textContent = name;
-            
-            const msgEl = document.getElementById('save-status-msg');
-            if (msgEl) {
-                msgEl.style.display = 'inline-block';
-                setTimeout(() => { msgEl.style.display = 'none'; }, 3000);
+            const modal = document.getElementById('modal-change-vehicle');
+            if (!modal) return;
+
+            const plateInput = document.getElementById('input-vehicle-plate');
+            if (plateInput) plateInput.value = currentPlate;
+
+            updateVehicleSelectionUI(selectedVehicleTypeToChange);
+            modal.style.display = 'flex';
+        }
+
+        function closeChangeVehicleModal() {
+            const modal = document.getElementById('modal-change-vehicle');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function selectChangeVehicleType(type) {
+            selectedVehicleTypeToChange = type;
+            updateVehicleSelectionUI(type);
+
+            const plateInput = document.getElementById('input-vehicle-plate');
+            if (plateInput && !plateInput.value) {
+                const defaults = {
+                    car4: '51G-889.24',
+                    car7: '51H-778.66',
+                    premium: '51K-999.88',
+                    motorbike: '59-S2 899.24',
+                    delivery: '59-S2 788.12'
+                };
+                plateInput.value = defaults[type] || '51G-889.24';
+            }
+        }
+
+        function updateVehicleSelectionUI(selectedType) {
+            const options = document.querySelectorAll('.vehicle-select-card');
+            options.forEach(opt => {
+                const vType = opt.getAttribute('data-type');
+                const isSelected = (vType === selectedType);
+                opt.style.borderColor = isSelected ? '#00b1a9' : '#e2e8f0';
+                opt.style.background = isSelected ? '#e6f7f6' : '#ffffff';
+                const radio = opt.querySelector('.vehicle-select-indicator');
+                if (radio) {
+                    radio.style.background = isSelected ? '#00b1a9' : '#ffffff';
+                    radio.style.borderColor = isSelected ? '#00b1a9' : '#cbd5e1';
+                    radio.innerHTML = isSelected ? '<span style="color:#fff; font-size:0.75rem; font-weight:800;">✓</span>' : '';
+                }
+            });
+        }
+
+        function saveDriverVehicleChanges() {
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            if (!user) return;
+
+            const vType = selectedVehicleTypeToChange || 'car4';
+            const plateInput = document.getElementById('input-vehicle-plate');
+            let plateVal = (plateInput?.value || '').trim().toUpperCase();
+
+            const vCatalog = {
+                car4: { name: 'Ô tô 4 chỗ (Navigo Car)', icon: '🚗', defaultModel: 'Navigo Car E-Series', defaultPlate: '51G-889.24' },
+                car7: { name: 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)', icon: '🚐', defaultModel: 'Navigo 7-Seats Plus', defaultPlate: '51H-778.66' },
+                premium: { name: 'Xe sang VIP (Navigo Luxury)', icon: '🚘', defaultModel: 'Navigo Luxury VIP', defaultPlate: '51K-999.88' },
+                motorbike: { name: 'Xe máy điện (Navigo Bike)', icon: '🛵', defaultModel: 'Navigo Bike E-Scooter', defaultPlate: '59-S2 899.24' },
+                delivery: { name: 'Giao hàng siêu tốc (Navigo Delivery)', icon: '📦', defaultModel: 'Navigo Delivery E-Box', defaultPlate: '59-S2 788.12' }
+            };
+
+            const cfg = vCatalog[vType] || vCatalog.car4;
+            if (!plateVal) plateVal = cfg.defaultPlate;
+
+            const updatedVehicle = {
+                type: vType,
+                typeName: cfg.name,
+                plate: plateVal,
+                model: cfg.defaultModel,
+                icon: cfg.icon
+            };
+
+            // 1. Update session & storage
+            user.vehicleType = vType;
+            user.vehicle = updatedVehicle;
+            user.licensePlate = plateVal;
+            user.vehicleModel = cfg.defaultModel;
+
+            localStorage.setItem('goride_user', JSON.stringify(user));
+            if (typeof sessionManager !== 'undefined') {
+                sessionManager.updateUser({
+                    vehicleType: vType,
+                    vehicle: updatedVehicle,
+                    licensePlate: plateVal,
+                    vehicleModel: cfg.defaultModel
+                });
             }
 
-            showToast('Đã lưu thông tin hồ sơ thành công!', 'success');
+            // 2. Update goride_admin_drivers
+            try {
+                const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+                const idx = adminDrivers.findIndex(d => d.id === user.id || d.email === user.email || d.phone === user.phone);
+                if (idx !== -1) {
+                    adminDrivers[idx].vehicleType = vType;
+                    adminDrivers[idx].vehicle = updatedVehicle;
+                    adminDrivers[idx].plate = plateVal;
+                    adminDrivers[idx].licensePlate = plateVal;
+                    adminDrivers[idx].model = cfg.defaultModel;
+                    adminDrivers[idx].vehicleModel = cfg.defaultModel;
+                } else {
+                    adminDrivers.push({
+                        id: user.id || ('drv_' + Date.now()),
+                        name: user.name || 'Tài xế Navigo',
+                        phone: user.phone || '0918765432',
+                        email: user.email || 'driver@navigo.vn',
+                        vehicleType: vType,
+                        vehicle: updatedVehicle,
+                        plate: plateVal,
+                        licensePlate: plateVal,
+                        model: cfg.defaultModel,
+                        vehicleModel: cfg.defaultModel,
+                        rating: user.rating || 5.0,
+                        status: 'online'
+                    });
+                }
+                localStorage.setItem('goride_admin_drivers', JSON.stringify(adminDrivers));
+            } catch (e) {}
+
+            // 3. Update goride_offline_users
+            try {
+                const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                const uIdx = offlineUsers.findIndex(u => u.id === user.id || u.email === user.email || u.phone === user.phone);
+                if (uIdx !== -1) {
+                    offlineUsers[uIdx].vehicleType = vType;
+                    offlineUsers[uIdx].vehicle = updatedVehicle;
+                    offlineUsers[uIdx].licensePlate = plateVal;
+                    offlineUsers[uIdx].vehicleModel = cfg.defaultModel;
+                    localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
+                }
+            } catch (e) {}
+
+            // 4. Firebase Sync
+            if (typeof realtimeSync !== 'undefined' && user.id) {
+                realtimeSync.updateUserProfile(user.id, {
+                    vehicleType: vType,
+                    vehicle: updatedVehicle,
+                    licensePlate: plateVal,
+                    vehicleModel: cfg.defaultModel
+                });
+            }
+
+            // 5. Dispatch event
+            window.dispatchEvent(new CustomEvent('driver:vehicle-change', { detail: { vehicleType: vType, vehicle: updatedVehicle } }));
+
+            closeChangeVehicleModal();
+            renderDriverVehicleSection();
+
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Đổi phương tiện thành công!',
+                    message: 'Đã cập nhật phương tiện sang: ' + cfg.name + ' (Biển số: ' + plateVal + '). Hệ thống sẽ tự động ghép cuốc tương ứng với loại xe này.',
+                    icon: cfg.icon,
+                    confirmText: 'Đã hiểu',
+                    showCancel: false
+                });
+            }
         }
 
-        function setupFirebaseConfigUI() {
-            // Keep silent in background
-        }
+        // =========================================================================
+        // COUNTERPARTY AVERAGE RATING SECTION
+        // Hiển thị trung bình cộng đánh giá của đối phương
+        // (Tài xế hiển thị đánh giá từ khách hàng; Khách hàng hiển thị từ tài xế)
+        // =========================================================================
 
-        function showToast(msg, type = 'info') {
-            const container = document.getElementById('toast-container');
+        function renderCounterpartyRating() {
+            const container = document.getElementById('profile-counterparty-rating-section');
             if (!container) return;
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = msg;
-            toast.style.cssText = `
-                padding: 12px 18px;
-                background: ${type === 'success' ? '#10b981' : '#0288d1'};
-                color: #ffffff;
-                border-radius: 8px;
-                margin-bottom: 8px;
-                font-size: 0.875rem;
-                font-weight: 600;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                animation: fadeIn 0.2s;
+
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            if (!user) {
+                container.innerHTML = '';
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+
+            const role = (user.role || 'customer').toLowerCase();
+            const isDriver = (role === 'driver');
+            const roleTitle = isDriver ? 'khách hàng' : 'tài xế';
+            const counterpartyTitle = isDriver ? 'Đánh giá từ khách hàng' : 'Đánh giá từ tài xế';
+            const subTitle = isDriver 
+                ? 'Trung bình cộng điểm đánh giá từ hành khách sau mỗi chuyến đi'
+                : 'Trung bình cộng điểm đánh giá từ các bác tài sau mỗi chuyến xe';
+
+            let ratingInfo = {
+                average: 5.0,
+                count: 0,
+                reviews: [],
+                starsBreakdown: { 5: 100, 4: 0, 3: 0, 2: 0, 1: 0 },
+                badges: isDriver ? ['Lái xe an toàn', 'Thân thiện', 'Xe sạch sẽ'] : ['Thân thiện', 'Đúng giờ', 'Lịch sự']
+            };
+
+            if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.getCounterpartyRating === 'function') {
+                ratingInfo = realtimeSync.getCounterpartyRating(user.id || user.phone, role);
+            } else {
+                try {
+                    const targetRole = isDriver ? 'driver' : 'customer';
+                    const history = JSON.parse(localStorage.getItem('navigo_ratings_history') || '[]');
+                    const matched = history.filter(h => h.toRole === targetRole);
+                    if (matched.length > 0) {
+                        let sum = 0;
+                        matched.forEach(m => sum += Number(m.rating || 5));
+                        ratingInfo.average = Number((sum / matched.length).toFixed(1));
+                        ratingInfo.count = matched.length;
+                        ratingInfo.reviews = matched.slice(0, 5);
+                    } else {
+                        ratingInfo.average = Number(user.rating || 5.0);
+                        ratingInfo.count = user.ratingCount || 1;
+                    }
+                } catch (e) {}
+            }
+
+            const avgScore = Number(ratingInfo.average || 5.0).toFixed(1);
+            const totalCount = ratingInfo.count || 0;
+            const bd = ratingInfo.starsBreakdown || { 5: 100, 4: 0, 3: 0, 2: 0, 1: 0 };
+            const badges = ratingInfo.badges || (isDriver ? ['Lái xe an toàn', 'Thân thiện', 'Xe sạch sẽ'] : ['Thân thiện', 'Đúng giờ', 'Lịch sự']);
+            const reviews = ratingInfo.reviews || [];
+
+            let badgesHtml = badges.map(b => `<span style="padding:4px 10px; border-radius:9999px; background:#f0fdf4; color:#15803d; font-size:0.75rem; font-weight:700; border:1px solid #bbf7d0;">⭐ ${b}</span>`).join(' ');
+
+            let reviewsHtml = '';
+            if (reviews.length > 0) {
+                reviewsHtml = `
+                    <div style="border-top:1px dashed #e2e8f0; padding-top:12px; margin-top:14px;">
+                        <div style="font-size:0.75rem; font-weight:800; color:#64748b; text-transform:uppercase; margin-bottom:8px;">Nhận xét gần nhất từ ${roleTitle}:</div>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            ${reviews.slice(0, 3).map(r => `
+                                <div style="background:#f8fafc; border:1px solid #f1f5f9; border-radius:12px; padding:10px 12px; font-size:0.82rem;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                                        <strong style="color:#1e293b; font-size:0.85rem;">${r.fromUserName || (isDriver ? 'Hành khách' : 'Bác tài')}</strong>
+                                        <span style="color:#f59e0b; font-weight:800;">★ ${Number(r.rating || 5).toFixed(1)}</span>
+                                    </div>
+                                    <div style="color:#475569; font-style:italic;">"${r.feedback || (isDriver ? 'Chuyến đi rất tuyệt vời, lái xe cẩn thận.' : 'Hành khách lịch sự, đúng giờ.')}"</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div style="background:#ffffff; border:1.5px solid #e2e8f0; border-radius:20px; padding:18px 20px; margin-bottom:18px; box-shadow:0 4px 18px rgba(15,45,60,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.4rem;">⭐</span>
+                            <div>
+                                <h3 style="margin:0; font-size:1.05rem; font-weight:800; color:#0f2d3c;">${counterpartyTitle}</h3>
+                                <span style="font-size:0.75rem; color:#64748b;">${subTitle}</span>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:0.7rem; font-weight:700; color:#00b1a9; text-transform:uppercase; letter-spacing:0.5px;">Trung bình cộng</span>
+                        </div>
+                    </div>
+
+                    <!-- Score Hero Card -->
+                    <div style="background:linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border:1.5px solid #bbf7d0; border-radius:16px; padding:16px; display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <div style="font-size:2.6rem; font-weight:900; color:#059669; line-height:1; letter-spacing:-1px;">
+                                ${avgScore}
+                            </div>
+                            <div>
+                                <div style="font-size:1.25rem; color:#f59e0b; letter-spacing:2px; margin-bottom:2px;">
+                                    ${'★'.repeat(Math.min(5, Math.max(1, Math.round(Number(avgScore)))))}${'☆'.repeat(Math.max(0, 5 - Math.round(Number(avgScore))))}
+                                </div>
+                                <div style="font-size:0.78rem; color:#065f46; font-weight:700;">
+                                    ${totalCount > 0 ? `Dựa trên ${totalCount} lượt đánh giá thực tế` : 'Chưa có chuyến đánh giá nào (Mặc định 5.0)'}
+                                </div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.72rem; color:#047857; font-weight:700; text-transform:uppercase;">Uy tín đối tác</div>
+                            <div style="font-size:0.95rem; font-weight:800; color:#059669; margin-top:2px;">Xuất sắc 🏆</div>
+                        </div>
+                    </div>
+
+                    <!-- Stars breakdown -->
+                    <div style="display:flex; flex-direction:column; gap:4px; font-size:0.75rem; color:#64748b; margin-bottom:12px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:36px;">5 sao</span>
+                            <div style="flex:1; height:6px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                                <div style="width:${bd[5] || 100}%; height:100%; background:#10b981; border-radius:4px;"></div>
+                            </div>
+                            <span style="width:32px; text-align:right; font-weight:700;">${bd[5] || 100}%</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:36px;">4 sao</span>
+                            <div style="flex:1; height:6px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                                <div style="width:${bd[4] || 0}%; height:100%; background:#34d399; border-radius:4px;"></div>
+                            </div>
+                            <span style="width:32px; text-align:right; font-weight:700;">${bd[4] || 0}%</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="width:36px;">3 sao</span>
+                            <div style="flex:1; height:6px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                                <div style="width:${bd[3] || 0}%; height:100%; background:#fbbf24; border-radius:4px;"></div>
+                            </div>
+                            <span style="width:32px; text-align:right; font-weight:700;">${bd[3] || 0}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Badges list -->
+                    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+                        ${badgesHtml}
+                    </div>
+
+                    ${reviewsHtml}
+                </div>
             `;
-            container.appendChild(toast);
-            setTimeout(() => toast.remove(), 3500);
         }
+
+        // 9. Event Wiring
+        function refreshAllProfileSections() {
+            renderProfileAccountBadge();
+            renderDriverVehicleSection();
+            renderCounterpartyRating();
+            renderEcoRaceStats();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshAllProfileSections();
+            initUserNameEdit();
+            initUserPhoneEdit();
+        });
+        window.addEventListener('session:change', refreshAllProfileSections);
+        window.addEventListener('session:login', refreshAllProfileSections);
+        window.addEventListener('session:logout', refreshAllProfileSections);
+        window.addEventListener('storage', (e) => {
+            if (!e.key || e.key === 'goride_driver_online_state' || e.key.includes('user') || e.key.includes('ratings') || e.key.includes('driver')) {
+                refreshAllProfileSections();
+            }
+            if (!e.key || e.key.includes('eco_stats') || e.key.includes('trips')) {
+                renderEcoRaceStats();
+            }
+        });
+        window.addEventListener('driver:online-change', refreshAllProfileSections);
+        window.addEventListener('driver:vehicle-change', refreshAllProfileSections);
+        window.addEventListener('navigo:rating-updated', refreshAllProfileSections);
+        window.addEventListener('navigo:eco_stats_updated', renderEcoRaceStats);
     </script>
+
+    <!-- Modal Thay Đổi Loại Phương Tiện Hoạt Động Của Tài Xế -->
+    <div id="modal-change-vehicle" style="display:none; position:fixed; inset:0; background:rgba(15,45,60,0.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
+        <div style="background:#ffffff; border-radius:24px; padding:24px 20px 20px; max-width:460px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(15,45,60,0.3); border:1.5px solid #cbd5e1; animation:liquidPop 0.22s cubic-bezier(0.16,1,0.3,1);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.5rem;">🔄</span>
+                    <div>
+                        <h3 style="margin:0; font-size:1.15rem; font-weight:800; color:#0f2d3c;">Thay đổi phương tiện</h3>
+                        <span style="font-size:0.75rem; color:#64748b;">Chọn phương tiện hoạt động nhận chuyến</span>
+                    </div>
+                </div>
+                <button type="button" onclick="closeChangeVehicleModal()" style="width:32px; height:32px; border-radius:50%; border:none; background:#f1f5f9; color:#64748b; font-size:1.3rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;">&times;</button>
+            </div>
+
+            <div style="font-size:0.8rem; color:#64748b; margin-bottom:12px;">
+                Vui lòng chọn loại xe bạn đang điều khiển. Hệ thống sẽ chỉ gửi thông báo các cuốc xe phù hợp với loại phương tiện này:
+            </div>
+
+            <!-- Vehicle Options List (5 choices) -->
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
+                <!-- 1. car4 -->
+                <div class="vehicle-select-card" data-type="car4" onclick="selectChangeVehicleType('car4')" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-radius:14px; border:2px solid #e2e8f0; cursor:pointer; transition:all 0.15s ease;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.8rem;">🚗</span>
+                        <div>
+                            <div style="font-weight:800; font-size:0.95rem; color:#0f2d3c;">Ô tô 4 chỗ (Navigo Car)</div>
+                            <div style="font-size:0.75rem; color:#64748b;">Navigo Car 4 chỗ thuần điện • 4 hành khách</div>
+                        </div>
+                    </div>
+                    <div class="vehicle-select-indicator" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center;"></div>
+                </div>
+
+                <!-- 2. car7 -->
+                <div class="vehicle-select-card" data-type="car7" onclick="selectChangeVehicleType('car7')" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-radius:14px; border:2px solid #e2e8f0; cursor:pointer; transition:all 0.15s ease;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.8rem;">🚐</span>
+                        <div>
+                            <div style="font-weight:800; font-size:0.95rem; color:#0f2d3c;">Ô tô 7 chỗ (Navigo Taxi 7 chỗ)</div>
+                            <div style="font-size:0.75rem; color:#64748b;">Navigo 7 chỗ thuần điện • Không gian rộng rãi 7 khách</div>
+                        </div>
+                    </div>
+                    <div class="vehicle-select-indicator" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center;"></div>
+                </div>
+
+                <!-- 3. premium -->
+                <div class="vehicle-select-card" data-type="premium" onclick="selectChangeVehicleType('premium')" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-radius:14px; border:2px solid #e2e8f0; cursor:pointer; transition:all 0.15s ease;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.8rem;">🚘</span>
+                        <div>
+                            <div style="font-weight:800; font-size:0.95rem; color:#0f2d3c;">Xe sang VIP (Navigo Luxury)</div>
+                            <div style="font-size:0.75rem; color:#64748b;">Navigo Luxury VIP • Dịch vụ thương gia cao cấp VIP</div>
+                        </div>
+                    </div>
+                    <div class="vehicle-select-indicator" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center;"></div>
+                </div>
+
+                <!-- 4. motorbike -->
+                <div class="vehicle-select-card" data-type="motorbike" onclick="selectChangeVehicleType('motorbike')" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-radius:14px; border:2px solid #e2e8f0; cursor:pointer; transition:all 0.15s ease;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.8rem;">🛵</span>
+                        <div>
+                            <div style="font-weight:800; font-size:0.95rem; color:#0f2d3c;">Xe máy điện (Navigo Bike)</div>
+                            <div style="font-size:0.75rem; color:#64748b;">Navigo Bike thuần điện • Di chuyển linh hoạt</div>
+                        </div>
+                    </div>
+                    <div class="vehicle-select-indicator" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center;"></div>
+                </div>
+
+                <!-- 5. delivery -->
+                <div class="vehicle-select-card" data-type="delivery" onclick="selectChangeVehicleType('delivery')" style="display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border-radius:14px; border:2px solid #e2e8f0; cursor:pointer; transition:all 0.15s ease;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span style="font-size:1.8rem;">📦</span>
+                        <div>
+                            <div style="font-weight:800; font-size:0.95rem; color:#0f2d3c;">Giao hàng siêu tốc (Navigo Delivery)</div>
+                            <div style="font-size:0.75rem; color:#64748b;">Navigo Delivery chuyên dụng • Chở hàng hỏa tốc</div>
+                        </div>
+                    </div>
+                    <div class="vehicle-select-indicator" style="width:20px; height:20px; border-radius:50%; border:2px solid #cbd5e1; display:flex; align-items:center; justify-content:center;"></div>
+                </div>
+            </div>
+
+            <!-- License Plate input -->
+            <div style="margin-bottom:18px;">
+                <label style="display:block; font-size:0.78rem; font-weight:700; color:#475569; margin-bottom:6px; text-transform:uppercase;">
+                    Biển kiểm soát (Biển số xe):
+                </label>
+                <input type="text" id="input-vehicle-plate" placeholder="VD: 51G-889.24" style="width:100%; height:44px; border-radius:12px; border:1.5px solid #cbd5e1; padding:0 14px; font-size:1rem; font-weight:800; font-family:monospace; color:#0288d1; box-sizing:border-box; outline:none; text-transform:uppercase;">
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button type="button" onclick="closeChangeVehicleModal()" style="flex:1; height:44px; border-radius:12px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-size:0.9rem; font-weight:700; cursor:pointer;">
+                    Hủy bỏ
+                </button>
+                <button type="button" onclick="saveDriverVehicleChanges()" style="flex:1.5; height:44px; border-radius:12px; border:none; background:linear-gradient(135deg, #00b1a9, #008781); color:#ffffff; font-size:0.92rem; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(0,177,169,0.35);">
+                    Lưu thay đổi phương tiện
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

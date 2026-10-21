@@ -8,7 +8,6 @@ class AdminController {
     constructor() {
         this.map = null;
         this.driverMarkersLayer = null;
-        this.driverMarkersMap = new Map();
         this.onlineDriversPollInterval = null;
         this.currentTab = 'dashboard';
         this.isProcessingApproval = new Set();
@@ -21,8 +20,7 @@ class AdminController {
             ONLINE_DRIVERS: 'goride_online_drivers',
             PENDING: 'goride_pending_drivers',
             USERS: 'goride_offline_users',
-            DELETED_TRIPS: 'goride_deleted_trip_ids',
-            DELETED_USERS: 'goride_deleted_user_ids'
+            DELETED_TRIPS: 'goride_deleted_trip_ids'
         };
     }
 
@@ -37,7 +35,6 @@ class AdminController {
         if (window.realtimeSync && typeof window.realtimeSync.cleanStaleDrivers === 'function') {
             window.realtimeSync.cleanStaleDrivers();
         }
-        this.cleanGhostPendingDrivers();
 
         // 1. Sync token with apiClient
         if (typeof sessionManager !== 'undefined' && sessionManager && sessionManager.getToken()) {
@@ -62,17 +59,17 @@ class AdminController {
         this.setupCloudSyncDiagnostics();
 
         // 5. Load Initial Dashboard Data & Tables
-        await this.loadDriverApprovals();
-        await this.loadDriversList();
         await this.loadDashboard();
         this.loadRecentTripsTable();
         this.loadTripsTable();
+        this.loadDriversList();
+        this.loadDriverApprovals();
         this.loadCustomers();
         this.setupCustomerFilters();
 
         // 6. Handle URL Hash for tabs
         const hash = window.location.hash.replace('#', '');
-        if (hash && ['dashboard', 'recent-trips', 'trips', 'drivers', 'customers'].includes(hash)) {
+        if (hash && ['dashboard', 'recent-trips', 'trips', 'drivers', 'customers', 'promotions'].includes(hash)) {
             this.switchTab(hash);
         }
 
@@ -101,31 +98,6 @@ class AdminController {
         }
     }
 
-    getDeletedUserIds() {
-        try {
-            const ids = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.DELETED_USERS));
-            return Array.isArray(ids) ? ids : [];
-        } catch {
-            return [];
-        }
-    }
-
-    addDeletedUserId(id) {
-        if (!id) return;
-        const ids = this.getDeletedUserIds();
-        if (!ids.includes(id)) {
-            ids.push(id);
-            localStorage.setItem(this.STORAGE_KEYS.DELETED_USERS, JSON.stringify(ids));
-        }
-    }
-
-    removeDeletedUserId(id, email) {
-        let ids = this.getDeletedUserIds();
-        if (id) ids = ids.filter(x => x !== id);
-        if (email) ids = ids.filter(x => String(x).toLowerCase().trim() !== email.toLowerCase().trim());
-        localStorage.setItem(this.STORAGE_KEYS.DELETED_USERS, JSON.stringify(ids));
-    }
-
     getStoredTrips() {
         try {
             const trips = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.TRIPS)) || [];
@@ -148,16 +120,16 @@ class AdminController {
 
             // Sync from registered offline users with role === 'driver' and approved/active
             const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
-            const realDrivers = users.filter(u => u.role === 'driver' && u.status === 'active');
+            const realDrivers = users.filter(u => u && u.role === 'driver' && (u.status === 'active' || !u.status));
             let hasNew = false;
 
             realDrivers.forEach(u => {
                 if (!drivers.some(d => d.id === u.id || (u.email && d.email === u.email))) {
                     const vType = u.vehicle?.type || u.vehicleType || 'motorbike';
-                    let vLabel = 'Ô tô 4 chỗ (Navigo Car)';
-                    if (vType === 'bike' || vType === 'motorbike') vLabel = 'Xe máy (Navigo Bike)';
-                    else if (vType === 'car7') vLabel = 'Ô tô 7 chỗ (Navigo XL)';
-                    else if (vType === 'premium') vLabel = 'Xe sang (Navigo Plus)';
+                    let vLabel = 'Ô tô điện (Navigo Car)';
+                    if (vType === 'bike' || vType === 'motorbike') vLabel = 'Xe máy điện (Navigo Bike)';
+                    else if (vType === 'car7') vLabel = 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)';
+                    else if (vType === 'premium') vLabel = 'Xe sang (Navigo Luxury)';
                     drivers.push({
                         id: u.id,
                         name: u.name,
@@ -165,8 +137,8 @@ class AdminController {
                         phone: u.phone,
                         vehicleType: vType,
                         vehicleTypeName: vLabel,
-                        plate: u.vehicle?.plate || u.licensePlate || '--',
-                        experience: u.vehicle?.experience || 2,
+                        plate: u.vehicle?.plate || u.licensePlate || u.plate || '--',
+                        experience: u.vehicle?.experience || u.experienceYears || u.experience || 1,
                         status: 'active',
                         createdAt: u.createdAt || new Date().toISOString()
                     });
@@ -187,96 +159,15 @@ class AdminController {
         localStorage.setItem(this.STORAGE_KEYS.DRIVERS, JSON.stringify(drivers));
     }
 
-    /**
-     * Dọn dẹp triệt để các hồ sơ rác / vô danh (ghost / undefined driver records)
-     */
-    cleanGhostPendingDrivers() {
-        // 1. Dọn dẹp localStorage goride_pending_drivers
-        try {
-            const raw = localStorage.getItem(this.STORAGE_KEYS.PENDING);
-            if (raw) {
-                const pending = JSON.parse(raw);
-                if (Array.isArray(pending)) {
-                    const cleaned = pending.filter(p => {
-                        if (!p || typeof p !== 'object') return false;
-                        const pid = String(p.id || '').trim();
-                        if (!pid || pid === 'undefined' || pid === 'null') return false;
-                        const hasInfo = (p.name && String(p.name).trim()) || (p.phone && String(p.phone).trim()) || (p.email && String(p.email).trim() && p.email !== '--');
-                        return !!hasInfo;
-                    });
-                    if (cleaned.length !== pending.length) {
-                        localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(cleaned));
-                    }
-                }
-            }
-        } catch (e) {}
-
-        // 2. Dọn dẹp localStorage goride_offline_users
-        try {
-            const rawUsers = localStorage.getItem(this.STORAGE_KEYS.USERS);
-            if (rawUsers) {
-                const users = JSON.parse(rawUsers);
-                if (Array.isArray(users)) {
-                    const cleanedUsers = users.filter(u => u && u.id && String(u.id).trim() !== '' && String(u.id).trim() !== 'undefined' && String(u.id).trim() !== 'null');
-                    if (cleanedUsers.length !== users.length) {
-                        localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(cleanedUsers));
-                    }
-                }
-            }
-        } catch (e) {}
-
-        // 3. Dọn dẹp các node rác 'undefined' / 'null' trên Firebase Cloud
-        if (window.realtimeSync) {
-            try {
-                if (window.realtimeSync.isAvailable()) {
-                    window.realtimeSync.db.ref('goride_pending_drivers/undefined').remove();
-                    window.realtimeSync.db.ref('goride_pending_drivers/null').remove();
-                    window.realtimeSync.db.ref('goride_drivers/undefined').remove();
-                    window.realtimeSync.db.ref('goride_drivers/null').remove();
-                    window.realtimeSync.db.ref('goride_users/undefined').remove();
-                    window.realtimeSync.db.ref('goride_users/null').remove();
-                } else if (typeof window.realtimeSync._restDelete === 'function') {
-                    window.realtimeSync._restDelete('goride_pending_drivers/undefined');
-                    window.realtimeSync._restDelete('goride_pending_drivers/null');
-                    window.realtimeSync._restDelete('goride_drivers/undefined');
-                    window.realtimeSync._restDelete('goride_drivers/null');
-                    window.realtimeSync._restDelete('goride_users/undefined');
-                    window.realtimeSync._restDelete('goride_users/null');
-                }
-            } catch (e) {}
-        }
-    }
-
     getPendingDrivers() {
         try {
             let list = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.PENDING));
             if (!Array.isArray(list)) list = [];
 
-            // Loại bỏ hoàn toàn các phần tử rác / không có ID hoặc thiếu toàn bộ thông tin
-            list = list.filter(p => {
-                if (!p || typeof p !== 'object') return false;
-                const pid = String(p.id || '').trim();
-                if (!pid || pid === 'undefined' || pid === 'null') return false;
-                const hasInfo = (p.name && String(p.name).trim()) || (p.phone && String(p.phone).trim()) || (p.email && String(p.email).trim() && p.email !== '--');
-                return !!hasInfo;
-            });
-
-            const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
-            const isDeleted = (id, email) => {
-                if (id && deletedIds.has(String(id).toLowerCase().trim())) return true;
-                if (email && deletedIds.has(String(email).toLowerCase().trim())) return true;
-                return false;
-            };
-
             // Merge any pending driver applications from goride_offline_users
             const offlineUsers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
             offlineUsers.forEach(u => {
-                if (u && u.role === 'driver' && (u.status === 'pending' || u.status === 'Chờ duyệt')) {
-                    const uid = String(u.id || '').trim();
-                    if (!uid || uid === 'undefined' || uid === 'null') return;
-                    const hasInfo = (u.name && String(u.name).trim()) || (u.phone && String(u.phone).trim()) || (u.email && String(u.email).trim());
-                    if (!hasInfo) return;
-                    if (isDeleted(u.id, u.email)) return;
+                if (u && u.role === 'driver' && u.status === 'pending') {
                     if (!list.some(p => p.id === u.id || (u.email && p.email === u.email))) {
                         list.unshift({
                             id: u.id,
@@ -293,25 +184,14 @@ class AdminController {
                 }
             });
 
-            const cleanList = list.filter(p => !isDeleted(p.id, p.email));
-            localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(cleanList));
-            return cleanList;
+            return list;
         } catch {
             return [];
         }
     }
 
     savePendingDrivers(list) {
-        if (!Array.isArray(list)) list = [];
-        // Lọc sạch trước khi lưu
-        const cleanList = list.filter(p => {
-            if (!p || typeof p !== 'object') return false;
-            const pid = String(p.id || '').trim();
-            if (!pid || pid === 'undefined' || pid === 'null') return false;
-            const hasInfo = (p.name && String(p.name).trim()) || (p.phone && String(p.phone).trim()) || (p.email && String(p.email).trim() && p.email !== '--');
-            return !!hasInfo;
-        });
-        localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(cleanList));
+        localStorage.setItem(this.STORAGE_KEYS.PENDING, JSON.stringify(list));
     }
 
     /* ==========================================================================
@@ -342,7 +222,6 @@ class AdminController {
 
             // Layer group for live driver markers
             this.driverMarkersLayer = L.layerGroup().addTo(this.map);
-            this.driverMarkersMap = new Map();
 
             // Initial render of online drivers
             this.renderOnlineDriversOnMap();
@@ -374,7 +253,7 @@ class AdminController {
                 if (this.currentTab === 'dashboard') {
                     this.updateDriverMetrics();
                 }
-            } else if (e.key === this.STORAGE_KEYS.PENDING || e.key === this.STORAGE_KEYS.USERS) {
+            } else if (e.key === this.STORAGE_KEYS.PENDING || e.key === this.STORAGE_KEYS.USERS || e.key === 'goride_last_driver_reg') {
                 this.loadDriverApprovals();
                 this.loadDriversList();
                 if (this.currentTab === 'dashboard') {
@@ -412,6 +291,14 @@ class AdminController {
             this.renderOnlineDriversOnMap();
             if (this.currentTab === 'dashboard') {
                 this.updateDriverMetrics();
+            }
+        });
+
+        window.addEventListener('navigo:driver-registered', () => {
+            this.loadDriverApprovals();
+            this.loadDriversList();
+            if (this.currentTab === 'dashboard') {
+                this.loadDashboard();
             }
         });
 
@@ -472,9 +359,8 @@ class AdminController {
                         }
                     });
 
-                    // Real-time continuous listener for driver accounts
+                    // Real-time continuous listener for approved/active drivers
                     window.realtimeSync.db.ref('goride_drivers').on('value', () => {
-                        this.loadDriverApprovals();
                         this.loadDriversList();
                         if (this.currentTab === 'dashboard') {
                             this.loadDashboard();
@@ -483,9 +369,12 @@ class AdminController {
 
                     // Real-time continuous listener for user / customer account updates
                     window.realtimeSync.db.ref('goride_users').on('value', () => {
+                        this.loadDriversList();
                         this.loadDriverApprovals();
                         if (this.currentTab === 'customers') {
                             this.loadCustomers();
+                        } else if (this.currentTab === 'promotions') {
+                            this.loadPromotionsTab();
                         }
                         if (this.currentTab === 'dashboard') {
                             this.loadDashboard();
@@ -721,7 +610,6 @@ class AdminController {
     renderOnlineDriversOnMap() {
         if (!this.map || !this.driverMarkersLayer) return;
 
-        this.driverMarkersMap = this.driverMarkersMap || new Map();
         const onlineDrivers = this.getOnlineDrivers();
         const badgeEl = document.getElementById('admin-map-online-badge');
 
@@ -739,40 +627,58 @@ class AdminController {
             }
         }
 
-        // If no drivers are currently online, remove all markers safely
-        if (onlineDrivers.length === 0) {
-            for (const marker of this.driverMarkersMap.values()) {
-                this.driverMarkersLayer.removeLayer(marker);
-            }
-            this.driverMarkersMap.clear();
-            return;
-        }
+        // Clear previous driver markers on the map
+        this.driverMarkersLayer.clearLayers();
 
-        const activeDriverKeys = new Set();
+        // If no drivers are currently online, nothing more to draw
+        if (onlineDrivers.length === 0) return;
 
-        // Render / update each online driver smoothly without destroying open popups or refreshing icons
+        // Render each online driver with custom vehicle marker, radar pulse, and info popup
         onlineDrivers.forEach(driver => {
-            const driverKey = String(driver.id || driver.phone || driver.plate || 'drv');
-            activeDriverKeys.add(driverKey);
-
             const vType = String(driver.vehicleType || driver.vehicle || '').toLowerCase();
             let markerClass = 'admin-driver-marker-car';
             let vehicleEmoji = '🚗';
-            let vehicleLabel = driver.vehicleTypeName || 'Ô tô 4 chỗ (Navigo Car)';
+            let vehicleLabel = driver.vehicleTypeName || 'Ô tô điện (Navigo Car)';
 
             if (vType === 'bike' || vType === 'motorbike' || vType.includes('bike') || vType.includes('moto') || vType.includes('xe máy') || vType.includes('xe may')) {
                 markerClass = 'admin-driver-marker-bike';
                 vehicleEmoji = '🛵';
-                vehicleLabel = driver.vehicleTypeName || 'Xe máy (Navigo Bike)';
+                vehicleLabel = driver.vehicleTypeName || 'Xe máy điện (Navigo Bike)';
             } else if (vType === 'car7' || vType === 'xl' || vType.includes('7 chỗ') || vType.includes('7 cho') || vType.includes('xl')) {
                 markerClass = 'admin-driver-marker-car7';
                 vehicleEmoji = '🚐';
-                vehicleLabel = driver.vehicleTypeName || 'Ô tô 7 chỗ (Navigo XL)';
+                vehicleLabel = driver.vehicleTypeName || 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)';
             } else if (vType === 'premium' || vType === 'car4_plus' || vType === 'plus' || vType.includes('plus') || vType.includes('sang')) {
                 markerClass = 'admin-driver-marker-premium';
                 vehicleEmoji = '🚘';
-                vehicleLabel = driver.vehicleTypeName || 'Xe sang 4 chỗ (Navigo Plus)';
+                vehicleLabel = driver.vehicleTypeName || 'Xe sang (Navigo Luxury)';
             }
+
+            const markerHtml = `
+                <div class="admin-driver-marker-wrap ${markerClass}">
+                    <div class="admin-driver-radar-ping"></div>
+                    <div class="admin-driver-icon-circle">
+                        ${vehicleEmoji}
+                    </div>
+                    <div class="admin-driver-label-chip">
+                        <span class="pulse-dot"></span>
+                        <span>${this.escapeHtml(driver.name || 'Tài xế')} &bull; ${this.escapeHtml(driver.plate || '--')}</span>
+                    </div>
+                </div>
+            `;
+
+            const customIcon = L.divIcon({
+                html: markerHtml,
+                className: 'custom-admin-driver-marker-container',
+                iconSize: [42, 68],
+                iconAnchor: [21, 24],
+                popupAnchor: [0, -26]
+            });
+
+            const marker = L.marker([driver.lat, driver.lng], {
+                icon: customIcon,
+                title: `${driver.name} (${driver.plate}) - Đang trực tuyến`
+            });
 
             const updatedTimeStr = driver.updatedAt ? new Date(driver.updatedAt).toLocaleTimeString('vi-VN') : 'Vừa xong';
 
@@ -820,84 +726,9 @@ class AdminController {
                 </div>
             `;
 
-            let marker = this.driverMarkersMap.get(driverKey);
-
-            if (marker) {
-                // Update marker position smoothly only if coordinates shifted
-                const curPos = marker.getLatLng();
-                if (Math.abs(curPos.lat - driver.lat) > 0.000005 || Math.abs(curPos.lng - driver.lng) > 0.000005) {
-                    marker.setLatLng([driver.lat, driver.lng]);
-                }
-
-                // Update popup content cleanly in place (NEVER close the popup while user is viewing)
-                marker.setPopupContent(popupContent);
-
-                // Update icon style only if vehicle classification changed
-                const iconSig = `${markerClass}_${driver.plate}_${driver.name}`;
-                if (marker._iconSig !== iconSig) {
-                    marker._iconSig = iconSig;
-                    const markerHtml = `
-                        <div class="admin-driver-marker-wrap ${markerClass}">
-                            <div class="admin-driver-radar-ping"></div>
-                            <div class="admin-driver-icon-circle">
-                                ${vehicleEmoji}
-                            </div>
-                            <div class="admin-driver-label-chip">
-                                <span class="pulse-dot"></span>
-                                <span>${this.escapeHtml(driver.name || 'Tài xế')} &bull; ${this.escapeHtml(driver.plate || '--')}</span>
-                            </div>
-                        </div>
-                    `;
-                    marker.setIcon(L.divIcon({
-                        html: markerHtml,
-                        className: 'custom-admin-driver-marker-container',
-                        iconSize: [42, 68],
-                        iconAnchor: [21, 24],
-                        popupAnchor: [0, -26]
-                    }));
-                }
-            } else {
-                // New driver marker
-                const markerHtml = `
-                    <div class="admin-driver-marker-wrap ${markerClass}">
-                        <div class="admin-driver-radar-ping"></div>
-                        <div class="admin-driver-icon-circle">
-                            ${vehicleEmoji}
-                        </div>
-                        <div class="admin-driver-label-chip">
-                            <span class="pulse-dot"></span>
-                            <span>${this.escapeHtml(driver.name || 'Tài xế')} &bull; ${this.escapeHtml(driver.plate || '--')}</span>
-                        </div>
-                    </div>
-                `;
-
-                const customIcon = L.divIcon({
-                    html: markerHtml,
-                    className: 'custom-admin-driver-marker-container',
-                    iconSize: [42, 68],
-                    iconAnchor: [21, 24],
-                    popupAnchor: [0, -26]
-                });
-
-                marker = L.marker([driver.lat, driver.lng], {
-                    icon: customIcon,
-                    title: `${driver.name} (${driver.plate}) - Đang trực tuyến`
-                });
-
-                marker._iconSig = `${markerClass}_${driver.plate}_${driver.name}`;
-                marker.bindPopup(popupContent, { maxWidth: 320, minWidth: 260, autoPan: true, autoPanPadding: [20, 20] });
-                marker.addTo(this.driverMarkersLayer);
-                this.driverMarkersMap.set(driverKey, marker);
-            }
+            marker.bindPopup(popupContent, { maxWidth: 320, minWidth: 260 });
+            marker.addTo(this.driverMarkersLayer);
         });
-
-        // Clean up any markers of drivers that went offline
-        for (const [key, marker] of this.driverMarkersMap.entries()) {
-            if (!activeDriverKeys.has(key)) {
-                this.driverMarkersLayer.removeLayer(marker);
-                this.driverMarkersMap.delete(key);
-            }
-        }
     }
 
     focusOnOnlineDrivers() {
@@ -962,7 +793,7 @@ class AdminController {
         });
 
         // Show/hide tabs
-        ['dashboard', 'recent-trips', 'trips', 'drivers', 'customers'].forEach(t => {
+        ['dashboard', 'recent-trips', 'trips', 'drivers', 'customers', 'promotions'].forEach(t => {
             const el = document.getElementById('tab-' + t);
             if (el) el.style.display = (t === tabName) ? '' : 'none';
         });
@@ -985,6 +816,8 @@ class AdminController {
             this.loadDriverApprovals();
         } else if (tabName === 'customers') {
             this.loadCustomers();
+        } else if (tabName === 'promotions') {
+            this.loadPromotionsTab();
         }
 
         // Close mobile drawer
@@ -1057,24 +890,30 @@ class AdminController {
         document.querySelectorAll('[data-action="logout"]').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.preventDefault();
+                try {
+                    if (typeof apiClient !== 'undefined' && apiClient.logout) {
+                        apiClient.logout().catch(() => {});
+                    }
+                } catch (err) {}
                 if (typeof sessionManager !== 'undefined') {
                     sessionManager.logout();
                 }
                 try {
-                    localStorage.setItem('goride_logged_out', '1');
-                    sessionStorage.setItem('goride_logged_out', '1');
                     sessionStorage.clear();
-                    const clearKeys = [
-                        'goride_user', 'navigo_user', 'ride_rtree_user',
-                        'goride_token', 'navigo_token', 'ride_rtree_token',
-                        'user', 'token', 'currentUser', 'auth_user',
-                        'goride_active_trip', 'goride_pending_trip_offers'
+                    const keysToRemove = [
+                        'ride_rtree_user', 'ride_rtree_token',
+                        'goride_user', 'goride_token',
+                        'navigo_user', 'navigo_token',
+                        'user', 'token', 'currentUser',
+                        'goride_active_trip', 'goride_driver_online_state',
+                        'goride_pending_trip_offers'
                     ];
-                    clearKeys.forEach(k => {
-                        try { localStorage.removeItem(k); } catch (e) {}
+                    keysToRemove.forEach(k => {
+                        localStorage.removeItem(k);
+                        sessionStorage.removeItem(k);
                     });
-                } catch (e) {}
-                window.location.href = '../index.html';
+                } catch(e) {}
+                window.location.href = 'login.html?logout=true';
             });
         });
     }
@@ -1083,57 +922,8 @@ class AdminController {
        DASHBOARD METRICS & RECENT TRIPS (DYNAMIC REAL METRICS)
        ========================================================================== */
 
-    isCompletedTrip(t) {
-        if (!t || !t.status) return false;
-        const s = String(t.status).toLowerCase().trim();
-        return s === 'completed' || s === 'finished' || s === 'finish' || s === 'done';
-    }
-
-    getTripFare(t) {
-        if (!t) return 0;
-        const raw = (t.fare !== undefined && t.fare !== null) ? t.fare 
-                  : ((t.fareAmount !== undefined && t.fareAmount !== null) ? t.fareAmount 
-                  : ((t.price !== undefined && t.price !== null) ? t.price 
-                  : ((t.totalFare !== undefined && t.totalFare !== null) ? t.totalFare : 0)));
-        if (typeof raw === 'number') return isNaN(raw) ? 0 : raw;
-        if (typeof raw === 'string') {
-            const clean = raw.replace(/[^\d]/g, '');
-            const val = Number(clean);
-            return isNaN(val) ? 0 : val;
-        }
-        return 0;
-    }
-
-    async syncTripsFromCloud() {
-        if (!window.realtimeSync) return;
-        try {
-            let cloudTrips = null;
-            if (window.realtimeSync.isAvailable()) {
-                const snap = await window.realtimeSync.db.ref('goride_trips').once('value');
-                cloudTrips = snap.val();
-            } else if (typeof window.realtimeSync._restGet === 'function') {
-                cloudTrips = await window.realtimeSync._restGet('goride_trips');
-            }
-            if (cloudTrips && typeof cloudTrips === 'object') {
-                const deletedIds = new Set(this.getDeletedTripIds());
-                const list = Object.values(cloudTrips).filter(t => t && t.id && !deletedIds.has(t.id));
-                if (list.length > 0) {
-                    const localTrips = this.getStoredTrips();
-                    const tripMap = new Map();
-                    localTrips.forEach(t => { if (t && t.id && !deletedIds.has(t.id)) tripMap.set(t.id, t); });
-                    list.forEach(t => { if (t && t.id && !deletedIds.has(t.id)) tripMap.set(t.id, { ...tripMap.get(t.id), ...t }); });
-                    const merged = Array.from(tripMap.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-                    this.saveStoredTrips(merged);
-                }
-            }
-        } catch (e) {
-            console.warn('[Admin] syncTripsFromCloud notice:', e);
-        }
-    }
-
     async loadDashboard() {
         try {
-            await this.syncTripsFromCloud();
             const trips = this.getStoredTrips();
             const drivers = this.getStoredDrivers();
             const onlineDrivers = this.getOnlineDrivers();
@@ -1141,10 +931,9 @@ class AdminController {
             // 100% Real KPI calculation based strictly on actual data
             const totalRides = trips.length;
             const activeDrivers = drivers.filter(d => d.status === 'active').length;
-            // Aggregate total revenue across ALL completed trips in the entire system
             const calculatedRevenue = trips
-                .filter(t => this.isCompletedTrip(t))
-                .reduce((sum, t) => sum + this.getTripFare(t), 0);
+                .filter(t => t.status === 'completed')
+                .reduce((sum, t) => sum + (Number(t.fare) || 0), 0);
 
             // Real unique customers
             const customerSet = new Set();
@@ -1226,64 +1015,28 @@ class AdminController {
         this.filterRecentTrips();
     }
 
-    getTripLocationText(trip, type = 'pickup') {
-        if (!trip) return '--';
-        if (type === 'pickup') {
-            if (trip.pickupName && typeof trip.pickupName === 'string') return trip.pickupName.trim();
-            if (trip.pickup) {
-                if (typeof trip.pickup === 'string') return trip.pickup.trim();
-                if (typeof trip.pickup === 'object') {
-                    return trip.pickup.name || trip.pickup.address || trip.pickup.title || (trip.pickup.lat && trip.pickup.lng ? `${Number(trip.pickup.lat).toFixed(4)}, ${Number(trip.pickup.lng).toFixed(4)}` : '--');
-                }
-            }
-            if (trip.pickupAddress && typeof trip.pickupAddress === 'string') return trip.pickupAddress.trim();
-            if (trip.pickupLat && trip.pickupLon) return `${Number(trip.pickupLat).toFixed(4)}, ${Number(trip.pickupLon).toFixed(4)}`;
-            return '--';
-        } else {
-            if (trip.dropoffName && typeof trip.dropoffName === 'string') return trip.dropoffName.trim();
-            if (trip.destinationName && typeof trip.destinationName === 'string') return trip.destinationName.trim();
-            if (trip.destination) {
-                if (typeof trip.destination === 'string') return trip.destination.trim();
-                if (typeof trip.destination === 'object') {
-                    return trip.destination.name || trip.destination.address || trip.destination.title || (trip.destination.lat && trip.destination.lng ? `${Number(trip.destination.lat).toFixed(4)}, ${Number(trip.destination.lng).toFixed(4)}` : '--');
-                }
-            }
-            if (trip.dropoffAddress && typeof trip.dropoffAddress === 'string') return trip.dropoffAddress.trim();
-            if (trip.dropoffLat && trip.dropoffLon) return `${Number(trip.dropoffLat).toFixed(4)}, ${Number(trip.dropoffLon).toFixed(4)}`;
-            return '--';
-        }
-    }
-
     filterRecentTrips() {
         const searchInput = document.getElementById('recent-trip-search-input');
         const statusFilter = document.getElementById('recent-trip-status-filter');
         const countText = document.getElementById('recent-trip-count-text');
 
-        const query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        const query = (searchInput?.value || '').toLowerCase().trim();
         const status = statusFilter ? statusFilter.value : 'all';
 
         let filtered = this.recentTripsData || this.getStoredTrips();
 
         if (status !== 'all') {
-            if (status.toLowerCase() === 'completed') {
-                filtered = filtered.filter(t => this.isCompletedTrip(t));
-            } else {
-                filtered = filtered.filter(t => (t.status || '').toLowerCase() === status.toLowerCase());
-            }
+            filtered = filtered.filter(t => t.status === status);
         }
 
         if (query) {
-            filtered = filtered.filter(t => {
-                const pText = this.getTripLocationText(t, 'pickup').toLowerCase();
-                const dText = this.getTripLocationText(t, 'destination').toLowerCase();
-                return (
-                    (t.id && String(t.id).toLowerCase().includes(query)) ||
-                    (t.customerName && t.customerName.toLowerCase().includes(query)) ||
-                    (t.driverName && t.driverName.toLowerCase().includes(query)) ||
-                    pText.includes(query) ||
-                    dText.includes(query)
-                );
-            });
+            filtered = filtered.filter(t =>
+                (t.id && String(t.id).toLowerCase().includes(query)) ||
+                (t.customerName && t.customerName.toLowerCase().includes(query)) ||
+                (t.driverName && t.driverName.toLowerCase().includes(query)) ||
+                (t.pickup && t.pickup.toLowerCase().includes(query)) ||
+                (t.destination && t.destination.toLowerCase().includes(query))
+            );
         }
 
         if (countText) {
@@ -1312,10 +1065,10 @@ class AdminController {
 
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
-            const fareFormatted = Number(this.getTripFare(t)).toLocaleString('vi-VN') + ' ₫';
+            const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
             const timeFormatted = t.createdAt ? new Date(t.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : 'Vừa xong';
-            const pickupShort = this.escapeHtml(this.getTripLocationText(t, 'pickup'));
-            const dropoffShort = this.escapeHtml(this.getTripLocationText(t, 'destination'));
+            const pickupShort = t.pickup ? this.escapeHtml(t.pickup) : '--';
+            const dropoffShort = t.destination ? this.escapeHtml(t.destination) : '--';
 
             return `
                 <tr>
@@ -1373,16 +1126,13 @@ class AdminController {
 
         const allTrips = this.getStoredTrips();
         const filtered = allTrips.filter(t => {
-            const matchStatus = (status === 'all') || 
-                (status.toLowerCase() === 'completed' ? this.isCompletedTrip(t) : (t.status || '').toLowerCase() === status.toLowerCase());
-            const pText = this.getTripLocationText(t, 'pickup').toLowerCase();
-            const dText = this.getTripLocationText(t, 'destination').toLowerCase();
+            const matchStatus = (status === 'all') || (t.status === status);
             const matchQuery = !query || 
-                (t.id && String(t.id).toLowerCase().includes(query)) ||
+                (t.id && t.id.toLowerCase().includes(query)) ||
                 (t.customerName && t.customerName.toLowerCase().includes(query)) ||
                 (t.driverName && t.driverName.toLowerCase().includes(query)) ||
-                pText.includes(query) ||
-                dText.includes(query);
+                (t.pickup && t.pickup.toLowerCase().includes(query)) ||
+                (t.destination && t.destination.toLowerCase().includes(query));
             return matchStatus && matchQuery;
         });
 
@@ -1408,20 +1158,17 @@ class AdminController {
 
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
-            const fareFormatted = Number(this.getTripFare(t)).toLocaleString('vi-VN') + ' ₫';
-            const pickupShort = this.escapeHtml(this.getTripLocationText(t, 'pickup'));
-            const dropoffShort = this.escapeHtml(this.getTripLocationText(t, 'destination'));
-
+            const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
             return `
                 <tr>
                     <td style="font-weight:700; color:var(--color-primary); font-family:monospace;">#${t.id}</td>
                     <td>
-                        <div style="font-weight:600;">${this.escapeHtml(t.customerName || '--')}</div>
-                        <div style="font-size:0.75rem; color:var(--color-gray-500);">${this.escapeHtml(t.customerPhone || '')}</div>
+                        <div style="font-weight:600;">${t.customerName || '--'}</div>
+                        <div style="font-size:0.75rem; color:var(--color-gray-500);">${t.customerPhone || ''}</div>
                     </td>
-                    <td>${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${pickupShort}">${pickupShort}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${dropoffShort}">${dropoffShort}</td>
+                    <td>${t.driverName || '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
+                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${t.pickup || ''}">${t.pickup || '--'}</td>
+                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${t.destination || ''}">${t.destination || '--'}</td>
                     <td><span class="badge ${badge.cls}">${badge.label}</span></td>
                     <td style="font-weight:700; color:#0f766e;">${fareFormatted}</td>
                     <td style="text-align:right;">
@@ -1449,18 +1196,15 @@ class AdminController {
         const trip = trips.find(t => t.id === tripId);
         if (!trip) return;
 
-        const pickupText = this.getTripLocationText(trip, 'pickup');
-        const destText = this.getTripLocationText(trip, 'destination');
-
         document.getElementById('modal-trip-title').textContent = `Chỉnh sửa chuyến đi #${trip.id}`;
         document.getElementById('trip-form-id').value = trip.id;
         document.getElementById('trip-form-customer').value = trip.customerName || '';
         document.getElementById('trip-form-phone').value = trip.customerPhone || '';
         document.getElementById('trip-form-driver').value = trip.driverName || '';
-        document.getElementById('trip-form-pickup').value = pickupText === '--' ? '' : pickupText;
-        document.getElementById('trip-form-dest').value = destText === '--' ? '' : destText;
-        document.getElementById('trip-form-fare').value = trip.fare || trip.fareAmount || 40000;
-        document.getElementById('trip-form-status').value = (trip.status || 'requested').toLowerCase();
+        document.getElementById('trip-form-pickup').value = trip.pickup || '';
+        document.getElementById('trip-form-dest').value = trip.destination || '';
+        document.getElementById('trip-form-fare').value = trip.fare || 40000;
+        document.getElementById('trip-form-status').value = trip.status || 'requested';
 
         this.openModal('modal-trip');
     }
@@ -1482,37 +1226,17 @@ class AdminController {
             // Edit existing trip
             const idx = trips.findIndex(t => t.id === idInput);
             if (idx !== -1) {
-                const existing = trips[idx];
-                const updatedPickup = (existing.pickup && typeof existing.pickup === 'object')
-                    ? { ...existing.pickup, name: pickup, address: pickup }
-                    : pickup;
-                const updatedDest = (existing.destination && typeof existing.destination === 'object')
-                    ? { ...existing.destination, name: destination, address: destination }
-                    : destination;
-
-                const updatedTrip = {
-                    ...existing,
+                trips[idx] = {
+                    ...trips[idx],
                     customerName,
                     customerPhone,
                     driverName,
-                    pickup: updatedPickup,
-                    destination: updatedDest,
-                    pickupName: pickup,
-                    dropoffName: destination,
+                    pickup,
+                    destination,
                     fare,
-                    fareAmount: fare,
                     status,
                     updatedAt: new Date().toISOString()
                 };
-                trips[idx] = updatedTrip;
-
-                // Sync to Firebase Cloud
-                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
-                    try {
-                        window.realtimeSync.db.ref('goride_trips/' + idInput).update(updatedTrip);
-                    } catch (fbErr) {}
-                }
-
                 this.showToast(`Đã cập nhật chuyến đi #${idInput} thành công!`, 'success');
             }
         } else {
@@ -1525,29 +1249,17 @@ class AdminController {
                 driverName: driverName || 'Chưa gán',
                 pickup,
                 destination,
-                pickupName: pickup,
-                dropoffName: destination,
                 fare,
-                fareAmount: fare,
                 status,
                 createdAt: new Date().toISOString()
             };
             trips.unshift(newTrip);
-
-            // Sync to Firebase Cloud
-            if (window.realtimeSync && window.realtimeSync.isAvailable()) {
-                try {
-                    window.realtimeSync.db.ref('goride_trips/' + newId).set(newTrip);
-                } catch (fbErr) {}
-            }
-
             this.showToast(`Đã thêm mới chuyến đi #${newId}!`, 'success');
         }
 
         this.saveStoredTrips(trips);
         this.closeModal('modal-trip');
         this.loadTripsTable();
-        this.loadRecentTripsTable();
         this.loadDashboard();
     }
 
@@ -1555,84 +1267,7 @@ class AdminController {
        DRIVERS MANAGEMENT (FULL CRUD & REAL DRIVER APPROVALS)
        ========================================================================== */
 
-    async loadDriversList() {
-        // Sync active registered drivers from cloud
-        if (window.realtimeSync) {
-            try {
-                let cloudDrivers = null;
-                let cloudUsers = null;
-                if (window.realtimeSync.isAvailable()) {
-                    const [dSnap, uSnap] = await Promise.all([
-                        window.realtimeSync.db.ref('goride_drivers').once('value').catch(() => null),
-                        window.realtimeSync.db.ref('goride_users').once('value').catch(() => null)
-                    ]);
-                    if (dSnap) cloudDrivers = dSnap.val();
-                    if (uSnap) cloudUsers = uSnap.val();
-                } else if (typeof window.realtimeSync._restGet === 'function') {
-                    const [dData, uData] = await Promise.all([
-                        window.realtimeSync._restGet('goride_drivers').catch(() => null),
-                        window.realtimeSync._restGet('goride_users').catch(() => null)
-                    ]);
-                    cloudDrivers = dData;
-                    cloudUsers = uData;
-                }
-
-                const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
-                const isDeleted = (id, email) => {
-                    if (id && deletedIds.has(String(id).toLowerCase().trim())) return true;
-                    if (email && deletedIds.has(String(email).toLowerCase().trim())) return true;
-                    return false;
-                };
-
-                let drivers = this.getStoredDrivers();
-                let hasChange = false;
-
-                const processDriverRecord = (cd) => {
-                    if (!cd || !cd.id) return;
-                    if (isDeleted(cd.id, cd.email)) return;
-                    if (cd.status === 'pending' || cd.status === 'Chờ duyệt') return; // Pending belongs in Approvals
-                    const vType = cd.vehicleType || cd.vehicle?.type || 'motorbike';
-                    const isBike = (vType === 'bike' || vType === 'motorbike');
-                    const vLabel = isBike ? 'Xe máy (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo XL)' : 'Ô tô 4 chỗ (Navigo Car)');
-                    const record = {
-                        id: cd.id,
-                        name: cd.name,
-                        email: cd.email,
-                        phone: cd.phone,
-                        vehicleType: vType,
-                        vehicleTypeName: vLabel,
-                        plate: cd.plate || cd.licensePlate || cd.vehicle?.plate || '--',
-                        experience: cd.experienceYears || cd.experience || 1,
-                        status: cd.status || 'active',
-                        createdAt: cd.createdAt || new Date().toISOString()
-                    };
-
-                    const idx = drivers.findIndex(d => d.id === cd.id || (cd.email && d.email === cd.email));
-                    if (idx !== -1) {
-                        drivers[idx] = { ...drivers[idx], ...record };
-                        hasChange = true;
-                    } else {
-                        drivers.push(record);
-                        hasChange = true;
-                    }
-                };
-
-                if (cloudDrivers && typeof cloudDrivers === 'object') {
-                    Object.values(cloudDrivers).forEach(processDriverRecord);
-                }
-                if (cloudUsers && typeof cloudUsers === 'object') {
-                    Object.values(cloudUsers).filter(u => u && u.role === 'driver' && u.status !== 'pending' && u.status !== 'Chờ duyệt').forEach(processDriverRecord);
-                }
-
-                if (hasChange) {
-                    this.saveStoredDrivers(drivers);
-                }
-            } catch (e) {
-                console.warn('[Admin] Cloud drivers sync notice:', e);
-            }
-        }
-
-        const drivers = this.getStoredDrivers();
+    renderDriversTable(drivers) {
         const tbody = document.getElementById('registered-drivers-body');
         const countText = document.getElementById('registered-drivers-count');
         if (countText) countText.textContent = `Tổng cộng: ${drivers.length} tài xế`;
@@ -1649,8 +1284,9 @@ class AdminController {
                 'active': '<span class="badge badge-success">Hoạt động</span>',
                 'offline': '<span class="badge badge-info">Ngoại tuyến</span>',
                 'pending': '<span class="badge badge-warning">Chờ duyệt</span>',
-                'locked': '<span class="badge badge-danger">Bị khóa</span>'
-            }[d.status] || `<span class="badge badge-info">${d.status}</span>`;
+                'locked': '<span class="badge badge-danger">Bị khóa</span>',
+                'rejected': '<span class="badge badge-danger">Từ chối</span>'
+            }[d.status] || `<span class="badge badge-success">Hoạt động</span>`;
 
             return `
                 <tr>
@@ -1672,6 +1308,109 @@ class AdminController {
                 </tr>
             `;
         }).join('');
+    }
+
+    async loadDriversList() {
+        // 1. Immediate instant render from local cache
+        let drivers = this.getStoredDrivers();
+        this.renderDriversTable(drivers);
+
+        // 2. Fetch and sync from Firebase Realtime Cloud & Live Backend API
+        try {
+            let cloudDrivers = [];
+
+            // A. Check Backend API if available
+            if (typeof apiClient !== 'undefined') {
+                try {
+                    const res = await apiClient.getDrivers();
+                    if (res && res.data && Array.isArray(res.data.drivers)) {
+                        cloudDrivers.push(...res.data.drivers);
+                    }
+                } catch (e) {}
+            }
+
+            // B. Query Firebase goride_drivers
+            if (window.realtimeSync) {
+                if (window.realtimeSync.isAvailable()) {
+                    try {
+                        const snap = await window.realtimeSync.db.ref('goride_drivers').once('value');
+                        const data = snap.val() || {};
+                        Object.values(data).forEach(d => {
+                            if (d && (d.id || d.email) && d.status !== 'pending' && d.status !== 'rejected') {
+                                cloudDrivers.push(d);
+                            }
+                        });
+                    } catch (e) {}
+                }
+                if (typeof window.realtimeSync._restGet === 'function') {
+                    try {
+                        const restData = await window.realtimeSync._restGet('goride_drivers');
+                        if (restData && typeof restData === 'object') {
+                            Object.values(restData).forEach(d => {
+                                if (d && (d.id || d.email) && d.status !== 'pending' && d.status !== 'rejected') {
+                                    cloudDrivers.push(d);
+                                }
+                            });
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // C. Query Firebase goride_users with role === 'driver' and status === 'active'
+            if (window.realtimeSync) {
+                if (window.realtimeSync.isAvailable()) {
+                    try {
+                        const snapU = await window.realtimeSync.db.ref('goride_users').once('value');
+                        const uData = snapU.val() || {};
+                        Object.values(uData).forEach(u => {
+                            if (u && u.role === 'driver' && (u.status === 'active' || !u.status)) {
+                                const vType = u.vehicleType || u.vehicle?.type || 'motorbike';
+                                const isBike = (vType === 'bike' || vType === 'motorbike');
+                                const vLabel = isBike ? 'Xe máy điện (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)' : 'Ô tô điện (Navigo Car)');
+                                cloudDrivers.push({
+                                    id: u.id,
+                                    name: u.name,
+                                    email: u.email,
+                                    phone: u.phone,
+                                    vehicleType: vType,
+                                    vehicleTypeName: vLabel,
+                                    plate: u.licensePlate || u.plate || u.vehicle?.plate || '--',
+                                    experience: u.experienceYears || u.experience || 1,
+                                    status: 'active',
+                                    createdAt: u.createdAt || new Date().toISOString()
+                                });
+                            }
+                        });
+                    } catch (e) {}
+                }
+            }
+
+            // Merge cloudDrivers into local drivers list
+            let hasNew = false;
+            cloudDrivers.forEach(cd => {
+                const idx = drivers.findIndex(d => d.id === cd.id || (cd.email && d.email === cd.email));
+                if (idx === -1) {
+                    drivers.push(cd);
+                    hasNew = true;
+                } else {
+                    if (cd.status && drivers[idx].status !== cd.status) {
+                        drivers[idx].status = cd.status;
+                        hasNew = true;
+                    }
+                    if (cd.plate && (!drivers[idx].plate || drivers[idx].plate === '--')) {
+                        drivers[idx].plate = cd.plate;
+                        hasNew = true;
+                    }
+                }
+            });
+
+            if (hasNew) {
+                this.saveStoredDrivers(drivers);
+                this.renderDriversTable(drivers);
+            }
+        } catch (err) {
+            console.warn('[Admin] Error syncing registered drivers:', err);
+        }
     }
 
     openAddDriverModal() {
@@ -1763,187 +1502,176 @@ class AdminController {
     async loadDriverApprovals() {
         const container = document.getElementById('driver-approvals');
         const badge = document.getElementById('pending-drivers-count');
-        if (!container) return;
+        const dashAlert = document.getElementById('dashboard-driver-approval-alert');
+        const dashCount = document.getElementById('dashboard-pending-count');
+        const dashPreview = document.getElementById('dashboard-pending-driver-preview');
 
         let pendingList = [];
 
-        // 1. Live C++ backend API check (Fast non-blocking with 800ms timeout)
+        // 1. Check live backend API
         if (typeof apiClient !== 'undefined') {
             try {
-                const apiRes = await Promise.race([
-                    apiClient.getPendingDrivers(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800))
-                ]);
-                if (apiRes && apiRes.data && Array.isArray(apiRes.data.drivers)) {
-                    pendingList = apiRes.data.drivers;
+                const res = await apiClient.getPendingDrivers();
+                if (res && res.data && Array.isArray(res.data.drivers)) {
+                    pendingList = res.data.drivers;
                 }
-            } catch (err) {
-                // Silently fallback if C++ backend is not running on web deploy
-            }
+            } catch (err) {}
         }
 
-        // 2. Query Firebase Realtime Cloud for ALL pending drivers
-        // Check goride_pending_drivers, goride_users (role=driver & status=pending), and goride_drivers (status=pending)
-        const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
-        const isDeleted = (id, email) => {
-            if (id && deletedIds.has(String(id).toLowerCase().trim())) return true;
-            if (email && deletedIds.has(String(email).toLowerCase().trim())) return true;
-            return false;
-        };
-
-        if (window.realtimeSync) {
-            try {
-                let cloudPending = {};
-                let cloudUsers = {};
-                let cloudDrivers = {};
-
-                if (window.realtimeSync.isAvailable()) {
-                    const [pSnap, uSnap, dSnap] = await Promise.all([
-                        window.realtimeSync.db.ref('goride_pending_drivers').once('value').catch(() => null),
-                        window.realtimeSync.db.ref('goride_users').once('value').catch(() => null),
-                        window.realtimeSync.db.ref('goride_drivers').once('value').catch(() => null)
-                    ]);
-                    if (pSnap) cloudPending = pSnap.val() || {};
-                    if (uSnap) cloudUsers = uSnap.val() || {};
-                    if (dSnap) cloudDrivers = dSnap.val() || {};
-                } else if (typeof window.realtimeSync._restGet === 'function') {
-                    const [pData, uData, dData] = await Promise.all([
-                        window.realtimeSync._restGet('goride_pending_drivers').catch(() => null),
-                        window.realtimeSync._restGet('goride_users').catch(() => null),
-                        window.realtimeSync._restGet('goride_drivers').catch(() => null)
-                    ]);
-                    if (pData) cloudPending = pData || {};
-                    if (uData) cloudUsers = uData || {};
-                    if (dData) cloudDrivers = dData || {};
-                }
-
-                // If Firebase connects later, auto re-run
-                if (!window.realtimeSync.isAvailable() && !this._driverApprovalsReadyHooked) {
-                    this._driverApprovalsReadyHooked = true;
-                    window.realtimeSync.onReady(() => {
-                        this.loadDriverApprovals();
-                    });
-                }
-
-                // Helper to validate and normalize a real pending applicant
-                const parseValidPending = (d, keyFallback) => {
-                    if (!d || typeof d !== 'object') return null;
-                    const id = String(d.id || keyFallback || '').trim();
-                    if (!id || id === 'undefined' || id === 'null') return null;
-                    const name = (d.name || '').trim();
-                    const email = (d.email || '').trim();
-                    const phone = (d.phone || '').trim();
-                    // A real driver applicant MUST have at least name, email, or phone!
-                    if (!name && !email && !phone) return null;
-                    const status = String(d.status || '').toLowerCase().trim();
-                    if (status !== 'pending' && status !== 'chờ duyệt') return null;
-                    return {
-                        id,
-                        name: name || 'Tài xế mới',
-                        email: email || '--',
-                        phone: phone || '--',
-                        vehicleType: d.vehicleType || d.vehicle?.type || 'motorbike',
-                        plate: d.plate || d.licensePlate || d.vehicle?.plate || '--',
-                        experienceYears: Number(d.experienceYears || d.experience) || 1,
-                        status: 'pending',
-                        createdAt: d.createdAt || new Date().toISOString()
-                    };
-                };
-
-                // A. Extract from goride_pending_drivers
-                Object.entries(cloudPending).forEach(([key, cp]) => {
-                    const valid = parseValidPending(cp, key);
-                    if (!valid) return;
-                    if (isDeleted(valid.id, valid.email)) return;
-                    if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
-                        pendingList.push(valid);
-                    }
-                });
-
-                // B. Extract from goride_users (role === 'driver' && status === 'pending')
-                Object.entries(cloudUsers).forEach(([key, cu]) => {
-                    if (!cu || cu.role !== 'driver') return;
-                    const valid = parseValidPending(cu, key);
-                    if (!valid) return;
-                    if (isDeleted(valid.id, valid.email)) return;
-                    if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
-                        pendingList.push(valid);
-                    }
-                });
-
-                // C. Extract from goride_drivers (status === 'pending')
-                Object.entries(cloudDrivers).forEach(([key, cd]) => {
-                    const valid = parseValidPending(cd, key);
-                    if (!valid) return;
-                    if (isDeleted(valid.id, valid.email)) return;
-                    if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
-                        pendingList.push(valid);
-                    }
-                });
-            } catch (e) {
-                console.warn('[Admin] Cloud pending drivers fetch warning:', e);
-            }
-        }
-
-        // 3. Combine with real registered applicants in localStorage
+        // 2. Check localStorage goride_pending_drivers and goride_offline_users
         const localPending = this.getPendingDrivers();
         localPending.forEach(lp => {
-            const valid = parseValidPending(lp, lp.id);
-            if (!valid) return;
-            if (isDeleted(valid.id, valid.email)) return;
-            if (!pendingList.some(p => p.id === valid.id || (valid.email !== '--' && p.email === valid.email))) {
-                pendingList.push(valid);
+            if (!pendingList.some(p => p.id === lp.id || (lp.email && p.email === lp.email))) {
+                pendingList.push(lp);
             }
         });
 
-        // 4. CRITICAL: Persist to localStorage on this Admin device for instant access across tabs
+        // 3. Query Firebase Realtime Cloud (both WebSocket SDK & direct REST GET for guaranteed cross-device sync)
+        if (window.realtimeSync) {
+            try {
+                if (window.realtimeSync.isAvailable()) {
+                    const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                    const cloudPending = snap.val() || {};
+                    Object.values(cloudPending).forEach(cp => {
+                        if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                            pendingList.push(cp);
+                        }
+                    });
+
+                    // Comprehensive check: scan goride_users for any driver with status === 'pending'
+                    const snapUsers = await window.realtimeSync.db.ref('goride_users').once('value');
+                    const cloudUsers = snapUsers.val() || {};
+                    Object.values(cloudUsers).forEach(cu => {
+                        if (cu && cu.role === 'driver' && (cu.status === 'pending' || !cu.status) && !pendingList.some(p => p.id === cu.id || (cu.email && p.email === cu.email))) {
+                            pendingList.push({
+                                id: cu.id,
+                                name: cu.name,
+                                email: cu.email,
+                                phone: cu.phone,
+                                vehicleType: cu.vehicleType || cu.vehicle?.type || 'motorbike',
+                                plate: cu.licensePlate || cu.plate || cu.vehicle?.plate || '--',
+                                experienceYears: cu.experienceYears || cu.experience || 1,
+                                status: 'pending',
+                                createdAt: cu.createdAt || new Date().toISOString()
+                            });
+                        }
+                    });
+                }
+            } catch (e) {}
+
+            // Guaranteed REST fallback: fetches directly via HTTP REST even if WebSocket is unready
+            try {
+                const rtdbUrl = window.realtimeSync.databaseURL || 'https://navigo-app-cc7cf-default-rtdb.asia-southeast1.firebasedatabase.app';
+                const res = await fetch(`${rtdbUrl}/goride_pending_drivers.json`);
+                if (res.ok) {
+                    const restData = await res.json();
+                    if (restData && typeof restData === 'object') {
+                        Object.values(restData).forEach(cp => {
+                            if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                                pendingList.push(cp);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // Cache and persist pending list
+        this.cachedPendingList = pendingList;
         this.savePendingDrivers(pendingList);
 
-        // 5. Update UI Badges synchronously
+        // Update badge counters
         if (badge) badge.textContent = pendingList.length;
+        if (dashCount) dashCount.textContent = pendingList.length;
 
         const sidebarDriversBadge = document.getElementById('sidebar-drivers-count');
         if (sidebarDriversBadge) {
-            const drivers = this.getStoredDrivers();
+            const drivers = this.getStoredDrivers().filter(d => d.status !== 'pending');
             sidebarDriversBadge.textContent = pendingList.length > 0 ? `${drivers.length} (${pendingList.length} chờ)` : drivers.length;
+            if (pendingList.length > 0) {
+                sidebarDriversBadge.className = 'badge badge-warning nav-link-badge';
+            }
         }
 
-        // 6. If no real applicants, show clean empty state
+        // Update Dashboard Alert Banner
+        if (dashAlert) {
+            if (pendingList.length > 0) {
+                dashAlert.style.display = 'block';
+                if (dashPreview) {
+                    dashPreview.innerHTML = pendingList.slice(0, 3).map(driver => {
+                        const vLabel = (driver.vehicleType === 'bike' || driver.vehicleType === 'motorbike')
+                            ? '🛵 Xe máy điện (Navigo Bike)'
+                            : (driver.vehicleType === 'car7' ? '🚐 Ô tô 7 chỗ (Navigo Taxi 7 chỗ)' : '🚗 Ô tô điện (Navigo Car)');
+                        return `
+                            <div style="background:#ffffff; border:1px solid #fde68a; border-radius:10px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <div>
+                                    <div style="font-weight:700; color:#0f2d3c; font-size:0.95rem;">
+                                        ${driver.name} &bull; <span style="color:#d97706;">${vLabel}</span>
+                                    </div>
+                                    <div style="font-size:0.82rem; color:#64748b; margin-top:2px;">
+                                        Biển số: <strong style="color:#0f2d3c;">${driver.plate || driver.licensePlate || '---'}</strong> &bull; SĐT: ${driver.phone} &bull; Email: ${driver.email}
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px;">
+                                    <button type="button" class="btn btn-sm btn-success" onclick="adminController.approveDriver('${driver.id}', true)" style="font-weight:700; border-radius:6px; padding:5px 12px;">
+                                        ✓ Duyệt ngay
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline" onclick="adminController.approveDriver('${driver.id}', false)" style="font-weight:700; border-radius:6px; padding:5px 12px; color:#dc2626; border-color:#fca5a5;">
+                                        ✕ Từ chối
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } else {
+                dashAlert.style.display = 'none';
+            }
+        }
+
+        // Render Drivers Tab Section
+        if (!container) return;
+
         if (pendingList.length === 0) {
             container.innerHTML = `
                 <div class="empty-state" style="padding:28px 16px; text-align:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px;">
                     <div style="font-size:2rem; margin-bottom:6px;">✨</div>
                     <p style="font-weight:600; color:var(--color-gray-700); margin:0;">Không có hồ sơ tài xế nào đang chờ duyệt.</p>
-                    <p style="font-size:0.8rem; color:var(--color-gray-500); margin:4px 0 0 0;">Khi có người đăng ký tài xế trên web hoặc điện thoại, hồ sơ thực tế sẽ lập tức xuất hiện tại đây để Quản trị viên duyệt.</p>
+                    <p style="font-size:0.8rem; color:var(--color-gray-500); margin:4px 0 0 0;">Khi có người đăng ký tài xế trên web, hồ sơ thực tế sẽ lập tức xuất hiện tại đây để Quản trị viên duyệt.</p>
                 </div>
             `;
             return;
         }
 
         container.innerHTML = pendingList.map(driver => {
-            const vLabel = (driver.vehicleType === 'bike' || driver.vehicleType === 'motorbike') ? '🏍️ Xe máy' : '🚗 Ô tô';
+            const vLabel = (driver.vehicleType === 'bike' || driver.vehicleType === 'motorbike')
+                ? '🛵 Xe máy điện (Navigo Bike)'
+                : (driver.vehicleType === 'car7' ? '🚐 Ô tô 7 chỗ (Navigo Taxi 7 chỗ)' : (driver.vehicleType === 'premium' ? '🚘 Xe sang (Navigo Premium)' : '🚗 Ô tô điện (Navigo Car)'));
             return `
-                <div class="card" style="margin-bottom:12px; padding:16px; border:1px solid var(--color-gray-200); border-radius:12px; background:#fff;" id="approval-${driver.id}">
+                <div class="card" style="margin-bottom:12px; padding:16px; border:1.5px solid #fde68a; border-radius:12px; background:#fffbeb;" id="approval-${driver.id}">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                         <div>
                             <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                                <h4 style="margin:0; font-size:1.05rem;">${this.escapeHtml(driver.name)}</h4>
-                                <span class="badge badge-warning" style="font-size:0.75rem;">Chờ duyệt</span>
-                                <span style="font-size:0.75rem; color:var(--color-gray-500); font-family:monospace;">ID: ${this.escapeHtml(driver.id)}</span>
+                                <h4 style="margin:0; font-size:1.1rem; color:#0f2d3c; font-weight:800;">${driver.name}</h4>
+                                <span class="badge badge-warning" style="font-size:0.75rem; background:#fef3c7; color:#92400e; border:1px solid #f59e0b; font-weight:700;">Chờ duyệt</span>
+                                <span style="font-size:0.75rem; color:var(--color-gray-500); font-family:monospace;">ID: ${driver.id}</span>
                             </div>
-                            <p style="color:var(--color-gray-600); font-size:0.875rem; margin:2px 0;">
-                                ✉️ ${this.escapeHtml(driver.email || '--')} &bull; 📞 ${this.escapeHtml(driver.phone || '--')}
+                            <p style="color:var(--color-gray-600); font-size:0.875rem; margin:3px 0;">
+                                ✉️ ${driver.email} &bull; 📞 ${driver.phone}
                             </p>
-                            <p style="color:var(--color-gray-700); font-size:0.85rem; margin:2px 0; font-weight:500;">
-                                ${vLabel} &bull; Biển số: <strong style="color:var(--color-primary);">${this.escapeHtml(driver.plate || driver.licensePlate || '---')}</strong> &bull; Kinh nghiệm: ${driver.experienceYears || driver.experience || 1} năm
+                            <p style="color:var(--color-gray-700); font-size:0.875rem; margin:3px 0; font-weight:600;">
+                                ${vLabel} &bull; Biển số: <strong style="color:#00897b; font-size:0.95rem;">${driver.plate || driver.licensePlate || '---'}</strong> &bull; Kinh nghiệm: ${driver.experienceYears || driver.experience || 1} năm
                             </p>
+                            <div style="font-size:0.75rem; color:#94a3b8; margin-top:4px;">
+                                Thời gian nộp hồ sơ: ${driver.createdAt ? new Date(driver.createdAt).toLocaleString('vi-VN') : 'Gần đây'}
+                            </div>
                         </div>
-                        <div class="approval-actions" style="display:flex; gap:8px;">
-                            <button class="btn btn-success btn-sm btn-approve" onclick="adminController.approveDriver('${driver.id}', true)">
-                                ✓ Duyệt hồ sơ
+                        <div class="approval-actions" style="display:flex; gap:10px;">
+                            <button class="btn btn-success btn-sm btn-approve" onclick="adminController.approveDriver('${driver.id}', true)" style="font-weight:700; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px;">
+                                <span>✓</span> Duyệt hồ sơ
                             </button>
-                            <button class="btn btn-danger btn-sm btn-reject" onclick="adminController.approveDriver('${driver.id}', false)">
-                                ✕ Từ chối
+                            <button class="btn btn-danger btn-sm btn-reject" onclick="adminController.approveDriver('${driver.id}', false)" style="font-weight:700; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px;">
+                                <span>✕</span> Từ chối
                             </button>
                         </div>
                     </div>
@@ -1953,54 +1681,6 @@ class AdminController {
     }
 
     async approveDriver(driverId, approved) {
-        const rawId = driverId;
-        driverId = String(driverId || '').trim();
-
-        // Xử lý dứt điểm trường hợp ID rác / vô danh / rỗng / 'undefined' / 'null':
-        if (!driverId || driverId === 'undefined' || driverId === 'null') {
-            console.warn('[Admin] Phê duyệt/từ chối hồ sơ không hợp lệ (Ghost driver):', rawId);
-
-            // 1. Dọn dẹp sạch hồ sơ rác trong localStorage
-            try {
-                let pending = this.getPendingDrivers();
-                pending = pending.filter(d => d && d.id && String(d.id).trim() !== '' && String(d.id).trim() !== 'undefined' && String(d.id).trim() !== 'null' && ((d.name && d.name.trim()) || (d.phone && d.phone.trim()) || (d.email && d.email.trim() && d.email !== '--')));
-                this.savePendingDrivers(pending);
-            } catch (e) {}
-
-            // 2. Xóa các node rác 'undefined' / 'null' trên Firebase Cloud
-            if (window.realtimeSync) {
-                try {
-                    if (window.realtimeSync.isAvailable()) {
-                        window.realtimeSync.db.ref('goride_pending_drivers/undefined').remove();
-                        window.realtimeSync.db.ref('goride_pending_drivers/null').remove();
-                        window.realtimeSync.db.ref('goride_drivers/undefined').remove();
-                        window.realtimeSync.db.ref('goride_drivers/null').remove();
-                        window.realtimeSync.db.ref('goride_users/undefined').remove();
-                        window.realtimeSync.db.ref('goride_users/null').remove();
-                    }
-                    if (typeof window.realtimeSync._restDelete === 'function') {
-                        window.realtimeSync._restDelete('goride_pending_drivers/undefined');
-                        window.realtimeSync._restDelete('goride_pending_drivers/null');
-                        window.realtimeSync._restDelete('goride_drivers/undefined');
-                        window.realtimeSync._restDelete('goride_drivers/null');
-                        window.realtimeSync._restDelete('goride_users/undefined');
-                        window.realtimeSync._restDelete('goride_users/null');
-                    }
-                } catch (e) {}
-            }
-
-            // 3. Xóa ngay thẻ rác trên giao diện nếu đang hiển thị
-            document.querySelectorAll("[id^='approval-'], #driver-approvals .card").forEach(el => {
-                if (el.id === 'approval-' || el.id === 'approval-undefined' || el.id === 'approval-null' || el.innerText.includes('ID: \n') || el.innerText.includes('ID:  ') || (el.innerText.includes('Chờ duyệt') && el.innerText.includes('✉️ -- • 📞 --'))) {
-                    el.remove();
-                }
-            });
-
-            this.showToast('Đã xóa bỏ hoàn toàn hồ sơ tài xế không hợp lệ khỏi hệ thống!', 'info');
-            await this.loadDriverApprovals();
-            return;
-        }
-
         if (this.isProcessingApproval.has(driverId)) return;
         this.isProcessingApproval.add(driverId);
 
@@ -2011,131 +1691,257 @@ class AdminController {
         }
 
         try {
-            // 1. Call backend API endpoint if reachable (fast non-blocking)
+            // 1. Call backend API endpoint if reachable
             if (typeof apiClient !== 'undefined') {
                 try {
-                    await Promise.race([
-                        approved ? apiClient.approveDriver(driverId) : apiClient.rejectDriver(driverId),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800))
-                    ]);
+                    if (approved) await apiClient.approveDriver(driverId);
+                    else await apiClient.rejectDriver(driverId);
                 } catch (e) {
-                    console.warn('[Admin] Backend approval call notice:', e.message);
+                    console.warn('[Admin] Backend approval call:', e.message);
                 }
             }
 
-            // 2. Read pending list & find applicant
-            let pending = this.getPendingDrivers();
-            let applicant = pending.find(d => d.id === driverId);
-
-            // Cloud query fallback if applicant is not cached in local storage
-            if (!applicant && window.realtimeSync) {
+            // 2. Resolve applicant details from all available local & cloud sources
+            let applicant = (this.cachedPendingList || []).find(d => d.id === driverId || String(d.id) === String(driverId));
+            if (!applicant) {
+                const localPending = this.getPendingDrivers();
+                applicant = localPending.find(d => d.id === driverId || String(d.id) === String(driverId));
+            }
+            if (!applicant) {
+                const offlineUsers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                const u = offlineUsers.find(d => d.id === driverId || String(d.id) === String(driverId));
+                if (u) {
+                    applicant = {
+                        id: u.id,
+                        name: u.name,
+                        email: u.email,
+                        phone: u.phone,
+                        vehicleType: u.vehicleType || u.vehicle?.type || 'motorbike',
+                        plate: u.licensePlate || u.plate || u.vehicle?.plate || '--',
+                        experienceYears: u.experienceYears || u.experience || 1,
+                        status: u.status || 'pending',
+                        createdAt: u.createdAt || new Date().toISOString()
+                    };
+                }
+            }
+            if (!applicant && window.realtimeSync && window.realtimeSync.isAvailable()) {
                 try {
-                    if (window.realtimeSync.isAvailable()) {
-                        const snap = await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).once('value');
-                        applicant = snap.val();
-                        if (!applicant) {
-                            const uSnap = await window.realtimeSync.db.ref(`goride_users/${driverId}`).once('value');
-                            applicant = uSnap.val();
-                        }
-                    } else if (typeof window.realtimeSync._restGet === 'function') {
-                        applicant = await window.realtimeSync._restGet(`goride_pending_drivers/${driverId}`);
-                        if (!applicant) {
-                            applicant = await window.realtimeSync._restGet(`goride_users/${driverId}`);
-                        }
+                    const snap = await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).once('value');
+                    applicant = snap.val();
+                    if (!applicant) {
+                        const uSnap = await window.realtimeSync.db.ref(`goride_users/${driverId}`).once('value');
+                        applicant = uSnap.val();
+                    }
+                    if (!applicant) {
+                        const dSnap = await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).once('value');
+                        applicant = dSnap.val();
+                    }
+                } catch (e) {}
+            }
+            if (!applicant && window.realtimeSync && typeof window.realtimeSync._restGet === 'function') {
+                try {
+                    applicant = await window.realtimeSync._restGet(`goride_pending_drivers/${driverId}`);
+                    if (!applicant) {
+                        applicant = await window.realtimeSync._restGet(`goride_users/${driverId}`);
                     }
                 } catch (e) {}
             }
 
-            // 3. Update real registered users in goride_offline_users
-            try {
-                const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
-                const uIdx = users.findIndex(u => u.id === driverId || (applicant && u.email === applicant.email));
-                if (uIdx !== -1) {
-                    users[uIdx].status = approved ? 'active' : 'rejected';
-                    localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
-                }
-            } catch (err) {}
+            // Fallback object so approval NEVER halts
+            if (!applicant) {
+                applicant = {
+                    id: driverId,
+                    name: 'Tài xế #' + driverId,
+                    email: '--',
+                    phone: '--',
+                    vehicleType: 'motorbike',
+                    plate: '--',
+                    experienceYears: 1,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+            }
 
-            // 4. If approved, add to active registered drivers pool
-            if (approved && applicant) {
-                const drivers = this.getStoredDrivers();
-                const existingIdx = drivers.findIndex(d => d.id === driverId || (applicant.email && d.email === applicant.email));
-                const vType = applicant.vehicleType || applicant.vehicle?.type || 'motorbike';
-                const isBike = (vType === 'bike' || vType === 'motorbike');
-                const vLabel = isBike ? 'Xe máy (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo XL)' : 'Ô tô 4 chỗ (Navigo Car)');
-                const driverRecord = {
+            const vType = applicant.vehicleType || applicant.vehicle?.type || 'motorbike';
+            const isBike = (vType === 'bike' || vType === 'motorbike');
+            const vLabel = isBike ? 'Xe máy điện (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)' : (vType === 'premium' ? 'Xe sang (Navigo Luxury)' : 'Ô tô điện (Navigo Car)'));
+            const plate = applicant.plate || applicant.licensePlate || applicant.vehicle?.plate || '--';
+            const experience = applicant.experienceYears || applicant.experience || applicant.vehicle?.experience || 1;
+
+            if (approved) {
+                // 3. Add to active registered drivers pool
+                const approvedDriverRecord = {
                     id: driverId,
                     name: applicant.name,
                     email: applicant.email,
                     phone: applicant.phone,
                     vehicleType: vType,
                     vehicleTypeName: vLabel,
-                    plate: applicant.plate || applicant.licensePlate || applicant.vehicle?.plate || '--',
-                    experience: applicant.experienceYears || applicant.experience || 1,
+                    plate: plate,
+                    experience: experience,
                     status: 'active',
+                    isOnline: false,
+                    rating: 5.0,
+                    totalRides: 0,
+                    walletBalance: 0,
+                    approvedAt: new Date().toISOString(),
                     createdAt: applicant.createdAt || new Date().toISOString()
                 };
 
-                if (existingIdx !== -1) {
-                    drivers[existingIdx] = { ...drivers[existingIdx], ...driverRecord };
+                let drivers = this.getStoredDrivers();
+                const dIdx = drivers.findIndex(d => d.id === driverId || (applicant.email && applicant.email !== '--' && d.email === applicant.email));
+                if (dIdx !== -1) {
+                    drivers[dIdx] = { ...drivers[dIdx], ...approvedDriverRecord, status: 'active' };
                 } else {
-                    drivers.unshift(driverRecord);
+                    drivers.unshift(approvedDriverRecord);
                 }
                 this.saveStoredDrivers(drivers);
-            }
 
-            // 5. Remove from pending list locally & sanitize
-            pending = pending.filter(d => d && d.id && d.id !== driverId && d.id !== 'undefined' && d.id !== 'null' && ((d.name && d.name.trim()) || (d.phone && d.phone.trim()) || (d.email && d.email.trim() && d.email !== '--')));
-            this.savePendingDrivers(pending);
+                // 4. Update real registered users in goride_offline_users
+                try {
+                    const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                    const uIdx = users.findIndex(u => u.id === driverId || (applicant.email && applicant.email !== '--' && u.email === applicant.email));
+                    if (uIdx !== -1) {
+                        users[uIdx].status = 'active';
+                        users[uIdx].role = 'driver';
+                        if (!users[uIdx].vehicle) users[uIdx].vehicle = {};
+                        users[uIdx].vehicle.plate = plate;
+                        users[uIdx].vehicle.type = vType;
+                        localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+                    } else {
+                        users.unshift({
+                            ...applicant,
+                            id: driverId,
+                            role: 'driver',
+                            status: 'active',
+                            vehicle: { plate, type: vType, experience }
+                        });
+                        localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+                    }
+                } catch (err) {}
 
-            // 6. Synchronize status across Firebase Realtime Cloud
-            if (window.realtimeSync) {
-                const newStatus = approved ? 'active' : 'rejected';
-                const cloudUpdate = {
-                    status: newStatus,
-                    updatedAt: new Date().toISOString()
-                };
-
-                if (window.realtimeSync.isAvailable()) {
+                // 5. Sync to Firebase Realtime Database
+                if (window.realtimeSync) {
                     try {
-                        await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).remove();
-                        await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).update(cloudUpdate);
-                        await window.realtimeSync.db.ref(`goride_users/${driverId}`).update(cloudUpdate);
-
-                        if (applicant && applicant.email) {
-                            try {
-                                const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
-                                const allUsers = uSnap.val() || {};
-                                for (const k of Object.keys(allUsers)) {
-                                    if (allUsers[k] && allUsers[k].email && allUsers[k].email.toLowerCase() === applicant.email.toLowerCase()) {
-                                        await window.realtimeSync.db.ref(`goride_users/${k}`).update(cloudUpdate);
+                        if (window.realtimeSync.isAvailable()) {
+                            await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).remove();
+                            await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).set(approvedDriverRecord);
+                            await window.realtimeSync.db.ref(`goride_users/${driverId}`).update({
+                                status: 'active',
+                                role: 'driver',
+                                updatedAt: new Date().toISOString()
+                            });
+                            if (applicant.email && applicant.email !== '--') {
+                                try {
+                                    const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
+                                    const allUsers = uSnap.val() || {};
+                                    for (const k of Object.keys(allUsers)) {
+                                        if (allUsers[k] && allUsers[k].email && allUsers[k].email.toLowerCase() === applicant.email.toLowerCase()) {
+                                            await window.realtimeSync.db.ref(`goride_users/${k}`).update({
+                                                status: 'active',
+                                                role: 'driver',
+                                                updatedAt: new Date().toISOString()
+                                            });
+                                        }
                                     }
-                                }
-                            } catch (e) {}
+                                } catch (e) {}
+                            }
+                        }
+                        if (typeof window.realtimeSync._restDelete === 'function') {
+                            await window.realtimeSync._restDelete(`goride_pending_drivers/${driverId}`);
+                        }
+                        if (typeof window.realtimeSync._restPut === 'function') {
+                            await window.realtimeSync._restPut(`goride_drivers/${driverId}`, approvedDriverRecord);
+                            await window.realtimeSync._restPatch(`goride_users/${driverId}`, {
+                                status: 'active',
+                                role: 'driver',
+                                updatedAt: new Date().toISOString()
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('[Admin] Firebase approval sync warning:', e);
+                    }
+                }
+            } else {
+                // Reject case
+                try {
+                    const users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
+                    const uIdx = users.findIndex(u => u.id === driverId || (applicant.email && applicant.email !== '--' && u.email === applicant.email));
+                    if (uIdx !== -1) {
+                        users[uIdx].status = 'rejected';
+                        localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
+                    }
+                } catch (err) {}
+
+                if (window.realtimeSync) {
+                    try {
+                        if (window.realtimeSync.isAvailable()) {
+                            await window.realtimeSync.db.ref(`goride_pending_drivers/${driverId}`).remove();
+                            await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).update({
+                                status: 'rejected',
+                                updatedAt: new Date().toISOString()
+                            });
+                            await window.realtimeSync.db.ref(`goride_users/${driverId}`).update({
+                                status: 'rejected',
+                                updatedAt: new Date().toISOString()
+                            });
+                        }
+                        if (typeof window.realtimeSync._restDelete === 'function') {
+                            await window.realtimeSync._restDelete(`goride_pending_drivers/${driverId}`);
                         }
                     } catch (e) {}
                 }
-
-                if (typeof window.realtimeSync._restDelete === 'function') {
-                    try {
-                        await window.realtimeSync._restDelete(`goride_pending_drivers/${driverId}`);
-                        await window.realtimeSync._restPatch(`goride_drivers/${driverId}`, cloudUpdate);
-                        await window.realtimeSync._restPatch(`goride_users/${driverId}`, cloudUpdate);
-                    } catch (e) {}
-                }
             }
 
+            // Remove from local pending lists
+            let pending = this.getPendingDrivers().filter(d => d.id !== driverId && (!applicant.email || applicant.email === '--' || d.email !== applicant.email));
+            this.savePendingDrivers(pending);
+            if (this.cachedPendingList) {
+                this.cachedPendingList = this.cachedPendingList.filter(d => d.id !== driverId && (!applicant.email || applicant.email === '--' || d.email !== applicant.email));
+            }
+
+            // Send in-app notification to the driver's isolated inbox
+            try {
+                const driverKeys = [];
+                if (driverId) driverKeys.push(`navigo_user_notifs_${String(driverId).toLowerCase().replace(/[^a-z0-9_]/g, '_')}`);
+                if (applicant.email && applicant.email !== '--') driverKeys.push(`navigo_user_notifs_${String(applicant.email).toLowerCase().replace(/[^a-z0-9_]/g, '_')}`);
+                if (applicant.phone && applicant.phone !== '--') driverKeys.push(`navigo_user_notifs_${String(applicant.phone).toLowerCase().replace(/[^a-z0-9_]/g, '_')}`);
+
+                const notifItem = {
+                    id: 'notif_approval_' + Date.now(),
+                    category: 'system',
+                    title: approved ? '🎉 Hồ sơ đối tác đã được duyệt!' : '⚠️ Thông báo xét duyệt hồ sơ đối tác',
+                    body: approved
+                        ? `Chúc mừng ${applicant.name || 'bạn'}! Hồ sơ đăng ký đối tác tài xế Navigo của bạn đã được Quản trị viên xét duyệt thành công. Bạn có thể bật trạng thái hoạt động để bắt đầu đón khách ngay!`
+                        : `Rất tiếc! Hồ sơ đối tác tài xế của bạn chưa đáp ứng đủ điều kiện phê duyệt của Navigo. Vui lòng liên hệ tổng đài hỗ trợ để biết thêm thông tin.`,
+                    date: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' hôm nay',
+                    timestamp: Date.now(),
+                    icon: approved ? '🎉' : '⚠️',
+                    unread: true,
+                    actionUrl: approved ? 'driver.html' : null,
+                    actionText: approved ? 'Vào cổng tài xế' : null
+                };
+
+                driverKeys.forEach(k => {
+                    try {
+                        const list = JSON.parse(localStorage.getItem(k) || '[]');
+                        list.unshift(notifItem);
+                        localStorage.setItem(k, JSON.stringify(list));
+                    } catch (e) {}
+                });
+            } catch (errNotif) {}
+
             this.showToast(approved 
-                ? `Đã phê duyệt tài xế "${applicant ? applicant.name : driverId}" thành công! Tài khoản đã được kích hoạt.` 
+                ? `Đã phê duyệt tài xế ${applicant.name || ''} thành công! Tài khoản đã được kích hoạt.` 
                 : 'Đã từ chối hồ sơ đăng ký tài xế.', 
                 approved ? 'success' : 'info'
             );
 
             if (card) card.remove();
             
-            // 7. Reload badge, pending approvals, driver list, and dashboard
-            await this.loadDriverApprovals();
+            // Immediately reload badge, registered drivers list, and dashboard
             await this.loadDriversList();
+            await this.loadDriverApprovals();
             this.loadDashboard();
         } catch (err) {
             this.showToast('Lỗi xử lý duyệt: ' + err.message, 'error');
@@ -2180,12 +1986,6 @@ class AdminController {
 
     async getStoredCustomers() {
         const userMap = new Map();
-        const deletedIds = new Set(this.getDeletedUserIds().map(x => String(x).toLowerCase().trim()));
-        const isUserDeleted = (u) => {
-            if (!u) return true;
-            if (u.id && deletedIds.has(String(u.id).toLowerCase().trim())) return true;
-            return false;
-        };
 
         // 1. Fetch from C++ Backend API if reachable
         if (typeof apiClient !== 'undefined') {
@@ -2193,9 +1993,7 @@ class AdminController {
                 const res = await apiClient.get('/admin/users');
                 if (res && res.data && Array.isArray(res.data.users)) {
                     res.data.users.forEach(u => {
-                        if (u && u.id && !isUserDeleted(u)) {
-                            userMap.set(u.id, u);
-                        }
+                        if (u && u.id) userMap.set(u.id, u);
                     });
                 }
             } catch (e) {}
@@ -2209,12 +2007,6 @@ class AdminController {
                     const cloudUsers = snap.val() || {};
                     Object.values(cloudUsers).forEach(u => {
                         if (u && (u.id || u.email)) {
-                            if (isUserDeleted(u)) {
-                                try {
-                                    if (u.id) window.realtimeSync.db.ref(`goride_users/${u.id}`).remove();
-                                } catch (e) {}
-                                return;
-                            }
                             const key = u.id || u.email;
                             userMap.set(key, { ...userMap.get(key), ...u });
                         }
@@ -2226,7 +2018,6 @@ class AdminController {
                     if (restUsers && typeof restUsers === 'object') {
                         Object.values(restUsers).forEach(u => {
                             if (u && (u.id || u.email)) {
-                                if (isUserDeleted(u)) return;
                                 const key = u.id || u.email;
                                 userMap.set(key, { ...userMap.get(key), ...u });
                             }
@@ -2241,32 +2032,40 @@ class AdminController {
             const offline = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
             offline.forEach(u => {
                 if (u && (u.id || u.email)) {
-                    if (isUserDeleted(u)) return;
                     const key = u.id || u.email;
                     userMap.set(key, { ...u, ...userMap.get(key) });
                 }
             });
         } catch (e) {}
 
-        // Baseline admin account (no hardcoded demo customer so deleted customers never resurrect)
+        // Baseline customer & admin accounts if not already included
         const defaultAccounts = [
             {
                 id: 'adm_admin',
                 name: 'Quản trị viên Hệ thống',
-                email: 'admin@navigo.vn',
+                email: 'admin@xanhsm.vn',
                 phone: '0988888888',
                 role: 'admin',
                 status: 'active',
                 createdAt: '2025-01-01T00:00:00.000Z'
+            },
+            {
+                id: 'usr_c101',
+                name: 'Nguyễn Văn An',
+                email: 'customer@demo.com',
+                phone: '0901234567',
+                role: 'customer',
+                status: 'active',
+                createdAt: '2026-01-15T08:30:00.000Z'
             }
         ];
         defaultAccounts.forEach(da => {
-            if (!isUserDeleted(da) && !userMap.has(da.id) && !userMap.has(da.email)) {
+            if (!userMap.has(da.id) && !userMap.has(da.email)) {
                 userMap.set(da.id, da);
             }
         });
 
-        return Array.from(userMap.values()).filter(u => !isUserDeleted(u));
+        return Array.from(userMap.values());
     }
 
     async loadCustomers() {
@@ -2337,7 +2136,7 @@ class AdminController {
         const trips = this.getStoredTrips();
         const tripCountMap = new Map();
         trips.forEach(t => {
-            if (t && this.isCompletedTrip(t)) {
+            if (t && t.status === 'completed') {
                 if (t.customerId) tripCountMap.set(t.customerId, (tripCountMap.get(t.customerId) || 0) + 1);
                 if (t.customerPhone) tripCountMap.set(t.customerPhone, (tripCountMap.get(t.customerPhone) || 0) + 1);
                 if (t.customerEmail) tripCountMap.set(t.customerEmail, (tripCountMap.get(t.customerEmail) || 0) + 1);
@@ -2356,48 +2155,48 @@ class AdminController {
 
             return `
                 <tr id="customer-row-${u.id}">
-                    <td style="font-family:monospace; font-weight:700; color:var(--color-gray-600); font-size:0.75rem; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="#${this.escapeHtml(u.id || '--')}">#${this.escapeHtml(u.id || '--')}</td>
+                    <td style="font-family:monospace; font-weight:700; color:var(--color-gray-600); font-size:0.75rem;">#${this.escapeHtml(u.id || '--')}</td>
                     <td>
                         <div style="display:flex; align-items:center; gap:8px;">
                             ${avatarHtml}
-                            <div style="min-width:0;">
-                                <div style="font-weight:700; color:#0f172a; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(u.name || 'Người dùng')}">${this.escapeHtml(u.name || 'Người dùng')}</div>
-                                <div style="font-size:0.72rem; color:#64748b; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(u.email || '--')}">${this.escapeHtml(u.email || '--')}</div>
+                            <div>
+                                <div style="font-weight:700; color:#0f172a;">${this.escapeHtml(u.name || 'Người dùng')}</div>
+                                <div style="font-size:0.72rem; color:#64748b;">${this.escapeHtml(u.email || '--')}</div>
                             </div>
                         </div>
                     </td>
-                    <td style="font-weight:600; font-family:monospace; color:#334155; white-space:nowrap;">${this.escapeHtml(u.phone || '--')}</td>
-                    <td style="font-size:0.8rem; color:#475569; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(u.email || '--')}">${this.escapeHtml(u.email || '--')}</td>
+                    <td style="font-weight:600; font-family:monospace; color:#334155;">${this.escapeHtml(u.phone || '--')}</td>
+                    <td style="font-size:0.8rem; color:#475569;">${this.escapeHtml(u.email || '--')}</td>
                     <td>
-                        <span class="badge ${isAdmin ? 'badge-danger' : 'badge-info'}" style="font-weight:700; font-size:0.72rem; padding:3px 8px; white-space:nowrap;">
+                        <span class="badge ${isAdmin ? 'badge-danger' : 'badge-info'}" style="font-weight:700; font-size:0.72rem; padding:3px 8px;">
                             ${isAdmin ? '👑 Quản trị viên' : '👤 Khách hàng'}
                         </span>
                     </td>
-                    <td style="font-weight:700; color:#0f766e; text-align:center; white-space:nowrap;">${completedCount} chuyến</td>
+                    <td style="font-weight:700; color:#0f766e; text-align:center;">${completedCount} chuyến</td>
                     <td>
-                        <span class="badge ${isLocked ? 'badge-danger' : 'badge-success'}" style="font-size:0.72rem; padding:3px 8px; white-space:nowrap;">
+                        <span class="badge ${isLocked ? 'badge-danger' : 'badge-success'}" style="font-size:0.72rem; padding:3px 8px;">
                             ${isLocked ? '🔒 Đã khóa' : '🟢 Hoạt động'}
                         </span>
                     </td>
-                    <td style="font-size:0.75rem; color:#64748b; white-space:nowrap;">${createdDate}</td>
-                    <td class="td-actions" style="text-align:right;">
-                        <div class="table-actions" style="display:flex; gap:6px; justify-content:flex-end; align-items:center;">
+                    <td style="font-size:0.75rem; color:#64748b;">${createdDate}</td>
+                    <td style="text-align:right;">
+                        <div class="table-actions" style="display:flex; gap:6px; justify-content:flex-end;">
                             <button type="button" class="btn btn-sm ${isAdmin ? 'btn-ghost' : 'btn-primary'}" 
-                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700; white-space:nowrap;"
+                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700;"
                                 onclick="adminController.toggleAdminRole('${u.id}')"
                                 title="${isAdmin ? 'Hạ quyền xuống Khách hàng' : 'Thăng cấp lên Quản trị viên (Admin)'}">
                                 ${isAdmin ? '🔻 Bỏ Admin' : '⭐ Quyền Admin'}
                             </button>
                             <button type="button" class="btn btn-sm ${isLocked ? 'btn-success' : 'btn-ghost'}"
-                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700; white-space:nowrap;"
+                                style="font-size:0.74rem; padding:4px 8px; border-radius:6px; font-weight:700;"
                                 onclick="adminController.toggleCustomerLock('${u.id}')"
                                 title="${isLocked ? 'Mở khóa tài khoản' : 'Khóa tài khoản này'}">
                                 ${isLocked ? '🔓 Mở khóa' : '🔒 Khóa'}
                             </button>
-                            <button type="button" class="btn-action-edit" onclick="adminController.openEditCustomerModal('${u.id}')" title="Sửa thông tin" style="flex-shrink:0;">
+                            <button type="button" class="btn-action-edit" onclick="adminController.openEditCustomerModal('${u.id}')" title="Sửa thông tin">
                                 ✏️
                             </button>
-                            <button type="button" class="btn-action-delete" onclick="adminController.openDeleteModal('customer', '${u.id}')" title="Xóa tài khoản sạch hoàn toàn" style="flex-shrink:0;">
+                            <button type="button" class="btn-action-delete" onclick="adminController.openDeleteModal('customer', '${u.id}')" title="Xóa tài khoản sạch hoàn toàn">
                                 🗑️
                             </button>
                         </div>
@@ -2639,18 +2438,8 @@ class AdminController {
             this.showToast(`Đã xóa vĩnh viễn chuyến đi #${id}!`, 'info');
         } else if (type === 'driver') {
             let drivers = this.getStoredDrivers();
-            const targetDriver = drivers.find(d => d && d.id === id);
-            this.addDeletedUserId(id);
-
             drivers = drivers.filter(d => d && d.id !== id);
             this.saveStoredDrivers(drivers);
-
-            // Clean from backend API
-            if (typeof apiClient !== 'undefined') {
-                try {
-                    apiClient.post('/admin/users/delete', { userId: id });
-                } catch (e) {}
-            }
 
             // Also clean from pending, offline users, online, and Firebase
             try {
@@ -2659,17 +2448,14 @@ class AdminController {
                 this.savePendingDrivers(pending);
 
                 let users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
-                users = users.filter(u => u && u.id !== id && (!targetDriver?.email || u.email !== targetDriver.email));
+                users = users.filter(u => u && u.id !== id);
                 localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
 
                 let online = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.ONLINE_DRIVERS) || '{}');
                 delete online[id];
                 localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(online));
 
-                if (window.realtimeSync && typeof window.realtimeSync.deleteUser === 'function') {
-                    window.realtimeSync.deleteUser(id, targetDriver?.email);
-                } else if (window.realtimeSync && window.realtimeSync.isAvailable()) {
-                    window.realtimeSync.db.ref('goride_users/' + id).remove();
+                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
                     window.realtimeSync.db.ref('goride_drivers/' + id).remove();
                     window.realtimeSync.db.ref('goride_pending_drivers/' + id).remove();
                     window.realtimeSync.db.ref('goride_online_drivers/' + id).remove();
@@ -2679,22 +2465,19 @@ class AdminController {
             this.loadDriversList();
             this.loadDriverApprovals();
             this.loadDashboard();
-            this.showToast(`Đã xóa vĩnh viễn tài xế #${id} khỏi hệ thống!`, 'info');
+            this.showToast(`Đã xóa tài xế #${id} thành công!`, 'info');
         } else if (type === 'customer') {
             try {
                 const targetCustomer = (this.cachedCustomers || []).find(c => c.id === id);
 
-                // 1. Record in blacklisted/deleted user IDs so mock never resurrects
-                this.addDeletedUserId(id);
-
-                // 2. Delete from SQLite Backend API
+                // 1. Delete from SQLite Backend API
                 if (typeof apiClient !== 'undefined') {
                     try {
                         await apiClient.post('/admin/users/delete', { userId: id });
                     } catch (e) {}
                 }
 
-                // 3. Delete cleanly from Firebase Realtime Cloud via RealtimeSyncManager
+                // 2. Delete cleanly from Firebase Realtime Cloud via RealtimeSyncManager
                 if (window.realtimeSync && typeof window.realtimeSync.deleteUser === 'function') {
                     await window.realtimeSync.deleteUser(id, targetCustomer?.email);
                 } else if (window.realtimeSync && window.realtimeSync.isAvailable()) {
@@ -2704,7 +2487,7 @@ class AdminController {
                     window.realtimeSync.db.ref(`goride_online_drivers/${id}`).remove();
                 }
 
-                // 4. Purge cleanly from localStorage
+                // 3. Purge cleanly from localStorage
                 let users = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
                 users = users.filter(u => !(u && (u.id === id || (targetCustomer && targetCustomer.email && u.email === targetCustomer.email))));
                 localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
@@ -2721,21 +2504,10 @@ class AdminController {
                 delete online[id];
                 localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(online));
 
-                // Clean session if current user was deleted
-                try {
-                    const cur = JSON.parse(sessionStorage.getItem('ride_rtree_user') || 'null');
-                    if (cur && (cur.id === id || (targetCustomer?.email && cur.email === targetCustomer.email))) {
-                        sessionStorage.removeItem('ride_rtree_user');
-                        sessionStorage.removeItem('ride_rtree_token');
-                    }
-                } catch (e) {}
-
-                // Clean cached list & DOM immediately
+                // Clean cached list
                 if (this.cachedCustomers) {
-                    this.cachedCustomers = this.cachedCustomers.filter(c => c.id !== id && (!targetCustomer?.email || c.email !== targetCustomer.email));
+                    this.cachedCustomers = this.cachedCustomers.filter(c => c.id !== id);
                 }
-                const domRow = document.getElementById(`customer-row-${id}`);
-                if (domRow) domRow.remove();
 
                 this.showToast(`Đã xóa vĩnh viễn tài khoản #${id} và dọn dẹp sạch toàn bộ database.`, 'info');
                 await this.loadCustomers();
@@ -2772,20 +2544,14 @@ class AdminController {
     }
 
     getStatusBadge(status) {
-        const s = String(status || '').toLowerCase().trim();
         const map = {
             'completed': { label: 'Hoàn thành', cls: 'badge-success' },
-            'finished': { label: 'Hoàn thành', cls: 'badge-success' },
-            'finish': { label: 'Hoàn thành', cls: 'badge-success' },
-            'done': { label: 'Hoàn thành', cls: 'badge-success' },
             'in_progress': { label: 'Đang di chuyển', cls: 'badge-primary' },
             'accepted': { label: 'Đã nhận', cls: 'badge-primary' },
             'requested': { label: 'Đang tìm xe', cls: 'badge-warning' },
-            'offered': { label: 'Đang tìm xe', cls: 'badge-warning' },
-            'cancelled': { label: 'Đã hủy', cls: 'badge-danger' },
-            'canceled': { label: 'Đã hủy', cls: 'badge-danger' }
+            'cancelled': { label: 'Đã hủy', cls: 'badge-danger' }
         };
-        return map[s] || { label: status || 'Chờ', cls: 'badge-info' };
+        return map[status] || { label: status || 'Chờ', cls: 'badge-info' };
     }
 
     escapeHtml(str) {
@@ -2826,6 +2592,194 @@ class AdminController {
         container.appendChild(toast);
         setTimeout(() => toast.remove(), 3500);
     }
+
+    /* ==========================================================================
+       PROMOTIONS & SOLAR HOLIDAY BROADCAST METHODS (ACCOUNT ISOLATION)
+       ========================================================================== */
+
+    /**
+     * Load & Populate Promotions & Broadcasts Tab
+     */
+    /**
+     * Quick broadcast shortcut from customer or driver tabs
+     */
+    quickBroadcast(target = 'all') {
+        this.switchTab('promotions');
+        const targetEl = document.getElementById('promo-target');
+        if (targetEl) {
+            targetEl.value = target;
+        }
+        const titleEl = document.getElementById('promo-title');
+        if (titleEl) {
+            titleEl.focus();
+            titleEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    /**
+     * Load & Populate Promotions & Broadcasts Tab
+     */
+    loadPromotionsTab() {
+        const select = document.getElementById('promo-solar-holiday');
+        if (select && typeof VIETNAM_SOLAR_HOLIDAYS !== 'undefined') {
+            if (select.options.length <= 1) {
+                VIETNAM_SOLAR_HOLIDAYS.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h.key;
+                    opt.textContent = `${h.icon} ${h.name}`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        const promoBadge = document.getElementById('sidebar-promos-count');
+        if (promoBadge && typeof navigoNotifications !== 'undefined') {
+            const bcasts = navigoNotifications.getBroadcasts();
+            promoBadge.textContent = bcasts.length;
+        }
+
+        this.renderBroadcastsTable();
+    }
+
+    /**
+     * Quick-fill form using Vietnamese Solar Calendar Holiday template
+     */
+    applySolarHolidayTemplate(key) {
+        if (!key || typeof VIETNAM_SOLAR_HOLIDAYS === 'undefined') return;
+        const holiday = VIETNAM_SOLAR_HOLIDAYS.find(h => h.key === key);
+        if (!holiday) return;
+
+        const titleEl = document.getElementById('promo-title');
+        const bodyEl = document.getElementById('promo-body');
+        const codeEl = document.getElementById('promo-code');
+        const discEl = document.getElementById('promo-discount');
+        const targetEl = document.getElementById('promo-target');
+        const catEl = document.getElementById('promo-category');
+
+        if (titleEl) titleEl.value = holiday.title;
+        if (bodyEl) bodyEl.value = holiday.body;
+        if (codeEl) codeEl.value = holiday.promoCode || '';
+        if (discEl) discEl.value = holiday.discountPercent || '';
+        if (targetEl) targetEl.value = holiday.target || 'all';
+        if (catEl) catEl.value = holiday.category || 'promo';
+
+        this.showToast(`Đã áp dụng mẫu sự kiện "${holiday.name}"!`, 'info');
+    }
+
+    /**
+     * Admin publishes a new notification / promotion broadcast
+     */
+    publishBroadcast(e) {
+        if (e && e.preventDefault) e.preventDefault();
+
+        const target = document.getElementById('promo-target')?.value || 'all';
+        const category = document.getElementById('promo-category')?.value || 'promo';
+        const title = document.getElementById('promo-title')?.value.trim();
+        const body = document.getElementById('promo-body')?.value.trim();
+        const promoCode = document.getElementById('promo-code')?.value.trim().toUpperCase() || null;
+        const discountPercent = Number(document.getElementById('promo-discount')?.value) || null;
+
+        if (!title || !body) {
+            this.showToast('Vui lòng nhập đầy đủ tiêu đề và nội dung thông báo.', 'warning');
+            return;
+        }
+
+        const targetLabel = target === 'all' ? 'Tất cả người dùng & tài xế' : (target === 'customer' ? 'Chỉ Khách hàng' : 'Chỉ Đối tác Tài xế');
+
+        const doPublish = () => {
+            if (typeof navigoNotifications === 'undefined') {
+                this.showToast('Lỗi: Hệ thống thông báo chưa được tải.', 'error');
+                return;
+            }
+
+            const res = navigoNotifications.publishBroadcast({
+                title,
+                body,
+                target,
+                category,
+                promoCode,
+                discountPercent,
+                icon: category === 'promo' ? '🎟️' : '🇻🇳'
+            });
+
+            if (res) {
+                this.showToast(`Đã phát hành thông báo thành công tới "${targetLabel}"!`, 'success');
+                const form = document.getElementById('form-broadcast-promo');
+                if (form) form.reset();
+                this.renderBroadcastsTable();
+            } else {
+                this.showToast('Không thể phát hành thông báo.', 'error');
+            }
+        };
+
+        if (typeof window.showNavigoModal === 'function') {
+            window.showNavigoModal({
+                title: 'Xác nhận phát hành thông báo',
+                message: `Bạn có chắc chắn muốn phát hành thông báo "${title}" tới đối tượng: ${targetLabel}?`,
+                icon: '📢',
+                confirmText: 'Phát hành ngay',
+                cancelText: 'Xem lại',
+                onConfirm: doPublish
+            });
+        } else {
+            doPublish();
+        }
+    }
+
+    /**
+     * Render broadcast history table in Admin
+     */
+    renderBroadcastsTable() {
+        const tbody = document.getElementById('promo-broadcasts-tbody');
+        if (!tbody) return;
+
+        if (typeof navigoNotifications === 'undefined') {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:24px;">Hệ thống thông báo chưa sẵn sàng.</td></tr>';
+            return;
+        }
+
+        const broadcasts = navigoNotifications.getBroadcasts();
+        if (!broadcasts || broadcasts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:24px; color:#64748b;">Chưa có thông báo nào được phát hành.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = broadcasts.map(b => {
+            const targetBadge = b.target === 'all'
+                ? '<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700;">🌐 Tất cả</span>'
+                : (b.target === 'customer'
+                    ? '<span class="badge" style="background:#e6f7f6; color:#007d77; font-weight:700;">👤 Khách hàng</span>'
+                    : '<span class="badge" style="background:#fef3c7; color:#92400e; font-weight:700;">🚗 Tài xế</span>');
+
+            const catBadge = b.category === 'promo'
+                ? '<span class="badge badge-success">🎟️ Khuyến mãi</span>'
+                : '<span class="badge badge-info">⭐ Sự kiện</span>';
+
+            const voucherText = b.promoCode
+                ? `<code style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:800; color:#0f2d3c;">${b.promoCode}</code>`
+                : '<span style="color:#94a3b8;">--</span>';
+
+            const discountText = b.discountPercent
+                ? `<strong style="color:#00b1a9;">-${b.discountPercent}%</strong>`
+                : '<span style="color:#94a3b8;">--</span>';
+
+            return `
+                <tr>
+                    <td style="font-size:0.85rem; color:#64748b;">${b.date || 'Hôm nay'}</td>
+                    <td>
+                        <div style="font-weight:700; color:#0f2d3c; margin-bottom:2px;">${b.icon || ''} ${b.title}</div>
+                        <div style="font-size:0.82rem; color:#64748b; max-width:400px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${b.body}</div>
+                    </td>
+                    <td>${targetBadge}</td>
+                    <td>${catBadge}</td>
+                    <td>${voucherText}</td>
+                    <td>${discountText}</td>
+                    <td><span class="badge badge-success" style="font-size:0.75rem;">Đã phát hành</span></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
 }
 
 // Global initialization

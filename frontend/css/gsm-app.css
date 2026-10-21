@@ -1,0 +1,2368 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ==========================================================================
+   NAVIGO - EXACT PIXEL-PERFECT MOBILE, TABLET & PC STYLESHEET
+   100% matched to authentic Navigo Application Screenshots
+   ========================================================================== */
+
+:root {
+  --gsm-teal: #00b1a9;
+  --gsm-teal-light: #e6f7f6;
+  --gsm-teal-card-bg: #eaf8f7;
+  --gsm-teal-border: #00b1a9;
+  --gsm-teal-hover: #009e96;
+  --gsm-navy: #0f2d3c;
+  --gsm-text-dark: #0f172a;
+  --gsm-text-sub: #64748b;
+  --gsm-bg-gray: #f8fafc;
+  --gsm-yellow-square: #f59e0b;
+  --gsm-radius-pill: 9999px;
+  --gsm-radius-card: 18px;
+  --gsm-radius-sheet: 24px;
+}
+
+/* Global resets for pure app feel */
+* {
+  box-sizing: border-box;
+}
+
+body.gsm-theme {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", Roboto, sans-serif !important;
+  background-color: #f1f5f9;
+  color: var(--gsm-text-dark);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   UNIVERSAL DRAGGABLE SCROLLBAR SYSTEM
+   Fixes invisible / un-draggable scrollbars on PC, Mac, Tablet & Mobile
+   ========================================================================== */
+/* WebKit & Chromium (Chrome, Edge, Safari, Opera, Brave, Responsively App) */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+  border: 2px solid #f1f5f9;
+  cursor: grab;
+  transition: background-color 0.15s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00b1a9;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #0d9488;
+  cursor: grabbing;
+}
+
+/* Firefox standard scrollbars */
+html, body, * {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+/* Touch momentum scrolling for iOS/Android/Tablets */
+html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas, .gsm-profile-page-wrapper, .goride-dialog-card {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Container responsive wrapper */
+.gsm-screen-wrapper {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: #ffffff;
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(15, 45, 60, 0.12);
+}
+
+/* Desktop & Tablet Adaptations */
+@media (min-width: 1025px) {
+  body.gsm-theme {
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    height: auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  /* Lock body viewport only when dual-pane desktop split layout is active (Home, Booking, etc.) */
+  body.gsm-theme:has(.gsm-desktop-container) {
+    height: 100vh;
+    overflow: hidden;
+  }
+  
+  /* Standalone profile page wrapper should always scroll full page smoothly */
+  body.gsm-theme:has(.gsm-profile-page-wrapper),
+  body.gsm-theme .gsm-profile-page-wrapper {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow-y: auto !important;
+    overflow-x: visible !important;
+  }
+  
+  /* PC Top Nav Bar */
+  .gsm-pc-navbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    height: 64px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+  
+  .gsm-pc-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .gsm-pc-nav-link {
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #475569;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  
+  .gsm-pc-nav-link:hover, .gsm-pc-nav-link.active {
+    color: var(--gsm-teal);
+    background: var(--gsm-teal-light);
+  }
+
+  /* Desktop Dual-Layout: Full Width & Full Height Seamless Split (Edge-to-Edge) */
+  .gsm-desktop-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+    width: 100%;
+    height: calc(100vh - 64px);
+    flex: 1;
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  .gsm-desktop-sidebar {
+    width: 440px;
+    min-width: 420px;
+    max-width: 460px;
+    flex-shrink: 0;
+    height: 100%;
+    border-right: 1px solid #e2e8f0;
+    background: #ffffff;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gsm-desktop-sidebar .gsm-screen-wrapper {
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #ffffff;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gsm-desktop-sidebar .gsm-screen-wrapper::-webkit-scrollbar {
+    width: 9px;
+  }
+  .gsm-desktop-sidebar .gsm-screen-wrapper::-webkit-scrollbar-track {
+    background: #f8fafc;
+    border-radius: 9999px;
+  }
+  .gsm-desktop-sidebar .gsm-screen-wrapper::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+    border: 2px solid #f8fafc;
+    cursor: grab;
+  }
+  .gsm-desktop-sidebar .gsm-screen-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #00b1a9;
+  }
+  .gsm-desktop-sidebar .gsm-screen-wrapper::-webkit-scrollbar-thumb:active {
+    background: #0d9488;
+    cursor: grabbing;
+  }
+
+  /* ==========================================================================
+     DESKTOP CUSTOMER SIDEBAR FLOW: ELIMINATE BLANK SPACES & MOVE LOWER UI UP
+     ========================================================================== */
+  .gsm-desktop-sidebar .goride-view-layer {
+    width: 100%;
+    height: auto;
+    min-height: 100%;
+    flex: 1 1 auto;
+  }
+
+  .gsm-desktop-sidebar .goride-view-layer.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gsm-desktop-sidebar .gsm-search-screen,
+  .gsm-desktop-sidebar .gsm-route-preview-screen,
+  .gsm-desktop-sidebar .gsm-map-fullscreen-container {
+    min-height: auto !important;
+    height: auto !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    overflow: visible !important;
+    padding: 16px 16px 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 1. Reset Top Floating Header to natural block flow */
+  .gsm-desktop-sidebar .gsm-map-floating-header {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 0 12px 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 2. Reset Floating Route Capsule (Screen 4) to natural block flow */
+  .gsm-desktop-sidebar .gsm-floating-route-box {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    margin: 0 0 14px 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 3. Hide mobile artifacts in desktop sidebar */
+  .gsm-desktop-sidebar .gsm-sheet-drag-handle,
+  .gsm-desktop-sidebar .gsm-floating-shield-btn,
+  .gsm-desktop-sidebar .gsm-center-target-pin {
+    display: none !important;
+  }
+
+  /* 4. Vehicle Selection Sheet in Desktop Sidebar (Screen 4):
+     ELIMINATES THE BLANK SPACE: Sits directly below the route capsule, not bottom: 0! */
+  .gsm-desktop-sidebar .gsm-vehicle-sheet {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  /* 5. Searching Radar Panel in Desktop Sidebar (Screen 5):
+     Sits directly below the header */
+  .gsm-desktop-sidebar #tracking-searching-panel {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    margin: 0 0 14px 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 6. Driver Card in Desktop Sidebar (Screen 5 - Image 1):
+     ELIMINATES THE BLANK SPACE: Sits directly below header, action buttons fully visible! */
+  .gsm-desktop-sidebar #tracking-driver-sheet {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+    flex-direction: column !important;
+  }
+
+  /* 7. Pickup Confirm Sheet in Desktop Sidebar (Screen 3) */
+  .gsm-desktop-sidebar .gsm-pickup-bottom-sheet {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  .gsm-desktop-wide-canvas {
+    flex: 1;
+    height: 100%;
+    background: #ffffff;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Ensure bottom nav remains centered at screen bottom on PC desktop */
+  .gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .gsm-pc-navbar {
+    display: none !important;
+  }
+  .gsm-desktop-wide-canvas {
+    display: none !important;
+  }
+  .gsm-screen-wrapper {
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .gsm-desktop-wide-canvas {
+    display: none !important;
+  }
+  .gsm-screen-wrapper {
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   SCREEN 1: NAVIGO HOME (Màn hình chính Navigo)
+   -------------------------------------------------------------------------- */
+.gsm-home-header {
+  background: url('../assets/gsm/city_bg.jpg') no-repeat top center;
+  background-size: cover;
+  padding: 16px 16px 20px;
+  position: relative;
+}
+
+.gsm-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.gsm-status-time {
+  background: #22c55e;
+  color: #ffffff;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.gsm-status-icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+/* Pill Search Bar */
+.gsm-top-search-pill {
+  background: #ffffff;
+  border-radius: var(--gsm-radius-pill);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-decoration: none;
+}
+
+.gsm-top-search-pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 177, 169, 0.15);
+}
+
+.gsm-search-icon {
+  font-size: 1.15rem;
+  color: #94a3b8;
+}
+
+.gsm-search-placeholder {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #64748b;
+  flex: 1;
+}
+
+/* Food Section Carousel */
+.gsm-food-section {
+  padding: 16px 0 12px 16px;
+}
+
+.gsm-food-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 16px;
+  margin-bottom: 12px;
+}
+
+.gsm-food-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gsm-food-carousel {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.gsm-food-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.gsm-food-card {
+  flex-shrink: 0;
+  width: 140px;
+  cursor: pointer;
+}
+
+.gsm-food-img-wrapper {
+  width: 140px;
+  height: 100px;
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+  background: #f1f5f9;
+}
+
+.gsm-food-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.gsm-food-rating-pill {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(15, 23, 42, 0.75);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  backdrop-filter: blur(4px);
+}
+
+.gsm-food-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gsm-food-dist {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Two Hero Primary Cards (Đặt xe & Đặt xe máy) */
+.gsm-hero-cards-row {
+  display: flex;
+  gap: 12px;
+  padding: 0 16px;
+  margin-bottom: 20px;
+}
+
+.gsm-hero-service-card {
+  flex: 1;
+  background: linear-gradient(135deg, #e6f7f6 0%, #f4fbfa 100%);
+  border-radius: 18px;
+  padding: 16px 14px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 130px;
+  text-decoration: none;
+  border: 1px solid #d4f1ef;
+  box-shadow: 0 4px 12px rgba(0, 177, 169, 0.08);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.gsm-hero-service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 177, 169, 0.18);
+  border-color: var(--gsm-teal);
+}
+
+.gsm-hero-service-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--gsm-navy);
+}
+
+.gsm-hero-service-img {
+  width: 125px;
+  height: 75px;
+  object-fit: contain;
+  align-self: flex-end;
+  margin-top: auto;
+}
+
+/* Other Services 4x2 Grid */
+.gsm-services-section {
+  padding: 0 16px 20px;
+}
+
+.gsm-services-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.gsm-services-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--gsm-navy);
+}
+
+.gsm-services-more {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.gsm-services-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 10px;
+}
+
+.gsm-grid-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  text-decoration: none;
+  position: relative;
+  cursor: pointer;
+}
+
+.gsm-grid-icon-wrap {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.gsm-grid-item:hover .gsm-grid-icon-wrap {
+  transform: scale(1.08);
+}
+
+.gsm-grid-icon-wrap img {
+  width: 48px;
+  height: 48px;
+}
+
+.gsm-grid-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.25;
+}
+
+.gsm-grid-badge {
+  position: absolute;
+  top: -6px;
+  right: -2px;
+  background: #fef08a;
+  color: #b45309;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  white-space: nowrap;
+}
+
+/* Insurance Promo Banner */
+.gsm-banner-card {
+  margin: 0 16px 24px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #e6f7f6 0%, #d1fae5 100%);
+  border: 1px solid #bbf7d0;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.gsm-banner-left h5 {
+  margin: 0 0 4px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #065f46;
+}
+
+.gsm-banner-left p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #047857;
+}
+
+/* ==========================================================================
+   AUTHENTIC FLOATING GLASS BOTTOM NAVIGATION (MATCHING EXACT USER SCREENSHOT)
+   Capsule Pill (Active Mint/Teal Gradient Capsule + Slate Icons) + Circular Trophy Glass Orb
+   ========================================================================== */
+
+.gsm-floating-bottom-nav {
+  position: fixed !important;
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  z-index: 2147483640 !important;
+  pointer-events: none !important;
+  width: auto !important;
+  max-width: calc(100vw - 24px) !important;
+  margin: 0 auto !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+}
+
+.gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+.gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+  pointer-events: auto !important;
+}
+
+/* 1. Main Navigation Frosted Glass Capsule Pill */
+.gsm-bottom-nav-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 58px;
+  padding: 5px 6px;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border: 1.5px solid rgba(255, 255, 255, 0.88);
+  border-radius: 9999px;
+  box-shadow: 0 12px 36px rgba(15, 45, 60, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 1px 1.5px rgba(255, 255, 255, 0.95);
+  pointer-events: auto;
+  gap: 6px;
+}
+
+/* Fallback if elements are placed directly inside .gsm-floating-bottom-nav */
+.gsm-floating-bottom-nav:not(:has(.gsm-bottom-nav-pill)) {
+  background: rgba(255, 255, 255, 0.76) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.88) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 12px 36px rgba(15, 45, 60, 0.14) !important;
+  height: 58px !important;
+  padding: 5px 8px !important;
+  pointer-events: auto !important;
+}
+
+/* 2. Navigation Item Buttons */
+.gsm-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  min-width: 48px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  text-decoration: none !important;
+  color: #475569;
+  position: relative;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gsm-nav-btn .gsm-nav-svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  color: #475569;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s;
+}
+
+/* Inactive button hover */
+.gsm-nav-btn:not(.active):hover {
+  background: rgba(255, 255, 255, 0.55);
+  transform: translateY(-1px);
+}
+
+.gsm-nav-btn:not(.active):hover .gsm-nav-svg {
+  color: #0f2d3c;
+}
+
+/* 3. ACTIVE ITEM: Smooth Aqua/Teal Cyan Gradient Capsule Pill (Exact Screenshot Match) */
+.gsm-nav-btn.active {
+  background: linear-gradient(135deg, rgba(167, 243, 208, 0.95) 0%, rgba(56, 211, 159, 0.95) 45%, rgba(0, 177, 169, 0.98) 100%) !important;
+  color: #ffffff !important;
+  min-width: 82px;
+  padding: 0 22px;
+  box-shadow: 0 6px 20px rgba(0, 177, 169, 0.38), inset 0 1px 2px rgba(255, 255, 255, 0.7) !important;
+}
+
+.gsm-nav-btn.active .gsm-nav-svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  transform: scale(1.05);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12));
+}
+
+.gsm-nav-btn.active .gsm-nav-svg path {
+  fill: #ffffff !important;
+}
+
+.gsm-nav-btn.active .gsm-nav-svg circle {
+  fill: #ffffff !important;
+}
+
+.gsm-nav-btn.active .gsm-nav-svg path[stroke] {
+  stroke: #00b1a9 !important;
+}
+
+/* 4. Bell with Red Notification Dot Badge */
+.gsm-nav-bell-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gsm-nav-badge-dot {
+  position: absolute;
+  top: -1px;
+  right: -2px;
+  width: 8.5px;
+  height: 8.5px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.5);
+}
+
+/* 5. SEPARATE CIRCULAR FLOATING GLASS TROPHY ORB (Exact Screenshot Match) */
+.gsm-bottom-nav-trophy,
+.gsm-nav-trophy-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.74) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.88) !important;
+  box-shadow: 0 12px 36px rgba(15, 45, 60, 0.14), 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 1px 1.5px rgba(255, 255, 255, 0.95) !important;
+  pointer-events: auto !important;
+  text-decoration: none !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease !important;
+  padding: 0 !important;
+}
+
+.gsm-bottom-nav-trophy:hover,
+.gsm-nav-trophy-btn:hover {
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 16px 42px rgba(15, 45, 60, 0.22), inset 0 1px 2px rgba(255, 255, 255, 1) !important;
+}
+
+.gsm-bottom-nav-trophy:active,
+.gsm-nav-trophy-btn:active {
+  transform: scale(0.94);
+}
+
+.gsm-nav-trophy-svg {
+  display: block;
+  width: 36px;
+  height: 36px;
+  filter: drop-shadow(0 2px 6px rgba(245, 158, 11, 0.3));
+}
+
+
+/* --------------------------------------------------------------------------
+   SCREEN 2: SEARCH DESTINATION (Màn hình Tìm kiếm điểm đến)
+   -------------------------------------------------------------------------- */
+.gsm-search-screen {
+  background: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.gsm-search-top-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.gsm-back-circle-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #0f172a;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.gsm-gps-current-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.gsm-flag-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Search input container with Yellow Square & Plus */
+.gsm-destination-input-bar {
+  margin: 8px 16px 14px;
+  background: #ffffff;
+  border: 2px solid var(--gsm-teal);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 177, 169, 0.12);
+}
+
+.gsm-yellow-square-icon {
+  width: 18px;
+  height: 18px;
+  background: var(--gsm-yellow-square);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.gsm-destination-input-bar input {
+  border: none;
+  outline: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  width: 100%;
+}
+
+.gsm-add-waypoint-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--gsm-teal);
+  color: #ffffff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Suggestion list */
+.gsm-suggest-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+  flex: 1;
+}
+
+.gsm-suggest-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+}
+
+.gsm-suggest-icon-pill {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  color: #64748b;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.gsm-suggest-distance {
+  position: absolute;
+  bottom: -6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.gsm-suggest-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.gsm-suggest-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gsm-suggest-address {
+  font-size: 0.78rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gsm-suggest-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+/* Bottom Saved & Map pills */
+.gsm-search-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+.gsm-search-action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--gsm-radius-pill);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   SCREEN 3: PICKUP LOCATION CONFIRM ON MAP
+   -------------------------------------------------------------------------- */
+.gsm-map-fullscreen-container {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+.gsm-map-floating-header {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 500;
+}
+
+.gsm-map-search-capsule {
+  flex: 1;
+  background: #ffffff;
+  border-radius: var(--gsm-radius-pill);
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #64748b;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+}
+
+/* Center Pin on Map */
+.gsm-center-target-pin {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -100%);
+  z-index: 400;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gsm-pin-title-bubble {
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: var(--gsm-radius-pill);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #0f172a;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.14);
+  border: 1.5px solid #e2e8f0;
+  margin-bottom: 6px;
+}
+
+.gsm-pin-target-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #00b1a9;
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 6px rgba(0, 177, 169, 0.25), 0 4px 12px rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gsm-pin-target-dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+/* Pickup Bottom Sheet */
+.gsm-pickup-bottom-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0;
+  box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.14);
+  padding: 12px 20px 24px;
+  z-index: 500;
+}
+
+.gsm-sheet-drag-handle {
+  width: 40px;
+  height: 5px;
+  background: #cbd5e1;
+  border-radius: 3px;
+  margin: 0 auto 14px;
+}
+
+.gsm-pickup-suggestion-card {
+  background: #f0faf9;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  border: 1.5px solid #ccefee;
+  cursor: pointer;
+}
+
+.gsm-pickup-suggestion-card.secondary {
+  background: #ffffff;
+  border-color: #f1f5f9;
+}
+
+.gsm-pickup-addr-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.gsm-pickup-addr-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.gsm-driver-note-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  color: #1e293b;
+  margin-bottom: 16px;
+  background: #f8fafc;
+  outline: none;
+}
+
+.gsm-driver-note-input:focus {
+  border-color: var(--gsm-teal);
+  background: #ffffff;
+}
+
+/* Big CTA Button (50px solid teal) */
+.gsm-btn-primary-cta {
+  width: 100%;
+  height: 50px;
+  background: var(--gsm-teal);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 177, 169, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.gsm-btn-primary-cta:hover {
+  background: var(--gsm-teal-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 177, 169, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   SCREEN 4: VEHICLE & FARE SELECTION (Chọn loại xe & Lộ trình)
+   -------------------------------------------------------------------------- */
+.gsm-route-preview-screen {
+  width: 100%;
+  height: 100%;
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Floating Route Capsule on top of map */
+.gsm-floating-route-box {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15, 45, 60, 0.12);
+  padding: 10px 14px;
+  z-index: 500;
+  border: 1px solid #e2e8f0;
+}
+
+.gsm-route-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.gsm-route-point-text {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.gsm-route-point-text span.arrow {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+.gsm-route-eta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #e6f7f6;
+  color: #007d77;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  margin: 4px 0;
+}
+
+/* Floating Book for someone else button (Đặt hộ) */
+.gsm-book-for-other-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 6px 14px;
+  border-radius: var(--gsm-radius-pill);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 510;
+  cursor: pointer;
+}
+
+/* Floating Shield Icon on bottom left of map */
+.gsm-floating-shield-btn {
+  position: absolute;
+  bottom: 380px;
+  left: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1.5px solid #d1fae5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 450;
+  cursor: pointer;
+}
+
+/* Vehicle Selection Sheet */
+.gsm-vehicle-sheet {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0;
+  box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16);
+  padding: 12px 18px 20px;
+  z-index: 500;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.gsm-vehicle-card-item {
+  border-radius: 16px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gsm-vehicle-card-item.selected {
+  background: #f0faf9;
+  border-color: var(--gsm-teal);
+  box-shadow: 0 4px 16px rgba(0, 177, 169, 0.15);
+}
+
+.gsm-vehicle-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.gsm-vehicle-thumb {
+  width: 60px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.gsm-vehicle-card-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gsm-vehicle-card-meta {
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.gsm-vehicle-card-price {
+  text-align: right;
+}
+
+.gsm-vehicle-price-current {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.gsm-vehicle-price-old {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+  margin-top: 1px;
+}
+
+/* Save more banner */
+.gsm-save-more-banner {
+  background: #e6f7f6;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #007d77;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+
+/* Payment & Promo Row */
+.gsm-payment-promo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.gsm-payment-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.gsm-promo-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--gsm-teal);
+  cursor: pointer;
+}
+
+/* Bottom Action Row: Hẹn giờ | GreenNow | Đặt xe */
+.gsm-cta-action-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gsm-sub-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #475569;
+  cursor: pointer;
+  text-decoration: none;
+  min-width: 48px;
+}
+
+.gsm-sub-action-btn span.icon {
+  font-size: 1.25rem;
+  color: var(--gsm-teal);
+}
+
+.gsm-main-book-btn {
+  flex: 1;
+  height: 48px;
+  background: var(--gsm-teal);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 177, 169, 0.35);
+  transition: all 0.2s;
+}
+
+.gsm-main-book-btn:hover {
+  background: var(--gsm-teal-hover);
+}
+
+/* Mobile Map Background Integration ONLY for Booking Page (customer.html) */
+@media (max-width: 1024px) {
+  /* When on customer booking page, Leaflet map sits in background of mobile */
+  body.gsm-booking-page #customer-map-container,
+  body.gsm-booking-page .gsm-desktop-wide-canvas {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 1 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  body.gsm-booking-page .gsm-desktop-sidebar {
+    width: 100% !important;
+    position: relative !important;
+    z-index: 10 !important;
+    pointer-events: none !important;
+  }
+  body.gsm-booking-page .gsm-desktop-sidebar .gsm-screen-wrapper {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    height: 100vh !important;
+    pointer-events: none !important;
+  }
+  body.gsm-booking-page #view-search,
+  body.gsm-booking-page #view-history {
+    background: #ffffff !important;
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 50;
+    min-height: 100vh;
+  }
+  body.gsm-booking-page #view-pickup-confirm,
+  body.gsm-booking-page #view-vehicle-select,
+  body.gsm-booking-page #view-tracking {
+    background: transparent !important;
+    pointer-events: none !important;
+    position: relative;
+    z-index: 20;
+    height: 100vh;
+  }
+  body.gsm-booking-page .gsm-map-fullscreen-container,
+  body.gsm-booking-page .gsm-route-preview-screen {
+    pointer-events: none !important;
+    background: transparent !important;
+  }
+  body.gsm-booking-page #view-pickup-confirm > *,
+  body.gsm-booking-page #view-vehicle-select > *,
+  body.gsm-booking-page #view-tracking > * {
+    pointer-events: none !important;
+  }
+  /* Explicitly enable pointer events on all interactive customer cards & controls */
+  body.gsm-booking-page .gsm-map-floating-header,
+  body.gsm-booking-page .gsm-floating-route-box,
+  body.gsm-booking-page .gsm-vehicle-sheet,
+  body.gsm-booking-page .gsm-pickup-bottom-sheet,
+  body.gsm-booking-page #tracking-searching-panel,
+  body.gsm-booking-page #tracking-driver-sheet,
+  body.gsm-booking-page .gsm-search-screen,
+  body.gsm-booking-page .gsm-search-bottom-actions,
+  body.gsm-booking-page .gsm-search-action-pill,
+  body.gsm-booking-page .floating-map-pick-banner,
+  body.gsm-booking-page .gsm-map-round-gps-btn,
+  body.gsm-booking-page .gsm-floating-shield-btn,
+  body.gsm-booking-page .goride-dialog-card {
+    pointer-events: auto !important;
+  }
+  /* Map canvas must always be fully interactive */
+  body.gsm-booking-page #customer-map-container,
+  body.gsm-booking-page .gsm-desktop-wide-canvas,
+  body.gsm-booking-page .leaflet-container,
+  body.gsm-booking-page .leaflet-pane {
+    pointer-events: auto !important;
+  }
+
+  /* Strictly hide bottom navigation on customer booking portal */
+  body.gsm-booking-page .bottom-nav,
+  body.gsm-booking-page #mobile-bottom-nav,
+  body.gsm-booking-page .gsm-floating-bottom-nav,
+  body.customer-body .gsm-floating-bottom-nav,
+  [data-page="customer"] .gsm-floating-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Mobile/Tablet Vehicle Selection Sheet:
+     Ensure content does not overflow and buttons are always visible above screen bottom */
+  body.gsm-booking-page .gsm-vehicle-sheet {
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: absolute !important;
+    max-height: min(78vh, 580px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+    box-sizing: border-box !important;
+    border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+    box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+    background: #ffffff !important;
+    z-index: 500 !important;
+  }
+
+  body.gsm-booking-page #vehicle-options-container {
+    flex: 1 1 auto !important;
+    max-height: 220px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-right: 2px !important;
+    margin-bottom: 6px !important;
+  }
+
+  body.gsm-booking-page .gsm-save-more-banner,
+  body.gsm-booking-page .gsm-payment-promo-row,
+  body.gsm-booking-page .gsm-cta-action-row {
+    flex-shrink: 0 !important;
+  }
+
+  body.gsm-booking-page #tracking-driver-sheet {
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: absolute !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 14px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+    box-sizing: border-box !important;
+    border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+    box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+    background: #ffffff !important;
+    z-index: 500 !important;
+  }
+
+  /* FOR ALL OTHER SCREENS (Home, Notifications, Activity, Profile):
+     Hide wide canvas on mobile & tablet, show pure full-width screen without white gap */
+  body:not(.gsm-booking-page) .gsm-desktop-wide-canvas {
+    display: none !important;
+  }
+  body:not(.gsm-booking-page) .gsm-desktop-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  body:not(.gsm-booking-page) .gsm-desktop-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  body:not(.gsm-booking-page) .gsm-screen-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100vh !important;
+    height: auto !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    pointer-events: auto !important;
+  }
+}
+
+
+/* ==========================================================================
+   ACTIVITY, NOTIFICATIONS & PROFILE SCREEN STYLES (MATCHING USER SCREENSHOTS)
+   ========================================================================== */
+
+/* Activity Screen Styles (ref_activity.jpg) */
+.gsm-activity-screen {
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 16px 16px 90px;
+  display: flex;
+  flex-direction: column;
+}
+
+.gsm-screen-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.gsm-screen-main-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.gsm-screen-header-action {
+  font-size: 1.25rem;
+  color: #334155;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 4px;
+}
+
+/* Filter Pills */
+.gsm-filter-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  margin-bottom: 24px;
+  scrollbar-width: none;
+}
+.gsm-filter-pills-row::-webkit-scrollbar {
+  display: none;
+}
+
+.gsm-filter-pill {
+  padding: 7px 18px;
+  border-radius: var(--gsm-radius-pill);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  transition: all 0.2s;
+}
+
+.gsm-filter-pill.active {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+/* Empty State */
+.gsm-empty-state-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.gsm-empty-img {
+  width: 140px;
+  height: 90px;
+  margin-bottom: 20px;
+}
+
+.gsm-empty-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  max-width: 280px;
+  line-height: 1.4;
+  margin-bottom: 20px;
+}
+
+.gsm-btn-empty-cta {
+  background: var(--gsm-teal);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 10px 28px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 177, 169, 0.35);
+  text-decoration: none;
+}
+
+/* Notifications Screen Styles (ref_notifications.jpg) */
+.gsm-notif-screen {
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 16px 16px 90px;
+}
+
+.gsm-notif-card {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+}
+
+.gsm-notif-header-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.gsm-notif-icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e6f7f6;
+  color: #00b1a9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.gsm-notif-title-area {
+  flex: 1;
+}
+
+.gsm-notif-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+  margin-bottom: 4px;
+}
+
+.gsm-notif-date-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.gsm-notif-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.gsm-notif-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00b1a9;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.gsm-notif-body {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.gsm-notif-action-btn {
+  background: #e6f7f6;
+  color: #007d77;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: 1px solid #bbf2ee;
+  display: inline-block;
+  text-decoration: none;
+  margin-bottom: 14px;
+}
+
+.gsm-notif-banner-img {
+  width: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
+/* Profile / Account Screen Styles (ref_profile1, 2, 3) */
+.gsm-profile-screen {
+  background: #ffffff;
+  min-height: 100vh;
+  padding: 16px 16px 95px;
+}
+
+.gsm-profile-user-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 0 16px;
+  cursor: pointer;
+}
+
+.gsm-profile-avatar-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00b1a9, #0f2d3c);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(0, 177, 169, 0.25);
+  flex-shrink: 0;
+}
+
+.gsm-profile-user-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gsm-profile-user-phone {
+  font-size: 0.88rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* ID Verification Card */
+.gsm-verify-id-card {
+  background: #f8fafc;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.gsm-verify-id-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.gsm-verify-id-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.gsm-verify-id-sub {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+/* Navigo Race Card (Green Game Widget) */
+.gsm-race-card {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #fefce8 100%);
+  border: 1.5px solid #d1fae5;
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.08);
+}
+
+.gsm-race-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.gsm-race-badge-chip {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: var(--gsm-radius-pill);
+}
+
+.gsm-race-see-progress {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.gsm-race-mid-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.gsm-race-medal-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gsm-race-medal-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #fed7aa;
+  border: 3px solid #f97316;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 4px;
+}
+
+.gsm-race-medal-title {
+  background: #15803d;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: var(--gsm-radius-pill);
+}
+
+.gsm-race-co2-box {
+  text-align: right;
+}
+
+.gsm-race-co2-label {
+  font-size: 0.78rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.gsm-race-co2-number-pill {
+  background: #fef08a;
+  color: #92400e;
+  font-size: 1.3rem;
+  font-weight: 900;
+  padding: 2px 18px;
+  border-radius: 10px;
+  display: inline-block;
+  margin: 3px 0;
+}
+
+.gsm-race-bottom-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  border-top: 1px dashed #a7f3d0;
+  padding-top: 10px;
+  text-align: center;
+}
+
+.gsm-race-stat-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.gsm-race-stat-val {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #00b1a9;
+}
+
+.gsm-race-stat-desc {
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* 2 Side-by-Side Cards (Gia đình / Doanh nghiệp) */
+.gsm-duo-cards-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.gsm-duo-card {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.gsm-duo-card-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.gsm-duo-card-icon {
+  font-size: 1.8rem;
+}
+
+/* Action Grids 2x2 */
+.gsm-section-header-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+.gsm-2x2-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.gsm-2x2-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.gsm-2x2-card:hover {
+  background: #f0faf9;
+  border-color: var(--gsm-teal);
+}
+
+.gsm-2x2-icon {
+  font-size: 1.25rem;
+}
+
+/* List Items with Chevron (Hỗ trợ & Hợp tác / Cài đặt chung) */
+.gsm-list-section {
+  margin-bottom: 20px;
+}
+
+.gsm-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid #f8fafc;
+  text-decoration: none;
+  color: #1e293b;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.gsm-list-row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gsm-list-row-icon {
+  font-size: 1.15rem;
+  color: #64748b;
+  width: 24px;
+  text-align: center;
+}
+
+.gsm-list-row-arrow {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+}
+
+/* Sign out button */
+.gsm-btn-logout-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  background: #ffffff;
+  border: none;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 10px 0 16px;
+}
+
+/* Ministry of Industry and Trade Badges */
+.gsm-bct-badges-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.gsm-bct-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.gsm-bct-badge.blue {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+.gsm-bct-badge.red {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.gsm-app-version-text {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin-bottom: 24px;
+}
+
+
+/* Hide device status bar completely per user request */
+.gsm-status-bar { display: none !important; height: 0 !important; padding: 0 !important; margin: 0 !important; overflow: hidden !important; }
+
+#desktop-home-map {
+  flex: 1;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 600px !important;
+  z-index: 5;
+}
+
+
+/* ==============================================================
+   LIQUID GLASS MODAL & FLOATING GPS CONTROLS
+   ============================================================== */
+@keyframes liquidPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.92) translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.gsm-map-round-gps-btn {
+  position: fixed;
+  bottom: 270px;
+  right: 18px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(0, 177, 169, 0.35);
+  box-shadow: 0 6px 22px rgba(15, 45, 60, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  z-index: 9999;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+  outline: none;
+}
+
+.gsm-map-round-gps-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 8px 26px rgba(0, 177, 169, 0.38);
+  border-color: var(--gsm-teal);
+}
+
+.gsm-map-round-gps-btn:active {
+  transform: scale(0.94);
+}
+
+@media (min-width: 1025px) {
+  .gsm-map-round-gps-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+  }
+}
+
+/* Liquid Glass Dialog Overlay & Card */
+.goride-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 45, 60, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 9999999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.goride-dialog-overlay.active {
+  display: flex !important;
+}
+
+.goride-dialog-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  padding: 26px 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 25px 60px rgba(15, 45, 60, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.8);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "SF Pro Display", Roboto, sans-serif !important;
+  animation: liquidPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+
+/* ==============================================================
+   ROLE-BASED VISIBILITY: Tab Quản trị chỉ hiển thị khi role === 'admin'
+   ============================================================== */
+[data-role="admin"],
+[data-auth="admin"],
+.gsm-nav-admin-only,
+a.gsm-pc-nav-link[href*="admin.html"] {
+  display: none !important;
+}
+
+body.gsm-role-admin [data-role="admin"],
+body.gsm-role-admin [data-auth="admin"],
+body.gsm-role-admin .gsm-nav-admin-only,
+body.gsm-role-admin a.gsm-pc-nav-link[href*="admin.html"] {
+  display: inline-flex !important;
+}
+
+/* Strictly hide bottom navigation on customer booking portal */
+body.gsm-booking-page .gsm-floating-bottom-nav,
+body.customer-body .gsm-floating-bottom-nav,
+[data-page="customer"] .gsm-floating-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

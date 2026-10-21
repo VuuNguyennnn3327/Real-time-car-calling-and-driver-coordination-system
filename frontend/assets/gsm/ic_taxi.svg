@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="14" fill="#e6f7f6"/>
+    <!-- Yellow Taxi Roof Light -->
+    <rect x="20" y="10" width="8" height="4" rx="1.5" fill="#f59e0b" stroke="#d97706" stroke-width="0.8"/>
+    <!-- Cyan Car Body -->
+    <path d="M13 24 L17 16 Q19 14 24 14 L28 14 Q33 14 35 16 L39 24 Q41 27 38 30 L10 30 Q7 27 13 24 Z" fill="#00b1a9"/>
+    <!-- Windshield -->
+    <path d="M18 17 L24 16 L30 16 L34 23 L14 23 Z" fill="#164e63"/>
+    <!-- Headlights -->
+    <circle cx="12" cy="27" r="2.5" fill="#fef08a"/>
+    <circle cx="36" cy="27" r="2.5" fill="#fef08a"/>
+    <!-- Wheels -->
+    <circle cx="15" cy="32" r="3.5" fill="#1e293b"/>
+    <circle cx="33" cy="32" r="3.5" fill="#1e293b"/>
+  </svg>

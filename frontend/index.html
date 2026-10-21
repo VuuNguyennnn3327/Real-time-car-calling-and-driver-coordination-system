@@ -2,550 +2,518 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navigo — Dẫn lối chuẩn xác, đón rước tận nơi</title>
-    <meta name="description" content="Navigo - Ứng dụng đặt xe thông minh, tối ưu lộ trình và ghép nối tài xế với cấu trúc R-Tree và thuật toán Dijkstra.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Navigo — Di chuyển xanh thuần điện</title>
+    <meta name="description" content="Navigo - Nền tảng di chuyển thuần điện 100% bằng ô tô và xe máy điện. Không khói, không mùi, không tiếng ồn.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/design-system.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/gsm-app.css">
     <style>
-        /* User Profile Button & Dropdown Styles */
-        .goride-home-user-menu-btn:hover {
-            background: #f1f5f9 !important;
-            border-color: #cbd5e1 !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-            transform: translateY(-1px);
-        }
-        .goride-user-menu-wrapper:hover #home-user-dropdown {
-            display: block !important;
-        }
-        #home-user-dropdown::before {
-            content: '';
-            position: absolute;
-            top: -12px;
-            left: 0;
-            right: 0;
-            height: 12px;
-        }
+        /* ==========================================================================
+           ENLARGED SPACIOUS PC DESKTOP HOME PAGE (NO MAP ON HOME)
+           ========================================================================== */
+        @media (min-width: 1025px) {
+            body.gsm-home-page {
+                background: #f8fafc !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
 
-        /* Mobile Bottom Nav & Home Page Viewport Optimizations */
-        @media (max-width: 1024px) {
-            #mobile-bottom-nav,
-            .bottom-nav {
-                display: flex !important;
-                position: fixed !important;
-                bottom: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
+            body.gsm-home-page .gsm-desktop-container {
+                max-width: 1240px !important;
+                margin: 0 auto !important;
+                padding: 24px 32px 60px !important;
                 width: 100% !important;
-                height: 58px !important;
-                background: #ffffff !important;
-                border-top: 1px solid #e2e8f0 !important;
-                z-index: 99999 !important;
-                align-items: center !important;
-                justify-content: space-around !important;
-                padding: 0 4px env(safe-area-inset-bottom, 0px) 4px !important;
-                box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
+                height: auto !important;
+                min-height: calc(100vh - 64px) !important;
+                overflow: visible !important;
+                background: transparent !important;
+                display: block !important;
+            }
+
+            body.gsm-home-page .gsm-desktop-sidebar {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                position: static !important;
+                overflow: visible !important;
+            }
+
+            body.gsm-home-page .gsm-screen-wrapper {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+            }
+
+            /* No map on home page */
+            body.gsm-home-page .gsm-desktop-wide-canvas,
+            body.gsm-home-page #desktop-home-map {
+                display: none !important;
+            }
+
+            /* Floating Navigation Bar: prominently float on top across all screens */
+            body.gsm-home-page .gsm-floating-bottom-nav,
+            .gsm-floating-bottom-nav {
+                display: inline-flex !important;
                 visibility: visible !important;
+                position: fixed !important;
+                bottom: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 2147483640 !important;
+                pointer-events: none !important;
+                opacity: 1 !important;
+            }
+            body.gsm-home-page .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            body.gsm-home-page .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+            .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
                 pointer-events: auto !important;
             }
-            .goride-home-content {
-                padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+
+            /* Hero Banner */
+            body.gsm-home-page .gsm-home-header {
+                border-radius: 28px !important;
+                padding: 56px 40px 48px !important;
+                margin-bottom: 32px !important;
+                background: linear-gradient(135deg, rgba(15, 45, 60, 0.45), rgba(0, 177, 169, 0.4)), url('assets/gsm/city_bg.jpg') no-repeat center center !important;
+                background-size: cover !important;
+                text-align: center !important;
+                box-shadow: 0 12px 35px rgba(15, 45, 60, 0.12) !important;
+            }
+
+            body.gsm-home-page .gsm-home-hero-text {
+                display: block !important;
+                margin-bottom: 24px !important;
+            }
+
+            body.gsm-home-page .gsm-top-search-pill {
+                max-width: 720px !important;
+                margin: 0 auto !important;
+                padding: 18px 28px !important;
+                border-radius: 9999px !important;
+                box-shadow: 0 14px 40px rgba(0, 0, 0, 0.15) !important;
+                background: #ffffff !important;
+                border: 1.5px solid rgba(0, 177, 169, 0.25) !important;
+            }
+            body.gsm-home-page .gsm-top-search-pill .gsm-search-placeholder {
+                font-size: 1.1rem !important;
+                font-weight: 600 !important;
+            }
+
+            /* Hero Cards: Đặt xe & Đặt xe máy */
+            body.gsm-home-page .gsm-hero-cards-row {
+                display: flex !important;
+                gap: 28px !important;
+                padding: 0 !important;
+                margin-bottom: 36px !important;
+            }
+            body.gsm-home-page .gsm-hero-service-card {
+                flex: 1 !important;
+                height: 185px !important;
+                padding: 24px 30px !important;
+                border-radius: 24px !important;
+                border: 1.5px solid #ccfbf1 !important;
+                box-shadow: 0 8px 24px rgba(0, 177, 169, 0.1) !important;
+            }
+            body.gsm-home-page .gsm-hero-service-title {
+                font-size: 1.65rem !important;
+                font-weight: 900 !important;
+            }
+            body.gsm-home-page .gsm-hero-service-img {
+                width: 220px !important;
+                height: 115px !important;
+            }
+
+            /* Food Section */
+            body.gsm-home-page .gsm-food-section {
+                padding: 24px 28px !important;
+                margin-bottom: 36px !important;
+                background: #ffffff !important;
+                border-radius: 24px !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            body.gsm-home-page .gsm-food-title {
+                font-size: 1.3rem !important;
+                font-weight: 800 !important;
+            }
+            body.gsm-home-page .gsm-food-carousel {
+                gap: 22px !important;
+                padding-bottom: 6px !important;
+            }
+            body.gsm-home-page .gsm-food-card {
+                width: 250px !important;
+            }
+            body.gsm-home-page .gsm-food-img-wrapper {
+                width: 250px !important;
+                height: 160px !important;
+                border-radius: 18px !important;
+            }
+            body.gsm-home-page .gsm-food-name {
+                font-size: 1rem !important;
+                font-weight: 800 !important;
+                margin-top: 10px !important;
+            }
+            body.gsm-home-page .gsm-food-dist {
+                font-size: 0.85rem !important;
+            }
+
+            /* Services Grid */
+            body.gsm-home-page .gsm-services-section {
+                padding: 24px 28px !important;
+                margin-bottom: 36px !important;
+                background: #ffffff !important;
+                border-radius: 24px !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            body.gsm-home-page .gsm-services-title {
+                font-size: 1.3rem !important;
+                font-weight: 800 !important;
+                margin-bottom: 22px !important;
+            }
+            body.gsm-home-page .gsm-services-grid {
+                grid-template-columns: repeat(8, 1fr) !important;
+                gap: 20px 14px !important;
+            }
+            body.gsm-home-page .gsm-grid-icon-wrap {
+                width: 72px !important;
+                height: 72px !important;
+                border-radius: 22px !important;
+                background: #f0fdfa !important;
+                border: 1.5px solid #ccfbf1 !important;
+            }
+            body.gsm-home-page .gsm-grid-icon-wrap img {
+                width: 48px !important;
+                height: 48px !important;
+            }
+            body.gsm-home-page .gsm-grid-label {
+                font-size: 0.9rem !important;
+                font-weight: 700 !important;
+                margin-top: 8px !important;
+            }
+
+            /* Promo Banner */
+            body.gsm-home-page .gsm-banner-card {
+                margin: 0 0 32px 0 !important;
+                padding: 28px 36px !important;
+                border-radius: 24px !important;
+                border: 1.5px solid #a7f3d0 !important;
+            }
+            body.gsm-home-page .gsm-banner-left h4 {
+                font-size: 1.25rem !important;
+            }
+            body.gsm-home-page .gsm-banner-left p {
+                font-size: 0.98rem !important;
+            }
+            body.gsm-home-page .gsm-banner-graphic {
+                font-size: 3rem !important;
             }
         }
     </style>
 </head>
-<body class="app-home-body">
-    <!-- Desktop Top Navigation Bar (>= 1025px) -->
-    <nav class="goride-desktop-navbar">
-        <div class="goride-desktop-nav-inner">
-            <a href="index.html" class="goride-desktop-nav-brand">
-                <div class="brand-logo">🚗</div>
-                <div class="brand-text">
-                    <span class="brand-name">Navigo</span>
-                    <span class="brand-tagline">Dẫn lối chuẩn xác, đón rước tận nơi</span>
-                </div>
-            </a>
-
-            <div class="goride-desktop-nav-links">
-                <a href="index.html" class="goride-desktop-nav-link active">Trang chủ</a>
-                <a href="pages/customer.html" class="goride-desktop-nav-link" id="nav-link-customer" data-nav="customer">Đặt chuyến</a>
-                <a href="pages/driver.html" class="goride-desktop-nav-link" id="nav-link-driver" data-nav="driver">Đối tác tài xế</a>
-                <a href="pages/admin.html" class="goride-desktop-nav-link" id="nav-link-admin" data-nav="admin">Quản trị</a>
-                <a href="pages/customer.html#history" class="goride-desktop-nav-link" id="nav-link-history" data-nav="history">Lịch sử</a>
-                <a href="pages/profile.html" class="goride-desktop-nav-link" id="nav-link-profile" data-nav="profile">Hồ sơ</a>
+<body class="gsm-theme gsm-home-page">
+    <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
             </div>
+        </a>
 
-            <div class="goride-desktop-nav-actions">
-                <!-- Guest: Login button -->
-                <div data-auth="guest">
-                    <a href="pages/login.html" class="btn btn-primary btn-sm" style="border-radius:18px; padding:7px 18px; font-weight:700;">
-                        Đăng nhập
-                    </a>
-                </div>
+        <div class="gsm-pc-nav-links">
+            <a href="index.html" class="gsm-pc-nav-link active">Trang chủ</a>
+            <a href="pages/customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
+            <a href="pages/customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
+            <a href="pages/customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="pages/driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
+            <a href="pages/admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+        </div>
 
-                <!-- Authenticated: User Avatar & Profile Navigation Pill -->
-                <div data-auth="user" class="goride-user-menu-wrapper" style="display: none; position: relative; align-items: center; gap: 8px;">
-                    <a href="pages/profile.html" class="goride-home-user-menu-btn" id="home-user-menu-btn" title="Hồ sơ cá nhân" style="display:inline-flex; align-items:center; gap:8px; padding:5px 14px 5px 6px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:30px; cursor:pointer; transition:all 0.2s; text-decoration:none; color:inherit;">
-                        <div class="avatar avatar-sm" id="desktop-user-badge" data-user-avatar style="width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, #00897b, #004d40); color:#fff; font-size:0.9rem; font-weight:800; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:0; box-shadow:0 2px 6px rgba(0,137,123,0.25);">
-                            <span>U</span>
-                        </div>
-                        <span class="desktop-only" data-user-name style="font-weight:700; font-size:0.85rem; color:#0f172a; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Người dùng</span>
-                        <span class="chevron desktop-only" style="font-size:0.68rem; color:#64748b;">▼</span>
-                    </a>
-                    <!-- User Dropdown Menu -->
-                    <div class="user-menu-dropdown" id="home-user-dropdown" style="display:none; position:absolute; top:calc(100% + 8px); right:0; min-width:230px; background:#ffffff; border-radius:14px; box-shadow:0 12px 28px rgba(0,0,0,0.14), 0 4px 10px rgba(0,0,0,0.06); border:1px solid #e2e8f0; z-index:1000; overflow:hidden;">
-                        <div style="padding:14px; border-bottom:1px solid #f1f5f9; background:#f8fafc;">
-                            <div style="font-weight:800; font-size:0.9rem; color:#0f172a;" data-user-name>Người dùng</div>
-                            <div style="font-size:0.75rem; color:#64748b; margin-top:2px;" data-user-email>user@demo.com</div>
-                            <span class="badge" data-user-role style="margin-top:6px; display:inline-block; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:10px; background:#e0f2fe; color:#0369a1;">Khách hàng</span>
-                        </div>
-                        <div style="padding:6px;">
-                            <a href="pages/profile.html" class="user-menu-item" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#334155; font-size:0.85rem; font-weight:600; text-decoration:none;">
-                                <span>👤</span> Hồ sơ cá nhân
-                            </a>
-                            <a href="pages/admin.html" id="home-dropdown-admin-link" class="user-menu-item" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#dc2626; font-size:0.85rem; font-weight:600; text-decoration:none;">
-                                <span>⚙️</span> Trung tâm Quản trị
-                            </a>
-                            <a href="pages/driver.html" id="home-dropdown-driver-link" class="user-menu-item" style="display:none; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#00897b; font-size:0.85rem; font-weight:600; text-decoration:none;">
-                                <span>🚗</span> Cổng nhận chuyến Tài xế
-                            </a>
-                            <a href="pages/customer.html#history" id="home-dropdown-history-link" class="user-menu-item" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#334155; font-size:0.85rem; font-weight:600; text-decoration:none;">
-                                <span>📋</span> Lịch sử chuyến đi
-                            </a>
-                            <div style="margin:4px 0; border-top:1px solid #f1f5f9;"></div>
-                            <a href="#" data-action="logout" class="user-menu-item" style="display:flex; align-items:center; gap:8px; padding:9px 12px; border-radius:8px; color:#ef4444; font-size:0.85rem; font-weight:700; text-decoration:none;">
-                                <span>🚪</span> Đăng xuất
-                            </a>
-                        </div>
-                    </div>
-                </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div data-auth="guest" style="display:flex; align-items:center; gap:8px;">
+                <a href="pages/register.html?role=driver" style="height:38px; padding:0 14px; border-radius:9999px; text-decoration:none; font-size:0.85rem; font-weight:700; color:#007d77; background:#e6f7f6; border:1px solid #a7f3d0; display:flex; align-items:center; gap:4px;" title="Đăng ký trở thành đối tác tài xế Navigo">
+                    <span>🚗</span> Đăng ký tài xế
+                </a>
+                <a href="pages/login.html" class="gsm-btn-primary-cta" style="height:38px; padding:0 18px; border-radius:9999px; text-decoration:none; font-size:0.88rem;">
+                    Đăng nhập
+                </a>
+                <a href="pages/register.html" style="height:38px; padding:0 16px; border-radius:9999px; text-decoration:none; font-size:0.88rem; font-weight:700; color:#0f2d3c; border:1px solid #cbd5e1; display:flex; align-items:center;">
+                    Đăng ký
+                </a>
+            </div>
+            <div data-auth="user" style="display:none; align-items:center; gap:10px;">
+                <a href="pages/profile.html" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:#0f2d3c; font-weight:700; font-size:0.9rem;">
+                    <div style="width:34px; height:34px; border-radius:50%; background:#00b1a9; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;" data-user-avatar>U</div>
+                    <span data-user-name>Người dùng</span>
+                </a>
+                <button type="button" data-action="logout" id="btn-desktop-logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 14px; border-radius:8px; font-weight:700; cursor:pointer;">
+                    Đăng xuất
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- App Shell Container (Responsive Desktop & Mobile) -->
-    <div class="goride-app-shell">
-        <!-- App Top Header (Mobile & Tablet) -->
-        <header class="goride-header mobile-header-hide-desktop">
-            <div class="goride-header-top">
-                <a href="index.html" class="goride-brand-pill">
-                    <div class="goride-brand-logo-icon">🚗</div>
-                    <div>
-                        <div class="goride-brand-title">Navigo</div>
-                        <div class="goride-brand-slogan">Dẫn lối chuẩn xác, đón rước tận nơi</div>
+    <!-- Main Desktop Layout Wrapper -->
+    <div class="gsm-desktop-container">
+        <!-- Sidebar Phone App Shell (Exact Screen 1 Replica) -->
+        <div class="gsm-desktop-sidebar">
+            <div class="gsm-screen-wrapper">
+                <!-- 1. Header with Top Search Pill and 3D City Background -->
+                <div class="gsm-home-header">
+                    <div class="gsm-home-hero-text" style="display:none;">
+                        <h1 style="color:#ffffff; font-size:2.4rem; font-weight:900; margin:0 0 10px 0; text-shadow:0 2px 12px rgba(0,0,0,0.45); letter-spacing:-0.5px;">Di chuyển xanh thuần điện cùng Navigo</h1>
+                        <p style="color:rgba(255,255,255,0.92); font-size:1.1rem; margin:0; text-shadow:0 1px 5px rgba(0,0,0,0.45);">Đặt ô tô và xe máy điện nhanh chóng, êm ái, không mùi xăng khói</p>
                     </div>
-                </a>
+                    <!-- Top Pill Search Bar -->
+                    <a href="pages/customer.html" class="gsm-top-search-pill">
+                        <span class="gsm-search-icon">🔍</span>
+                        <span class="gsm-search-placeholder">Bạn muốn đi đâu, ăn gì?</span>
+                    </a>
+                </div>
 
-                <div class="goride-header-actions">
-                    <!-- User Profile / Auth Toggle -->
-                    <div data-auth="guest">
-                        <a href="pages/login.html" class="goride-user-avatar-btn" title="Đăng nhập">
-                            👤
-                        </a>
+                <!-- 2. Food Section Carousel -->
+                <div class="gsm-food-section">
+                    <div class="gsm-food-header">
+                        <div class="gsm-food-title">
+                            <span style="color:#f59e0b;">✦</span> Đói chưa? Mấy quán ngon gần đây đang chờ bạn.
+                        </div>
+                        <span style="color:#94a3b8; font-size:1.1rem; cursor:pointer;">•••</span>
                     </div>
-                    <div data-auth="user" style="display: none;">
-                        <a href="pages/profile.html" class="goride-user-avatar-btn" id="user-profile-badge" data-user-avatar title="Hồ sơ người dùng">
-                            <span>K</span>
+
+                    <div class="gsm-food-carousel">
+                        <!-- Food 1 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=MiCaySeoul'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=300&q=80" alt="Mì Cay Seoul" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 4.8</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Mì Cay Seoul - Tỉnh Lộ 43
+                            </div>
+                            <div class="gsm-food-dist">📍 0.4 km</div>
+                        </div>
+
+                        <!-- Food 2 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=PizzaHongSon'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80" alt="Pizza Hồng Sơn" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 4.7</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Hồng Sơn - Pizza, Gà Rán
+                            </div>
+                            <div class="gsm-food-dist">📍 1.3 km</div>
+                        </div>
+
+                        <!-- Food 3 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=TraSuaToco'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1558857563-b37cfb84c99c?auto=format&fit=crop&w=300&q=80" alt="Trà Sữa ToCoToCo" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 4.9</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Trà Sữa ToCoToCo
+                            </div>
+                            <div class="gsm-food-dist">📍 1.4 km</div>
+                        </div>
+
+                        <!-- Food 4 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=ChanGaVemy'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=300&q=80" alt="Chân Gà Thái" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 5.0</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Chân Gà Sốt Thái
+                            </div>
+                            <div class="gsm-food-dist">📍 2.1 km</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Two Big Hero Cards: Đặt xe (Car) & Đặt xe máy (Bike) -->
+                <div class="gsm-hero-cards-row">
+                    <a href="pages/customer.html?service=car4" class="gsm-hero-service-card" title="Đặt ô tô điện Navigo">
+                        <div class="gsm-hero-service-title">Đặt xe</div>
+                        <img src="assets/gsm/car_vf5.svg" alt="Navigo Car" class="gsm-hero-service-img">
+                    </a>
+
+                    <a href="pages/customer.html?service=bike" class="gsm-hero-service-card" title="Đặt xe máy điện Navigo">
+                        <div class="gsm-hero-service-title">Đặt xe máy</div>
+                        <img src="assets/gsm/bike_feliz.svg" alt="Navigo Bike" class="gsm-hero-service-img">
+                    </a>
+                </div>
+
+                <!-- 4. 4x2 Other Services Grid (Dịch vụ khác) -->
+                <div class="gsm-services-section">
+                    <div class="gsm-services-header">
+                        <div class="gsm-services-title">Dịch vụ khác</div>
+                        <a href="pages/customer.html" class="gsm-services-more">Xem tất cả</a>
+                    </div>
+
+                    <div class="gsm-services-grid">
+                        <!-- 1. Liên tỉnh -->
+                        <a href="pages/customer.html?service=intercity" class="gsm-grid-item">
+                            <div class="gsm-grid-badge">-20%</div>
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_lientinh.svg" alt="Liên tỉnh">
+                            </div>
+                            <div class="gsm-grid-label">Liên tỉnh</div>
+                        </a>
+
+                        <!-- 2. Đặt taxi -->
+                        <a href="pages/customer.html?service=car4" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_taxi.svg" alt="Đặt taxi">
+                            </div>
+                            <div class="gsm-grid-label">Đặt taxi</div>
+                        </a>
+
+                        <!-- 3. Đồ ăn -->
+                        <a href="pages/customer.html?service=food" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_food.svg" alt="Đồ ăn">
+                            </div>
+                            <div class="gsm-grid-label">Đồ ăn</div>
+                        </a>
+
+                        <!-- 4. Giao hàng -->
+                        <a href="pages/customer.html?service=delivery" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_delivery.svg" alt="Giao hàng">
+                            </div>
+                            <div class="gsm-grid-label">Giao hàng</div>
+                        </a>
+
+                        <!-- 5. Hội viên -->
+                        <a href="pages/profile.html#membership" class="gsm-grid-item">
+                            <div class="gsm-grid-badge">MỚI</div>
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_member.svg" alt="Hội viên">
+                            </div>
+                            <div class="gsm-grid-label">Hội viên</div>
+                        </a>
+
+                        <!-- 6. Thuê xe tự lái -->
+                        <a href="pages/customer.html?service=rental" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_rent.svg" alt="Thuê xe tự lái">
+                            </div>
+                            <div class="gsm-grid-label">Thuê xe tự lái</div>
+                        </a>
+
+                        <!-- 7. Thẻ quà tặng -->
+                        <a href="pages/customer.html?service=gift" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_gift.svg" alt="Thẻ quà tặng">
+                            </div>
+                            <div class="gsm-grid-label">Thẻ quà tặng</div>
+                        </a>
+
+                        <!-- 8. VinBus -->
+                        <a href="pages/customer.html?service=vinbus" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_vinbus.svg" alt="VinBus">
+                            </div>
+                            <div class="gsm-grid-label">VinBus</div>
                         </a>
                     </div>
                 </div>
+
+                <!-- 5. Promotional Banner Card (BIC & BIDV) -->
+                <div class="gsm-banner-card" onclick="window.location.href='pages/customer.html'">
+                    <div class="gsm-banner-left">
+                        <h4>🛡️ NHÂN ĐÔI BẢO VỆ CÙNG BIC & BIDV</h4>
+                        <p>Bảo hiểm hành trình tự động 100% cho mọi cuốc xe Navigo</p>
+                    </div>
+                    <div class="gsm-banner-graphic">🎉</div>
+                </div>
+
+                <div style="height: 90px;"></div>
+
+                <!-- 6. Bottom Navigation Bar anchored to viewport center -->
             </div>
-
-            <!-- Interactive Search Pill: "Bạn muốn đi đâu hôm nay?" (ref-01) -->
-            <a href="pages/customer.html" class="goride-search-pill" id="home-search-pill">
-                <span class="goride-search-icon">🔍</span>
-                <span class="goride-search-text">Bạn muốn đi đâu hôm nay?</span>
-                <span class="goride-search-action">Đặt xe →</span>
-            </a>
-        </header>
-
-        <!-- Main Content Area: Responsive Grid on Desktop -->
-        <main class="goride-home-content">
-            <div class="goride-desktop-home-grid">
-                <!-- Left Column (Desktop Hero Booking & Services) -->
-                <div class="goride-desktop-hero-booking-card">
-                    <!-- Desktop Prominent Search Action (Desktop only - mobile has header search pill) -->
-                    <div class="goride-desktop-hero-search desktop-only" style="margin-bottom: 24px;">
-                        <div style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-bottom: 6px;">
-                            Bạn muốn di chuyển đến đâu hôm nay?
-                        </div>
-                        <p style="font-size: 0.85rem; color: #64748b; margin: 0 0 14px 0;">
-                            Chọn điểm đón và điểm đến để Navigo điều phối xe gần bạn nhất.
-                        </p>
-                        <a href="pages/customer.html" class="goride-search-pill" style="box-shadow: 0 4px 16px rgba(0, 137, 123, 0.15);">
-                            <span class="goride-search-icon">🔍</span>
-                            <span class="goride-search-text">Nhập điểm đón và điểm đến...</span>
-                            <span class="goride-search-action">Bắt đầu đặt xe →</span>
-                        </a>
-                    </div>
-
-                    <!-- Services Section: 6 Vehicle Options -->
-                    <section class="goride-services-section">
-                        <div class="goride-section-header-compact">
-                            <h2 class="goride-section-title">
-                                <span>⚡</span> Dịch vụ di chuyển
-                            </h2>
-                            <span class="goride-instant-badge">Ghép tức thì</span>
-                        </div>
-
-                        <div class="goride-services-grid">
-                            <!-- Navigo Bike (Xe máy) -->
-                            <a href="pages/customer.html?service=bike" class="goride-service-tile" title="Đặt xe máy Navigo">
-                                <div class="goride-service-icon-wrap" style="color: #00897b;">
-                                    🛵
-                                </div>
-                                <div class="goride-service-name">Xe máy</div>
-                                <div class="goride-service-sub">Tiết kiệm</div>
-                            </a>
-
-                            <!-- Navigo Car (Ô tô 4 chỗ) -->
-                            <a href="pages/customer.html?service=car4" class="goride-service-tile" title="Đặt ô tô 4 chỗ Navigo">
-                                <div class="goride-service-icon-wrap" style="color: #0288d1;">
-                                    🚗
-                                </div>
-                                <div class="goride-service-name">Ô tô 4 chỗ</div>
-                                <div class="goride-service-sub">Phổ biến</div>
-                            </a>
-
-                            <!-- Navigo Plus (Xe sang cao cấp) -->
-                            <a href="pages/customer.html?service=premium" class="goride-service-tile" title="Đặt xe cao cấp Navigo Plus">
-                                <div class="goride-service-icon-wrap" style="color: #7c3aed;">
-                                    🚘
-                                </div>
-                                <div class="goride-service-name">Navigo Plus</div>
-                                <div class="goride-service-sub">Cao cấp</div>
-                            </a>
-
-                            <!-- Navigo XL (Xe 7 chỗ) -->
-                            <a href="pages/customer.html?service=car7" class="goride-service-tile" title="Đặt xe 7 chỗ Navigo XL">
-                                <div class="goride-service-icon-wrap" style="color: #ea580c;">
-                                    🚐
-                                </div>
-                                <div class="goride-service-name">Xe 7 chỗ</div>
-                                <div class="goride-service-sub">Rộng rãi</div>
-                            </a>
-
-                            <!-- Giao hàng -->
-                            <a href="pages/customer.html?service=delivery" class="goride-service-tile" title="Giao hàng hỏa tốc">
-                                <div class="goride-service-icon-wrap" style="color: #d97706;">
-                                    📦
-                                </div>
-                                <div class="goride-service-name">Giao hàng</div>
-                                <div class="goride-service-sub">Hỏa tốc</div>
-                            </a>
-
-                            <!-- Đặt trước -->
-                            <a href="pages/customer.html?service=schedule" class="goride-service-tile" title="Đặt xe theo lịch hẹn">
-                                <div class="goride-service-icon-wrap" style="color: #059669;">
-                                    📅
-                                </div>
-                                <div class="goride-service-name">Đặt trước</div>
-                                <div class="goride-service-sub">Hẹn giờ</div>
-                            </a>
-                        </div>
-                    </section>
-
-                    <!-- Promo Banner -->
-                    <div class="goride-promo-banner" onclick="window.location.href='pages/customer.html'">
-                        <div class="goride-promo-left">
-                            <h4>Ưu đãi 20% hôm nay</h4>
-                            <p>Tự động áp dụng khi đặt chuyến</p>
-                        </div>
-                        <div class="goride-promo-badge">
-                            🏷️ NAVIGO20
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Column (Modern Promotions, Safety Standards, Service Highlights) -->
-                <div class="goride-desktop-sidebar-col">
-                    <!-- Featured Promotion Banner -->
-                    <div class="goride-sidebar-promo-card">
-                        <div class="goride-sidebar-promo-badge">ƯU ĐÃI ĐẶC QUYỀN</div>
-                        <div class="goride-sidebar-promo-content">
-                            <div class="goride-sidebar-promo-title">Giảm 25% cho chuyến đi hôm nay</div>
-                            <div class="goride-sidebar-promo-desc">Nhập mã <strong>NAVIGO25</strong> khi đặt xe. Tối đa 30.000 ₫, áp dụng tự động cho cả xe máy và ô tô.</div>
-                        </div>
-                        <a href="pages/customer.html" class="goride-sidebar-promo-cta">
-                            Đặt xe nhận ưu đãi ngay →
-                        </a>
-                    </div>
-
-                    <!-- Navigo Pass & Membership Benefits -->
-                    <div class="goride-sidebar-pass-card">
-                        <div class="goride-pass-header">
-                            <div class="goride-pass-icon">🎁</div>
-                            <div>
-                                <div class="goride-pass-title">Gói Tiết Kiệm Navigo Pass</div>
-                                <div class="goride-pass-sub">Tiết kiệm đến 400.000 ₫ mỗi tháng</div>
-                            </div>
-                        </div>
-                        <div class="goride-pass-benefits">
-                            <div class="goride-pass-benefit-item">
-                                <span class="goride-benefit-check">✓</span>
-                                <span>Giảm 20% các cuốc xe vào giờ cao điểm sáng & tối</span>
-                            </div>
-                            <div class="goride-pass-benefit-item">
-                                <span class="goride-benefit-check">✓</span>
-                                <span>Ưu tiên ghép tài xế 5 sao gần bạn nhất</span>
-                            </div>
-                            <div class="goride-pass-benefit-item">
-                                <span class="goride-benefit-check">✓</span>
-                                <span>Tích điểm đổi mã voucher nước uống & tiện ích</span>
-                            </div>
-                        </div>
-                        <a href="pages/customer.html" class="goride-pass-btn">Khám phá gói Navigo Pass</a>
-                    </div>
-
-                    <!-- Safety & Quality Standards -->
-                    <div class="goride-sidebar-safety-card">
-                        <div class="goride-safety-header">
-                            <span class="goride-safety-shield">🛡️</span>
-                            <span class="goride-safety-title">Cam kết an tâm mọi hành trình</span>
-                        </div>
-                        <div class="goride-safety-list">
-                            <div class="goride-safety-item">
-                                <span class="goride-safety-bullet">⭐</span>
-                                <div>
-                                    <strong>Tài xế 5 sao được xác minh danh tính</strong>
-                                    <p>100% tài xế kiểm tra lý lịch, giấy phép lái xe và định kỳ kiểm định xe.</p>
-                                </div>
-                            </div>
-                            <div class="goride-safety-item">
-                                <span class="goride-safety-bullet">🛡️</span>
-                                <div>
-                                    <strong>Bảo hiểm chuyến đi tự động tích hợp</strong>
-                                    <p>Bảo vệ toàn diện cho hành khách và tài xế trong suốt lộ trình di chuyển.</p>
-                                </div>
-                            </div>
-                            <div class="goride-safety-item">
-                                <span class="goride-safety-bullet">⚡</span>
-                                <div>
-                                    <strong>Ghép xe thông minh với R-Tree & Dijkstra</strong>
-                                    <p>Định vị tài xế tối ưu cự ly đón, rút ngắn tối đa thời gian chờ đợi.</p>
-                                </div>
-                            </div>
-                            <div class="goride-safety-item">
-                                <span class="goride-safety-bullet">📞</span>
-                                <div>
-                                    <strong>Tổng đài hỗ trợ & SOS khẩn cấp 24/7</strong>
-                                    <p>Chia sẻ lộ trình trực tiếp cho người thân và trợ giúp liên tục 24/7.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Platform Trust Stats -->
-                    <div class="goride-sidebar-stats-card">
-                        <div class="goride-stats-grid">
-                            <div class="goride-stat-item">
-                                <div class="goride-stat-number">500K+</div>
-                                <div class="goride-stat-label">Chuyến đi an toàn</div>
-                            </div>
-                            <div class="goride-stat-item">
-                                <div class="goride-stat-number">4.9/5 ⭐</div>
-                                <div class="goride-stat-label">Đánh giá hài lòng</div>
-                            </div>
-                            <div class="goride-stat-item">
-                                <div class="goride-stat-number">99.8%</div>
-                                <div class="goride-stat-label">Đúng giờ đón khách</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
 
-    <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
-    <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav"></nav>
+        <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="index.html" class="gsm-nav-btn active" title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="pages/activity.html" class="gsm-nav-btn " title="Hoạt động">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </a>
+            <a href="pages/notifications.html" class="gsm-nav-btn " title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot"></span>
+                </div>
+            </a>
+            <a href="pages/profile.html" class="gsm-nav-btn " title="Tài khoản">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
 
-    <!-- Toast Notifications -->
-    <div class="toast-container" id="toast-container"></div>
+        <!-- Separate Circular Floating Glass Trophy Orb -->
+        <a href="pages/profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
 
+    <!-- Scripts -->
     <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="js/core/firebase-config.js"></script>
-    <script src="js/core/realtime.js"></script>
+    <script src="js/core/geocoder.js"></script>
     <script src="js/core/api.js"></script>
     <script src="js/core/session.js"></script>
-    <script src="js/core/router.js"></script>
-    <script src="js/core/demo-data.js"></script>
-    <script src="js/core/app.js"></script>
-    <script>
-        (function() {
-            function syncHomeAuthUI() {
-                let user = null;
-                if (typeof sessionManager !== 'undefined') {
-                    user = sessionManager.getCurrentUser();
-                }
-                if (!user) {
-                    if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
-                        user = null;
-                    } else {
-                        try {
-                            const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
-                            if (raw && raw !== 'null' && raw !== 'undefined' && raw !== '{}') {
-                                user = JSON.parse(raw);
-                            }
-                        } catch (e) {}
-                    }
-                }
-
-                const isAuth = !!(user && (user.id || user.email));
-                const role = user ? (user.role || 'customer') : null;
-
-                // 1. Strictly toggle guest vs user elements across desktop & mobile
-                document.querySelectorAll('[data-auth="guest"]').forEach(el => {
-                    el.style.setProperty('display', isAuth ? 'none' : '', 'important');
-                });
-                document.querySelectorAll('[data-auth="user"]').forEach(el => {
-                    el.style.setProperty('display', isAuth ? 'flex' : 'none', 'important');
-                });
-
-                // 2. Populate User Profile Data (Name, Email, Role, Avatar)
-                if (isAuth && user) {
-                    document.querySelectorAll('[data-user-name]').forEach(el => {
-                        el.textContent = user.name || 'Người dùng';
-                    });
-                    document.querySelectorAll('[data-user-email]').forEach(el => {
-                        el.textContent = user.email || '';
-                    });
-                    document.querySelectorAll('[data-user-role]').forEach(el => {
-                        const roleLabels = { customer: 'Khách hàng', driver: 'Tài xế', admin: 'Quản trị viên' };
-                        el.textContent = roleLabels[user.role] || user.role;
-                    });
-
-                    const avatarSrc = user.avatar || user.avatar_path;
-                    document.querySelectorAll('[data-user-avatar]').forEach(el => {
-                        if (avatarSrc) {
-                            if (el.tagName && el.tagName.toLowerCase() === 'img') {
-                                el.src = avatarSrc;
-                                el.style.display = 'block';
-                            } else {
-                                el.innerHTML = `<img src="${avatarSrc}" alt="Avatar" style="width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; pointer-events:none;">`;
-                            }
-                        } else {
-                            const initial = (user.name || 'U').charAt(0).toUpperCase();
-                            if (el.tagName && el.tagName.toLowerCase() === 'img') {
-                                el.style.display = 'none';
-                            } else {
-                                el.innerHTML = `<span>${initial}</span>`;
-                            }
-                        }
-                    });
-
-                    // Dropdown portal shortcuts visibility based on role
-                    const adminDropLink = document.getElementById('home-dropdown-admin-link');
-                    const driverDropLink = document.getElementById('home-dropdown-driver-link');
-                    const historyDropLink = document.getElementById('home-dropdown-history-link');
-                    if (adminDropLink) adminDropLink.style.display = (role === 'admin') ? 'flex' : 'none';
-                    if (driverDropLink) driverDropLink.style.display = (role === 'driver') ? 'flex' : 'none';
-                    if (historyDropLink) historyDropLink.style.display = (role === 'customer') ? 'flex' : 'none';
-                }
-
-                // 3. Role-based visibility across Desktop navbar links
-                const driverLinks = [document.getElementById('nav-link-driver'), document.getElementById('m-pill-driver')];
-                const adminLinks = [document.getElementById('nav-link-admin'), document.getElementById('m-pill-admin')];
-                const customerLinks = [document.getElementById('nav-link-customer')];
-                const historyLinks = [document.getElementById('nav-link-history')];
-                const profileLinks = [document.getElementById('nav-link-profile')];
-
-                const setVisible = (elements, show) => {
-                    elements.forEach(el => {
-                        if (el) el.style.display = show ? '' : 'none';
-                    });
-                };
-
-                if (role === 'admin') {
-                    setVisible(driverLinks, false);
-                    setVisible(adminLinks, true);
-                    setVisible(customerLinks, false);
-                    setVisible(historyLinks, false);
-                    setVisible(profileLinks, true);
-                } else if (role === 'driver') {
-                    setVisible(driverLinks, true);
-                    setVisible(adminLinks, false);
-                    setVisible(customerLinks, false);
-                    setVisible(historyLinks, false);
-                    setVisible(profileLinks, true);
-                } else if (role === 'customer') {
-                    setVisible(driverLinks, false);
-                    setVisible(adminLinks, false);
-                    setVisible(customerLinks, true);
-                    setVisible(historyLinks, true);
-                    setVisible(profileLinks, true);
-                } else {
-                    setVisible(driverLinks, true);
-                    setVisible(adminLinks, false);
-                    setVisible(customerLinks, true);
-                    setVisible(historyLinks, false);
-                    setVisible(profileLinks, false);
-                }
-
-                // 4. Strictly synchronize Mobile Bottom Navigation matching role
-                if (typeof app !== 'undefined' && typeof app.initMobileBottomNav === 'function') {
-                    app.initMobileBottomNav();
-                }
-            }
-
-            // Setup Home User Menu Dropdown Toggle
-            function setupHomeUserMenu() {
-                const menuBtn = document.getElementById('home-user-menu-btn');
-                const dropdown = document.getElementById('home-user-dropdown');
-                const wrapper = menuBtn ? (menuBtn.closest('.goride-user-menu-wrapper') || menuBtn.parentElement) : null;
-
-                if (menuBtn && dropdown) {
-                    menuBtn.onclick = (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const isShown = dropdown.style.display === 'block';
-                        dropdown.style.display = isShown ? 'none' : 'block';
-                    };
-                }
-
-                if (wrapper && dropdown) {
-                    wrapper.addEventListener('mouseenter', () => {
-                        dropdown.style.display = 'block';
-                    });
-                    wrapper.addEventListener('mouseleave', () => {
-                        dropdown.style.display = 'none';
-                    });
-                    document.addEventListener('click', (e) => {
-                        if (!wrapper.contains(e.target)) {
-                            dropdown.style.display = 'none';
-                        }
-                    });
-                }
-            }
-
-            // Run immediately
-            syncHomeAuthUI();
-
-            // Run on DOM ready
-            document.addEventListener('DOMContentLoaded', () => {
-                syncHomeAuthUI();
-                setupHomeUserMenu();
-                if (typeof app !== 'undefined') {
-                    if (app.updateAuthUI) app.updateAuthUI();
-                    if (app.initMobileBottomNav) app.initMobileBottomNav();
-                }
-            });
-
-            // Reactively re-sync on all storage and session events
-            ['load', 'pageshow', 'focus', 'session:login', 'session:update', 'session:logout', 'session:change'].forEach(evt => {
-                window.addEventListener(evt, () => syncHomeAuthUI());
-            });
-            window.addEventListener('storage', (e) => {
-                if (!e.key || e.key.includes('user') || e.key.includes('token') || e.key.includes('logged_out')) {
-                    if (typeof sessionManager !== 'undefined') sessionManager._initFromStorage();
-                    syncHomeAuthUI();
-                }
-            });
-        })();
-    </script>
+    <script src="js/core/realtime.js"></script>
+    <script src="js/core/notifications.js"></script>
 </body>
 </html>

@@ -4,24 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng ký tài khoản - Navigo</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/responsive.css">
-    <style>
-        /* Strictly hide mobile bottom navigation on register page */
-        .bottom-nav,
-        #mobile-bottom-nav,
-        .mobile-only-flex.bottom-nav,
-        .goride-mobile-nav-bar {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-    </style>
 </head>
-<body class="auth-page">
+<body>
     <div class="auth-layout">
         <div class="auth-container">
             <div class="auth-card">
@@ -124,7 +115,7 @@
                                 <option value="">Chọn loại phương tiện</option>
                                 <option value="motorbike">🛵 Xe máy (Navigo Bike)</option>
                                 <option value="car4">🚗 Ô tô 4 chỗ (Navigo Car)</option>
-                                <option value="premium">🚘 Xe sang 4 chỗ (Navigo Plus)</option>
+                                <option value="premium">🚘 Xe sang 4 chỗ (Navigo Premium)</option>
                                 <option value="car7">🚐 Ô tô 7 chỗ (Navigo XL)</option>
                             </select>
                         </div>
@@ -166,6 +157,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="../js/core/firebase-config.js"></script>
     <script src="../js/core/realtime.js"></script>
+    <script src="../js/core/notifications.js"></script>
     <script src="../js/core/api.js"></script>
     <script src="../js/core/session.js"></script>
     <script src="../js/core/router.js"></script>
@@ -302,105 +294,39 @@
             btn.textContent = 'Đang xử lý đăng ký...';
 
             try {
-                const normEmail = email.toLowerCase().trim();
-                const normPhone = phone.trim();
+                // 1. Check duplicate locally
+                const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                if (offlineUsers.some(u => u.email && u.email.toLowerCase() === email.toLowerCase())) {
+                    throw new Error('Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.');
+                }
+                if (offlineUsers.some(u => u.phone && u.phone === phone)) {
+                    throw new Error('Số điện thoại này đã được đăng ký. Vui lòng sử dụng số điện thoại khác.');
+                }
 
-                // 1. Authoritative Cloud Duplicate Check (Firebase Realtime Database)
-                let emailExistsInCloud = false;
-                let phoneExistsInCloud = false;
-
-                if (window.realtimeSync) {
+                // 2. Check duplicate in Firebase Cloud
+                if (window.realtimeSync && window.realtimeSync.isAvailable()) {
                     try {
-                        let allUsers = {};
-                        let allDrivers = {};
-                        let allPending = {};
-
-                        if (window.realtimeSync.isAvailable()) {
-                            const [uSnap, dSnap, pSnap] = await Promise.all([
-                                window.realtimeSync.db.ref('goride_users').once('value'),
-                                window.realtimeSync.db.ref('goride_drivers').once('value'),
-                                window.realtimeSync.db.ref('goride_pending_drivers').once('value')
-                            ]);
-                            allUsers = uSnap.val() || {};
-                            allDrivers = dSnap.val() || {};
-                            allPending = pSnap.val() || {};
-                        } else if (typeof window.realtimeSync._restGet === 'function') {
-                            const [uData, dData, pData] = await Promise.all([
-                                window.realtimeSync._restGet('goride_users'),
-                                window.realtimeSync._restGet('goride_drivers'),
-                                window.realtimeSync._restGet('goride_pending_drivers')
-                            ]);
-                            allUsers = uData || {};
-                            allDrivers = dData || {};
-                            allPending = pData || {};
+                        const snapUsers = await window.realtimeSync.db.ref('goride_users').once('value');
+                        const cloudUsers = snapUsers.val() || {};
+                        const userValues = Object.values(cloudUsers);
+                        if (userValues.some(u => u && u.email && u.email.toLowerCase() === email.toLowerCase())) {
+                            throw new Error('Email này đã được đăng ký trên hệ thống. Vui lòng đăng nhập.');
                         }
-
-                        const allCloudAccounts = [
-                            ...Object.values(allUsers),
-                            ...Object.values(allDrivers),
-                            ...Object.values(allPending)
-                        ].filter(Boolean);
-
-                        for (const acc of allCloudAccounts) {
-                            if (acc.email && acc.email.toLowerCase().trim() === normEmail) {
-                                emailExistsInCloud = true;
-                            }
-                            if (acc.phone && String(acc.phone).trim() === normPhone) {
-                                phoneExistsInCloud = true;
-                            }
+                        if (userValues.some(u => u && u.phone && u.phone === phone)) {
+                            throw new Error('Số điện thoại này đã được đăng ký trên hệ thống. Vui lòng dùng số khác.');
                         }
-
-                        if (emailExistsInCloud) {
-                            throw new Error('Email này đã được đăng ký trên hệ thống. Vui lòng đăng nhập hoặc sử dụng email khác.');
-                        }
-                        if (phoneExistsInCloud) {
-                            throw new Error('Số điện thoại này đã được đăng ký trên hệ thống. Vui lòng sử dụng số điện thoại khác.');
-                        }
-
-                        // Email & phone NOT in cloud -> Any local copy is stale/from an account deleted by Admin!
-                        // Purge stale ghost records from localStorage so they never block new registration
-                        const currentOffline = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-                        const cleanOffline = currentOffline.filter(u => 
-                            !(u && ((u.email && u.email.toLowerCase().trim() === normEmail) || (u.phone && String(u.phone).trim() === normPhone)))
-                        );
-                        localStorage.setItem('goride_offline_users', JSON.stringify(cleanOffline));
-
-                        const currentPending = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
-                        const cleanPending = currentPending.filter(p => 
-                            !(p && ((p.email && p.email.toLowerCase().trim() === normEmail) || (p.phone && String(p.phone).trim() === normPhone)))
-                        );
-                        localStorage.setItem('goride_pending_drivers', JSON.stringify(cleanPending));
-
-                    } catch (cloudErr) {
-                        if (cloudErr.message && cloudErr.message.includes('đăng ký')) throw cloudErr;
-                        console.warn('[Register] Cloud check notice:', cloudErr.message);
+                    } catch (fbErr) {
+                        if (fbErr.message && fbErr.message.includes('đăng ký')) throw fbErr;
+                        console.warn('[Register] Firebase duplicate check warning:', fbErr.message);
                     }
                 }
-
-                // 2. Offline Fallback Check (only if cloud is not reachable)
-                if (!window.realtimeSync || (!window.realtimeSync.isAvailable() && !window.realtimeSync.databaseURL)) {
-                    const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-                    if (offlineUsers.some(u => u.email && u.email.toLowerCase().trim() === normEmail)) {
-                        throw new Error('Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.');
-                    }
-                    if (offlineUsers.some(u => u.phone && String(u.phone).trim() === normPhone)) {
-                        throw new Error('Số điện thoại này đã được đăng ký. Vui lòng sử dụng số điện thoại khác.');
-                    }
-                }
-
-                // 3. Clear any historical deleted-blacklist marker for this email/phone
-                try {
-                    const deletedIds = JSON.parse(localStorage.getItem('goride_deleted_user_ids') || '[]');
-                    const filteredDeleted = deletedIds.filter(x => String(x).toLowerCase().trim() !== normEmail && String(x).trim() !== normPhone);
-                    localStorage.setItem('goride_deleted_user_ids', JSON.stringify(filteredDeleted));
-                } catch (e) {}
 
                 const userId = (currentRole === 'driver' ? 'drv_' : 'usr_') + Date.now();
                 const newUser = {
                     id: userId,
                     name: name,
-                    email: normEmail,
-                    phone: normPhone,
+                    email: email.toLowerCase(),
+                    phone: phone,
                     password: password,
                     role: currentRole,
                     walletBalance: 0,
@@ -422,74 +348,28 @@
                     };
                 }
 
-                // 4. Save to Firebase Realtime Database Cloud (Cross-device instant sync)
+                // 3. Save to Firebase Realtime Database Cloud (Cross-device instant sync)
                 if (window.realtimeSync) {
                     try {
+                        // Chờ tối đa 2s nếu Firebase đang kết nối
                         if (!window.realtimeSync.isAvailable()) {
                             await new Promise(r => {
                                 window.realtimeSync.onReady(r);
-                                setTimeout(r, 1200);
+                                setTimeout(r, 2000);
                             });
                         }
                         await window.realtimeSync.registerUser(newUser);
-
-                        // Direct explicit cloud write for pending driver record
-                        if (currentRole === 'driver') {
-                            const pRecord = {
-                                id: userId,
-                                name: newUser.name,
-                                email: newUser.email,
-                                phone: newUser.phone,
-                                vehicleType: newUser.vehicleType,
-                                plate: newUser.licensePlate,
-                                experienceYears: newUser.experienceYears,
-                                status: 'pending',
-                                createdAt: newUser.createdAt
-                            };
-
-                            if (window.realtimeSync.isAvailable()) {
-                                try {
-                                    await window.realtimeSync.db.ref(`goride_pending_drivers/${userId}`).set(pRecord);
-                                    await window.realtimeSync.db.ref(`goride_drivers/${userId}`).set({
-                                        ...pRecord,
-                                        isOnline: false,
-                                        walletBalance: 0,
-                                        rating: 5.0,
-                                        totalRides: 0
-                                    });
-                                } catch (e) {}
-                            } else if (typeof window.realtimeSync._restPut === 'function') {
-                                try {
-                                    await window.realtimeSync._restPut(`goride_pending_drivers/${userId}`, pRecord);
-                                    await window.realtimeSync._restPut(`goride_drivers/${userId}`, {
-                                        ...pRecord,
-                                        isOnline: false,
-                                        walletBalance: 0,
-                                        rating: 5.0,
-                                        totalRides: 0
-                                    });
-                                } catch (e) {}
-                            }
-                        }
                     } catch (fbSaveErr) {
                         console.warn('[Register] Firebase cloud sync warning:', fbSaveErr);
                     }
                 }
 
-                // 5. Save to localStorage for instant offline access
-                const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-                const existingIdx = offlineUsers.findIndex(u => u.id === userId || (u.email && u.email.toLowerCase() === normEmail));
-                if (existingIdx !== -1) {
-                    offlineUsers[existingIdx] = newUser;
-                } else {
-                    offlineUsers.push(newUser);
-                }
+                // 4. Save to localStorage for instant offline access
+                offlineUsers.push(newUser);
                 localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
 
                 if (currentRole === 'driver') {
-                    const pendingDrivers = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
-                    const pIdx = pendingDrivers.findIndex(p => p.id === userId || (p.email && p.email.toLowerCase() === normEmail));
-                    const pRecord = {
+                    const pendingData = {
                         id: userId,
                         name: newUser.name,
                         email: newUser.email,
@@ -500,33 +380,75 @@
                         status: 'pending',
                         createdAt: newUser.createdAt
                     };
-                    if (pIdx !== -1) {
-                        pendingDrivers[pIdx] = pRecord;
-                    } else {
-                        pendingDrivers.unshift(pRecord);
-                    }
+
+                    const pendingDrivers = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
+                    pendingDrivers.unshift(pendingData);
                     localStorage.setItem('goride_pending_drivers', JSON.stringify(pendingDrivers));
+
+                    // Direct REST PUT to Firebase RTDB for guaranteed instant cross-device delivery
+                    try {
+                        const rtdbBase = (window.realtimeSync && window.realtimeSync.databaseURL) || 'https://navigo-app-cc7cf-default-rtdb.asia-southeast1.firebasedatabase.app';
+                        fetch(`${rtdbBase}/goride_pending_drivers/${userId}.json`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(pendingData),
+                            keepalive: true
+                        }).catch(() => {});
+
+                        fetch(`${rtdbBase}/goride_users/${userId}.json`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newUser),
+                            keepalive: true
+                        }).catch(() => {});
+                    } catch (e) {}
+
+                    // Push in-app alert notification directly into Admin accounts inbox
+                    const adminKeys = ['navigo_user_notifs_adm_admin', 'navigo_user_notifs_admin_navigo_vn', 'navigo_user_notifs_admin_demo_com'];
+                    const vLabel = (newUser.vehicleType === 'bike' || newUser.vehicleType === 'motorbike') ? 'Xe máy điện (Navigo Bike)' : 'Ô tô điện (Navigo Car)';
+                    const notifItem = {
+                        id: 'notif_reg_' + Date.now(),
+                        category: 'system',
+                        title: '📋 Hồ sơ tài xế mới đăng ký: ' + newUser.name,
+                        body: `Tài xế ${newUser.name} (${vLabel}, Biển số: ${newUser.licensePlate}) vừa nộp hồ sơ đăng ký đối tác, đang chờ bạn phê duyệt.`,
+                        date: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' hôm nay',
+                        timestamp: Date.now(),
+                        icon: '📋',
+                        unread: true,
+                        actionUrl: 'admin.html#drivers',
+                        actionText: 'Duyệt ngay'
+                    };
+                    adminKeys.forEach(k => {
+                        try {
+                            const list = JSON.parse(localStorage.getItem(k) || '[]');
+                            list.unshift(notifItem);
+                            localStorage.setItem(k, JSON.stringify(list));
+                        } catch (e) {}
+                    });
+
+                    // Trigger cross-tab sync event
+                    try {
+                        localStorage.setItem('goride_last_driver_reg', JSON.stringify({ id: userId, time: Date.now() }));
+                        window.dispatchEvent(new CustomEvent('navigo:driver-registered', { detail: pendingData }));
+                    } catch (e) {}
                 }
 
-                // 6. Attempt backend API call if C++ server is running (Fast non-blocking with 800ms timeout)
+                // 5. Attempt backend API call if C++ server is running
                 if (typeof apiClient !== 'undefined') {
                     try {
-                        await Promise.race([
-                            apiClient.post('/auth/register', {
-                                name,
-                                email,
-                                phone,
-                                password,
-                                role: currentRole,
-                                licensePlate: licensePlate,
-                                vehicleType: vehicleType,
-                                experience: experience
-                            }),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 800))
-                        ]);
+                        await apiClient.post('/auth/register', {
+                            name,
+                            email,
+                            phone,
+                            password,
+                            role: currentRole,
+                            licensePlate: licensePlate,
+                            vehicleType: vehicleType,
+                            experience: experience
+                        });
                     } catch (apiErr) {
                         // Ignore 404 / connection errors on static hosting
-                        console.warn('[Register] API endpoint call notice:', apiErr.message);
+                        console.warn('[Register] API endpoint call:', apiErr.message);
                     }
                 }
 

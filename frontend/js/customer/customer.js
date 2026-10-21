@@ -15,7 +15,7 @@ class CustomerAppController {
         // Current Active View: 'search' | 'pickup-confirm' | 'vehicle-select' | 'tracking' | 'history'
         this.currentView = 'search';
 
-        // Locations (no default prefill, user selects or enters pickup)
+        // Locations (default initialized to user's current GPS location on load)
         this.pickup = null;
         this.destination = null;
 
@@ -62,14 +62,58 @@ class CustomerAppController {
         // Realistic HCMC Locations Pool (ref-02)
         this.locationsPool = [
             {
+                id: 'loc_tan_son_nhat_t3',
+                name: 'Ga Quốc Nội (Ga T3) - Sân Bay Quốc Tế Tân Sơn Nhất',
+                address: 'Phường Tân Sơn, Thành phố Hồ Chí Minh, VNM',
+                lat: 10.8190,
+                lng: 106.6560,
+                distanceKm: '11,8 km',
+                icon: '✈'
+            },
+            {
+                id: 'loc_tan_son_nhat_t1',
+                name: 'Ga Quốc Nội (Ga T1) - Sân Bay Quốc Tế Tân Sơn Nhất',
+                address: 'Trường Sơn, Phường Tân Sơn Hòa, Thành phố Hồ Chí Minh, Việt Nam',
+                lat: 10.8165,
+                lng: 106.6575,
+                distanceKm: '11 km',
+                icon: '✈'
+            },
+            {
+                id: 'loc_tan_son_nhat_t2',
+                name: 'Ga Quốc Tế (Ga T2) - Sân Bay Quốc Tế Tân Sơn Nhất',
+                address: 'Trường Sơn, Phường Tân Sơn Hòa, Thành phố Hồ Chí Minh, Việt Nam',
+                lat: 10.8175,
+                lng: 106.6590,
+                distanceKm: '10,8 km',
+                icon: '✈'
+            },
+            {
+                id: 'loc_ben_xe_mientay',
+                name: 'Bến Xe Miền Đông Cũ',
+                address: '292 Đường Đinh Bộ Lĩnh, Phường Bình Thạnh, Thành phố Hồ Chí Minh, Việt Nam',
+                lat: 10.8142,
+                lng: 106.7115,
+                distanceKm: '8,7 km',
+                icon: '🚌'
+            },
+            {
+                id: 'loc_van_lang_cs3',
+                name: 'Trường Đại Học Văn Lang - Cơ Sở 3',
+                address: '69/68 Đặng Thùy Trâm, Phường Bình Lợi, Bình Thạnh, TP.HCM',
+                lat: 10.8282,
+                lng: 106.6967,
+                distanceKm: '6,5 km',
+                icon: '🎓'
+            },
+            {
                 id: 'loc_vincom_dk',
                 name: 'Vincom Center Đồng Khởi',
                 address: '72 Lê Thánh Tôn & 45A Lý Tự Trọng, Bến Nghé, Quận 1, TP.HCM',
                 lat: 10.7781,
                 lng: 106.7023,
-                distance: 1300,
-                isPopular: true,
-                popularText: 'Điểm đến phổ biến (60% khách chọn đặt)'
+                distanceKm: '1,3 km',
+                icon: '📍'
             },
             {
                 id: 'loc_benthanh',
@@ -77,113 +121,90 @@ class CustomerAppController {
                 address: 'Cửa Nam, Đường Lê Lợi, Phường Bến Thành, Quận 1, TP.HCM',
                 lat: 10.7725,
                 lng: 106.6980,
-                distance: 800,
-                isPopular: true,
-                popularText: 'Khu vực trung tâm thương mại & ẩm thực'
-            },
-            {
-                id: 'loc_landmark81',
-                name: 'Landmark 81, Vinhomes Central Park',
-                address: '720A Điện Biên Phủ, Phường 22, Bình Thạnh, TP.HCM',
-                lat: 10.7951,
-                lng: 106.7219,
-                distance: 5800,
-                isPopular: true,
-                popularText: 'Tòa nhà cao nhất Việt Nam'
-            },
-            {
-                id: 'loc_airport',
-                name: 'Sân bay Quốc tế Tân Sơn Nhất',
-                address: 'Ga Quốc nội & Quốc tế, Đường Trường Sơn, Tân Bình, TP.HCM',
-                lat: 10.8185,
-                lng: 106.6588,
-                distance: 6200,
-                isPopular: false
-            },
-            {
-                id: 'loc_bachkhoa',
-                name: 'Đại học Bách Khoa TP.HCM (Cơ sở 1)',
-                address: '268 Lý Thường Kiệt, Phường 14, Quận 10, TP.HCM',
-                lat: 10.7721,
-                lng: 106.6578,
-                distance: 4200,
-                isPopular: false
-            },
-            {
-                id: 'loc_ducba',
-                name: 'Nhà Thờ Đức Bà Sài Gòn',
-                address: '01 Công xã Paris, Phường Bến Nghé, Quận 1, TP.HCM',
-                lat: 10.7798,
-                lng: 106.6990,
-                distance: 1500,
-                isPopular: false
-            },
-            {
-                id: 'loc_nguyenhue',
-                name: 'Phố đi bộ Nguyễn Huệ',
-                address: 'Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM',
-                lat: 10.7743,
-                lng: 106.7036,
-                distance: 1100,
-                isPopular: true,
-                popularText: 'Khu vực đi bộ sôi động'
-            },
-            {
-                id: 'loc_crescent',
-                name: 'Crescent Mall & Cầu Ánh Sao',
-                address: '101 Tôn Dật Tiên, Tân Phú, Quận 7, TP.HCM',
-                lat: 10.7297,
-                lng: 106.7222,
-                distance: 7500,
-                isPopular: false
+                distanceKm: '0,8 km',
+                icon: '📍'
             }
         ];
 
         // Vehicle specifications & dynamic rates (ref-04)
         this.vehicleCatalog = {
-            bike: {
-                id: 'bike',
-                name: 'Navigo Bike',
-                seats: '1 chỗ',
-                icon: '🛵',
-                baseFare: 14000,
-                perKm: 5500,
-                etaMin: 2,
-                etaMax: 4,
-                desc: 'Nhanh chóng, luồn lách qua ngõ ngách'
-            },
             car4: {
                 id: 'car4',
-                name: 'Navigo Car',
-                seats: '4 chỗ',
+                name: 'Green Car - 4 khách',
+                seats: '4',
                 icon: '🚗',
-                baseFare: 26000,
-                perKm: 11500,
+                thumb: '../assets/gsm/car_vf5.svg',
+                baseFare: 22000,
+                perKm: 10800,
                 etaMin: 4,
-                etaMax: 6,
-                desc: 'Tiện lợi, êm ái, máy lạnh mát mẻ'
+                etaMax: 4,
+                desc: 'Đón trong 4 phút',
+                discountPercent: 5
             },
             premium: {
                 id: 'premium',
-                name: 'Navigo Plus',
-                seats: '4 chỗ',
+                name: 'Green Premium - 4 khách',
+                seats: '4',
                 icon: '🚘',
-                baseFare: 45000,
-                perKm: 18500,
+                thumb: '../assets/gsm/car_vf5.svg',
+                baseFare: 26000,
+                perKm: 12100,
                 etaMin: 5,
-                etaMax: 7,
-                desc: 'Sedan sang trọng, tài xế vest 5★'
+                etaMax: 5,
+                desc: 'Đón trong 5 phút',
+                discountPercent: 5
+            },
+            bike: {
+                id: 'bike',
+                name: 'Green Bike - 1 khách',
+                seats: '1',
+                icon: '🛵',
+                thumb: '../assets/gsm/bike_feliz.svg',
+                baseFare: 14000,
+                perKm: 5200,
+                etaMin: 3,
+                etaMax: 3,
+                desc: 'Đón trong 3 phút',
+                discountPercent: 0
+            },
+            luxury: {
+                id: 'luxury',
+                name: 'Green Luxury - 5 khách',
+                seats: '5',
+                icon: '✨',
+                thumb: '../assets/gsm/car_vf5.svg',
+                baseFare: 45000,
+                perKm: 18000,
+                etaMin: 6,
+                etaMax: 6,
+                desc: 'Đón trong 6 phút • Xe thuần điện cao cấp',
+                discountPercent: 0
             },
             car7: {
                 id: 'car7',
-                name: 'Navigo XL',
-                seats: '7 chỗ',
+                name: 'Green Taxi 7 chỗ',
+                seats: '7',
                 icon: '🚐',
-                baseFare: 35000,
-                perKm: 14500,
-                etaMin: 6,
-                etaMax: 8,
-                desc: 'Rộng rãi cho cả nhóm & nhiều hành lý'
+                thumb: '../assets/gsm/car_vf5.svg',
+                baseFare: 30000,
+                perKm: 13500,
+                etaMin: 5,
+                etaMax: 5,
+                desc: 'Đón trong 5 phút • Xe thuần điện cao cấp',
+                discountPercent: 5
+            },
+            delivery: {
+                id: 'delivery',
+                name: 'Green Delivery',
+                seats: '1',
+                icon: '📦',
+                thumb: '../assets/gsm/bike_feliz.svg',
+                baseFare: 15000,
+                perKm: 5500,
+                etaMin: 4,
+                etaMax: 4,
+                desc: 'Giao hàng siêu tốc trong nội thành',
+                discountPercent: 0
             }
         };
     }
@@ -191,9 +212,10 @@ class CustomerAppController {
     normalizeVehicleType(type) {
         if (!type) return 'car4';
         const s = String(type).toLowerCase().trim();
+        if (s === 'delivery' || s.includes('giao hàng') || s.includes('giao hang') || s.includes('delivery')) return 'delivery';
         if (s === 'bike' || s === 'motorbike' || s.includes('bike') || s.includes('moto') || s.includes('xe máy') || s.includes('xe may')) return 'motorbike';
         if (s === 'car7' || s === 'xl' || s.includes('7 chỗ') || s.includes('7 cho') || s.includes('xl')) return 'car7';
-        if (s === 'premium' || s === 'car4_plus' || s === 'plus' || s.includes('plus') || s.includes('sang')) return 'premium';
+        if (s === 'premium' || s === 'luxury' || s === 'car4_plus' || s === 'plus' || s.includes('plus') || s.includes('sang') || s.includes('luxury')) return 'premium';
         return 'car4';
     }
 
@@ -204,35 +226,45 @@ class CustomerAppController {
     getVehicleDetails(type) {
         const norm = this.normalizeVehicleType(type);
         switch (norm) {
+            case 'delivery':
+                return {
+                    id: 'delivery',
+                    type: 'delivery',
+                    name: 'Navigo Delivery',
+                    icon: '📦',
+                    plate: '59-S2 788.12',
+                    model: 'Navigo Delivery E-Box',
+                    label: 'Giao hàng siêu tốc (Navigo Delivery)'
+                };
             case 'motorbike':
                 return {
                     id: 'bike',
                     type: 'motorbike',
                     name: 'Navigo Bike',
                     icon: '🛵',
-                    plate: '',
-                    model: 'Xe máy',
-                    label: 'Xe máy (Navigo Bike)'
+                    plate: '59-S2 899.24',
+                    model: 'Navigo Bike E-Scooter',
+                    label: 'Xe máy điện (Navigo Bike)'
                 };
             case 'premium':
                 return {
                     id: 'premium',
                     type: 'premium',
-                    name: 'Navigo Plus',
+                    name: 'Navigo Luxury',
                     icon: '🚘',
-                    plate: '',
-                    model: 'Xe sang',
-                    label: 'Xe sang (Navigo Plus)'
+                    plate: '51K-999.88',
+                    model: 'Navigo Luxury VIP',
+                    label: 'Xe sang VIP (Navigo Luxury)'
                 };
             case 'car7':
                 return {
                     id: 'car7',
                     type: 'car7',
-                    name: 'Navigo XL',
+                    name: 'Navigo Taxi 7 chỗ',
                     icon: '🚐',
-                    plate: '',
-                    model: 'Ô tô 7 chỗ',
-                    label: 'Ô tô 7 chỗ (Navigo XL)'
+                    plate: '51H-778.66',
+                    model: 'Xe thuần điện cao cấp',
+                    label: 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)'
                 };
             case 'car4':
             default:
@@ -241,9 +273,9 @@ class CustomerAppController {
                     type: 'car4',
                     name: 'Navigo Car',
                     icon: '🚗',
-                    plate: '',
-                    model: 'Ô tô 4 chỗ',
-                    label: 'Ô tô 4 chỗ (Navigo Car)'
+                    plate: '51G-889.24',
+                    model: 'Navigo Car E-Series',
+                    label: 'Ô tô điện 4 chỗ (Navigo Car)'
                 };
         }
     }
@@ -287,6 +319,61 @@ class CustomerAppController {
                 } else {
                     this.switchView('search');
                 }
+            }
+        });
+
+        // Universal user location permission & initial pickup initialization
+        if (typeof window.navigoEnsureLocationPermission === 'function') {
+            window.navigoEnsureLocationPermission((loc) => {
+                if (loc && loc.lat && loc.lng) {
+                    this.userGpsPosition = { lat: loc.lat, lng: loc.lng };
+                    if (!this.pickup) {
+                        this.pickup = {
+                            lat: loc.lat,
+                            lng: loc.lng,
+                            name: loc.name || 'Vị trí của tôi',
+                            address: loc.address || 'Vị trí hiện tại của bạn'
+                        };
+                        const pickupInput = document.getElementById('input-pickup');
+                        if (pickupInput && (!pickupInput.value || pickupInput.value.includes('789/12'))) {
+                            pickupInput.value = this.pickup.name || this.pickup.address;
+                        }
+                        const pickupConfirmedTitle = document.getElementById('pickup-confirmed-title');
+                        if (pickupConfirmedTitle) pickupConfirmedTitle.textContent = this.pickup.name;
+                        const pickupConfirmedDesc = document.getElementById('pickup-confirmed-desc');
+                        if (pickupConfirmedDesc) pickupConfirmedDesc.textContent = this.pickup.address;
+                        const routeSumPickup = document.getElementById('route-sum-pickup');
+                        if (routeSumPickup) routeSumPickup.textContent = this.pickup.name;
+                    }
+                    if (this.mapController && this.mapController.map) {
+                        this.mapController.map.setView([loc.lat, loc.lng], 15);
+                        if (typeof this.mapController.setUserLocation === 'function') {
+                            this.mapController.setUserLocation(loc.lat, loc.lng);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Realtime cross-tab sync with driver portal
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips') {
+                try {
+                    let act = JSON.parse(localStorage.getItem('goride_active_trip') || 'null');
+                    if (!act && e.key === 'goride_admin_trips') {
+                        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                        act = adminTrips.find(x => x.id === (this.activeTripId || this.activeTrip?.id));
+                    }
+                    if (act && (act.id === (this.activeTripId || this.activeTrip?.id) || !this.activeTripId)) {
+                        const curStatus = (this.activeTrip?.status || 'REQUESTED').toUpperCase();
+                        const newStatus = (act.status || 'REQUESTED').toUpperCase();
+                        if (newStatus !== curStatus || (act.driverName && act.driverName !== this.activeTrip?.driverName)) {
+                            this.activeTrip = { ...this.activeTrip, ...act, status: newStatus };
+                            this.activeTripId = act.id;
+                            this.updateTrackingUI(this.activeTrip);
+                        }
+                    }
+                } catch (err) {}
             }
         });
 
@@ -336,7 +423,7 @@ class CustomerAppController {
         const container = document.getElementById('customer-map-container');
         if (!container || typeof MapController === 'undefined') return;
 
-        const defaultCenter = this.pickup ? [this.pickup.lat, this.pickup.lng] : [10.7760, 106.7000];
+        const defaultCenter = this.pickup ? [this.pickup.lat, this.pickup.lng] : [10.7769, 106.7009];
         this.mapController = new MapController('customer-map-container', {
             center: defaultCenter,
             zoom: 15,
@@ -347,6 +434,10 @@ class CustomerAppController {
 
         if (typeof MapRenderer !== 'undefined') {
             this.mapRenderer = new MapRenderer(this.mapController);
+        }
+
+        if (this.destination && this.mapController) {
+            this.mapController.addDestinationMarker(this.destination.lat, this.destination.lng, this.destination.name);
         }
 
         // Real dispatch: only display real active driver when assigned by backend
@@ -360,7 +451,107 @@ class CustomerAppController {
                     this.updateCenterPinAddress(center.lat, center.lng);
                 }
             });
+
+            // Map click event: Allows seamless tapping on map across views
+            this.mapController.map.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+
+                // Pickup confirm mode: pan map to clicked spot & update address
+                if (this.currentView === 'pickup-confirm') {
+                    this.mapController.map.panTo([lat, lng]);
+                    this.updateCenterPinAddress(lat, lng);
+                    return;
+                }
+
+                // If in search or map-select-destination mode and click-to-select is not overriding
+                if ((this.currentView === 'search' || this.currentView === 'map-select-destination') && !this.mapController.isClickToSelectActive) {
+                    let placeName = `Vị trí đã chọn (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                    let placeAddr = '';
+                    if (typeof geocoderService !== 'undefined') {
+                        try {
+                            const rev = await geocoderService.reverse(lat, lng);
+                            if (rev && rev.name) {
+                                placeName = rev.name;
+                                placeAddr = rev.address || rev.name;
+                            }
+                        } catch (err) {}
+                    }
+
+                    if (!this.destination) {
+                        this.selectDestination({
+                            name: placeName,
+                            address: placeAddr || placeName,
+                            lat: lat,
+                            lng: lng
+                        });
+                    } else if (!this.pickup) {
+                        this.pickup = {
+                            name: placeName,
+                            address: placeAddr || placeName,
+                            lat: lat,
+                            lng: lng
+                        };
+                        const pInput = document.getElementById('input-pickup');
+                        if (pInput) pInput.value = placeName;
+                        this.switchView('vehicle-select');
+                        this.renderRouteOnMap();
+                    }
+                }
+            });
         }
+
+        // Initialize Google Maps style real-time GPS pulsing blue dot
+        this.initUserGeolocation();
+    }
+
+    /**
+     * Initializes Google Maps-style pulsing blue dot representing self/device GPS position
+     */
+    initUserGeolocation() {
+        if (!navigator.geolocation || !this.mapController) return;
+
+        // Fast initial position acquisition
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                const acc = pos.coords.accuracy;
+                this.userGpsPosition = { lat, lng };
+                if (typeof this.mapController.setUserLocation === 'function') {
+                    this.mapController.setUserLocation(lat, lng, acc);
+                }
+            },
+            (err) => {
+                console.warn('[Customer] Initial GPS notice:', err.message);
+                if (typeof this.mapController.setUserLocation === 'function') {
+                    const fallbackCenter = this.pickup ? [this.pickup.lat, this.pickup.lng] : [10.7760, 106.7000];
+                    this.mapController.setUserLocation(fallbackCenter[0], fallbackCenter[1]);
+                }
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+        );
+
+        // Continuous watch to keep Google Maps pulsing blue dot updated as user moves
+        try {
+            if (this._gpsWatchId) {
+                navigator.geolocation.clearWatch(this._gpsWatchId);
+            }
+            this._gpsWatchId = navigator.geolocation.watchPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const acc = pos.coords.accuracy;
+                    this.userGpsPosition = { lat, lng };
+                    if (this.mapController && typeof this.mapController.setUserLocation === 'function') {
+                        this.mapController.setUserLocation(lat, lng, acc);
+                    }
+                },
+                (err) => {
+                    console.debug('[Customer] Watch GPS update notice:', err.message);
+                },
+                { enableHighAccuracy: true, maximumAge: 10000 }
+            );
+        } catch (e) {}
     }
 
     /**
@@ -382,13 +573,6 @@ class CustomerAppController {
     showRadarAtPickup(lat, lng) {
         if (!this.mapController || !this.mapController.map) return;
 
-        // Status Guard: NEVER display or recreate radar pulse marker if trip has already been accepted or is active
-        const curStatus = String((this.activeTrip && this.activeTrip.status) || '').toUpperCase().trim();
-        if (this.activeTrip && ['ACCEPTED', 'ARRIVED', 'IN_PROGRESS', 'COMPLETED'].includes(curStatus)) {
-            this.hideRadar();
-            return;
-        }
-
         let pLat = Number(lat);
         let pLng = Number(lng);
 
@@ -408,16 +592,16 @@ class CustomerAppController {
         const staticRadar = document.getElementById('tracking-radar');
         if (staticRadar) staticRadar.style.display = 'none';
 
-        // Ensure pickup marker is visible on map (idempotent, reuses existing marker)
+        // Ensure pickup marker is visible on map
         if (typeof this.mapController.addPickupMarker === 'function') {
             this.mapController.addPickupMarker(pLat, pLng, (this.pickup && this.pickup.name) || 'Điểm đón của bạn');
         }
 
-        // If radar marker already exists at this exact position, don't recreate or restart CSS wave
+        // If radar marker already exists at this exact position, don't recreate
         if (this.radarMarker) {
             try {
                 const curPos = this.radarMarker.getLatLng();
-                if (Math.abs(curPos.lat - pLat) < 0.00002 && Math.abs(curPos.lng - pLng) < 0.00002) {
+                if (Math.abs(curPos.lat - pLat) < 0.00001 && Math.abs(curPos.lng - pLng) < 0.00001) {
                     return;
                 }
             } catch (e) {}
@@ -448,35 +632,27 @@ class CustomerAppController {
             }).addTo(this.mapController.map);
         }
 
-        // Smoothly zoom map to customer pickup location ONLY ONCE to prevent continuous jitter
-        if (!this._hasCenteredRadar) {
-            this._hasCenteredRadar = true;
-            try {
-                this.mapController.map.invalidateSize({ animate: false });
-                if (typeof this.mapController.map.flyTo === 'function') {
-                    this.mapController.map.flyTo([pLat, pLng], 16, { duration: 0.8 });
-                } else if (typeof this.mapController.setView === 'function') {
-                    this.mapController.setView(pLat, pLng, 16);
-                }
-            } catch (e) {}
-        }
+        // Smoothly zoom map to customer pickup location
+        try {
+            this.mapController.map.invalidateSize({ animate: false });
+            if (typeof this.mapController.map.flyTo === 'function') {
+                this.mapController.map.flyTo([pLat, pLng], 16, { duration: 0.9 });
+            } else if (typeof this.mapController.setView === 'function') {
+                this.mapController.setView(pLat, pLng, 16);
+            }
+        } catch (e) {}
     }
 
     /**
-     * Remove map-anchored radar pulse marker and purge any lingering radar DOM elements
+     * Remove map-anchored radar pulse marker
      */
     hideRadar() {
-        this._hasCenteredRadar = false;
         if (this.radarMarker && this.mapController && this.mapController.map) {
             try {
                 this.mapController.map.removeLayer(this.radarMarker);
             } catch (e) {}
             this.radarMarker = null;
         }
-        // Force-remove any leaflet radar marker elements that might have been left in DOM
-        try {
-            document.querySelectorAll('.goride-radar-leaflet-marker').forEach(el => el.remove());
-        } catch (e) {}
         const staticRadar = document.getElementById('tracking-radar');
         if (staticRadar) staticRadar.style.display = 'none';
     }
@@ -497,14 +673,37 @@ class CustomerAppController {
         };
 
         Object.keys(views).forEach(key => {
-            if (views[key]) {
+            const el = views[key];
+            if (el) {
                 if (key === viewName) {
-                    views[key].classList.add('active');
+                    el.classList.add('active');
+                    el.style.removeProperty('display');
                 } else {
-                    views[key].classList.remove('active');
+                    el.classList.remove('active');
+                    el.style.setProperty('display', 'none', 'important');
                 }
             }
         });
+
+        const pickBanner = document.getElementById('floating-map-pick-banner');
+        if (pickBanner && viewName !== 'map-select-destination') {
+            pickBanner.style.display = 'none';
+        }
+
+        const sidebar = document.querySelector('.gsm-desktop-sidebar');
+        if (sidebar) {
+            if (viewName === 'map-select-destination') {
+                sidebar.style.setProperty('pointer-events', 'none', 'important');
+            } else {
+                sidebar.style.removeProperty('pointer-events');
+            }
+        }
+
+        if (this.mapController && this.mapController.map) {
+            setTimeout(() => {
+                this.mapController.map.invalidateSize();
+            }, 100);
+        }
         // Update active state of mobile bottom nav items
         const bNavBooking = document.getElementById('bnav-cust-booking');
         const bNavHistory = document.getElementById('bnav-cust-history');
@@ -557,25 +756,23 @@ class CustomerAppController {
         }
 
         if (viewName === 'tracking') {
-            const curStatus = String((this.activeTrip && this.activeTrip.status) || '').toUpperCase().trim();
-            const isSearching = (!this.activeTrip && !this.pickup) || curStatus === 'REQUESTED' || curStatus === 'OFFERED';
-            const searchingPanel = document.getElementById('tracking-searching-panel');
-            const driverSheet = document.getElementById('tracking-driver-sheet');
+            // Explicitly ensure pickup & destination selection view and vehicle sheet are fully hidden
+            const searchView = document.getElementById('view-search');
+            if (searchView) searchView.style.setProperty('display', 'none', 'important');
+            const pickupConfirmView = document.getElementById('view-pickup-confirm');
+            if (pickupConfirmView) pickupConfirmView.style.setProperty('display', 'none', 'important');
+            const vehicleSelectView = document.getElementById('view-vehicle-select');
+            if (vehicleSelectView) vehicleSelectView.style.setProperty('display', 'none', 'important');
+            const vSheet = document.getElementById('goride-vehicle-sheet');
+            if (vSheet) vSheet.style.setProperty('display', 'none', 'important');
+            const rBar = document.querySelector('.goride-route-summary-bar');
+            if (rBar) rBar.style.setProperty('display', 'none', 'important');
 
-            if (isSearching && (!this.activeTrip || curStatus === 'REQUESTED' || curStatus === 'OFFERED')) {
+            const isSearching = !this.activeTrip || this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED';
+            if (isSearching) {
                 this.showRadarAtPickup();
-                if (searchingPanel) searchingPanel.style.display = 'block';
-                if (driverSheet) driverSheet.style.display = 'none';
             } else {
                 this.hideRadar();
-                if (searchingPanel) {
-                    searchingPanel.style.display = 'none';
-                    searchingPanel.style.setProperty('display', 'none', 'important');
-                }
-                if (driverSheet) {
-                    driverSheet.style.display = 'flex';
-                    driverSheet.style.setProperty('display', 'flex', 'important');
-                }
             }
         } else {
             this.hideRadar();
@@ -615,6 +812,10 @@ class CustomerAppController {
                 this.updateCenterPinAddress(centerLat, centerLng);
             }
         } else if (viewName === 'vehicle-select') {
+            const vSheet = document.getElementById('goride-vehicle-sheet');
+            if (vSheet) vSheet.style.removeProperty('display');
+            const rBar = document.querySelector('.goride-route-summary-bar');
+            if (rBar) rBar.style.removeProperty('display');
             this.renderRouteOnMap();
             if (typeof this.expandVehicleSheet === 'function') {
                 this.expandVehicleSheet();
@@ -636,6 +837,7 @@ class CustomerAppController {
 
         if (service && this.vehicleCatalog[service]) {
             this.selectedService = service;
+            this.updateVehicleTabsUI(service);
         }
 
         if (dest) {
@@ -664,6 +866,33 @@ class CustomerAppController {
                 this.selectDestination(matched);
             }
         }
+    }
+
+    /**
+     * Update search vehicle quick tabs
+     */
+    updateVehicleTabsUI(serviceType) {
+        const v = serviceType || this.selectedService || 'car4';
+        const vInfo = this.getVehicleDetails(v);
+        const badge = document.getElementById('search-selected-vehicle-badge');
+        if (badge) {
+            badge.textContent = `${vInfo.icon} ${vInfo.name}`;
+        }
+        document.querySelectorAll('.vehicle-tab-btn').forEach(btn => {
+            const match = btn.getAttribute('data-v') === v;
+            btn.classList.toggle('active', match);
+            if (match) {
+                btn.style.border = '2px solid #00b1a9';
+                btn.style.background = '#f0fdfa';
+                const label = btn.querySelector('span:last-child');
+                if (label) label.style.color = '#007d77';
+            } else {
+                btn.style.border = '1.5px solid #cbd5e1';
+                btn.style.background = '#ffffff';
+                const label = btn.querySelector('span:last-child');
+                if (label) label.style.color = '#0f2d3c';
+            }
+        });
     }
 
     /**
@@ -764,6 +993,185 @@ class CustomerAppController {
             });
         }
 
+        // Use Current GPS Pill
+        const btnGpsPill = document.getElementById('btn-use-current-gps');
+        if (btnGpsPill) {
+            btnGpsPill.addEventListener('click', () => {
+                this.recenterMapOnGps(true);
+            });
+        }
+
+        // Change Pickup Point directly from route preview capsule
+        const btnChangePickup = document.getElementById('btn-change-pickup-pt');
+        if (btnChangePickup) {
+            btnChangePickup.addEventListener('click', () => {
+                this.switchView('search');
+                this.searchTarget = 'pickup';
+                const pInp = document.getElementById('input-pickup');
+                if (pInp) {
+                    pInp.focus();
+                    pInp.select();
+                }
+                this.renderSuggestions(this.locationsPool);
+                this.showToast('Mời bạn chọn hoặc tìm kiếm điểm đón mới', 'info');
+            });
+        }
+
+        // Change Destination Point directly from route preview capsule
+        const btnChangeDest = document.getElementById('btn-change-dest-pt');
+        if (btnChangeDest) {
+            btnChangeDest.addEventListener('click', () => {
+                this.switchView('search');
+                this.searchTarget = 'destination';
+                const dInp = document.getElementById('input-destination');
+                if (dInp) {
+                    dInp.focus();
+                    dInp.select();
+                }
+                this.renderSuggestions(this.locationsPool);
+                this.showToast('Mời bạn chọn hoặc tìm kiếm điểm đến mới', 'info');
+            });
+        }
+
+        // Search Vehicle Quick Tabs
+        document.querySelectorAll('.vehicle-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const v = btn.getAttribute('data-v');
+                if (v && this.vehicleCatalog[v]) {
+                    this.selectedService = v;
+                    this.updateVehicleTabsUI(v);
+                    this.renderVehicleOptions();
+                    const vInfo = this.getVehicleDetails(v);
+                    this.showToast(`Đã chọn phương tiện: ${vInfo.icon} ${vInfo.name}`, 'info', 2000);
+                }
+            });
+        });
+
+        // Draggable Pickup Pin On Map
+        const btnPinPickup = document.getElementById('btn-pin-pickup-on-map');
+        if (btnPinPickup) {
+            btnPinPickup.addEventListener('click', () => {
+                if (!this.mapController || !this.mapController.map) return;
+                if (window.innerWidth <= 1024) {
+                    this.switchView('pickup-confirm');
+                }
+                const pLat = this.pickup ? Number(this.pickup.lat) : 10.8715;
+                const pLng = this.pickup ? Number(this.pickup.lng) : 106.7490;
+                this.mapController.setView(pLat, pLng, 16);
+                const marker = this.mapController.addPickupMarker(pLat, pLng, this.pickup ? this.pickup.name : 'Điểm đón');
+                if (marker) {
+                    marker.openPopup();
+                }
+                this.showToast('🟢 Kéo nút ghim xanh trên bản đồ để chọn điểm đón chính xác', 'info', 4000);
+            });
+        }
+
+        // Draggable Destination Pin On Map
+        const btnPinDest = document.getElementById('btn-pin-dest-on-map');
+        if (btnPinDest) {
+            btnPinDest.addEventListener('click', () => {
+                if (!this.mapController || !this.mapController.map) return;
+                if (window.innerWidth <= 1024) {
+                    if (this.pickup && this.destination) {
+                        this.switchView('vehicle-select');
+                    } else {
+                        btnMapDest?.click();
+                        return;
+                    }
+                }
+                let dLat = this.destination ? Number(this.destination.lat) : null;
+                let dLng = this.destination ? Number(this.destination.lng) : null;
+                if (!dLat || !dLng) {
+                    const baseLat = this.pickup ? Number(this.pickup.lat) : 10.7760;
+                    const baseLng = this.pickup ? Number(this.pickup.lng) : 106.7000;
+                    dLat = baseLat + 0.015;
+                    dLng = baseLng + 0.012;
+                    this.destination = {
+                        name: 'Điểm đến trên bản đồ',
+                        address: 'Thành phố Hồ Chí Minh',
+                        lat: dLat,
+                        lng: dLng
+                    };
+                    const dInp = document.getElementById('input-destination');
+                    if (dInp) dInp.value = this.destination.name;
+                }
+                this.mapController.setView(dLat, dLng, 16);
+                const marker = this.mapController.addDestinationMarker(dLat, dLng, this.destination.name);
+                if (marker) {
+                    marker.openPopup();
+                }
+                this.showToast('📍 Kéo nút ghim đỏ/cam trên bản đồ để chọn điểm đến chính xác', 'info', 4000);
+                if (this.pickup) {
+                    this.renderRouteOnMap();
+                }
+            });
+        }
+
+        // Listen for map pin dragend events
+        window.addEventListener('navigo:pickup_dragend', async (e) => {
+            const { lat, lng } = e.detail || {};
+            if (!lat || !lng) return;
+            let pName = `Tọa độ (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            let pAddr = pName;
+            if (typeof geocoderService !== 'undefined') {
+                try {
+                    const place = await geocoderService.reverse(lat, lng);
+                    if (place && place.name) {
+                        pName = place.name;
+                        pAddr = place.address || place.name;
+                    }
+                } catch (err) {}
+            }
+            this.pickup = {
+                id: `loc_${Date.now()}`,
+                name: pName,
+                address: pAddr,
+                lat: Number(lat),
+                lng: Number(lng)
+            };
+            const pInput = document.getElementById('input-pickup');
+            if (pInput) pInput.value = pName;
+            const pSum = document.getElementById('route-sum-pickup');
+            if (pSum) pSum.textContent = pName;
+            this.showToast(`🟢 Đã cập nhật điểm đón: ${pName}`, 'success', 3000);
+            if (this.destination) {
+                this.renderRouteOnMap();
+            }
+        });
+
+        window.addEventListener('navigo:destination_dragend', async (e) => {
+            const { lat, lng } = e.detail || {};
+            if (!lat || !lng) return;
+            let dName = `Tọa độ (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            let dAddr = dName;
+            if (typeof geocoderService !== 'undefined') {
+                try {
+                    const place = await geocoderService.reverse(lat, lng);
+                    if (place && place.name) {
+                        dName = place.name;
+                        dAddr = place.address || place.name;
+                    }
+                } catch (err) {}
+            }
+            this.destination = {
+                id: `dest_${Date.now()}`,
+                name: dName,
+                address: dAddr,
+                lat: Number(lat),
+                lng: Number(lng)
+            };
+            const dInput = document.getElementById('input-destination');
+            if (dInput) dInput.value = dName;
+            const dSum = document.getElementById('route-sum-dest');
+            if (dSum) dSum.textContent = dName;
+            this.showToast(`📍 Đã cập nhật điểm đến: ${dName}`, 'success', 3000);
+            if (this.pickup) {
+                this.switchView('vehicle-select');
+                this.renderRouteOnMap();
+            }
+        });
+
         // Swap Locations Button (ref-02)
         const btnSwap = document.getElementById('btn-swap-locations');
         if (btnSwap) {
@@ -802,7 +1210,7 @@ class CustomerAppController {
             });
         }
 
-        // Trigger Map Pickup Mode (ref-02 -> ref-03)
+        // Trigger Map Pickup Mode
         const btnMapPickup = document.getElementById('btn-trigger-map-pickup');
         if (btnMapPickup) {
             btnMapPickup.addEventListener('click', () => {
@@ -814,118 +1222,80 @@ class CustomerAppController {
         const btnMapDest = document.getElementById('btn-trigger-map-dest');
         if (btnMapDest) {
             btnMapDest.addEventListener('click', () => {
-                this.showToast('Chạm vào điểm bất kỳ trên bản đồ để chọn điểm đến', 'info');
+                this.switchView('map-select-destination');
+
+                let banner = document.getElementById('floating-map-pick-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'floating-map-pick-banner';
+                    banner.className = 'floating-map-pick-banner';
+                    document.body.appendChild(banner);
+                }
+                banner.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-size:1.15rem;">🎯</span>
+                        <span style="font-weight:700; font-size:0.88rem; color:#0f172a;">Chạm vào bản đồ để chọn điểm đến</span>
+                    </div>
+                    <button type="button" id="btn-cancel-map-dest-pick" style="border:none; background:#f1f5f9; color:#475569; border-radius:6px; padding:4px 10px; font-size:0.8rem; font-weight:700; cursor:pointer;">
+                        ✕ Hủy
+                    </button>
+                `;
+                banner.style.display = 'flex';
+
+                const cancelBtn = banner.querySelector('#btn-cancel-map-dest-pick');
+                if (cancelBtn) {
+                    cancelBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (this.mapController) this.mapController.disableClickToSelect();
+                        banner.style.display = 'none';
+                        this.switchView('search');
+                    };
+                }
+
                 if (this.mapController) {
-                    this.mapController.enableClickToSelect(async (coords) => {
+                    this.mapController.enableClickToSelect(async (location) => {
+                        banner.style.display = 'none';
                         this.mapController.disableClickToSelect();
-                        let destPlace = {
-                            name: `Tọa độ: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`,
-                            address: `Khu vực TP. Hồ Chí Minh`,
-                            lat: coords.lat,
-                            lng: coords.lng
-                        };
-
+                        let placeName = `Điểm đến (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`;
+                        let placeAddr = '';
                         if (typeof geocoderService !== 'undefined') {
-                            const rev = await geocoderService.reverse(coords.lat, coords.lng);
-                            if (rev) destPlace = rev;
+                            try {
+                                const rev = await geocoderService.reverse(location.lat, location.lng);
+                                if (rev && rev.name) {
+                                    placeName = rev.name;
+                                    placeAddr = rev.address || rev.name;
+                                }
+                            } catch (err) {}
                         }
-
-                        this.selectDestination(destPlace);
-                        this.showToast(`Điểm đến: ${destPlace.name}`, 'success');
+                        this.selectDestination({
+                            name: placeName,
+                            address: placeAddr || placeName,
+                            lat: location.lat,
+                            lng: location.lng
+                        });
                     });
                 }
+
+                this.showToast('Chạm vào điểm bất kỳ trên bản đồ để chọn điểm đến', 'info');
             });
         }
 
-        // Quick Preset Destination Chips (Nhà riêng, Công ty, Bến Thành, Sân bay)
-        document.querySelectorAll('.goride-preset-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                const presetKey = chip.getAttribute('data-preset');
-                let target = null;
-                if (presetKey === 'home') {
-                    target = this.locationsPool.find(l => l.id === 'loc_bachkhoa') || this.locationsPool[4];
-                } else if (presetKey === 'work') {
-                    target = this.locationsPool.find(l => l.id === 'loc_landmark81') || this.locationsPool[2];
-                } else if (presetKey === 'benthanh') {
-                    target = this.locationsPool.find(l => l.id === 'loc_benthanh') || this.locationsPool[1];
-                } else if (presetKey === 'airport') {
-                    target = this.locationsPool.find(l => l.id === 'loc_airport') || this.locationsPool[3];
-                }
-                if (target) {
-                    this.selectDestination(target);
-                }
-            });
-        });
-
-        // Back from Pickup Confirm to Search
-        const btnBackToSearch = document.getElementById('btn-back-to-search');
-        if (btnBackToSearch) {
-            btnBackToSearch.addEventListener('click', () => {
-                this.switchView('search');
+        // Floating Round GPS Button on Map (Mobile & Desktop)
+        const btnFloatingGps = document.getElementById('btn-floating-my-location');
+        if (btnFloatingGps) {
+            btnFloatingGps.addEventListener('click', () => {
+                this.recenterMapOnGps(true);
             });
         }
 
-        // Real GPS Recenter on Map using Browser Geolocation (ref-03)
+        // Desktop Map Recenter Button
         const btnGps = document.getElementById('btn-gps-recenter');
         if (btnGps) {
             btnGps.addEventListener('click', () => {
-                if (navigator.geolocation) {
-                    this.showToast('Đang tìm vị trí GPS thực tế của bạn...', 'info');
-                    navigator.geolocation.getCurrentPosition(
-                        async (pos) => {
-                            const lat = pos.coords.latitude;
-                            const lng = pos.coords.longitude;
-                            if (this.mapController) {
-                                this.mapController.setView(lat, lng, 16);
-                            }
-                            if (typeof geocoderService !== 'undefined') {
-                                const rev = await geocoderService.reverse(lat, lng);
-                                if (rev) {
-                                    this.pickup = {
-                                        name: rev.name,
-                                        address: rev.address,
-                                        lat: lat,
-                                        lng: lng
-                                    };
-                                    const pInput = document.getElementById('input-pickup');
-                                    if (pInput) pInput.value = rev.name;
-                                    const clearPickupBtn = document.getElementById('btn-clear-pickup');
-                                    if (clearPickupBtn) clearPickupBtn.style.display = 'flex';
-                                    this.showToast(`Đã định vị: ${rev.name}`, 'success');
-                                    if (this.destination) {
-                                        this.switchView('vehicle-select');
-                                    }
-                                    return;
-                                }
-                            }
-                            this.pickup = {
-                                name: `Vị trí hiện tại (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
-                                address: `Khu vực TP. Hồ Chí Minh`,
-                                lat: lat,
-                                lng: lng
-                            };
-                            const pInput = document.getElementById('input-pickup');
-                            if (pInput) pInput.value = this.pickup.name;
-                            const clearPickupBtn = document.getElementById('btn-clear-pickup');
-                            if (clearPickupBtn) clearPickupBtn.style.display = 'flex';
-                            this.showToast(`Đã định vị GPS thành công`, 'success');
-                            if (this.destination) {
-                                this.switchView('vehicle-select');
-                            }
-                        },
-                        (err) => {
-                            console.warn('[GPS] Geolocation error:', err.message);
-                            this.showToast('Không thể lấy GPS trình duyệt (Cần cấp quyền vị trí). Giữ vị trí hiện tại.', 'warning');
-                        },
-                        { enableHighAccuracy: true, timeout: 8000 }
-                    );
-                } else {
-                    this.showToast('Trình duyệt không hỗ trợ Geolocation GPS.', 'warning');
-                }
+                this.recenterMapOnGps(true);
             });
         }
 
-        // Preference Pills (ref-03)
         document.querySelectorAll('.goride-pref-pill').forEach(pill => {
             pill.addEventListener('click', () => {
                 const pref = pill.getAttribute('data-pref');
@@ -1177,30 +1547,38 @@ class CustomerAppController {
             }
         } catch (e) {}
 
-        // Cross-tab real-time sync with Driver & Admin portals (0ms reactive wakeup)
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips') {
-                this.handleStorageTripUpdate(e.key, e.newValue);
+        // Universal logout handler for customer portal
+        const handleCustLogout = (e) => {
+            if (e) e.preventDefault();
+            if (typeof sessionManager !== 'undefined' && typeof sessionManager.logoutWithConfirmation === 'function') {
+                sessionManager.logoutWithConfirmation();
+                return;
             }
-        });
-
-        // BroadcastChannel for instant zero-lag cross-tab synchronization
-        try {
-            if (typeof BroadcastChannel !== 'undefined') {
-                this.tripBroadcastChannel = new BroadcastChannel('goride_trip_channel');
-                this.tripBroadcastChannel.onmessage = (event) => {
-                    if (event && event.data && event.data.trip) {
-                        this.handleImmediateTripUpdate(event.data.trip);
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Xác nhận đăng xuất',
+                    message: 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản Navigo không?',
+                    icon: '🚪',
+                    confirmText: 'Xác nhận',
+                    cancelText: 'Hủy',
+                    danger: true,
+                    onConfirm: () => {
+                        if (typeof sessionManager !== 'undefined') sessionManager.logout();
+                        window.location.href = 'login.html?logout=true';
                     }
-                };
+                });
+                return;
             }
-        } catch (e) {}
+            if (typeof sessionManager !== 'undefined') sessionManager.logout();
+            window.location.href = 'login.html?logout=true';
+        };
 
-        // Window custom events for same-tab updates
-        window.addEventListener('goride:trip_updated', (e) => {
-            if (e.detail) {
-                this.handleImmediateTripUpdate(e.detail);
-            }
+        const btnCustLogout = document.getElementById('btn-customer-logout');
+        if (btnCustLogout) {
+            btnCustLogout.addEventListener('click', handleCustLogout);
+        }
+        document.querySelectorAll('[data-action="logout"]').forEach(el => {
+            el.addEventListener('click', handleCustLogout);
         });
 
         // Initialize draggable & collapsible bottom sheet for vehicle selection
@@ -1208,120 +1586,100 @@ class CustomerAppController {
     }
 
     /**
-     * Cross-tab storage change handler for instantaneous trip status updates
-     */
-    handleStorageTripUpdate(key, rawValue) {
-        if (!this.activeTripId && !this.activeTrip) {
-            try {
-                const storedActive = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
-                if (storedActive && storedActive.id && ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes(String(storedActive.status || '').toUpperCase())) {
-                    this.activeTrip = storedActive;
-                    this.activeTripId = storedActive.id;
-                }
-            } catch (e) {}
-        }
-        if (!this.activeTripId && !this.activeTrip) return;
-
-        try {
-            let updatedTrip = null;
-            if (key === 'goride_active_trip' && rawValue) {
-                const parsed = JSON.parse(rawValue);
-                if (parsed && (parsed.id === this.activeTripId || !this.activeTripId)) {
-                    updatedTrip = parsed;
-                }
-            } else if (key === 'goride_admin_trips' && rawValue) {
-                const trips = JSON.parse(rawValue);
-                if (Array.isArray(trips)) {
-                    const match = trips.find(t => t.id === this.activeTripId);
-                    if (match) {
-                        updatedTrip = {
-                            id: match.id,
-                            status: String(match.status || '').toUpperCase(),
-                            customerName: match.customerName || 'Khách hàng',
-                            driverName: match.driverName !== 'Chưa gán' ? match.driverName : null,
-                            licensePlate: match.licensePlate || '',
-                            vehicleModel: match.vehicleModel || '',
-                            vehicleType: match.vehicleType || this.selectedService || 'motorbike',
-                            pickupName: match.pickup || this.pickup?.name,
-                            dropoffName: match.destination || this.destination?.name,
-                            fareAmount: Number(match.fare) || this.selectedVehicleFare || 45000,
-                            distanceMeters: (Number(match.distance) || 3) * 1000,
-                            driverLat: (match.driverLat !== undefined && match.driverLat !== null) ? Number(match.driverLat) : null,
-                            driverLon: (match.driverLon !== undefined && match.driverLon !== null) ? Number(match.driverLon) : null
-                        };
-                    }
-                }
-            }
-
-            if (updatedTrip && updatedTrip.status) {
-                this.handleImmediateTripUpdate(updatedTrip);
-            }
-        } catch (err) {
-            console.warn('[CustomerApp] Storage trip update sync warning:', err);
-        }
-    }
-
-    /**
-     * Immediate trip update handler without waiting for polling interval
-     */
-    handleImmediateTripUpdate(tripData) {
-        if (!tripData) return;
-
-        const STATUS_RANKS = {
-            'REQUESTED': 1,
-            'OFFERED': 2,
-            'ACCEPTED': 3,
-            'ARRIVED': 4,
-            'IN_PROGRESS': 5,
-            'COMPLETED': 6,
-            'CANCELLED': 7
-        };
-
-        const prevStatus = String((this.activeTrip && this.activeTrip.status) || 'REQUESTED').toUpperCase().trim();
-        const incomingStatus = String(tripData.status || '').toUpperCase().trim();
-
-        // Monotonicity Guard: NEVER downgrade from higher rank (e.g. ACCEPTED) back to lower (e.g. REQUESTED)
-        const prevRank = STATUS_RANKS[prevStatus] || 0;
-        const incomingRank = STATUS_RANKS[incomingStatus] || 0;
-
-        let finalStatus = incomingStatus;
-        if (incomingRank > 0 && prevRank > 0 && incomingRank < prevRank && incomingStatus !== 'CANCELLED') {
-            finalStatus = prevStatus;
-        }
-
-        this.activeTrip = {
-            ...(this.activeTrip || {}),
-            ...tripData,
-            status: finalStatus
-        };
-        if (tripData.id) this.activeTripId = tripData.id;
-
-        // Immediately update UI and cancel searching radar/panel
-        this.updateTrackingUI(this.activeTrip);
-
-        // Immediate Toast alerts on state transitions
-        if (prevStatus === 'REQUESTED' && (finalStatus === 'ACCEPTED' || finalStatus === 'ARRIVED')) {
-            this.showToast(`Tài xế ${this.activeTrip.driverName || 'đối tác'} đã nhận chuyến! Đang đến đón bạn.`, 'success', 5000);
-        } else if (prevStatus === 'ACCEPTED' && finalStatus === 'ARRIVED') {
-            this.showToast('Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.', 'info', 4500);
-        } else if (prevStatus === 'ARRIVED' && finalStatus === 'IN_PROGRESS') {
-            this.showToast('Chuyến xe bắt đầu lăn bánh...', 'info', 4000);
-        } else if (finalStatus === 'COMPLETED') {
-            if (this.trackingInterval) {
-                clearInterval(this.trackingInterval);
-                this.trackingInterval = null;
-            }
-            this.completeTrip(this.activeTrip);
-        } else if (finalStatus === 'CANCELLED') {
-            this.cancelPendingBooking();
-        }
-    }
-
-    /**
      * Interactive draggable & collapsible bottom sheet for vehicle selection
      * Allows user to pull/drag down or tap handle to view map freely,
      * and pull/drag up or tap handle to expand and choose vehicle / book ride.
+    }
+
+    /**
+     * Recenter Leaflet Map directly on User GPS Coordinates (Smooth FlyTo Animation)
+     * and present Liquid Glass Modal with Confirm / Cancel options.
      */
+    async recenterMapOnGps(confirmSelection = true) {
+        const doCenter = async (lat, lng, accuracy = 30) => {
+            this.userGpsPosition = { lat, lng };
+
+            // 1. Center map right on GPS position with smooth flyTo animation
+            if (this.mapController) {
+                if (typeof this.mapController.setUserLocation === 'function') {
+                    this.mapController.setUserLocation(lat, lng, accuracy);
+                }
+                if (this.mapController.map && typeof this.mapController.map.flyTo === 'function') {
+                    this.mapController.map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
+                } else if (typeof this.mapController.setView === 'function') {
+                    this.mapController.setView(lat, lng, 16);
+                }
+            }
+
+            // 2. Reverse geocode to resolve street address
+            let locName = 'Tọa độ GPS (' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ')';
+            let locAddr = 'Khu vực TP. Hồ Chí Minh';
+            if (typeof geocoderService !== 'undefined') {
+                try {
+                    const rev = await geocoderService.reverse(lat, lng);
+                    if (rev && rev.name) {
+                        locName = rev.name;
+                        locAddr = rev.address || locName;
+                    }
+                } catch (e) {
+                    console.warn('[GPS] Reverse geocode error:', e);
+                }
+            }
+
+            // 3. Floating Liquid Glass Modal Notification with context-aware Title, Cancel & Confirm
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Định vị GPS của bạn',
+                    message: 'Bản đồ đã chuyển hướng về giữa vị trí GPS của bạn:\n"' + locName + '".\nBạn có muốn đặt vị trí này làm điểm đón không?',
+                    icon: '🎯',
+                    confirmText: 'Xác nhận điểm đón',
+                    cancelText: 'Hủy / Chỉ xem',
+                    onConfirm: () => {
+                        this.pickup = {
+                            name: locName,
+                            address: locAddr,
+                            lat: lat,
+                            lng: lng
+                        };
+                        const pInput = document.getElementById('input-pickup');
+                        if (pInput) pInput.value = locName;
+                        const clearPickupBtn = document.getElementById('btn-clear-pickup');
+                        if (clearPickupBtn) clearPickupBtn.style.display = 'flex';
+
+                        if (this.destination) {
+                            this.switchView('vehicle-select');
+                        } else {
+                            const destInput = document.getElementById('input-destination');
+                            if (destInput) destInput.focus();
+                        }
+                    }
+                });
+            }
+        };
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    const acc = pos.coords.accuracy || 30;
+                    doCenter(lat, lng, acc);
+                },
+                (err) => {
+                    console.warn('[GPS] Browser Geolocation fallback:', err.message);
+                    const fallbackLat = 10.8643;
+                    const fallbackLng = 106.7570;
+                    doCenter(fallbackLat, fallbackLng, 40);
+                },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+            );
+        } else {
+            const fallbackLat = 10.8643;
+            const fallbackLng = 106.7570;
+            doCenter(fallbackLat, fallbackLng, 40);
+        }
+    }
+
     setupVehicleSheetDrag() {
         const sheet = document.getElementById('goride-vehicle-sheet') || document.querySelector('.goride-vehicle-sheet');
         const handleZone = document.getElementById('goride-sheet-handle-zone') || sheet?.querySelector('.goride-sheet-drag-handle-zone') || sheet?.querySelector('.goride-sheet-handle');
@@ -1698,6 +2056,7 @@ class CustomerAppController {
 
         // Switch to vehicle selection view (ref-04)
         this.switchView('vehicle-select');
+        this.renderRouteOnMap();
     }
 
     /**
@@ -2427,7 +2786,7 @@ class CustomerAppController {
             try {
                 const raw = localStorage.getItem('goride_active_trip');
                 if (raw) {
-                    let parsed = JSON.parse(raw);
+                    const parsed = JSON.parse(raw);
                     if (parsed && typeof isMockTrip === 'function' && isMockTrip(parsed)) {
                         localStorage.removeItem('goride_active_trip');
                         parsed = null;
@@ -2510,28 +2869,69 @@ class CustomerAppController {
     /**
      * Execute real ride booking request (Phase C.3 / P1 / P7.1)
      */
+
+    /**
+     * Request Ride Booking
+     */
     async requestRideBooking() {
-        // 1. Enforce Authentication (P2)
         if (typeof sessionManager !== 'undefined' && !sessionManager.isAuthenticated()) {
-            this.showToast('Vui lòng đăng nhập để đặt chuyến xe GoRide.', 'warning');
-            setTimeout(() => {
-                window.location.href = 'login.html?redirect=customer.html';
-            }, 1200);
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Yêu cầu đăng nhập',
+                    message: 'Vui lòng đăng nhập hoặc đăng ký tài khoản để tiếp tục đặt chuyến xe Navigo.',
+                    icon: '👤',
+                    confirmText: 'Đăng nhập ngay',
+                    cancelText: 'Hủy',
+                    onConfirm: () => {
+                        window.location.href = 'login.html?redirect=customer.html';
+                    }
+                });
+            } else {
+                this.showToast('Vui lòng đăng nhập để đặt chuyến xe Navigo.', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'login.html?redirect=customer.html';
+                }, 1200);
+            }
             return;
         }
 
-        // 2. Enforce Single Active Trip (P7.1)
         if (this.activeTrip && ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes(this.activeTrip.status)) {
-            this.showToast('Bạn đang có một chuyến xe đang hoạt động. Đang chuyển tới màn hình theo dõi.', 'info');
-            this.switchView('tracking');
-            this.startActiveTripPolling(this.activeTrip.id);
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Chuyến xe đang hoạt động',
+                    message: 'Bạn đang có một chuyến xe đang diễn ra. Chuyển sang màn hình theo dõi hành trình.',
+                    icon: '🚗',
+                    confirmText: 'Xem hành trình',
+                    cancelText: 'Hủy',
+                    onConfirm: () => {
+                        this.switchView('tracking');
+                        this.startActiveTripPolling(this.activeTrip.id);
+                    }
+                });
+            } else {
+                this.showToast('Bạn đang có một chuyến xe đang hoạt động. Đang chuyển tới màn hình theo dõi.', 'info');
+                this.switchView('tracking');
+                this.startActiveTripPolling(this.activeTrip.id);
+            }
             return;
         }
 
-        // 3. Ensure both pickup and destination are selected
         if (!this.pickup || !this.destination) {
-            this.showToast('Vui lòng chọn đầy đủ điểm đón và điểm đến trước khi đặt xe.', 'warning');
-            this.switchView('search');
+            if (typeof window.showNavigoModal === 'function') {
+                window.showNavigoModal({
+                    title: 'Thiếu điểm hành trình',
+                    message: 'Vui lòng chọn đầy đủ điểm đón và điểm đến trước khi tiến hành đặt xe Navigo.',
+                    icon: '📍',
+                    confirmText: 'Chọn điểm đến',
+                    cancelText: 'Hủy',
+                    onConfirm: () => {
+                        this.switchView('search');
+                    }
+                });
+            } else {
+                this.showToast('Vui lòng chọn đầy đủ điểm đón và điểm đến trước khi đặt xe.', 'warning');
+                this.switchView('search');
+            }
             return;
         }
 
@@ -2598,10 +2998,21 @@ class CustomerAppController {
                 try {
                     const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
                     const currentUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+                    createdTrip.vehicleType = vInfo.type;
+                    createdTrip.customerName = currentUser?.name || 'Khách hàng Navigo';
+                    createdTrip.customerPhone = currentUser?.phone || '0901234567';
+                    createdTrip.customerId = currentUser?.id || 'cust_01';
+                    createdTrip.distance = (estDist / 1000).toFixed(1);
+                    createdTrip.duration = Math.max(3, Math.round(estDist / 350));
+                    createdTrip.fareAmount = estFare;
+                    createdTrip.pickupName = this.pickup.name || this.pickup.address;
+                    createdTrip.dropoffName = this.destination.name || this.destination.address;
+
                     adminTrips.unshift({
                         id: createdTrip.id,
-                        customerName: currentUser?.name || 'Khách hàng',
+                        customerName: currentUser?.name || 'Khách hàng Navigo',
                         customerPhone: currentUser?.phone || '0901234567',
+                        customerId: currentUser?.id || 'cust_01',
                         driverName: createdTrip.driverName || 'Chưa gán',
                         pickup: this.pickup.name,
                         destination: this.destination.name,
@@ -2612,6 +3023,10 @@ class CustomerAppController {
                         dropoffLat: Number(this.destination.lat),
                         dropoffLon: Number(this.destination.lng),
                         fare: estFare,
+                        distance: (estDist / 1000).toFixed(1),
+                        duration: Math.max(3, Math.round(estDist / 350)),
+                        vehicleType: vInfo.type,
+                        vehicleTypeName: vInfo.name,
                         status: 'requested',
                         createdAt: new Date().toISOString()
                     });
@@ -2654,7 +3069,19 @@ class CustomerAppController {
                 this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
                 this.updateTrackingUI(createdTrip);
                 this.startActiveTripPolling(createdTrip.id);
+                this.initiateDriverDispatch(createdTrip, vType, this.pickup.lat, this.pickup.lng);
                 this.showToast('Yêu cầu đặt xe thành công! Đang phát tín hiệu tìm tài xế gần nhất...', 'success');
+                if (typeof navigoNotifications !== 'undefined') {
+                    navigoNotifications.addNotification({
+                        id: 'trip_req_' + createdTrip.id,
+                        category: 'trips',
+                        title: 'ĐÃ ĐẶT CHUYẾN XE #' + createdTrip.id,
+                        body: 'Điểm đón: ' + (this.pickup.name || this.pickup.address) + ' → Điểm đến: ' + (this.destination.name || this.destination.address) + '. Giá cước dự kiến: ' + this.formatMoney(estFare) + '. Hệ thống đang điều phối xe gần bạn nhất.',
+                        icon: '🚗',
+                        actionUrl: 'customer.html',
+                        actionText: 'Theo dõi chuyến'
+                    });
+                }
             } else {
                 throw new Error(res?.data?.error || 'Không thể tạo yêu cầu chuyến đi.');
             }
@@ -2703,6 +3130,7 @@ class CustomerAppController {
                     dropoffLon: Number(this.destination.lng),
                     pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
                     destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
+                    targetedDriverIds: ['*'],
                     pickup: {
                         name: this.pickup.name,
                         address: this.pickup.address || this.pickup.name,
@@ -2720,6 +3148,9 @@ class CustomerAppController {
                     promoCode: this.appliedPromo ? this.appliedPromo.code : null,
                     discountPercent: this.appliedPromo ? this.appliedPromo.discountPercent : 0,
                     distanceMeters: estDist,
+                    distance: (estDist / 1000).toFixed(1),
+                    duration: Math.max(3, Math.round(estDist / 350)),
+                    customerId: currentUser?.id || 'cust_01',
                     vehicleType: vInfo.type,
                     vehicleTypeName: vInfo.name,
                     vehicleIcon: vInfo.icon
@@ -2751,6 +3182,7 @@ class CustomerAppController {
                     localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
                     // Dedicated key to trigger storage event in driver tab immediately
                     localStorage.setItem('goride_pending_trip_offers', JSON.stringify([offlineTrip]));
+                    localStorage.setItem('goride_last_trip_event', JSON.stringify({ id: offlineTrip.id, time: Date.now() }));
                     localStorage.setItem('goride_active_trip', JSON.stringify({
                         id: offlineTrip.id,
                         status: 'REQUESTED',
@@ -2795,6 +3227,18 @@ class CustomerAppController {
                 this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
                 this.updateTrackingUI(offlineTrip);
                 this.startActiveTripPolling(offlineTrip.id);
+                this.initiateDriverDispatch(offlineTrip, vInfo.type, this.pickup.lat, this.pickup.lng);
+                if (typeof navigoNotifications !== 'undefined') {
+                    navigoNotifications.addNotification({
+                        id: 'trip_req_' + offlineTrip.id,
+                        category: 'trips',
+                        title: 'ĐÃ ĐẶT CHUYẾN XE #' + offlineTrip.id,
+                        body: 'Điểm đón: ' + (this.pickup.name || this.pickup.address) + ' → Điểm đến: ' + (this.destination.name || this.destination.address) + '. Giá cước dự kiến: ' + this.formatMoney(estFare) + '. Hệ thống đang điều phối xe gần bạn nhất.',
+                        icon: '🚗',
+                        actionUrl: 'customer.html',
+                        actionText: 'Theo dõi chuyến'
+                    });
+                }
 
                 // 100% Real Dispatch Architecture: Wait strictly for real online drivers to accept
                 this.simulationTimers = [];
@@ -2807,9 +3251,244 @@ class CustomerAppController {
     }
 
     /**
+     * Haversine distance calculator between two coordinates (in km)
+     */
+    calculateDistanceKm(lat1, lon1, lat2, lon2) {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return 999999;
+        const R = 6371; // km
+        const dLat = (Number(lat2) - Number(lat1)) * Math.PI / 180;
+        const dLon = (Number(lon2) - Number(lon1)) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(Number(lat1) * Math.PI / 180) * Math.cos(Number(lat2) * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    /**
+     * Intelligent Progressive Driver Dispatch Algorithm:
+     * - Default: Select 2 online drivers closest to the pickup point.
+     * - If neither accepts within 30s, expand to 4 closest drivers.
+     * - Further expand if unaccepted, but NEVER select drivers > 20km from pickup point.
+     * @param {Object} trip 
+     * @param {string} vType 
+     * @param {number} pickupLat 
+     * @param {number} pickupLng 
+     */
+    async initiateDriverDispatch(trip, vType, pickupLat, pickupLng) {
+        if (!trip || !trip.id) return;
+
+        // Clear existing dispatch expansion timers
+        if (this.dispatchExpandTimers && Array.isArray(this.dispatchExpandTimers)) {
+            this.dispatchExpandTimers.forEach(t => clearTimeout(t));
+        }
+        this.dispatchExpandTimers = [];
+
+        const pLat = Number(pickupLat);
+        const pLng = Number(pickupLng);
+
+        // Helper: Quét toàn bộ tài xế đang trực tuyến từ LocalStorage & Firebase Realtime Cloud
+        const fetchEligibleDrivers = async () => {
+            let driversList = [];
+            try {
+                const rawOnline = localStorage.getItem('goride_online_drivers');
+                if (rawOnline) {
+                    const parsed = JSON.parse(rawOnline);
+                    if (Array.isArray(parsed)) driversList.push(...parsed);
+                    else if (typeof parsed === 'object') driversList.push(...Object.values(parsed));
+                }
+            } catch (e) {}
+
+            try {
+                const rawAdminDrivers = localStorage.getItem('goride_admin_drivers');
+                if (rawAdminDrivers) {
+                    const parsed = JSON.parse(rawAdminDrivers);
+                    if (Array.isArray(parsed)) {
+                        parsed.forEach(ad => {
+                            if (!driversList.some(d => d.id === ad.id || (ad.phone && d.phone === ad.phone))) {
+                                driversList.push(ad);
+                            }
+                        });
+                    }
+                }
+            } catch (e) {}
+
+            // Truy vấn Firebase Realtime Cloud (Đa thiết bị)
+            if (typeof realtimeSync !== 'undefined') {
+                if (realtimeSync.isAvailable()) {
+                    try {
+                        const snap = await realtimeSync.db.ref('goride_online_drivers').once('value');
+                        const val = snap.val() || {};
+                        Object.values(val).forEach(fd => {
+                            if (fd && !driversList.some(d => d.id === fd.id || (fd.phone && d.phone === fd.phone))) {
+                                driversList.push(fd);
+                            }
+                        });
+                    } catch (e) {}
+                } else if (typeof realtimeSync._restGet === 'function') {
+                    try {
+                        const val = await realtimeSync._restGet('goride_online_drivers') || {};
+                        Object.values(val).forEach(fd => {
+                            if (fd && !driversList.some(d => d.id === fd.id || (fd.phone && d.phone === fd.phone))) {
+                                driversList.push(fd);
+                            }
+                        });
+                    } catch (e) {}
+                }
+            }
+
+            // Lọc tài xế hợp lệ: Đang online, khớp loại xe, tọa độ chuẩn xác, BÁN KÍNH <= 20KM
+            const eligible = driversList.filter(d => {
+                if (!d) return false;
+                if (d.isOnline === false) return false;
+                if (vType && d.vehicleType && d.vehicleType !== vType) {
+                    const isBikeMatch = (vType === 'motorbike' || vType === 'bike') && (d.vehicleType === 'motorbike' || d.vehicleType === 'bike');
+                    if (!isBikeMatch) return false;
+                }
+                const dLat = Number(d.lat || (d.location && d.location.lat));
+                const dLng = Number(d.lng || (d.location && d.location.lng));
+                if (isNaN(dLat) || isNaN(dLng) || (dLat === 0 && dLng === 0)) return false;
+
+                const distKm = this.calculateDistanceKm(pLat, pLng, dLat, dLng);
+                d._distToPickup = distKm;
+
+                // RÀNG BUỘC CỨNG: Nếu tài xế xa hơn điểm đón khách 20km thì tài xế đó TUYỆT ĐỐI không nhận được thông tin cuốc xe này
+                return distKm <= 20;
+            });
+
+            // Sắp xếp tăng dần theo khoảng cách tới điểm đón (GẦN NHẤT ĐỨNG ĐẦU TIÊN)
+            eligible.sort((a, b) => (a._distToPickup || 0) - (b._distToPickup || 0));
+            return eligible;
+        };
+
+        const updateTripTargets = (targetedIds) => {
+            trip.targetedDriverIds = targetedIds;
+            trip.pickupCoords = [pLat, pLng];
+            trip.pickupLat = pLat;
+            trip.pickupLon = pLng;
+
+            try {
+                const active = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                if (active && active.id === trip.id) {
+                    active.targetedDriverIds = targetedIds;
+                    active.pickupCoords = [pLat, pLng];
+                    active.pickupLat = pLat;
+                    active.pickupLon = pLng;
+                    localStorage.setItem('goride_active_trip', JSON.stringify(active));
+                }
+            } catch (e) {}
+
+            try {
+                localStorage.setItem('goride_pending_trip_offers', JSON.stringify([trip]));
+            } catch (e) {}
+
+            try {
+                const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                const at = adminTrips.find(t => t.id === trip.id);
+                if (at) {
+                    at.targetedDriverIds = targetedIds;
+                    at.pickupCoords = [pLat, pLng];
+                    at.pickupLat = pLat;
+                    at.pickupLon = pLng;
+                    localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
+                }
+            } catch (e) {}
+
+            if (typeof realtimeSync !== 'undefined') {
+                const patchData = {
+                    targetedDriverIds: targetedIds,
+                    pickupCoords: [pLat, pLng],
+                    pickupLat: pLat,
+                    pickupLon: pLng
+                };
+                if (realtimeSync.isAvailable()) {
+                    realtimeSync.db.ref(`goride_active_offers/${trip.id}`).update(patchData);
+                    realtimeSync.db.ref(`goride_trips/${trip.id}`).update(patchData);
+                } else if (typeof realtimeSync._restPatch === 'function') {
+                    realtimeSync._restPatch(`goride_active_offers/${trip.id}`, patchData);
+                    realtimeSync._restPatch(`goride_trips/${trip.id}`, patchData);
+                }
+            }
+        };
+
+        const initialEligible = await fetchEligibleDrivers();
+
+        if (initialEligible.length === 0) {
+            // Không có tài xế nào trong bán kính 20km: targetedDriverIds = [] (KHÔNG phát wildcard '*')
+            updateTripTargets([]);
+            const statusText = document.getElementById('tracking-status-text');
+            if (statusText) {
+                statusText.textContent = 'Đang tìm xe... Hiện chưa có tài xế trực tuyến trong bán kính 20km từ điểm đón.';
+            }
+            this.showToast('Hệ thống đang quét tìm xe... Chưa có tài xế trực tuyến trong phạm vi 20km.', 'warning', 4500);
+        } else {
+            // Giai đoạn 1 (0s): Chuyển thông tin tới 2 tài xế gần nhất (trong phạm vi <= 20km)
+            const phase1Drivers = initialEligible.slice(0, 2);
+            const targetedIdsPhase1 = phase1Drivers.map(d => d.id || d.phone || d.name);
+            updateTripTargets(targetedIdsPhase1);
+        }
+
+        // Giai đoạn 2 (30s): Mở rộng tới 4 tài xế gần nhất trong bán kính <= 20km
+        const timerPhase2 = setTimeout(async () => {
+            if (this.activeTrip && this.activeTrip.id === trip.id && (this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED')) {
+                const refreshedEligible = await fetchEligibleDrivers();
+                if (refreshedEligible.length > 0) {
+                    const phase2Drivers = refreshedEligible.slice(0, 4);
+                    const targetedIdsPhase2 = phase2Drivers.map(d => d.id || d.phone || d.name);
+                    updateTripTargets(targetedIdsPhase2);
+                    this.showToast('Hệ thống đang mở rộng phát tín hiệu tới 4 tài xế gần bạn nhất (trong 20km)...', 'info', 3500);
+                } else {
+                    updateTripTargets([]);
+                }
+            }
+        }, 30000);
+        this.dispatchExpandTimers.push(timerPhase2);
+
+        // Giai đoạn 3 (60s): Mở rộng tới TOÀN BỘ tài xế trực tuyến trong bán kính <= 20km
+        const timerPhase3 = setTimeout(async () => {
+            if (this.activeTrip && this.activeTrip.id === trip.id && (this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED')) {
+                const refreshedEligible = await fetchEligibleDrivers();
+                if (refreshedEligible.length > 0) {
+                    const targetedIdsPhase3 = refreshedEligible.map(d => d.id || d.phone || d.name);
+                    updateTripTargets(targetedIdsPhase3);
+                    this.showToast('Đang phát tín hiệu tới toàn bộ tài xế trong bán kính 20km...', 'info', 3500);
+                } else {
+                    updateTripTargets([]);
+                }
+            }
+        }, 60000);
+        this.dispatchExpandTimers.push(timerPhase3);
+
+        // Tự động quét lại định kỳ mỗi 12s nếu hiện tại chưa có tài xế trong 20km nhận
+        const periodicRescan = setInterval(async () => {
+            if (!this.activeTrip || this.activeTrip.id !== trip.id || (this.activeTrip.status !== 'REQUESTED' && this.activeTrip.status !== 'OFFERED')) {
+                clearInterval(periodicRescan);
+                return;
+            }
+            if (!trip.targetedDriverIds || trip.targetedDriverIds.length === 0) {
+                const currentEligible = await fetchEligibleDrivers();
+                if (currentEligible.length > 0) {
+                    const newPhase = currentEligible.slice(0, 2);
+                    updateTripTargets(newPhase.map(d => d.id || d.phone || d.name));
+                    const statusText = document.getElementById('tracking-status-text');
+                    if (statusText) statusText.textContent = 'Đã tìm thấy tài xế trong phạm vi 20km! Đang gửi tín hiệu...';
+                    this.showToast('Đã phát hiện tài xế trong bán kính 20km, đang gửi yêu cầu...', 'info', 3000);
+                }
+            }
+        }, 12000);
+        this.dispatchExpandTimers.push(periodicRescan);
+    }
+
+    /**
      * Cancel pending booking request (When searching or before in-progress)
      */
     cancelPendingBooking() {
+        // Clear dispatch expansion timers
+        if (this.dispatchExpandTimers && Array.isArray(this.dispatchExpandTimers)) {
+            this.dispatchExpandTimers.forEach(t => clearTimeout(t));
+            this.dispatchExpandTimers = [];
+        }
+
         // 1. Clear any active progression timers
         if (Array.isArray(this.simulationTimers)) {
             this.simulationTimers.forEach(t => clearTimeout(t));
@@ -2845,6 +3524,18 @@ class CustomerAppController {
                 }
                 localStorage.removeItem('goride_pending_trip_offers');
             } catch (e) {}
+
+            if (typeof navigoNotifications !== 'undefined' && tripId) {
+                navigoNotifications.addNotification({
+                    id: 'trip_cnc_' + tripId + '_' + Date.now(),
+                    category: 'trips',
+                    title: 'ĐÃ HỦY CHUYẾN XE #' + tripId,
+                    body: 'Bạn đã hủy yêu cầu chuyến xe #' + tripId + '. Bạn có thể đặt lại chuyến bất kỳ lúc nào.',
+                    icon: '🛑',
+                    actionUrl: 'customer.html',
+                    actionText: 'Đặt chuyến mới'
+                });
+            }
         }
 
         // 3. Clear active state & intervals
@@ -2917,21 +3608,46 @@ class CustomerAppController {
                         this.activeTrip.driverLng = cloudTrip.driverLon || cloudTrip.driverLng;
                     }
 
-                    // Synchronize updated active trip to localStorage immediately
+                    // CRITICAL: Synchronize cloud status immediately into local storage so local interval never reads stale 'requested'
                     try {
-                        const existing = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
-                        const updated = {
-                            ...existing,
-                            ...this.activeTrip,
-                            status: (cloudTrip.status || this.activeTrip.status).toUpperCase()
-                        };
-                        localStorage.setItem('goride_active_trip', JSON.stringify(updated));
+                        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                        const idx = adminTrips.findIndex(x => x.id === tripId);
+                        if (idx !== -1) {
+                            adminTrips[idx].status = (cloudTrip.status || 'requested').toLowerCase();
+                            if (cloudTrip.driverName && cloudTrip.driverName !== 'Chưa gán') adminTrips[idx].driverName = cloudTrip.driverName;
+                            if (cloudTrip.licensePlate) adminTrips[idx].licensePlate = cloudTrip.licensePlate;
+                            if (cloudTrip.vehicleModel) adminTrips[idx].vehicleModel = cloudTrip.vehicleModel;
+                            if (cloudTrip.driverLat) adminTrips[idx].driverLat = cloudTrip.driverLat;
+                            if (cloudTrip.driverLon || cloudTrip.driverLng) adminTrips[idx].driverLon = cloudTrip.driverLon || cloudTrip.driverLng;
+                            localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
+                        }
+                        const act = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                        if (act.id === tripId) {
+                            act.status = (cloudTrip.status || 'REQUESTED').toUpperCase();
+                            if (cloudTrip.driverName && cloudTrip.driverName !== 'Chưa gán') act.driverName = cloudTrip.driverName;
+                            if (cloudTrip.licensePlate) act.licensePlate = cloudTrip.licensePlate;
+                            if (cloudTrip.vehicleModel) act.vehicleModel = cloudTrip.vehicleModel;
+                            if (cloudTrip.driverLat) act.driverLat = cloudTrip.driverLat;
+                            if (cloudTrip.driverLon || cloudTrip.driverLng) act.driverLon = cloudTrip.driverLon || cloudTrip.driverLng;
+                            localStorage.setItem('goride_active_trip', JSON.stringify(act));
+                        }
                     } catch (e) {}
 
                     this.updateTrackingUI(this.activeTrip);
 
                     if (prevStatus === 'REQUESTED' && (cloudTrip.status === 'ACCEPTED' || cloudTrip.status === 'ARRIVED')) {
                         this.showToast(`Tài xế ${cloudTrip.driverName || 'đối tác'} đã nhận chuyến! Đang đến đón bạn.`, 'success', 5000);
+                        if (typeof navigoNotifications !== 'undefined') {
+                            navigoNotifications.addNotification({
+                                id: 'trip_acc_' + (cloudTrip.id || this.activeTripId),
+                                category: 'trips',
+                                title: 'TÀI XẾ ĐÃ NHẬN CHUYẾN #' + (cloudTrip.id || this.activeTripId),
+                                body: 'Tài xế ' + (cloudTrip.driverName || 'đối tác') + ' (' + (cloudTrip.licensePlate || 'Xe thuần điện') + ') đã nhận chuyến và đang di chuyển tới điểm đón bạn.',
+                                icon: '🚗',
+                                actionUrl: 'customer.html',
+                                actionText: 'Xem tài xế'
+                            });
+                        }
                     } else if (prevStatus === 'ACCEPTED' && cloudTrip.status === 'ARRIVED') {
                         this.showToast('Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.', 'info', 4500);
                     } else if (prevStatus === 'ARRIVED' && cloudTrip.status === 'IN_PROGRESS') {
@@ -2953,16 +3669,6 @@ class CustomerAppController {
             });
         }
 
-        const STATUS_RANKS = {
-            'REQUESTED': 1,
-            'OFFERED': 2,
-            'ACCEPTED': 3,
-            'ARRIVED': 4,
-            'IN_PROGRESS': 5,
-            'COMPLETED': 6,
-            'CANCELLED': 7
-        };
-
         let pollCount = 0;
         this.trackingInterval = setInterval(async () => {
             pollCount++;
@@ -2975,86 +3681,77 @@ class CustomerAppController {
                         const res = await apiClient.getActiveTrip();
                         if (res && res.data && res.data.has_active_trip && res.data.trip) {
                             currentTrip = res.data.trip;
-                            if (currentTrip.status) {
-                                currentTrip.status = String(currentTrip.status).toUpperCase().trim();
-                            }
                         }
                     } catch (e) {}
                 }
 
                 // 2. Real-time shared storage sync (cross-tab with Driver portal)
-                try {
-                    // Check goride_active_trip directly
-                    const activeRaw = localStorage.getItem('goride_active_trip');
-                    if (activeRaw) {
-                        const act = JSON.parse(activeRaw);
-                        if (act && (act.id === tripId || !tripId) && act.status) {
-                            const actStatus = String(act.status).toUpperCase().trim();
-                            const curStatus = currentTrip ? String(currentTrip.status || '').toUpperCase().trim() : '';
-                            const actRank = STATUS_RANKS[actStatus] || 0;
-                            const curRank = STATUS_RANKS[curStatus] || 0;
-
-                            // If localStorage has higher progress status (e.g. driver accepted), prefer it!
-                            if (actRank > curRank || !currentTrip) {
-                                currentTrip = { ...(currentTrip || {}), ...act, status: actStatus };
-                            }
-                        }
-                    }
-
-                    // Check goride_admin_trips
-                    const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                    const t = adminTrips.find(x => x.id === tripId);
-                    if (t) {
-                        const tStatus = String(t.status || 'requested').toUpperCase().trim();
-                        const curStatus = currentTrip ? String(currentTrip.status || '').toUpperCase().trim() : '';
-                        const tRank = STATUS_RANKS[tStatus] || 0;
-                        const curRank = STATUS_RANKS[curStatus] || 0;
-
-                        if (tRank > curRank || !currentTrip) {
+                if (!currentTrip) {
+                    try {
+                        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                        const t = adminTrips.find(x => x.id === tripId);
+                        if (t) {
                             currentTrip = {
-                                ...(currentTrip || {}),
                                 id: t.id,
-                                status: tStatus,
+                                status: (t.status || 'requested').toUpperCase(),
                                 customerName: t.customerName || 'Khách hàng',
-                                driverName: t.driverName !== 'Chưa gán' ? t.driverName : (currentTrip?.driverName || null),
-                                licensePlate: t.licensePlate || currentTrip?.licensePlate || '',
-                                vehicleModel: t.vehicleModel || currentTrip?.vehicleModel || '',
-                                vehicleType: t.vehicleType || currentTrip?.vehicleType || this.selectedService || 'motorbike',
+                                driverName: t.driverName !== 'Chưa gán' ? t.driverName : null,
+                                licensePlate: t.licensePlate || '',
+                                vehicleModel: t.vehicleModel || '',
+                                vehicleType: t.vehicleType || this.selectedService || 'motorbike',
                                 pickupName: t.pickup || this.pickup?.name,
                                 dropoffName: t.destination || this.destination?.name,
-                                fareAmount: Number(t.fare) || currentTrip?.fareAmount || this.selectedVehicleFare || 45000,
+                                fareAmount: Number(t.fare) || this.selectedVehicleFare || 45000,
                                 distanceMeters: (Number(t.distance) || 3) * 1000,
-                                driverLat: (t.driverLat !== undefined && t.driverLat !== null) ? Number(t.driverLat) : (currentTrip?.driverLat || null),
-                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : (currentTrip?.driverLon || null)
+                                driverLat: (t.driverLat !== undefined && t.driverLat !== null) ? Number(t.driverLat) : null,
+                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : null
                             };
+                            // Sync GPS and vehicleType from live driver broadcast
+                            try {
+                                const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+                                const dEntry = Object.values(onlineDrivers).find(d => 
+                                    (t.driverName && d.name === t.driverName) || 
+                                    (t.licensePlate && d.plate === t.licensePlate)
+                                );
+                                if (dEntry && dEntry.isOnline) {
+                                    const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
+                                    const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
+                                    if (!isNaN(dLat) && dLat !== 0) currentTrip.driverLat = dLat;
+                                    if (!isNaN(dLng) && dLng !== 0) currentTrip.driverLon = dLng;
+                                    if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
+                                }
+                            } catch (e) {}
                         }
-                    }
-
-                    // Sync GPS and vehicleType from live driver broadcast
-                    if (currentTrip && currentTrip.driverName) {
-                        const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
-                        const dEntry = Object.values(onlineDrivers).find(d => 
-                            (currentTrip.driverName && d.name === currentTrip.driverName) || 
-                            (currentTrip.licensePlate && d.plate === currentTrip.licensePlate)
-                        );
-                        if (dEntry && dEntry.isOnline) {
-                            const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
-                            const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
-                            if (!isNaN(dLat) && dLat !== 0) currentTrip.driverLat = dLat;
-                            if (!isNaN(dLng) && dLng !== 0) currentTrip.driverLon = dLng;
-                            if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
-                        }
-                    }
-                } catch (e) {}
+                    } catch (e) {}
+                }
 
                 if (currentTrip) {
-                    const prevStatus = String((this.activeTrip && this.activeTrip.status) || 'REQUESTED').toUpperCase().trim();
-                    let curStatus = String(currentTrip.status || '').toUpperCase().trim();
+                    const prevStatus = this.activeTrip ? this.activeTrip.status : 'REQUESTED';
 
-                    // Monotonicity Guard: NEVER downgrade from higher state (e.g. ACCEPTED) back to lower (e.g. REQUESTED)
-                    if ((STATUS_RANKS[curStatus] || 0) < (STATUS_RANKS[prevStatus] || 0) && curStatus !== 'CANCELLED') {
-                        curStatus = prevStatus;
-                        currentTrip.status = prevStatus;
+                    // MONOTONIC STATUS PROGRESSION:
+                    // Prevent stale local data from rolling back an accepted/in-progress trip to REQUESTED
+                    const STATUS_WEIGHT = {
+                        'REQUESTED': 1,
+                        'OFFERED': 2,
+                        'ACCEPTED': 3,
+                        'ARRIVED': 4,
+                        'IN_PROGRESS': 5,
+                        'COMPLETED': 6,
+                        'CANCELLED': 7
+                    };
+                    const curWeight = STATUS_WEIGHT[(this.activeTrip?.status || 'REQUESTED').toUpperCase()] || 1;
+                    const newWeight = STATUS_WEIGHT[(currentTrip.status || 'REQUESTED').toUpperCase()] || 1;
+
+                    if (newWeight < curWeight) {
+                        // Keep the higher status and driver details from activeTrip
+                        currentTrip.status = this.activeTrip.status;
+                        if (!currentTrip.driverName || currentTrip.driverName === 'Chưa gán') {
+                            currentTrip.driverName = this.activeTrip.driverName;
+                        }
+                        if (!currentTrip.licensePlate) currentTrip.licensePlate = this.activeTrip.licensePlate;
+                        if (!currentTrip.vehicleModel) currentTrip.vehicleModel = this.activeTrip.vehicleModel;
+                        if (!currentTrip.driverLat) currentTrip.driverLat = this.activeTrip.driverLat;
+                        if (!currentTrip.driverLon) currentTrip.driverLon = this.activeTrip.driverLon;
                     }
 
                     this.activeTrip = currentTrip;
@@ -3064,7 +3761,7 @@ class CustomerAppController {
                     try {
                         const existing = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
                         existing.id = currentTrip.id;
-                        existing.status = curStatus;
+                        existing.status = (currentTrip.status || 'REQUESTED').toUpperCase();
                         if (currentTrip.driverName && currentTrip.driverName !== 'Chưa gán') existing.driverName = currentTrip.driverName;
                         if (currentTrip.licensePlate) existing.licensePlate = currentTrip.licensePlate;
                         if (currentTrip.vehicleModel) existing.vehicleModel = currentTrip.vehicleModel;
@@ -3075,17 +3772,28 @@ class CustomerAppController {
 
                     this.updateTrackingUI(currentTrip, pollCount);
 
-                    if (prevStatus === 'REQUESTED' && (curStatus === 'ACCEPTED' || curStatus === 'ARRIVED')) {
+                    if (prevStatus === 'REQUESTED' && (currentTrip.status === 'ACCEPTED' || currentTrip.status === 'ARRIVED')) {
                         this.showToast(`Tài xế ${currentTrip.driverName || 'đối tác'} đã nhận chuyến! Đang đến đón bạn.`, 'success', 5000);
-                    } else if (prevStatus === 'ACCEPTED' && curStatus === 'ARRIVED') {
+                        if (typeof navigoNotifications !== 'undefined') {
+                            navigoNotifications.addNotification({
+                                id: 'trip_acc_' + currentTrip.id,
+                                category: 'trips',
+                                title: 'TÀI XẾ ĐÃ NHẬN CHUYẾN #' + currentTrip.id,
+                                body: 'Tài xế ' + (currentTrip.driverName || 'đối tác') + ' (' + (currentTrip.licensePlate || 'Xe thuần điện') + ') đã nhận chuyến và đang di chuyển tới điểm đón bạn.',
+                                icon: '🚗',
+                                actionUrl: 'customer.html',
+                                actionText: 'Xem tài xế'
+                            });
+                        }
+                    } else if (prevStatus === 'ACCEPTED' && currentTrip.status === 'ARRIVED') {
                         this.showToast('Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.', 'info', 4500);
-                    } else if (prevStatus === 'ARRIVED' && curStatus === 'IN_PROGRESS') {
+                    } else if (prevStatus === 'ARRIVED' && currentTrip.status === 'IN_PROGRESS') {
                         this.showToast('Chuyến xe bắt đầu lăn bánh...', 'info', 4000);
-                    } else if (curStatus === 'COMPLETED') {
+                    } else if (currentTrip.status === 'COMPLETED') {
                         clearInterval(this.trackingInterval);
                         this.trackingInterval = null;
                         this.completeTrip(currentTrip);
-                    } else if (curStatus === 'CANCELLED') {
+                    } else if (currentTrip.status === 'CANCELLED') {
                         this.cancelPendingBooking();
                     }
                 } else if (pollCount > 8 && !this.activeTrip) {
@@ -3105,25 +3813,23 @@ class CustomerAppController {
             } catch (err) {
                 console.warn('[CustomerApp] Active trip poll warning:', err.message);
             }
-        }, 1500);
+        }, 1200);
     }
 
     /**
      * Update tracking UI components according to real backend trip state
      */
     updateTrackingUI(trip, pollCount = 0) {
-        if (!trip) return;
         const radar = document.getElementById('tracking-radar');
         const driverSheet = document.getElementById('tracking-driver-sheet');
         const statusText = document.getElementById('tracking-status-text');
-        const statusIcon = document.getElementById('tracking-status-icon');
         const prog1 = document.getElementById('prog-step-1');
         const prog2 = document.getElementById('prog-step-2');
         const prog3 = document.getElementById('prog-step-3');
         const prog4 = document.getElementById('prog-step-4');
         const cancelBtn = document.getElementById('btn-cancel-trip') || document.querySelector('[data-action="cancel-ride"]');
 
-        const status = String(trip.status || '').toUpperCase().trim();
+        const status = trip.status;
 
         // Reset progress steps
         [prog1, prog2, prog3, prog4].forEach(p => p && p.classList.remove('active'));
@@ -3132,23 +3838,19 @@ class CustomerAppController {
         const searchingPanel = document.getElementById('tracking-searching-panel');
 
         if (status === 'REQUESTED' || status === 'OFFERED') {
-            if (this.mapController && this.mapController.markers && this.mapController.markers.drivers && this.mapController.markers.drivers.size > 0) {
+            if (this.mapController) {
                 this.mapController.clearMarkers('drivers');
             }
-            if (radar) radar.style.display = 'none';
+            if (radar) radar.style.setProperty('display', 'none', 'important');
             this.showRadarAtPickup(trip.pickupLat || (trip.pickup && trip.pickup.lat), trip.pickupLon || trip.pickupLng || (trip.pickup && (trip.pickup.lng || trip.pickup.lon)));
-            if (driverSheet) {
-                driverSheet.style.display = 'none';
-            }
+            if (driverSheet) driverSheet.style.setProperty('display', 'none', 'important');
             if (searchingPanel) {
-                searchingPanel.style.display = 'block';
+                searchingPanel.style.setProperty('display', 'block', 'important');
                 const sPickup = document.getElementById('searching-pickup-text');
                 const sDropoff = document.getElementById('searching-dropoff-text');
                 if (sPickup) sPickup.textContent = trip.pickupName || (this.pickup && this.pickup.name) || '--';
                 if (sDropoff) sDropoff.textContent = trip.dropoffName || (this.destination && this.destination.name) || '--';
             }
-
-            if (statusIcon) statusIcon.textContent = '📡';
 
             // Cancellation is PERMITTED during REQUESTED / OFFERED
             if (cancelBtn) {
@@ -3168,17 +3870,10 @@ class CustomerAppController {
                 if (statusText) statusText.textContent = 'Đã gửi yêu cầu tới tài xế gần nhất! Đang chờ tài xế xác nhận (15s)...';
             }
         } else if (status === 'ACCEPTED' || status === 'ARRIVED' || status === 'IN_PROGRESS') {
-            if (radar) radar.style.display = 'none';
+            if (radar) radar.style.setProperty('display', 'none', 'important');
             this.hideRadar();
-            if (searchingPanel) {
-                searchingPanel.style.display = 'none';
-                searchingPanel.style.setProperty('display', 'none', 'important');
-            }
-            if (driverSheet) {
-                driverSheet.style.display = 'flex';
-                driverSheet.style.setProperty('display', 'flex', 'important');
-            }
-            if (statusIcon) statusIcon.textContent = '🚗';
+            if (searchingPanel) searchingPanel.style.setProperty('display', 'none', 'important');
+            if (driverSheet) driverSheet.style.setProperty('display', 'flex', 'important');
 
             // Cancellation is allowed when driver is en route or at pickup. Only forbidden when vehicle is in progress.
             if (cancelBtn) {
@@ -3204,7 +3899,7 @@ class CustomerAppController {
             const tripVType = this.normalizeVehicleType(trip.vehicleType || trip.serviceType || this.selectedService || 'car4');
             const vDetails = this.getVehicleDetails(tripVType);
 
-            if (driverNameEl) driverNameEl.textContent = trip.driverName || 'Tài xế GoRide đối tác';
+            if (driverNameEl) driverNameEl.textContent = trip.driverName || 'Tài xế Navigo đối tác';
             if (driverPlateEl) {
                 if (trip.licensePlate) {
                     driverPlateEl.textContent = trip.licensePlate;
@@ -3223,9 +3918,20 @@ class CustomerAppController {
             }
             if (driverRatingEl) driverRatingEl.textContent = trip.driverRating ? `★ ${trip.driverRating}` : '★ 5.0';
 
+            const statusIcon = document.getElementById('tracking-status-icon');
+            if (statusIcon) statusIcon.textContent = '🚗';
+
+            const btnCallDriver = document.getElementById('btn-call-driver');
+            if (btnCallDriver) {
+                btnCallDriver.onclick = () => {
+                    const phone = trip.driverPhone || '0901234567';
+                    window.location.href = `tel:${phone}`;
+                };
+            }
+
             if (status === 'ACCEPTED') {
                 if (prog2) prog2.classList.add('active');
-                if (statusText) statusText.textContent = `Tài xế ${trip.driverName || ''} (${vDetails.name}) đã nhận chuyến! Đang di chuyển đến điểm đón bạn.`;
+                if (statusText) statusText.textContent = `Tài xế ${trip.driverName || 'đối tác'} đã nhận cuốc!`;
             } else if (status === 'ARRIVED') {
                 if (prog2) prog2.classList.add('active');
                 if (statusText) statusText.textContent = 'Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.';
@@ -3305,8 +4011,11 @@ class CustomerAppController {
 
         // Save completed trip to account-isolated trip history (100% real data)
         const tripData = trip || this.activeTrip;
+        let ecoResult = null;
         if (tripData) {
             this.saveUserTrip({ ...tripData, status: 'completed' });
+            // Đồng bộ điểm sự kiện & chỉ số xanh Navigo Race
+            ecoResult = this.updateUserEcoStats(tripData);
         }
 
         const prog4 = document.getElementById('prog-step-4');
@@ -3315,52 +4024,162 @@ class CustomerAppController {
         if (prog4) prog4.classList.add('active');
         if (statusText) statusText.textContent = 'Chuyến đi đã hoàn thành an toàn! 🎉';
 
-        this.showToast('Bạn đã đến nơi an toàn. Cảm ơn bạn đã đồng hành cùng GoRide!', 'success', 5000);
+        this.showToast('Bạn đã đến nơi an toàn. Cảm ơn bạn đã đồng hành cùng Navigo!', 'success', 5000);
 
         const fareAmount = this.formatMoney(trip ? trip.fareAmount : 45000);
         const tripCode = trip ? trip.id : `TRP-${Date.now()}`;
-        const driverTitle = trip && trip.driverName ? `${trip.driverName} (${trip.licensePlate || 'Xe đối tác'})` : 'Tài xế GoRide đối tác';
+        const driverTitle = trip && trip.driverName ? `${trip.driverName} (${trip.licensePlate || 'Xe đối tác'})` : 'Tài xế Navigo đối tác';
+        if (typeof navigoNotifications !== 'undefined') {
+            navigoNotifications.addNotification({
+                id: 'trip_done_' + tripCode,
+                category: 'trips',
+                title: 'HOÀN THÀNH CHUYẾN XE #' + tripCode,
+                body: 'Chuyến xe đã kết thúc an toàn! Cước phí: ' + fareAmount + '. Cảm ơn bạn đã lựa chọn di chuyển thuần điện cùng Navigo.',
+                icon: '🎉',
+                actionUrl: 'activity.html',
+                actionText: 'Xem lịch sử'
+            });
+        }
 
         setTimeout(() => {
+            let selectedRating = 5;
+
             this.showDialog(`
-                <div style="text-align:center;">
-                    <div style="font-size:3rem; margin-bottom:8px;">🎉</div>
-                    <h3 style="margin:0 0 4px; color:#0f172a; font-size:1.25rem;">Hành trình kết thúc!</h3>
-                    <p style="margin:0; font-size:0.85rem; color:#64748b;">Mã chuyến: #${tripCode}</p>
-                </div>
+                <div style="position:relative;">
+                    <button type="button" class="btn-dialog-corner-close" id="btn-close-rating-corner" aria-label="Đóng" title="Đóng thông báo" style="position:absolute; top:-4px; right:-4px; width:30px; height:30px; border-radius:50%; border:none; background:#f1f5f9; font-size:1.3rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#64748b; z-index:10;">&times;</button>
+                    
+                    <div style="text-align:center;">
+                        <div style="font-size:3rem; margin-bottom:8px;">🎉</div>
+                        <h3 style="margin:0 0 4px; color:#0f172a; font-size:1.25rem;">Hành trình kết thúc!</h3>
+                        <p style="margin:0; font-size:0.85rem; color:#64748b;">Mã chuyến: #${tripCode}</p>
+                    </div>
 
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; font-size:0.85rem;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <span style="color:#64748b;">Tài xế:</span>
-                        <strong>${driverTitle}</strong>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:12px; margin:14px 0; font-size:0.85rem;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#64748b;">Tài xế:</span>
+                            <strong>${driverTitle}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#64748b;">Cước phí:</span>
+                            <strong style="color:var(--goride-teal); font-size:1.1rem;">${fareAmount}</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#64748b;">Thanh toán:</span>
+                            <span>${this.paymentMethod === 'cash' ? 'Tiền mặt' : 'Ví Navigo'}</span>
+                        </div>
                     </div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                        <span style="color:#64748b;">Cước phí:</span>
-                        <strong style="color:var(--goride-teal); font-size:1.1rem;">${fareAmount}</strong>
+
+                    <!-- Banner Điểm Sự Kiện Navigo Race (Gamification & Eco Stats) -->
+                    <div style="background:linear-gradient(135deg, #ecfdf5, #d1fae5); border:1.5px solid #a7f3d0; border-radius:14px; padding:10px 14px; margin:10px 0 14px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 8px rgba(16,185,129,0.08);">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.5rem;">🌱</span>
+                            <div style="text-align:left;">
+                                <div style="font-size:0.75rem; color:#047857; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;">Navigo Race 2024</div>
+                                <div style="font-size:0.85rem; color:#065f46; font-weight:800;">+${ecoResult ? ecoResult.earnedPoints : 25} điểm sự kiện</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.72rem; color:#047857;">Cắt giảm CO₂</div>
+                            <div style="font-size:0.88rem; color:#065f46; font-weight:800;">-${ecoResult ? ecoResult.co2Saved : '0.45'} KG</div>
+                        </div>
                     </div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <span style="color:#64748b;">Thanh toán:</span>
-                        <span>${this.paymentMethod === 'cash' ? 'Tiền mặt' : 'Ví GoRide'}</span>
+
+                    <div>
+                        <div style="text-align:center; font-size:0.85rem; color:#334155; font-weight:600; margin-bottom:8px;">
+                            Đánh giá chất lượng chuyến đi:
+                        </div>
+                        <div style="display:flex; justify-content:center; gap:8px; font-size:2rem; cursor:pointer; user-select:none;" id="rating-stars">
+                            <span data-star="1" style="color:#f59e0b;">⭐</span>
+                            <span data-star="2" style="color:#f59e0b;">⭐</span>
+                            <span data-star="3" style="color:#f59e0b;">⭐</span>
+                            <span data-star="4" style="color:#f59e0b;">⭐</span>
+                            <span data-star="5" style="color:#f59e0b;">⭐</span>
+                        </div>
+                        <div style="text-align:center; font-size:0.8rem; color:#64748b; margin-top:4px;" id="rating-label">Tuyệt vời (5 sao)</div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button type="button" id="btn-skip-rating" style="flex:1; height:44px; border-radius:12px; border:1px solid #cbd5e1; background:#f8fafc; color:#64748b; font-weight:700; font-size:0.92rem; cursor:pointer;">
+                            Bỏ qua
+                        </button>
+                        <button type="button" class="goride-btn-solicitar" id="btn-finish-trip-dialog" style="flex:1.4; height:44px; margin-top:0; font-size:0.92rem;">
+                            Gửi đánh giá
+                        </button>
                     </div>
                 </div>
-
-                <div>
-                    <div style="text-align:center; font-size:0.85rem; color:#334155; font-weight:600; margin-bottom:8px;">
-                        Đánh giá chất lượng chuyến đi:
-                    </div>
-                    <div style="display:flex; justify-content:center; gap:8px; font-size:1.8rem; cursor:pointer;" id="rating-stars">
-                        <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
-                    </div>
-                </div>
-
-                <button type="button" class="goride-btn-solicitar" id="btn-finish-trip-dialog">
-                    Hoàn tất & Đặt chuyến mới
-                </button>
             `);
+
+            // Wire star selection
+            const starContainer = document.getElementById('rating-stars');
+            const starLabel = document.getElementById('rating-label');
+            const labels = {
+                1: 'Rất không hài lòng (1 sao)',
+                2: 'Chưa tốt (2 sao)',
+                3: 'Bình thường (3 sao)',
+                4: 'Hài lòng (4 sao)',
+                5: 'Tuyệt vời (5 sao)'
+            };
+
+            if (starContainer) {
+                const stars = starContainer.querySelectorAll('span');
+                stars.forEach(st => {
+                    st.onclick = () => {
+                        const val = Number(st.getAttribute('data-star')) || 5;
+                        selectedRating = val;
+                        stars.forEach((s, idx) => {
+                            s.style.opacity = (idx < val) ? '1' : '0.3';
+                        });
+                        if (starLabel) starLabel.textContent = labels[val] || `${val} sao`;
+                    };
+                });
+            }
+
+            // Wire corner close button & skip button (allows user to skip rating)
+            const handleSkipRating = (e) => {
+                if (e) e.preventDefault();
+                if (tripData) {
+                    this.saveUserTrip({ ...tripData, status: 'completed' });
+                }
+                this.closeDialog();
+                this.activeTrip = null;
+                this.activeTripId = null;
+                try {
+                    localStorage.removeItem('goride_active_trip');
+                } catch (err) {}
+                this.updatePersistentBanner();
+                this.switchView('search');
+                this.resetBookingState();
+                this.showToast('Đã hoàn tất chuyến xe.', 'info', 2500);
+            };
+
+            const btnCloseCorner = document.getElementById('btn-close-rating-corner');
+            if (btnCloseCorner) {
+                btnCloseCorner.addEventListener('click', handleSkipRating);
+            }
+            const btnSkipRating = document.getElementById('btn-skip-rating');
+            if (btnSkipRating) {
+                btnSkipRating.addEventListener('click', handleSkipRating);
+            }
 
             const btnFinish = document.getElementById('btn-finish-trip-dialog');
             if (btnFinish) {
                 btnFinish.addEventListener('click', () => {
+                    // Update rating in saved user trip history
+                    if (tripData) {
+                        this.saveUserTrip({ ...tripData, status: 'completed', rating: selectedRating });
+                    }
+                    if (typeof realtimeSync !== 'undefined' && tripCode) {
+                        const curCust = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+                        realtimeSync.saveTripRating(tripCode, {
+                            rating: selectedRating,
+                            driverId: tripData?.driverId || tripData?.driver?.id,
+                            driverName: tripData?.driverName || driverTitle || 'Tài xế',
+                            customerName: curCust?.name || tripData?.customerName || 'Khách hàng',
+                            customerId: curCust?.id || tripData?.customerId || '',
+                            userKey: this.getCurrentUserKey()
+                        });
+                    }
+                    this.showToast(`Cảm ơn bạn đã đánh giá tài xế (${selectedRating} ⭐)!`, 'success', 3500);
                     this.closeDialog();
                     this.activeTrip = null;
                     this.activeTripId = null;
@@ -3377,51 +4196,14 @@ class CustomerAppController {
 
     /**
      * Update persistent floating banner across views (P7.1)
+     * Suppressed on Customer portal booking section to keep the UI clean
      */
     updatePersistentBanner() {
-        let banner = document.getElementById('goride-persistent-active-banner');
-        const hasActiveTrip = this.activeTrip && ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes(this.activeTrip.status);
-
-        if (!hasActiveTrip || this.currentView === 'tracking') {
-            if (banner) banner.style.display = 'none';
-            return;
-        }
-
-        if (!banner) {
-            banner = document.createElement('div');
-            banner.id = 'goride-persistent-active-banner';
-            banner.className = 'goride-persistent-active-banner';
-            banner.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                z-index: 1500;
-                background: linear-gradient(135deg, #0d9488, #059669);
-                color: #ffffff;
-                padding: 12px 20px;
-                border-radius: 9999px;
-                box-shadow: 0 10px 25px rgba(13, 148, 136, 0.45);
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                font-size: 0.9rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
-            `;
-            banner.addEventListener('click', () => {
-                this.switchView('tracking');
-            });
-            document.body.appendChild(banner);
-        }
-
-        banner.innerHTML = `
-            <span style="font-size:1.2rem;">🚗</span>
-            <span>Bạn đang có chuyến xe đang diễn ra (#${this.activeTrip.id})</span>
-            <span style="background:rgba(255,255,255,0.25); padding:3px 10px; border-radius:12px; font-size:0.8rem;">Quay lại theo dõi &rarr;</span>
-        `;
-        banner.style.display = 'flex';
+        const banner = document.getElementById('goride-persistent-active-banner');
+        if (banner) banner.remove();
+        const floatingGlobal = document.getElementById('goride-floating-active-trip');
+        if (floatingGlobal) floatingGlobal.remove();
+        return;
     }
 
     /**
@@ -3601,6 +4383,88 @@ class CustomerAppController {
     /**
      * Save trip to account-isolated trip history (100% real data)
      */
+    /**
+     * Cập nhật điểm sự kiện & chỉ số xanh Navigo Race sau mỗi cuốc xe hoàn tất
+     * Lưu vào bộ nhớ cục bộ và đồng bộ đa thiết bị qua Firebase Realtime Cloud
+     */
+    updateUserEcoStats(tripData) {
+        if (!tripData) return null;
+        try {
+            const userKey = this.getCurrentUserKey();
+            const storageKey = `navigo_eco_stats_${userKey}`;
+            let stats = null;
+            try {
+                stats = JSON.parse(localStorage.getItem(storageKey) || 'null');
+            } catch (e) {}
+
+            if (!stats || typeof stats !== 'object') {
+                stats = {
+                    totalKm: 0,
+                    co2Kg: 0,
+                    trees: 0,
+                    greenFundVnd: 0,
+                    eventPoints: 0,
+                    tripsCompleted: 0,
+                    medal: 'Người Khởi Đầu',
+                    medalIcon: '🥉',
+                    history: []
+                };
+            }
+
+            const distMeters = Number(tripData.distanceMeters || tripData.distance || (this.currentRouteDistance || 3000));
+            const tripKm = Math.max(0.1, Number((distMeters > 100 ? distMeters / 1000 : distMeters).toFixed(1)));
+            const earnedPoints = Math.max(5, Math.round(tripKm * 10)); // 10 điểm sự kiện / 1 km
+            const co2Saved = Number((tripKm * 0.15).toFixed(2));
+
+            stats.totalKm = Number((stats.totalKm + tripKm).toFixed(1));
+            stats.co2Kg = Number((stats.totalKm * 0.15).toFixed(1));
+            stats.trees = Math.max(1, Math.floor(stats.totalKm / 5));
+            stats.greenFundVnd = Math.round(stats.totalKm * 500);
+            stats.eventPoints = (stats.eventPoints || 0) + earnedPoints;
+            stats.tripsCompleted = (stats.tripsCompleted || 0) + 1;
+
+            if (stats.totalKm < 10) {
+                stats.medal = 'Người Khởi Đầu';
+                stats.medalIcon = '🥉';
+            } else if (stats.totalKm < 50) {
+                stats.medal = 'Người Ươm Mầm';
+                stats.medalIcon = '🥈';
+            } else if (stats.totalKm < 150) {
+                stats.medal = 'Sứ Giả Xanh';
+                stats.medalIcon = '🥇';
+            } else {
+                stats.medal = 'Hiệp Sĩ Môi Trường';
+                stats.medalIcon = '🏆';
+            }
+
+            if (!Array.isArray(stats.history)) stats.history = [];
+            stats.history.unshift({
+                tripId: tripData.id,
+                km: tripKm,
+                earnedPoints: earnedPoints,
+                co2Saved: co2Saved,
+                timestamp: new Date().toISOString()
+            });
+            if (stats.history.length > 50) stats.history = stats.history.slice(0, 50);
+
+            // Lưu vào bộ nhớ cục bộ
+            localStorage.setItem(storageKey, JSON.stringify(stats));
+            localStorage.setItem('goride_eco_stats', JSON.stringify(stats));
+
+            // Đồng bộ đa thiết bị qua Firebase Realtime Cloud
+            if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.syncEcoStats === 'function') {
+                realtimeSync.syncEcoStats(userKey, stats);
+            }
+
+            // Phát sự kiện toàn cục để profile.html cập nhật tức thì
+            window.dispatchEvent(new CustomEvent('navigo:eco_stats_updated', { detail: { userKey, stats } }));
+            return { stats, earnedPoints, tripKm, co2Saved };
+        } catch (e) {
+            console.warn('[Navigo] updateUserEcoStats warning:', e);
+            return null;
+        }
+    }
+
     saveUserTrip(tripData) {
         if (!tripData || !tripData.id) return;
         try {
@@ -3637,6 +4501,8 @@ class CustomerAppController {
                     model: tripData.vehicleModel || (vName || 'GoRide'),
                     rating: tripData.driverRating || 5.0
                 } : (tripData.driver || null),
+                rating: (tripData.rating !== undefined ? Number(tripData.rating) : (tripData.userRating ? Number(tripData.userRating) : 5)),
+                userRating: (tripData.rating !== undefined ? Number(tripData.rating) : 5),
                 cancelReason: tripData.cancelReason || null,
                 createdAt: tripData.createdAt || new Date().toISOString(),
                 completedAt: tripData.completedAt || (['completed', 'COMPLETED'].includes(tripData.status) ? new Date().toISOString() : null)
@@ -3649,6 +4515,11 @@ class CustomerAppController {
                 list.unshift(record);
             }
             localStorage.setItem(storageKey, JSON.stringify(list));
+
+            // Persist to Database (Firebase RTDB Cloud)
+            if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.saveUserTrip === 'function') {
+                realtimeSync.saveUserTrip(userKey, record);
+            }
         } catch (e) {
             console.warn('[GoRide] Error saving user trip:', e);
         }
@@ -3682,6 +4553,28 @@ class CustomerAppController {
             let userTrips = [];
             try {
                 userTrips = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+            // Sync from Database (Firebase RTDB Cloud)
+            if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.getUserTrips === 'function') {
+                try {
+                    const dbTrips = await realtimeSync.getUserTrips(userKey);
+                    if (Array.isArray(dbTrips) && dbTrips.length > 0) {
+                        dbTrips.forEach(dt => {
+                            if (dt && dt.id && !checkMock(dt)) {
+                                const idx = userTrips.findIndex(x => x.id === dt.id);
+                                if (idx !== -1) {
+                                    userTrips[idx] = { ...userTrips[idx], ...dt };
+                                } else {
+                                    userTrips.push(dt);
+                                }
+                            }
+                        });
+                        localStorage.setItem(storageKey, JSON.stringify(userTrips));
+                    }
+                } catch (dbErr) {
+                    console.warn('[CustomerApp] Error syncing trips from database:', dbErr);
+                }
+            }
                 userTrips = userTrips.filter(t => !checkMock(t));
                 localStorage.setItem(storageKey, JSON.stringify(userTrips));
             } catch (e) {

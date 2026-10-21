@@ -56,7 +56,7 @@
 
       /* Green Pickup Pin */
       .rtree-pin-pickup .rtree-pin-body {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        background: linear-gradient(135deg, #00b1a9 0%, #0f2d3c 100%);
         border: 2px solid #ffffff;
       }
 
@@ -72,7 +72,7 @@
         border: 2px solid #ffffff;
       }
 
-      /* Pulsing ring for pins - calmed to a smooth, non-flickering beacon */
+      /* Pulsing ring for pins */
       .rtree-pulse {
         position: absolute;
         bottom: 2px;
@@ -80,20 +80,22 @@
         transform: translateX(-50%);
         width: 14px;
         height: 6px;
-        background: rgba(0, 0, 0, 0.22);
+        background: rgba(0, 0, 0, 0.3);
         border-radius: 50%;
-        animation: rtree-pulse-anim 3.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-        will-change: transform, opacity;
-        pointer-events: none;
+        animation: rtree-pulse-anim 1.8s infinite;
       }
 
       @keyframes rtree-pulse-anim {
         0% {
-          transform: translateX(-50%) scale(0.85);
-          opacity: 0.65;
+          transform: translateX(-50%) scale(0.8);
+          opacity: 0.8;
         }
-        60%, 100% {
-          transform: translateX(-50%) scale(1.35);
+        70% {
+          transform: translateX(-50%) scale(2.2);
+          opacity: 0;
+        }
+        100% {
+          transform: translateX(-50%) scale(0.8);
           opacity: 0;
         }
       }
@@ -130,28 +132,26 @@
         filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
       }
 
-      /* Active trip driver glowing radar halo - smooth radiating ripple */
+      /* Active trip driver glowing radar halo */
       .rtree-active-driver-halo {
         position: absolute;
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background: rgba(16, 185, 129, 0.12);
-        border: 1.5px solid rgba(16, 185, 129, 0.5);
-        animation: rtree-active-driver-pulse 3.6s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        background: rgba(16, 185, 129, 0.2);
+        border: 2px solid rgba(16, 185, 129, 0.65);
+        animation: rtree-active-driver-pulse 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
         pointer-events: none;
         z-index: -1;
-        will-change: transform, opacity;
-        transform: translateZ(0);
       }
 
       @keyframes rtree-active-driver-pulse {
         0% {
-          transform: scale(0.85);
-          opacity: 0.8;
+          transform: scale(0.6);
+          opacity: 0.95;
         }
-        65%, 100% {
-          transform: scale(1.4);
+        70%, 100% {
+          transform: scale(1.75);
           opacity: 0;
         }
       }
@@ -210,6 +210,66 @@
         font-size: 14px;
         font-weight: bold;
         padding: 0 4px;
+      }
+
+      /* Google Maps Style Real-Time GPS Pulsing Blue Dot */
+      .gmap-blue-dot-marker {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none !important;
+      }
+
+      .gmap-blue-dot-container {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+
+      .gmap-blue-pulse {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(26, 115, 232, 0.28);
+        border: 1.5px solid rgba(26, 115, 232, 0.55);
+        animation: gmapGpsPulse 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        pointer-events: none;
+        box-sizing: border-box;
+      }
+
+      .gmap-blue-dot {
+        position: relative;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #1a73e8;
+        border: 2.5px solid #ffffff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4), 0 0 8px rgba(26, 115, 232, 0.5);
+        z-index: 2;
+        pointer-events: none;
+        box-sizing: border-box;
+      }
+
+      @keyframes gmapGpsPulse {
+        0% {
+          transform: scale(0.45);
+          opacity: 0.95;
+        }
+        70% {
+          transform: scale(1.6);
+          opacity: 0.15;
+        }
+        100% {
+          transform: scale(1.85);
+          opacity: 0;
+        }
       }
 
       /* Clean Map Styles */
@@ -291,8 +351,10 @@
         pickup: null,
         destination: null,
         temp: null,
+        userLocation: null,
         drivers: new Map() // Map<driverId, L.Marker>
       };
+      this._userAccuracyCircle = null;
 
       // Polyline routes
       this.routePolyline = null;
@@ -595,7 +657,7 @@
           lower.includes('xe máy') ||
           lower.includes('xe may') ||
           lower.includes('gobike') ||
-          lower.includes('navigo bike')
+          lower.includes('navigo bike') || lower.includes('xanh sm bike') || lower.includes('feliz') || lower.includes('evo')
         ) {
           return 'motorbike';
         }
@@ -605,7 +667,7 @@
           lower === '7seats' ||
           lower.includes('7 chỗ') ||
           lower.includes('7 cho') ||
-          lower.includes('navigo xl') ||
+          lower.includes('navigo xl') || lower.includes('xanh sm taxi 7') || lower.includes('vf 9') ||
           lower.includes('xpander') ||
           lower.includes('innova')
         ) {
@@ -617,7 +679,7 @@
           lower === 'plus' ||
           lower === 'luxury' ||
           lower.includes('xe sang') ||
-          lower.includes('navigo plus') ||
+          lower.includes('navigo plus') || lower.includes('xanh sm luxury') || lower.includes('vf 8') ||
           lower.includes('camry') ||
           lower.includes('mercedes')
         ) {
@@ -847,6 +909,26 @@
     addPickupMarker(lat, lng, popupContent = 'Điểm đón') {
       if (!this.map) return null;
 
+      if (this.markers.pickup) {
+        this.map.removeLayer(this.markers.pickup);
+        this.markers.pickup = null;
+      }
+
+      const icon = this._createPickupIcon();
+      const marker = L.marker([lat, lng], {
+        icon,
+        title: 'Điểm đón (Kéo ghim để đổi vị trí)',
+        riseOnHover: true,
+        draggable: true
+      });
+
+      marker.on('dragend', (e) => {
+        const pos = e.target.getLatLng();
+        if (typeof this.onPickupDragEnd === 'function') {
+          this.onPickupDragEnd(pos.lat, pos.lng);
+        }
+        window.dispatchEvent(new CustomEvent('navigo:pickup_dragend', { detail: { lat: pos.lat, lng: pos.lng } }));
+      });
       const labelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đón');
       const popupHtml = `
         <div class="rtree-popup-title" style="color: #10b981;">
@@ -855,28 +937,6 @@
         </div>
         <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
       `;
-
-      // Re-use existing marker if already on map: update position and popup smoothly without restarting DOM animation
-      if (this.markers.pickup) {
-        try {
-          const curPos = this.markers.pickup.getLatLng();
-          if (Math.abs(curPos.lat - lat) < 0.00001 && Math.abs(curPos.lng - lng) < 0.00001) {
-            return this.markers.pickup;
-          }
-          this.markers.pickup.setLatLng([lat, lng]);
-          this.markers.pickup.setPopupContent(popupHtml);
-          return this.markers.pickup;
-        } catch (e) {}
-        this.map.removeLayer(this.markers.pickup);
-        this.markers.pickup = null;
-      }
-
-      const icon = this._createPickupIcon();
-      const marker = L.marker([lat, lng], {
-        icon,
-        title: 'Điểm đón',
-        riseOnHover: true
-      });
 
       marker.bindPopup(popupHtml, { className: 'rtree-popup', closeButton: true });
       marker.addTo(this.map);
@@ -895,6 +955,27 @@
     addDestinationMarker(lat, lng, popupContent = 'Điểm đến') {
       if (!this.map) return null;
 
+      if (this.markers.destination) {
+        this.map.removeLayer(this.markers.destination);
+        this.markers.destination = null;
+      }
+
+      const icon = this._createDestinationIcon();
+      const marker = L.marker([lat, lng], {
+        icon,
+        title: 'Điểm đến (Kéo ghim để đổi vị trí)',
+        riseOnHover: true,
+        draggable: true
+      });
+
+      marker.on('dragend', (e) => {
+        const pos = e.target.getLatLng();
+        if (typeof this.onDestinationDragEnd === 'function') {
+          this.onDestinationDragEnd(pos.lat, pos.lng);
+        }
+        window.dispatchEvent(new CustomEvent('navigo:destination_dragend', { detail: { lat: pos.lat, lng: pos.lng } }));
+      });
+
       const destLabelText = (popupContent && typeof popupContent === 'object' && popupContent.name) ? popupContent.name : (popupContent || 'Điểm đến');
       const popupHtml = `
         <div class="rtree-popup-title" style="color: #ef4444;">
@@ -903,28 +984,6 @@
         </div>
         <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
       `;
-
-      // Re-use existing marker if already on map: update position and popup smoothly without restarting DOM animation
-      if (this.markers.destination) {
-        try {
-          const curPos = this.markers.destination.getLatLng();
-          if (Math.abs(curPos.lat - lat) < 0.00001 && Math.abs(curPos.lng - lng) < 0.00001) {
-            return this.markers.destination;
-          }
-          this.markers.destination.setLatLng([lat, lng]);
-          this.markers.destination.setPopupContent(popupHtml);
-          return this.markers.destination;
-        } catch (e) {}
-        this.map.removeLayer(this.markers.destination);
-        this.markers.destination = null;
-      }
-
-      const icon = this._createDestinationIcon();
-      const marker = L.marker([lat, lng], {
-        icon,
-        title: 'Điểm đến',
-        riseOnHover: true
-      });
 
       marker.bindPopup(popupHtml, { className: 'rtree-popup', closeButton: true });
       marker.addTo(this.map);
@@ -972,7 +1031,7 @@
 
       const vType = this._resolveVehicleType(metadata);
       const isBike = (vType === 'motorbike');
-      const vDetails = (vType === 'motorbike' ? 'Xe máy (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo XL)' : (vType === 'premium' ? 'Xe sang (Navigo Plus)' : 'Ô tô 4 chỗ (Navigo Car)')));
+      const vDetails = (vType === 'motorbike' ? 'Xe máy điện (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)' : (vType === 'premium' ? 'Xe sang (Navigo Luxury)' : 'Ô tô điện (Navigo Car)')));
       const vEmoji = (vType === 'motorbike' ? '🛵' : (vType === 'car7' ? '🚐' : (vType === 'premium' ? '🚘' : '🚗')));
       const driverName = metadata.name || `Tài xế #${driverKey}`;
       const driverVehicle = metadata.vehicle || `${vEmoji} ${vDetails}`;
@@ -1020,15 +1079,8 @@
         return this.addDriverMarker(driverKey, lat, lng, heading, metadata || {});
       }
 
-      // Update position only if changed beyond micro-jitter threshold
-      try {
-        const curLatLng = marker.getLatLng();
-        if (Math.abs(curLatLng.lat - lat) > 0.000005 || Math.abs(curLatLng.lng - lng) > 0.000005) {
-          marker.setLatLng([lat, lng]);
-        }
-      } catch (e) {
-        marker.setLatLng([lat, lng]);
-      }
+      // Update position
+      marker.setLatLng([lat, lng]);
 
       // Update metadata
       if (metadata) {
@@ -1091,7 +1143,89 @@
     }
 
     /**
-     * Clears markers by type ('pickup', 'destination', 'drivers', 'temp', or 'all')
+     * Sets or updates Google Maps-style pulsing blue dot representing self/device GPS position.
+     * @param {number} lat - Latitude
+     * @param {number} lng - Longitude
+     * @param {number} [accuracy] - Optional accuracy radius in meters
+     * @returns {L.Marker|null}
+     */
+    setUserLocation(lat, lng, accuracy = null) {
+      if (!this.map) return null;
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      if (isNaN(numLat) || isNaN(numLng)) return null;
+
+      if (!this.markers.userLocation) {
+        const icon = L.divIcon({
+          className: 'gmap-blue-dot-marker',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
+          html: `
+            <div class="gmap-blue-dot-container" title="Vị trí của bạn">
+              <div class="gmap-blue-pulse"></div>
+              <div class="gmap-blue-dot"></div>
+            </div>
+          `
+        });
+
+        this.markers.userLocation = L.marker([numLat, numLng], {
+          icon,
+          zIndexOffset: 650,
+          interactive: false,
+          keyboard: false
+        }).addTo(this.map);
+      } else {
+        this.markers.userLocation.setLatLng([numLat, numLng]);
+      }
+
+      if (accuracy && accuracy > 0 && accuracy < 500) {
+        if (!this._userAccuracyCircle) {
+          this._userAccuracyCircle = L.circle([numLat, numLng], {
+            radius: accuracy,
+            color: '#1a73e8',
+            fillColor: '#4285F4',
+            fillOpacity: 0.1,
+            weight: 1,
+            interactive: false
+          }).addTo(this.map);
+        } else {
+          this._userAccuracyCircle.setLatLng([numLat, numLng]);
+          this._userAccuracyCircle.setRadius(accuracy);
+        }
+      } else if (this._userAccuracyCircle) {
+        this.map.removeLayer(this._userAccuracyCircle);
+        this._userAccuracyCircle = null;
+      }
+
+      return this.markers.userLocation;
+    }
+
+    /**
+     * Returns the current self/user GPS marker coordinates
+     * @returns {{lat: number, lng: number}|null}
+     */
+    getUserLocation() {
+      if (!this.markers.userLocation) return null;
+      const latlng = this.markers.userLocation.getLatLng();
+      return { lat: latlng.lat, lng: latlng.lng };
+    }
+
+    /**
+     * Removes the Google Maps-style blue dot and accuracy circle from the map
+     */
+    clearUserLocation() {
+      if (this.markers.userLocation && this.map) {
+        this.map.removeLayer(this.markers.userLocation);
+        this.markers.userLocation = null;
+      }
+      if (this._userAccuracyCircle && this.map) {
+        this.map.removeLayer(this._userAccuracyCircle);
+        this._userAccuracyCircle = null;
+      }
+    }
+
+    /**
+     * Clears markers by type ('pickup', 'destination', 'drivers', 'temp', 'user', or 'all')
      * @param {string} [type='all']
      */
     clearMarkers(type = 'all') {
@@ -1125,6 +1259,10 @@
           this.map.removeLayer(marker);
         });
         this.markers.drivers.clear();
+      }
+
+      if (targetType === 'user' || targetType === 'userlocation') {
+        this.clearUserLocation();
       }
     }
 
@@ -1175,7 +1313,7 @@
 
       const polylineOptions = Object.assign(
         {
-          color: '#2563eb',
+          color: '#00b1a9',
           weight: 5,
           opacity: 0.85,
           dashArray: null,
@@ -1436,6 +1574,7 @@
     destroy() {
       this.disableClickToSelect();
       this.clearMarkers('all');
+      this.clearUserLocation();
       this.clearRoute();
 
       if (this._resizeObserver) {

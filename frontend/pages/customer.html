@@ -2,28 +2,70 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đặt xe | Navigo — Dẫn lối chuẩn xác, đón rước tận nơi</title>
-    <meta name="description" content="Đặt chuyến xe Navigo nhanh chóng - Mô phỏng tìm tài xế k-NN với R-Tree và dẫn đường Dijkstra.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Đặt xe thuần điện | Navigo</title>
+    <meta name="description" content="Đặt xe điện Navigo thuần điện 100% bằng xe ô tô và xe máy điện. Ghép nối tài xế R-Tree và dẫn đường Dijkstra.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="../css/gsm-app.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
-        /* Customer Portal Local Overrides */
-        /* Strictly suppress mobile bottom navigation on Customer Booking Portal */
-        body.customer-body .bottom-nav,
-        body.customer-body #mobile-bottom-nav,
-        .customer-body .bottom-nav,
-        .customer-body #mobile-bottom-nav {
-            display: none !important;
-            visibility: hidden !important;
-            pointer-events: none !important;
-            height: 0 !important;
-            opacity: 0 !important;
+        /* Specific View Transitions */
+        .goride-view-layer {
+            display: none;
+            width: 100%;
+            height: 100%;
         }
-
+        .goride-view-layer.active {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+        }
+        #suggestions-container {
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 4px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+        #suggestions-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #suggestions-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 9999px;
+        }
+        .vehicle-tab-btn {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .vehicle-tab-btn:hover {
+            border-color: #00b1a9 !important;
+            transform: translateY(-2px);
+        }
+        .vehicle-tab-btn.active {
+            border-color: #00b1a9 !important;
+            background: linear-gradient(135deg, #f0fdfa, #e6fffa) !important;
+            box-shadow: 0 4px 12px rgba(0, 177, 169, 0.2);
+            transform: translateY(-1px);
+        }
+        #customer-map-container {
+            width: 100%;
+            height: 100%;
+            min-height: 100vh;
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
         .goride-dialog-overlay {
             position: fixed;
             inset: 0;
@@ -35,11 +77,9 @@
             justify-content: center;
             padding: 20px;
         }
-
         .goride-dialog-overlay.active {
             display: flex;
         }
-
         .goride-dialog-card {
             background: #ffffff;
             border-radius: 20px;
@@ -52,696 +92,703 @@
             gap: 14px;
         }
 
-        .goride-btn-cancel-request:hover {
-            background: #fef2f2 !important;
-            border-color: #dc2626 !important;
-            color: #dc2626 !important;
+        /* Strictly hide bottom navigation on customer booking portal */
+        .gsm-floating-bottom-nav,
+        body.gsm-booking-page .gsm-floating-bottom-nav,
+        body.customer-body .gsm-floating-bottom-nav,
+        [data-page="customer"] .gsm-floating-bottom-nav,
+        body.gsm-booking-page .bottom-nav,
+        body.gsm-booking-page #mobile-bottom-nav {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
-        /* Top Customer Header Action Buttons (Glassmorphism & Legible Typography) */
-        .goride-customer-header-right {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #btn-desktop-history {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 7px 16px !important;
-            background: rgba(255, 255, 255, 0.18) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
-            border-radius: 9999px !important;
-            color: #ffffff !important;
-            font-size: 0.85rem !important;
-            font-weight: 700 !important;
-            cursor: pointer !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
-            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            user-select: none !important;
-            -webkit-user-select: none !important;
-            white-space: nowrap !important;
-        }
-
-        #btn-desktop-history .btn-history-icon {
-            font-size: 1rem !important;
-            line-height: 1 !important;
-            display: inline-block !important;
-        }
-
-        #btn-desktop-history .btn-history-text {
-            color: #ffffff !important;
-            font-weight: 700 !important;
-            font-size: 0.85rem !important;
-            display: inline !important;
-            line-height: 1 !important;
-        }
-
-        #btn-desktop-history:hover {
-            background: rgba(255, 255, 255, 0.28) !important;
-            border-color: rgba(255, 255, 255, 0.8) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
-        }
-
-        /* Active highlight when currently on History view (#history) */
-        #btn-desktop-history.active {
-            background: #ffffff !important;
-            border-color: #ffffff !important;
-            color: #065f46 !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22) !important;
-        }
-
-        #btn-desktop-history.active .btn-history-text {
-            color: #065f46 !important;
-            font-weight: 800 !important;
-        }
-
-        #customer-profile-btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 7px 16px !important;
-            background: rgba(255, 255, 255, 0.18) !important;
-            backdrop-filter: blur(12px) !important;
-            -webkit-backdrop-filter: blur(12px) !important;
-            border: 1.5px solid rgba(255, 255, 255, 0.45) !important;
-            border-radius: 9999px !important;
-            color: #ffffff !important;
-            font-size: 0.85rem !important;
-            font-weight: 700 !important;
-            text-decoration: none !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
-            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            white-space: nowrap !important;
-        }
-
-        #customer-profile-btn span {
-            color: #ffffff !important;
-            font-weight: 700 !important;
-            display: inline !important;
-        }
-
-        #customer-profile-btn:hover {
-            background: rgba(255, 255, 255, 0.28) !important;
-            border-color: rgba(255, 255, 255, 0.8) !important;
-            transform: translateY(-2px) !important;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
-        }
-
-        /* Mobile viewport: Bottom Navigation Bar, Header Layout & Prominent Action Buttons */
-        @media (max-width: 1024px) {
-            #mobile-bottom-nav,
-            .bottom-nav,
-            nav.bottom-nav {
+        /* Desktop Sidebar Flow: Eliminate blank spaces, elevate booking button */
+        @media (min-width: 1025px) {
+            .gsm-desktop-sidebar .gsm-screen-wrapper {
+                height: 100% !important;
+                max-height: 100% !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
                 display: flex !important;
-                position: fixed !important;
+                flex-direction: column !important;
+            }
+
+            .gsm-desktop-sidebar .goride-view-layer {
+                width: 100%;
+                height: auto;
+                min-height: 100%;
+                flex: 1 1 auto;
+            }
+
+            .gsm-desktop-sidebar .goride-view-layer.active {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .gsm-desktop-sidebar .gsm-search-screen,
+            .gsm-desktop-sidebar .gsm-route-preview-screen,
+            .gsm-desktop-sidebar .gsm-map-fullscreen-container {
+                min-height: auto !important;
+                height: auto !important;
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+                position: relative !important;
+                overflow: visible !important;
+                padding: 16px 16px 36px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Reset Top Floating Header to natural flow */
+            .gsm-desktop-sidebar .gsm-map-floating-header {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 0 10px 0 !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* Reset Floating Route Capsule (Screen 4) to natural flow */
+            .gsm-desktop-sidebar .gsm-floating-route-box {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                margin: 0 0 10px 0 !important;
+                box-sizing: border-box !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* Hide mobile artifacts in desktop sidebar */
+            .gsm-desktop-sidebar .gsm-sheet-drag-handle,
+            .gsm-desktop-sidebar .gsm-floating-shield-btn,
+            .gsm-desktop-sidebar .gsm-center-target-pin {
+                display: none !important;
+            }
+
+            /* Vehicle Selection Sheet in Desktop Sidebar (Screen 4):
+               Compact vehicle list, pushing booking button UP and fully visible on PC */
+            .gsm-desktop-sidebar .gsm-vehicle-sheet {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-height: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                overflow: visible !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding-bottom: 24px !important;
+            }
+
+            .gsm-desktop-sidebar #vehicle-options-container {
+                max-height: 220px !important;
+                overflow-y: auto !important;
+                padding-right: 4px !important;
+                margin-bottom: 8px !important;
+                flex-shrink: 1 !important;
+                scrollbar-width: thin;
+                scrollbar-color: #cbd5e1 transparent;
+            }
+            .gsm-desktop-sidebar #vehicle-options-container::-webkit-scrollbar {
+                width: 5px;
+            }
+            .gsm-desktop-sidebar #vehicle-options-container::-webkit-scrollbar-thumb {
+                background-color: #cbd5e1;
+                border-radius: 9999px;
+            }
+
+            .gsm-desktop-sidebar .gsm-save-more-banner {
+                margin: 4px 0 8px 0 !important;
+                flex-shrink: 0 !important;
+            }
+
+            .gsm-desktop-sidebar .gsm-payment-promo-row {
+                margin-bottom: 10px !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* Elevated CTA Action Row on PC: prominently pushed UP with plenty of breathing space */
+            .gsm-desktop-sidebar .gsm-cta-action-row {
+                margin-top: 6px !important;
+                margin-bottom: 24px !important;
+                padding-bottom: 6px !important;
+                flex-shrink: 0 !important;
+                position: relative !important;
+                z-index: 100 !important;
+            }
+
+            .gsm-desktop-sidebar .gsm-main-book-btn {
+                height: 52px !important;
+                font-size: 1.05rem !important;
+                font-weight: 800 !important;
+                cursor: pointer !important;
+                pointer-events: auto !important;
+                position: relative !important;
+                z-index: 101 !important;
+                box-shadow: 0 6px 20px rgba(0, 177, 169, 0.45) !important;
+            }
+
+            body.gsm-booking-page .gsm-desktop-sidebar,
+            body.gsm-booking-page .gsm-desktop-sidebar *,
+            body.gsm-booking-page .gsm-cta-action-row,
+            body.gsm-booking-page .gsm-main-book-btn {
+                pointer-events: auto !important;
+            }
+
+            /* Searching Radar Panel in Desktop Sidebar (Screen 5) */
+            .gsm-desktop-sidebar #tracking-searching-panel {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                margin: 0 0 14px 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Driver Card in Desktop Sidebar (Screen 5 - Image 1):
+               Eliminates blank space by sitting directly below header */
+            .gsm-desktop-sidebar #tracking-driver-sheet {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-height: none !important;
+                box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 18px !important;
+                padding: 16px 16px 24px !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                box-sizing: border-box !important;
+                flex-direction: column !important;
+            }
+
+            /* Pickup Confirm Sheet in Desktop Sidebar (Screen 3) */
+            .gsm-desktop-sidebar .gsm-pickup-bottom-sheet {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-height: none !important;
+                box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 18px !important;
+                padding: 16px 16px 24px !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                box-sizing: border-box !important;
+            }
+        }
+
+        /* Mobile & Tablet Bottom Sheet Enhancements */
+        @media (max-width: 1024px) {
+            body.gsm-booking-page .gsm-vehicle-sheet {
                 bottom: 0 !important;
                 left: 0 !important;
                 right: 0 !important;
-                width: 100% !important;
-                height: 58px !important;
-                background: #ffffff !important;
-                border-top: 1px solid #e2e8f0 !important;
-                z-index: 99999 !important;
-                align-items: center !important;
-                justify-content: space-around !important;
-                padding: 0 4px env(safe-area-inset-bottom, 0px) 4px !important;
-                box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08) !important;
-                visibility: visible !important;
-                pointer-events: auto !important;
-            }
-        }
-
-        @media (max-width: 767px) {
-            html, body {
-                overflow-x: hidden !important;
-                max-width: 100vw !important;
-            }
-
-            /* Fix Header Overflow on Mobile: Space items gracefully without clipping */
-            .goride-desktop-customer-header {
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-                padding: 6px 10px !important;
-                height: 50px !important;
-                max-width: 100vw !important;
-                box-sizing: border-box !important;
-                overflow: hidden !important;
-                gap: 4px !important;
-            }
-            .goride-customer-header-left {
-                flex-shrink: 0 !important;
-            }
-            .goride-customer-brand {
-                font-size: 1.05rem !important;
-            }
-            .goride-step-breadcrumb {
-                display: none !important;
-            }
-            .goride-customer-header-right {
-                display: none !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-            }
-            #btn-desktop-history,
-            #customer-profile-btn,
-            .goride-header-home-btn {
-                display: none !important;
-                visibility: hidden !important;
-                pointer-events: none !important;
-            }
-
-            /* Bottom Sheets Positioned Cleanly Above Bottom Nav (58px) */
-            .goride-vehicle-sheet,
-            .goride-confirm-pickup-sheet,
-            .goride-driver-sheet {
-                position: fixed !important;
-                bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
-                left: 0 !important;
-                right: 0 !important;
-                z-index: 100 !important;
-                pointer-events: auto !important;
-                border-radius: 20px 20px 0 0 !important;
-                box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.16) !important;
-            }
-
-            /* Vehicle Sheet & Always-Visible CTA Button */
-            .goride-vehicle-sheet {
-                max-height: calc(100vh - 120px) !important;
+                position: absolute !important;
+                max-height: min(78vh, 560px) !important;
                 display: flex !important;
                 flex-direction: column !important;
-                padding: 6px 14px 12px 14px !important;
+                padding: 12px 18px max(24px, env(safe-area-inset-bottom, 24px)) !important;
                 box-sizing: border-box !important;
+                border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+                box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+                background: #ffffff !important;
+                z-index: 500 !important;
             }
-            .goride-vehicle-list {
+
+            body.gsm-booking-page #vehicle-options-container {
                 flex: 1 1 auto !important;
-                max-height: 250px !important;
+                max-height: 180px !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
+                padding-right: 2px !important;
                 margin-bottom: 6px !important;
             }
-            .goride-payment-row {
+
+            body.gsm-booking-page .gsm-save-more-banner,
+            body.gsm-booking-page .gsm-payment-promo-row,
+            body.gsm-booking-page .gsm-cta-action-row {
                 flex-shrink: 0 !important;
-                margin: 6px 0 !important;
             }
-            .goride-btn-solicitar {
-                flex-shrink: 0 !important;
-                width: 100% !important;
-                min-height: 48px !important;
-                margin: 4px 0 0 0 !important;
+
+            body.gsm-booking-page .gsm-cta-action-row {
+                margin-top: 4px !important;
+                margin-bottom: 12px !important;
+                padding-bottom: 4px !important;
                 position: relative !important;
-                z-index: 10 !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                font-size: 0.95rem !important;
-                font-weight: 800 !important;
-                box-shadow: 0 4px 14px rgba(0, 137, 123, 0.35) !important;
-            }
-            .goride-btn-cancel-request {
-                flex-shrink: 0 !important;
-                width: 100% !important;
-                min-height: 42px !important;
-                margin-top: 8px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: center !important;
+                z-index: 501 !important;
             }
 
-            /* Searching Panel & Cancel Search Button on Mobile */
-            #tracking-searching-panel {
-                position: fixed !important;
-                bottom: calc(66px + env(safe-area-inset-bottom, 0px)) !important;
-                left: 12px !important;
-                right: 12px !important;
-                z-index: 100 !important;
+            body.gsm-booking-page .gsm-main-book-btn {
+                height: 50px !important;
                 pointer-events: auto !important;
-                margin: 0 !important;
+                cursor: pointer !important;
+            }
+
+            body.gsm-booking-page #tracking-driver-sheet {
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                position: absolute !important;
+                max-height: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding: 14px 18px max(24px, env(safe-area-inset-bottom, 24px)) !important;
+                box-sizing: border-box !important;
+                border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+                box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
                 background: #ffffff !important;
-                border-radius: 18px !important;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22) !important;
-                border: 1.5px solid #e2e8f0 !important;
-                padding: 16px 14px !important;
-            }
-            #btn-cancel-searching {
-                pointer-events: auto !important;
-                cursor: pointer !important;
-                width: 100% !important;
-                min-height: 44px !important;
-                margin-top: 10px !important;
-            }
-
-            /* Driver Tracking Sheet & Cancel Trip Button on Mobile */
-            .goride-driver-sheet {
-                padding: 12px 14px 16px 14px !important;
-            }
-            .goride-tracking-actions {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr 1.15fr !important;
-                gap: 6px !important;
-                margin-top: 10px !important;
-            }
-            .goride-action-btn {
-                height: 42px !important;
-                font-size: 0.8rem !important;
-                font-weight: 700 !important;
-                pointer-events: auto !important;
-                cursor: pointer !important;
+                z-index: 500 !important;
             }
         }
 
-        /* Screen widths <= 480px: Compact header buttons preventing overflow */
-        @media (max-width: 480px) {
-            #btn-desktop-history .btn-history-text {
-                display: none !important;
+        /* Complete Map Interactivity & Pass-Through on Customer Portal */
+        body.gsm-booking-page #customer-map-container,
+        body.gsm-booking-page .gsm-desktop-wide-canvas,
+        body.gsm-booking-page .leaflet-container,
+        body.gsm-booking-page .leaflet-pane {
+            pointer-events: auto !important;
+        }
+
+        @media (max-width: 1024px) {
+            body.gsm-booking-page .gsm-desktop-sidebar {
+                pointer-events: none !important;
             }
-            #customer-profile-btn span {
-                display: none !important;
+            body.gsm-booking-page .gsm-desktop-sidebar .gsm-screen-wrapper {
+                pointer-events: none !important;
             }
-            .goride-header-home-btn {
-                padding: 5px 8px !important;
-                font-size: 0.72rem !important;
+            body.gsm-booking-page #view-search,
+            body.gsm-booking-page #view-history {
+                pointer-events: auto !important;
             }
-            .goride-customer-brand {
-                font-size: 0.98rem !important;
+            body.gsm-booking-page #view-pickup-confirm,
+            body.gsm-booking-page #view-vehicle-select,
+            body.gsm-booking-page #view-tracking {
+                pointer-events: none !important;
             }
+            body.gsm-booking-page .gsm-map-fullscreen-container,
+            body.gsm-booking-page .gsm-route-preview-screen {
+                pointer-events: none !important;
+            }
+            body.gsm-booking-page #view-pickup-confirm > *,
+            body.gsm-booking-page #view-vehicle-select > *,
+            body.gsm-booking-page #view-tracking > * {
+                pointer-events: none !important;
+            }
+        }
+
+        /* Interactive floating cards and buttons inside customer views */
+        body.gsm-booking-page .gsm-map-floating-header,
+        body.gsm-booking-page .gsm-floating-route-box,
+        body.gsm-booking-page .gsm-vehicle-sheet,
+        body.gsm-booking-page .gsm-pickup-bottom-sheet,
+        body.gsm-booking-page #tracking-searching-panel,
+        body.gsm-booking-page #tracking-driver-sheet,
+        body.gsm-booking-page .gsm-search-screen,
+        body.gsm-booking-page .gsm-search-bottom-actions,
+        body.gsm-booking-page .gsm-search-action-pill,
+        body.gsm-booking-page .floating-map-pick-banner,
+        body.gsm-booking-page .gsm-map-round-gps-btn,
+        body.gsm-booking-page .gsm-floating-shield-btn,
+        body.gsm-booking-page .goride-dialog-card {
+            pointer-events: auto !important;
         }
     </style>
 </head>
-<body class="customer-body">
-    <div class="goride-customer-app" id="customer-app">
-        <!-- Desktop / App Top Header -->
-        <header class="goride-desktop-customer-header">
-            <div class="goride-customer-header-left">
-                <a href="../index.html" class="goride-customer-brand" title="Về trang chủ Navigo">
-                    <span>🚗</span> Navigo
-                </a>
-                <div class="goride-step-breadcrumb" id="header-step-breadcrumb">
-                    <span id="breadcrumb-step">Lộ trình</span>
-                    <span style="opacity:0.5;">•</span>
-                    <span style="font-weight:700;" id="breadcrumb-title">Chọn điểm đón & điểm đến</span>
-                </div>
+<body class="gsm-theme gsm-booking-page customer-body" data-page="customer">
+    <!-- Desktop Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.7rem; font-weight:700; color:#00b1a9; line-height:1;">PURE EV MOBILITY</div>
             </div>
+        </a>
 
-            <div class="goride-customer-header-right">
-                <button type="button" class="goride-header-home-btn" id="btn-desktop-history" title="Xem lịch sử chuyến đi của tài khoản">
-                    <span class="btn-history-icon">📋</span>
-                    <span class="btn-history-text">Lịch sử</span>
-                </button>
-                <a href="profile.html" class="goride-header-home-btn" id="customer-profile-btn" title="Hồ sơ cá nhân">
-                    <div class="avatar avatar-sm" id="customer-user-avatar" data-user-avatar style="width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,0.3); color:#fff; font-size:0.75rem; font-weight:700; overflow:hidden; display:flex; align-items:center; justify-content:center; padding:0;">👤</div>
-                    <span>Hồ sơ</span>
-                </a>
-                <a href="../index.html" class="goride-header-home-btn" title="Về trang chủ Navigo">
-                    <span class="btn-arrow-icon">←</span>
-                    <span>Trang chủ</span>
-                </a>
-            </div>
-        </header>
+        <div class="gsm-pc-nav-links">
+            <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
+            <a href="customer.html" class="gsm-pc-nav-link active">Đặt xe Navigo</a>
+            <a href="customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
+            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
+            <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+        </div>
 
-        <!-- Customer Split Layout (Sidebar Panel + Map Viewport) -->
-        <div class="goride-customer-split-layout">
-            <!-- Left Sidebar Panel: Contains Booking Steps Views -->
-            <aside class="goride-sidebar-panel" id="customer-sidebar-panel">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="activity.html" class="gsm-search-action-pill" id="btn-desktop-history" style="text-decoration:none;">
+                <span>📋</span> Lịch sử
+            </a>
+            <a href="profile.html" class="gsm-search-action-pill" style="text-decoration:none;">
+                <span>👤</span> Hồ sơ
+            </a>
+            <button type="button" data-action="logout" id="btn-customer-logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer;">
+                Đăng xuất
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="gsm-desktop-container">
+        <!-- Sidebar Shell (Screen 2, Screen 3, Screen 4 container) -->
+        <div class="gsm-desktop-sidebar">
+            <div class="gsm-screen-wrapper" id="customer-sidebar-panel">
+
                 <!-- ============================================================== -->
-                <!-- VIEW 1: LOCATION SEARCH SHEET (ref-02)                          -->
+                <!-- SCREEN 2: SEARCH DESTINATION (ref_search.jpg)                  -->
                 <!-- ============================================================== -->
                 <div class="goride-view-layer active" id="view-search">
-                    <div class="goride-search-view">
-                        <!-- Search Header -->
-                        <div class="goride-search-header">
-                            <div class="goride-search-header-top">
-                                <a href="../index.html" class="goride-back-btn" title="Trở về trang chủ">
-                                    ←
-                                </a>
-                                <div class="goride-search-header-title">Chọn lộ trình di chuyển</div>
-                                <div class="goride-city-badge">
-                                    <span>🇻🇳</span> TP. Hồ Chí Minh
+                    <div class="gsm-search-screen">
+                        <!-- Top Nav Bar -->
+                        <div class="gsm-search-top-nav">
+                            <a href="../index.html" class="gsm-back-circle-btn" id="btn-back-home" title="Trở về trang chủ">←</a>
+                            <div class="gsm-gps-current-pill" id="btn-use-current-gps" style="cursor:pointer;" title="Sử dụng vị trí hiện tại">
+                                <span style="color:#00b1a9;">◉</span> Sử dụng vị trí hiện tại
+                            </div>
+                            <div class="gsm-flag-pill">
+                                <span>🇻🇳</span> Hồ Chí Minh
+                            </div>
+                        </div>
+
+                        <!-- Dual Location Selection Card: Điểm đón & Điểm đến -->
+                        <div class="gsm-route-inputs-card" style="background:#ffffff; border:1.5px solid #00b1a9; border-radius:18px; padding:10px 14px; margin-bottom:14px; box-shadow:0 4px 16px rgba(0,177,169,0.08); display:flex; flex-direction:column; gap:8px;">
+                            <!-- Pickup Location Row -->
+                            <div style="display:flex; align-items:center; gap:10px; padding-bottom:8px; border-bottom:1px solid #f1f5f9;">
+                                <span style="width:14px; height:14px; border-radius:50%; background:#00b1a9; display:inline-block; flex-shrink:0; box-shadow:0 0 0 3px #e6f7f6;"></span>
+                                <div style="flex:1; display:flex; flex-direction:column;">
+                                    <span style="font-size:0.68rem; font-weight:800; color:#007d77; text-transform:uppercase; letter-spacing:0.5px;">Điểm đón</span>
+                                    <input type="text" id="input-pickup" placeholder="Chọn hoặc nhập điểm đón..." value="" style="border:none; background:transparent; font-size:0.92rem; font-weight:700; color:#0f2d3c; outline:none; padding:2px 0;">
                                 </div>
+                                <button type="button" id="btn-clear-pickup" style="display:none; border:none; background:transparent; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px;" title="Xóa điểm đón">&times;</button>
+                                <button type="button" id="btn-swap-locations" style="border:none; background:#e6f7f6; color:#007d77; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.95rem; font-weight:800;" title="Đổi chiều điểm đón và điểm đến">⇅</button>
                             </div>
 
-                            <!-- Origin & Destination Inputs (ref-02) -->
-                            <div class="goride-search-inputs-box">
-                                <!-- Pickup Input -->
-                                <div class="goride-search-input-row">
-                                    <span class="goride-input-dot goride-input-dot-pickup"></span>
-                                    <input type="text" id="input-pickup" class="goride-search-field" placeholder="Chọn hoặc nhập điểm đón..." value="">
-                                    <button type="button" class="goride-search-clear" id="btn-clear-pickup" title="Xóa điểm đón" style="display:none;">&times;</button>
+                            <!-- Destination Location Row -->
+                            <div style="display:flex; align-items:center; gap:10px; padding-top:2px;">
+                                <span class="gsm-yellow-square-icon" style="flex-shrink:0;"></span>
+                                <div style="flex:1; display:flex; flex-direction:column;">
+                                    <span style="font-size:0.68rem; font-weight:800; color:#d97706; text-transform:uppercase; letter-spacing:0.5px;">Điểm đến</span>
+                                    <input type="text" id="input-destination" placeholder="Bạn muốn đi đâu?" style="border:none; background:transparent; font-size:0.92rem; font-weight:700; color:#0f2d3c; outline:none; padding:2px 0;" autofocus>
                                 </div>
+                                <button type="button" id="btn-clear-dest" style="display:none; border:none; background:transparent; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px;" title="Xóa điểm đến">&times;</button>
+                                <button type="button" class="gsm-add-waypoint-btn" id="btn-add-stop" title="Thêm điểm dừng">+</button>
+                            </div>
+                        </div>
 
-                                <div class="goride-search-divider"></div>
+                        <!-- Map Pin Drag & Drop Quick Controls -->
+                        <div style="display:flex; gap:8px; margin-bottom:12px;">
+                            <button type="button" id="btn-pin-pickup-on-map" style="flex:1; border:1.5px solid #a7f3d0; background:#f0fdfa; color:#0f766e; font-weight:700; font-size:0.82rem; border-radius:12px; padding:9px 10px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 2px 6px rgba(13,148,136,0.08); transition:all 0.15s ease;" title="Kéo nút ghim xanh trên bản đồ để chọn điểm đón">
+                                <span>🟢</span> Di chuyển ghim đón
+                            </button>
+                            <button type="button" id="btn-pin-dest-on-map" style="flex:1; border:1.5px solid #fde68a; background:#fffbeb; color:#b45309; font-weight:700; font-size:0.82rem; border-radius:12px; padding:9px 10px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer; box-shadow:0 2px 6px rgba(217,119,6,0.08); transition:all 0.15s ease;" title="Kéo nút ghim đỏ/cam trên bản đồ để chọn điểm đến">
+                                <span>📍</span> Di chuyển ghim đến
+                            </button>
+                        </div>
 
-                                <!-- Destination Input -->
-                                <div class="goride-search-input-row">
-                                    <span class="goride-input-dot goride-input-dot-dest"></span>
-                                    <input type="text" id="input-destination" class="goride-search-field" placeholder="Bạn muốn đến đâu? (Nhập địa chỉ, tên địa điểm...)" autofocus>
-                                    <button type="button" class="goride-search-clear" id="btn-clear-dest" title="Xóa điểm đến" style="display:none;">&times;</button>
-                                </div>
-
-                                <!-- Swap Locations Button -->
-                                <button type="button" class="goride-search-swap-btn" id="btn-swap-locations" title="Đổi điểm đón và điểm đến">
-                                    ⇅
+                        <!-- Vehicle Type Quick Selector -->
+                        <div style="margin-bottom:12px; background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:16px; padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+                            <div style="font-size:0.75rem; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                                <span>Phương tiện di chuyển</span>
+                                <span id="search-selected-vehicle-badge" style="color:#00897b; font-weight:800; font-size:0.82rem;">🚗 Ô tô 4 chỗ (Navigo Car)</span>
+                            </div>
+                            <div id="search-vehicle-tabs" style="display:flex; gap:6px; overflow-x:auto; padding-bottom:2px;">
+                                <button type="button" class="vehicle-tab-btn" data-v="bike" style="flex:1; min-width:68px; padding:8px 4px; border-radius:12px; border:1.5px solid #cbd5e1; background:#ffffff; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span style="font-size:1.3rem;">🛵</span>
+                                    <span style="font-size:0.72rem; font-weight:800; color:#0f2d3c;">Xe máy</span>
+                                </button>
+                                <button type="button" class="vehicle-tab-btn active" data-v="car4" style="flex:1; min-width:68px; padding:8px 4px; border-radius:12px; border:2px solid #00b1a9; background:#f0fdfa; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span style="font-size:1.3rem;">🚗</span>
+                                    <span style="font-size:0.72rem; font-weight:800; color:#007d77;">Ô tô 4c</span>
+                                </button>
+                                <button type="button" class="vehicle-tab-btn" data-v="car7" style="flex:1; min-width:68px; padding:8px 4px; border-radius:12px; border:1.5px solid #cbd5e1; background:#ffffff; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span style="font-size:1.3rem;">🚐</span>
+                                    <span style="font-size:0.72rem; font-weight:800; color:#0f2d3c;">Ô tô 7c</span>
+                                </button>
+                                <button type="button" class="vehicle-tab-btn" data-v="premium" style="flex:1; min-width:68px; padding:8px 4px; border-radius:12px; border:1.5px solid #cbd5e1; background:#ffffff; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span style="font-size:1.3rem;">🚘</span>
+                                    <span style="font-size:0.72rem; font-weight:800; color:#0f2d3c;">Xe sang</span>
+                                </button>
+                                <button type="button" class="vehicle-tab-btn" data-v="delivery" style="flex:1; min-width:68px; padding:8px 4px; border-radius:12px; border:1.5px solid #cbd5e1; background:#ffffff; text-align:center; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                                    <span style="font-size:1.3rem;">📦</span>
+                                    <span style="font-size:0.72rem; font-weight:800; color:#0f2d3c;">Giao hàng</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Pick on Map Quick Action Bars (Pickup & Destination) -->
-                        <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:8px;">
-                            <div class="goride-pick-on-map-bar" id="btn-trigger-map-pickup">
-                                <span>📍</span>
-                                <span>Chọn điểm đón bằng cách kéo ghim giữa bản đồ</span>
-                                <span style="margin-left:auto;">→</span>
-                            </div>
-                            <div class="goride-pick-on-map-bar" id="btn-trigger-map-dest" style="background:#fef2f2; border-color:#fecaca; color:#b91c1c;">
-                                <span>🏁</span>
-                                <span>Chạm vào bản đồ để chọn điểm đến</span>
-                                <span style="margin-left:auto;">→</span>
-                            </div>
-                        </div>
-
-                        <!-- Quick Favorite Destination Presets (No pre-filled fake km - calculated dynamically after both locations chosen) -->
-                        <div class="goride-quick-presets-bar" id="quick-presets-bar">
-                            <button type="button" class="goride-preset-chip" data-preset="home" title="Nhà riêng">
-                                <span>🏠</span> Nhà riêng
-                            </button>
-                            <button type="button" class="goride-preset-chip" data-preset="work" title="Công ty / Văn phòng">
-                                <span>💼</span> Công ty
-                            </button>
-                            <button type="button" class="goride-preset-chip" data-preset="benthanh" title="Chợ Bến Thành">
-                                <span>📍</span> Chợ Bến Thành
-                            </button>
-                            <button type="button" class="goride-preset-chip" data-preset="airport" title="Sân bay Tân Sơn Nhất">
-                                <span>✈️</span> Sân bay
-                            </button>
-                        </div>
-
-                        <!-- Filtered Suggestions List (ref-02) -->
-                        <div class="goride-suggestions-list" id="suggestions-container">
+                        <!-- Suggestions List Container (Matches screenshot 2) -->
+                        <div class="gsm-suggest-list" id="suggestions-container">
                             <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <!-- Bottom Shortcut Action Pills -->
+                        <div class="gsm-search-bottom-actions">
+                            <div class="gsm-search-action-pill" id="btn-saved-places">
+                                <span style="color:#ef4444;">❤️</span> Địa chỉ đã lưu
+                            </div>
+                            <div class="gsm-search-action-pill" id="btn-trigger-map-dest">
+                                <span>🗺️</span> Tìm trên bản đồ
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ============================================================== -->
-                <!-- VIEW 2: CONFIRM PICKUP LOCATION ON MAP (ref-03)                -->
+                <!-- SCREEN 3: PICKUP LOCATION CONFIRM ON MAP (ref_pickup_confirm.jpg) -->
                 <!-- ============================================================== -->
                 <div class="goride-view-layer" id="view-pickup-confirm">
-                    <!-- Top Bar inside Sidebar (Desktop) / Floating (Mobile) -->
-                    <div class="goride-map-top-bar">
-                        <button type="button" class="goride-back-btn" id="btn-back-to-search" title="Quay lại">
-                            ←
-                        </button>
-                        <div class="goride-map-title-card">
-                            <span>📍</span>
-                            <span>Xác nhận điểm đón</span>
-                        </div>
-                        <div style="width: 38px;"></div>
-                    </div>
-
-                    <div class="goride-pickup-hint-card">
-                        <div style="background:#f0fdfa; border:1px solid #ccfbf1; border-radius:12px; padding:10px 14px; font-size:0.8rem; color:#0f766e;">
-                            💡 Kéo hoặc di chuyển bản đồ để ghim chính xác vị trí tài xế sẽ đón bạn.
-                        </div>
-                    </div>
-
-                    <!-- Bottom Confirm Sheet Content (ref-03) -->
-                    <div class="goride-confirm-pickup-sheet">
-                        <div style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:8px;">Tùy chọn chuyến đi:</div>
-                        <!-- Preference Pills -->
-                        <div class="goride-preference-pills" style="margin-bottom:16px;">
-                            <button type="button" class="goride-pref-pill" data-pref="quiet">
-                                <span>🤫</span>
-                                <span>Chuyến đi yên lặng</span>
-                            </button>
-                            <button type="button" class="goride-pref-pill" data-pref="luggage">
-                                <span>🧳</span>
-                                <span>Có hành lý</span>
-                            </button>
-                            <button type="button" class="goride-pref-pill" data-pref="aircon">
-                                <span>❄️</span>
-                                <span>Máy lạnh mát</span>
-                            </button>
+                    <div class="gsm-map-fullscreen-container">
+                        <!-- Floating Header -->
+                        <div class="gsm-map-floating-header">
+                            <button type="button" class="gsm-back-circle-btn" id="btn-back-to-search" title="Quay lại">←</button>
+                            <div class="gsm-map-search-capsule" id="btn-pickup-search-capsule">
+                                <span>🔍</span> Tìm kiếm
+                            </div>
                         </div>
 
-                        <!-- Confirm CTA Button -->
-                        <button type="button" class="goride-btn-confirm" id="btn-confirm-pickup-cta">
-                            XÁC NHẬN ĐIỂM ĐÓN
-                        </button>
+                        <!-- Center Pin on Map -->
+                        <div class="gsm-center-target-pin" id="center-pin-badge">
+                            <div class="gsm-pin-title-bubble" id="center-pin-address">Điểm đón</div>
+                            <div class="gsm-pin-target-dot"></div>
+                        </div>
+
+                        <!-- Pickup Bottom Sheet -->
+                        <div class="gsm-pickup-bottom-sheet" id="confirm-pickup-sheet">
+                            <div class="gsm-sheet-drag-handle"></div>
+
+                            <!-- Selected address card (Light teal background) -->
+                            <div class="gsm-pickup-suggestion-card" id="pickup-card-primary">
+                                <span style="font-size:1.25rem; color:#00b1a9;">📍</span>
+                                <div>
+                                    <div class="gsm-pickup-addr-title" id="pickup-confirmed-title">Vị trí của bạn</div>
+                                    <div class="gsm-pickup-addr-desc" id="pickup-confirmed-desc">Đang tải địa chỉ...</div>
+                                </div>
+                            </div>
+
+                            <input type="text" class="gsm-driver-note-input" id="input-driver-note" placeholder="Thêm ghi chú cho bác tài (ví dụ: gần cổng).">
+
+                            <button type="button" class="gsm-btn-primary-cta" id="btn-confirm-pickup-cta">
+                                Chọn điểm đón này
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- ============================================================== -->
-                <!-- VIEW 3: VEHICLE SELECTION & ROUTE PREVIEW (ref-04)             -->
+                <!-- SCREEN 4: VEHICLE & FARE SELECTION (ref_vehicle_select.jpg)     -->
                 <!-- ============================================================== -->
                 <div class="goride-view-layer" id="view-vehicle-select">
-                    <!-- Top Route Summary Bar (ref-04: 2-tier layout preventing address overlap) -->
-                    <div class="goride-route-summary-bar">
-                        <div class="goride-route-summary-main-row">
-                            <button type="button" class="goride-back-btn" id="btn-back-to-pickup" title="Quay lại chọn lộ trình">
-                                ←
-                            </button>
-                            <div class="goride-route-stops-summary">
-                                <div class="goride-stop-pill">
-                                    <span class="goride-stop-dot" style="color:#0288d1;">●</span>
-                                    <span id="route-sum-pickup" class="goride-stop-text">Điểm đón</span>
-                                </div>
-                                <div class="goride-stop-pill">
-                                    <span class="goride-stop-dot" style="color:#ef4444;">■</span>
-                                    <strong id="route-sum-dest" class="goride-stop-text">Điểm đến</strong>
-                                </div>
-                            </div>
-                            <button type="button" class="goride-change-route-btn" id="btn-change-route" title="Thay đổi điểm đón hoặc điểm đến">
-                                Thay đổi
+                    <div class="gsm-route-preview-screen">
+                        <!-- Top Bar with Back and "Đặt hộ" button -->
+                        <div class="gsm-map-floating-header" style="justify-content:space-between;">
+                            <button type="button" class="gsm-back-circle-btn" id="btn-back-to-pickup" title="Quay lại">←</button>
+                            <button type="button" class="gsm-book-for-other-btn" id="btn-book-for-other">
+                                <span style="color:#ef4444;">👥</span> Đặt hộ
                             </button>
                         </div>
-                        <div class="goride-route-summary-sub-row" id="route-summary-sub-row">
-                            <div id="route-distance-pill" class="goride-route-distance-pill" style="display:none;" title="Cự ly tính toán thực tế">
-                                <span>🛣️</span>
-                                <span id="route-distance-value">0.0 km</span>
-                            </div>
-                            <div class="goride-route-badge-live" id="route-badge-live">
-                                <span>⚡ Tuyến đường tối ưu</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Sheet: Vehicle Selection List (ref-04: Draggable & Collapsible to view map) -->
-                    <div class="goride-vehicle-sheet" id="goride-vehicle-sheet">
-                        <div class="goride-sheet-drag-handle-zone" id="goride-sheet-handle-zone" title="Kéo hoặc chạm để thu gọn / mở rộng">
-                            <div class="goride-sheet-handle"></div>
-                            <div class="goride-sheet-peek-bar" id="goride-sheet-peek-bar">
-                                <div class="goride-sheet-peek-info">
-                                    <span class="goride-sheet-peek-icon" id="goride-sheet-peek-icon">🚗</span>
-                                    <span class="goride-sheet-peek-title" id="goride-sheet-peek-title">Chọn loại xe &amp; Giá cước</span>
+                        <!-- Floating Route Box on Top of Map -->
+                        <div class="gsm-floating-route-box" id="floating-route-capsule" style="top: 66px;">
+                            <div class="gsm-route-top-row">
+                                <div class="gsm-route-point-text" id="btn-change-pickup-pt">
+                                    <span style="color:#00b1a9;">●</span>
+                                    <span id="route-sum-pickup">Điểm đón của bạn</span>
+                                    <span class="arrow">&gt;</span>
                                 </div>
-                                <div class="goride-sheet-peek-toggle" id="goride-sheet-peek-toggle">
-                                    <span class="goride-sheet-peek-hint" id="goride-sheet-peek-hint">Vuốt xuống để xem bản đồ</span>
-                                    <span class="goride-sheet-peek-chevron" id="goride-sheet-peek-chevron">▼</span>
+                                <button type="button" id="btn-change-route" style="border:none; background:#f1f5f9; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:0.95rem; display:flex; align-items:center; justify-content:center;" title="Đổi chiều đón - trả">⇅</button>
+                            </div>
+
+                            <!-- Center ETA pill -->
+                            <div class="gsm-route-eta-badge" id="route-distance-pill">
+                                <span>⏱</span>
+                                <span id="route-distance-value">41 phút • 17,4 km</span>
+                            </div>
+
+                            <div class="gsm-route-top-row" style="margin-bottom:0; margin-top:4px;">
+                                <div class="gsm-route-point-text" id="btn-change-dest-pt">
+                                    <span style="color:#f59e0b;">⏹</span>
+                                    <strong id="route-sum-dest">Ga Quốc Nội (Ga T3) - S...</strong>
+                                    <span class="arrow">&gt;</span>
+                                </div>
+                                <button type="button" id="btn-add-extra-stop" style="border:none; background:var(--gsm-teal); color:#fff; border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:1.1rem; display:flex; align-items:center; justify-content:center;" title="Thêm điểm dừng">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Floating Shield Safety Badge -->
+                        <div class="gsm-floating-shield-btn" id="btn-shield-safety" title="Bảo hiểm chuyến đi Navigo">
+                            🛡️
+                        </div>
+
+                        <!-- Bottom Sheet: Vehicle Selection List -->
+                        <div class="gsm-vehicle-sheet" id="goride-vehicle-sheet">
+                            <div class="gsm-sheet-drag-handle" id="goride-sheet-handle-zone"></div>
+
+                            <!-- Vehicle Choices List (Populated via JS) -->
+                            <div id="vehicle-options-container">
+                                <!-- Populated dynamically by customer.js -->
+                            </div>
+
+                            <!-- Save More Banner -->
+                            <div class="gsm-save-more-banner">
+                                <span style="font-size:1rem;">✦</span> Tiết kiệm hơn cho chuyến này
+                            </div>
+
+                            <!-- Payment Method & Promo Code Row -->
+                            <div class="gsm-payment-promo-row">
+                                <div class="gsm-payment-left" id="btn-toggle-payment">
+                                    <span>💵</span>
+                                    <span id="current-payment-method">Tiền mặt/QR</span>
+                                    <span style="font-size:0.75rem; color:#94a3b8;">▼</span>
+                                </div>
+                                <div class="gsm-promo-right" id="btn-promo-tag" title="Mã ưu đãi">
+                                    <span>Vietnam Airlines | Giảm...</span>
+                                    <span>⚏</span>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Vehicle Choices List -->
-                        <div class="goride-vehicle-list" id="vehicle-options-container">
-                            <!-- Populated dynamically via JS -->
-                        </div>
-
-                        <!-- Payment Method & Promo Code Tag (ref-04) -->
-                        <div class="goride-payment-row">
-                            <div class="goride-payment-selector" id="btn-toggle-payment">
-                                <span>💵</span>
-                                <span id="current-payment-method">Tiền mặt</span>
-                                <span style="font-size:0.75rem; color:#94a3b8;">▼</span>
+                            <!-- Action Bottom Bar: Hẹn giờ | NavigoNow | Đặt xe CTA -->
+                            <div class="gsm-cta-action-row">
+                                <div class="gsm-sub-action-btn" id="btn-schedule-action" title="Hẹn giờ xe đón">
+                                    <span class="icon">⏱</span>
+                                    <span>Hẹn giờ</span>
+                                </div>
+                                <div class="gsm-sub-action-btn" id="btn-navigonow-action" title="Dịch vụ NavigoNow">
+                                    <span class="icon">⚡</span>
+                                    <span>NavigoNow</span>
+                                </div>
+                                <button type="button" class="gsm-main-book-btn" id="btn-solicitar-ride">
+                                    <span id="solicitar-text">Đặt xe</span>
+                                </button>
                             </div>
-                            <div class="goride-promo-tag-btn" id="btn-promo-tag" style="cursor:pointer; user-select:none;" title="Chạm để nhập hoặc chọn mã giảm giá">
-                                🏷️ NAVIGO20 (-20%)
-                            </div>
+
+                            <button type="button" class="btn btn-outline-danger btn-block" id="btn-cancel-request-booking" style="display:none; width:100%; margin-top:10px; border-radius:12px; font-weight:700; padding:10px; border:1.5px solid #ef4444; color:#dc2626; background:#fff5f5; cursor:pointer;">
+                                ✕ Hủy yêu cầu đặt xe
+                            </button>
                         </div>
-
-                        <!-- Solicitar CTA Button (ref-04) -->
-                        <button type="button" class="goride-btn-solicitar" id="btn-solicitar-ride">
-                            <span id="solicitar-text">Đặt chuyến Navigo • 45.000 ₫</span>
-                        </button>
-
-                        <!-- Cancel Search / Booking Button (When requesting or searching for drivers) -->
-                        <button type="button" class="goride-btn-cancel-request" id="btn-cancel-request-booking" style="display:none; width:100%; margin-top:10px; padding:12px; background:#ffffff; border:1.5px solid #ef4444; border-radius:12px; color:#ef4444; font-weight:700; font-size:0.92rem; cursor:pointer; transition:all 0.2s ease; text-align:center;">
-                            <span>❌</span> Hủy yêu cầu đặt xe
-                        </button>
                     </div>
                 </div>
 
                 <!-- ============================================================== -->
-                <!-- VIEW 4: LIVE TRIP TRACKING & DRIVER ARRIVAL (ref-05/06)        -->
+                <!-- SCREEN 5: LIVE TRIP TRACKING & DRIVER ARRIVAL                   -->
                 <!-- ============================================================== -->
                 <div class="goride-view-layer" id="view-tracking">
-                    <!-- Top Status Bar (ref-05/06) -->
-                    <div class="goride-tracking-top-bar">
-                        <button type="button" class="goride-back-btn" id="btn-tracking-home" title="Về trang chủ Navigo (Chuyến xe vẫn được duy trì)">
-                            ←
-                        </button>
-                        <div class="goride-tracking-status-pill">
-                            <span id="tracking-status-icon">🚗</span>
-                            <span id="tracking-status-text">Đang tìm tài xế gần bạn...</span>
-                        </div>
-                    </div>
-
-                    <!-- Searching Panel with Cancel Button (Visible while searching for driver) -->
-                    <div id="tracking-searching-panel" style="display:none; padding: 20px 18px; text-align: center; background: #ffffff; border-radius: 16px; margin: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.06); border: 1.5px solid #e2e8f0;">
-                        <div style="font-size: 2.4rem; margin-bottom: 8px;">📡</div>
-                        <h4 style="margin: 0 0 6px 0; color: #1e293b; font-size: 1.1rem; font-weight: 700;">Đang tìm tài xế Navigo gần nhất</h4>
-                        <p style="margin: 0 0 14px 0; color: #64748b; font-size: 0.85rem;" id="tracking-searching-subtext">Hệ thống đang phát tín hiệu tới các tài xế trực tuyến trong khu vực...</p>
-                        
-                        <div style="background: #f8fafc; border-radius: 10px; padding: 12px; text-align: left; margin-bottom: 16px; font-size: 0.85rem; border: 1px solid #f1f5f9; line-height: 1.5;">
-                            <div style="margin-bottom: 6px;"><strong style="color: #10b981;">🟢 Đón:</strong> <span id="searching-pickup-text">--</span></div>
-                            <div><strong style="color: #ef4444;">🔴 Đến:</strong> <span id="searching-dropoff-text">--</span></div>
+                    <div class="gsm-route-preview-screen">
+                        <!-- Top Status Bar -->
+                        <div class="gsm-map-floating-header">
+                            <button type="button" class="gsm-back-circle-btn" id="btn-tracking-home" title="Về trang chủ">←</button>
+                            <div class="gsm-map-search-capsule" style="background:#ffffff; color:#0f2d3c;">
+                                <span id="tracking-status-icon">⚡</span>
+                                <span id="tracking-status-text" style="font-weight:700;">Đang tìm tài xế Navigo...</span>
+                            </div>
                         </div>
 
-                        <button type="button" class="btn btn-outline-danger btn-block" id="btn-cancel-searching" style="border-radius: 12px; font-weight: 700; padding: 10px 16px; border: 1.5px solid #ef4444; color: #dc2626; background: #fff5f5; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; cursor: pointer;">
-                            <span>✕</span> Hủy đặt xe
-                        </button>
-                    </div>
+                        <!-- Searching Radar Panel -->
+                        <div id="tracking-searching-panel" style="display:none; position:absolute; top:75px; left:16px; right:16px; z-index:500; background:#ffffff; border-radius:16px; padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.15); text-align:center;">
+                            <div style="font-size: 2.4rem; margin-bottom: 8px;">📡</div>
+                            <h4 style="margin: 0 0 6px 0; color: #0f2d3c; font-size: 1.1rem; font-weight: 800;">Đang tìm tài xế Navigo gần nhất</h4>
+                            <p style="margin: 0 0 14px 0; color: #64748b; font-size: 0.85rem;" id="tracking-searching-subtext">Hệ thống đang phát tín hiệu qua R-Tree tới các xe gần bạn...</p>
+                            <button type="button" id="btn-cancel-searching" style="border:1.5px solid #ef4444; color:#dc2626; background:#fff5f5; border-radius:12px; padding:10px 20px; font-weight:700; cursor:pointer; width:100%;">
+                                Hủy đặt xe
+                            </button>
+                        </div>
 
-                    <!-- Driver Card Bottom Sheet (ref-05/06) -->
-                    <div class="goride-driver-sheet" id="tracking-driver-sheet">
-                        <div class="goride-sheet-handle"></div>
+                        <!-- Driver Card Bottom Sheet -->
+                        <div class="gsm-vehicle-sheet" id="tracking-driver-sheet" style="display:none;">
+                            <div class="gsm-sheet-drag-handle"></div>
 
-                        <!-- Driver Profile & Car Details -->
-                        <div class="goride-driver-profile-row">
-                            <div class="goride-driver-info-left">
-                                <div class="goride-driver-avatar" id="track-driver-avatar" style="width:48px; height:48px; border-radius:50%; background:linear-gradient(135deg, #0d9488, #004d40); color:#ffffff; font-weight:800; font-size:1.1rem; display:flex; align-items:center; justify-content:center; flex-shrink:0;">🚗</div>
-                                <div class="goride-driver-names">
-                                    <span class="goride-driver-title-label">Tài xế Navigo</span>
-                                    <span class="goride-driver-name" id="track-driver-name">Tài xế đối tác</span>
-                                    <span class="goride-driver-rating" id="track-driver-rating">
-                                        ★ 5.0
-                                    </span>
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div id="track-driver-avatar" style="width:50px; height:50px; border-radius:50%; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#ffffff; font-weight:800; font-size:1.2rem; display:flex; align-items:center; justify-content:center;">🚗</div>
+                                    <div>
+                                        <div style="font-size:0.75rem; color:#64748b; font-weight:600;">Tài xế Navigo</div>
+                                        <div id="track-driver-name" style="font-size:1.05rem; font-weight:800; color:#0f172a;">Nguyễn Văn Bình</div>
+                                        <div style="font-size:0.78rem; color:#f59e0b; font-weight:700;" id="track-driver-rating">★ 4.96</div>
+                                    </div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="background:#fef08a; color:#b45309; font-weight:800; font-size:0.85rem; padding:3px 8px; border-radius:6px; display:inline-block;" id="track-driver-plate">51K-123.45</div>
+                                    <div style="font-size:0.82rem; font-weight:700; color:#007d77; margin-top:2px;" id="track-driver-model">Navigo Car E-Series</div>
+                                    <div style="font-size:0.75rem; color:#10b981; font-weight:700;">🔋 Pin 82%</div>
                                 </div>
                             </div>
 
-                            <div class="goride-driver-car-right">
-                                <span class="goride-plate-badge" id="track-driver-plate" style="display:none;">--</span>
-                                <span class="goride-car-model-text" id="track-driver-model">Xe đối tác</span>
+                            <!-- Actions -->
+                            <div style="display:flex; gap:10px;">
+                                <button type="button" id="btn-call-driver" class="gsm-btn-primary-cta" style="flex:1; height:42px; font-size:0.9rem;">
+                                    📞 Gọi điện
+                                </button>
+                                <button type="button" id="btn-chat-driver" class="gsm-btn-primary-cta" style="flex:1; height:42px; font-size:0.9rem; background:#f1f5f9; color:#1e293b; box-shadow:none;">
+                                    💬 Nhắn tin
+                                </button>
+                                <button type="button" id="btn-cancel-trip" style="border:1.5px solid #ef4444; color:#ef4444; background:#fff; border-radius:12px; padding:0 14px; font-weight:700; cursor:pointer;">
+                                    ❌ Hủy
+                                </button>
                             </div>
-                        </div>
-
-                        <!-- Progression Timeline -->
-                        <div class="goride-progression-bar">
-                            <div class="goride-prog-step active" id="prog-step-1">
-                                <span>●</span> Đã ghép nối
-                            </div>
-                            <span>➔</span>
-                            <div class="goride-prog-step" id="prog-step-2">
-                                <span>●</span> Đang đến
-                            </div>
-                            <span>➔</span>
-                            <div class="goride-prog-step" id="prog-step-3">
-                                <span>●</span> Đang đi
-                            </div>
-                            <span>➔</span>
-                            <div class="goride-prog-step" id="prog-step-4">
-                                <span>●</span> Đến nơi
-                            </div>
-                        </div>
-
-                        <!-- Contact & Action Buttons -->
-                        <div class="goride-tracking-actions">
-                            <button type="button" class="goride-action-btn call-btn" id="btn-call-driver">
-                                <span>📞</span> Gọi điện
-                            </button>
-                            <button type="button" class="goride-action-btn chat-btn" id="btn-chat-driver">
-                                <span>💬</span> Nhắn tin
-                            </button>
-                            <button type="button" class="goride-action-btn cancel-btn" id="btn-cancel-trip">
-                                <span>❌</span> Hủy chuyến
-                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- ============================================================== -->
-                <!-- VIEW 5: TRIP HISTORY MODAL VIEW (#history)                     -->
+                <!-- SCREEN 6: TRIP HISTORY MODAL VIEW (#history)                   -->
                 <!-- ============================================================== -->
                 <div class="goride-view-layer" id="view-history">
-                    <div class="goride-search-view">
-                        <div class="goride-search-header">
-                            <div class="goride-search-header-top">
-                                <button type="button" class="goride-back-btn" id="btn-close-history">
-                                    ←
-                                </button>
-                                <div class="goride-search-header-title">Lịch sử chuyến đi</div>
-                                <button type="button" class="btn btn-ghost btn-sm" id="btn-refresh-history">
-                                    Làm mới
-                                </button>
-                            </div>
+                    <div class="gsm-search-screen">
+                        <div class="gsm-search-top-nav">
+                            <button type="button" class="gsm-back-circle-btn" id="btn-close-history">←</button>
+                            <div style="font-weight:800; font-size:1.1rem; color:#0f2d3c;">Lịch sử chuyến đi</div>
+                            <button type="button" id="btn-refresh-history" style="border:none; background:transparent; color:#00b1a9; font-weight:700; cursor:pointer;">Làm mới</button>
                         </div>
-                        <div class="goride-suggestions-list" id="history-trips-container" style="padding-top:12px;">
-                            <!-- Trip history cards populated dynamically -->
+                        <div id="history-trips-container" style="padding:14px; overflow-y:auto; flex:1;">
+                            <!-- Populated dynamically via JS -->
                         </div>
                     </div>
                 </div>
-            </aside>
-
-            <!-- Right Map Viewport: Interactive Leaflet Map -->
-            <section class="goride-map-viewport" id="customer-map-viewport">
-                <!-- Interactive Leaflet Map Container (Base Layer) -->
-                <div id="customer-map-container"></div>
-
-                <!-- Center Pin Callout (ref-03) (Visible when confirming pickup on map) -->
-                <div class="goride-center-pin-badge" id="center-pin-badge" style="display:none;">
-                    <div class="goride-pin-callout" id="center-pin-address">
-                        Đang xác định vị trí...
-                    </div>
-                    <svg class="goride-pin-center-icon" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#00897b"/>
-                        <circle cx="12" cy="9" r="2.5" fill="#ffffff"/>
-                    </svg>
-                </div>
-
-                <!-- Radar Pulse Animation (R-Tree matching state) -->
-                <div class="goride-radar-container" id="tracking-radar" style="display:none;">
-                    <div class="goride-radar-pulse"></div>
-                    <div class="goride-radar-text">
-                        Đang tìm kiếm tài xế gần bạn nhất...
-                    </div>
-                </div>
-
-                <!-- Floating Recenter FAB Button -->
-                <div class="goride-map-fab-stack">
-                    <button type="button" class="goride-map-fab" id="btn-gps-recenter" title="Định vị vị trí hiện tại">
-                        🎯
-                    </button>
-                    <button type="button" class="goride-map-fab" id="btn-share-trip" title="Chia sẻ lộ trình" style="display:none;">
-                        🔗
-                    </button>
-                    <button type="button" class="goride-map-fab" id="btn-track-recenter" title="Xem xe tài xế" style="display:none;">
-                        🚗
-                    </button>
-                </div>
-            </section>
-        </div>
-
-        <!-- In-App Dialog Overlay (Chat / Call simulation / Rating) -->
-        <div class="goride-dialog-overlay" id="dialog-overlay">
-            <div class="goride-dialog-card" id="dialog-card-content">
-                <!-- Content injected via JS -->
             </div>
         </div>
 
-        <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
-        <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav"></nav>
+        <!-- Desktop Wide Live Interactive Canvas (Visible on Tablet & PC) -->
+        <div class="gsm-desktop-wide-canvas">
+            <!-- Full Interactive Leaflet Map Viewport -->
+            <div id="customer-map-container"></div>
 
-        <!-- Toast Notifications -->
-        <div class="toast-container" id="toast-container"></div>
+            <!-- Floating Top Tool Pills on Map -->
+            <div style="position:absolute; top:18px; left:20px; z-index:500; display:flex; gap:10px;">
+                <button type="button" class="gsm-search-action-pill" id="btn-gps-recenter" style="background:#ffffff; box-shadow:0 4px 12px rgba(0,0,0,0.12); cursor:pointer;">
+                    <span>🎯</span> Vị trí của tôi
+                </button>
+                <button type="button" class="gsm-search-action-pill" id="btn-track-recenter" style="background:#ffffff; box-shadow:0 4px 12px rgba(0,0,0,0.12); cursor:pointer; display:none;">
+                    <span>🚗</span> Theo dõi xe
+                </button>
+            </div>
+        </div>
     </div>
+
+    <!-- Floating Round GPS Button for Instant Recenter (Mobile & Desktop) -->
+    <button type="button" class="gsm-map-round-gps-btn" id="btn-floating-my-location" title="Chuyển hướng bản đồ về vị trí của tôi">
+        🎯
+    </button>
+
+    <!-- Dialog Overlay -->
+    <div class="goride-dialog-overlay" id="dialog-overlay">
+        <div class="goride-dialog-card" id="dialog-card-content"></div>
+    </div>
+
+
+
+    <div class="toast-container" id="toast-container"></div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="../js/core/firebase-config.js"></script>
@@ -749,6 +796,7 @@
     <script src="../js/core/api.js"></script>
     <script src="../js/core/geocoder.js"></script>
     <script src="../js/core/session.js"></script>
+    <script src="../js/core/notifications.js"></script>
     <script src="../js/core/router.js"></script>
     <script src="../js/core/demo-data.js"></script>
     <script src="../js/core/app.js"></script>

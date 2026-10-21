@@ -5,24 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập - Navigo</title>
     <meta name="description" content="Đăng nhập tài khoản Navigo - Dẫn lối chuẩn xác, đón rước tận nơi.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
     <link rel="stylesheet" href="../css/responsive.css">
-    <style>
-        /* Strictly hide mobile bottom navigation on login page */
-        .bottom-nav,
-        #mobile-bottom-nav,
-        .mobile-only-flex.bottom-nav,
-        .goride-mobile-nav-bar {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-        }
-    </style>
 </head>
-<body class="auth-page">
+<body>
     <div class="auth-layout">
         <div class="auth-container">
             <!-- Auth Card -->
@@ -34,6 +25,11 @@
                 </div>
 
                 <form id="login-form" class="auth-form" novalidate>
+                    <div id="login-success" class="app-alert alert-success" style="display:none; color:#15803d; background:#f0fdf4; border:1.5px solid #bbf7d0; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:14px; font-weight:600; align-items:center; gap:8px;">
+                        <span id="login-success-msg">✅ Đã đăng xuất tài khoản thành công.</span>
+                        <button type="button" class="app-alert-close" onclick="this.parentElement.style.display='none'" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:18px; line-height:1; color:#15803d;">&times;</button>
+                    </div>
+
                     <div id="login-error" class="app-alert alert-error" style="display:none;">
                         <span id="login-error-msg"></span>
                         <button type="button" class="app-alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
@@ -73,9 +69,11 @@
                     </button>
                 </form>
 
-                <div class="auth-footer">
+                <div class="auth-footer" style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; align-items:center;">
                     <span>Chưa có tài khoản?</span>
-                    <a href="register.html">Đăng ký ngay</a>
+                    <a href="register.html">Đăng ký khách hàng</a>
+                    <span style="color:var(--color-border);">•</span>
+                    <a href="register.html?role=driver" style="color:var(--color-primary); font-weight:700;">Đăng ký đối tác tài xế 🚗</a>
                     <span style="color:var(--color-border);">•</span>
                     <a href="../index.html">Về trang chủ</a>
                 </div>
@@ -109,6 +107,23 @@
             const btn = document.getElementById('login-btn');
             const errorDiv = document.getElementById('login-error');
             const errorMsg = document.getElementById('login-error-msg');
+            const successDiv = document.getElementById('login-success');
+
+            // Handle logout confirmation banner
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('logout') === 'true' || urlParams.get('logged_out') === '1') {
+                    if (typeof sessionManager !== 'undefined' && sessionManager.logout) {
+                        sessionManager.logout();
+                    }
+                    if (successDiv) {
+                        successDiv.style.display = 'flex';
+                    }
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
+            } catch (err) {}
 
             // Password visibility toggle (Eye Icon)
             if (togglePasswordBtn && passwordInput) {
@@ -154,17 +169,6 @@
                 btn.textContent = 'Đang xác thực...';
 
                 try {
-                    const deletedUserIds = (() => {
-                        try {
-                            const ids = JSON.parse(localStorage.getItem('goride_deleted_user_ids') || '[]');
-                            return Array.isArray(ids) ? ids.map(x => String(x).toLowerCase().trim()) : [];
-                        } catch (e) { return []; }
-                    })();
-
-                    if (deletedUserIds.includes(normInput) && ['usr_c101', 'customer@demo.com'].includes(normInput)) {
-                        throw new Error('Tài khoản này đã bị xóa khỏi hệ thống bởi Quản trị viên.');
-                    }
-
                     let result = null;
 
                     // 1. Attempt authentic C++ backend API connection
@@ -210,7 +214,6 @@
                                 } else if (typeof window.realtimeSync._restGet === 'function') {
                                     allUsers = await window.realtimeSync._restGet('goride_users') || {};
                                 }
-
                                 for (const k of Object.keys(allUsers)) {
                                     const u = allUsers[k];
                                     if (u && ((u.email && u.email.toLowerCase() === normInput) || (u.phone && u.phone === normInput) || (u.name && u.name.toLowerCase() === normInput))) {
@@ -228,7 +231,6 @@
                                     } else if (typeof window.realtimeSync._restGet === 'function') {
                                         allDrivers = await window.realtimeSync._restGet('goride_drivers') || {};
                                     }
-
                                     for (const k of Object.keys(allDrivers)) {
                                         const d = allDrivers[k];
                                         if (d && ((d.email && d.email.toLowerCase() === normInput) || (d.phone && d.phone === normInput))) {
@@ -247,7 +249,6 @@
                                     } else if (typeof window.realtimeSync._restGet === 'function') {
                                         allPending = await window.realtimeSync._restGet('goride_pending_drivers') || {};
                                     }
-
                                     for (const k of Object.keys(allPending)) {
                                         const p = allPending[k];
                                         if (p && ((p.email && p.email.toLowerCase() === normInput) || (p.phone && p.phone === normInput))) {
@@ -358,8 +359,6 @@
                             ];
 
                             const matchedDemo = defaultAccounts.find(d => 
-                                !deletedUserIds.includes(d.id.toLowerCase()) &&
-                                !deletedUserIds.includes(d.email.toLowerCase()) &&
                                 d.identifiers.some(id => id.toLowerCase() === normInput)
                             );
 
@@ -411,8 +410,8 @@
                         if (role === 'driver' && targetKey === 'driver') {
                             window.location.href = 'driver.html';
                             return;
-                        } else if (role === 'customer' && targetKey === 'profile') {
-                            window.location.href = 'profile.html';
+                        } else if (role === 'customer' && targetKey === 'customer') {
+                            window.location.href = 'customer.html';
                             return;
                         }
                     }
@@ -420,10 +419,8 @@
                     // Default role-based routing
                     if (role === 'driver') {
                         window.location.href = 'driver.html';
-                    } else if (role === 'admin') {
-                        window.location.href = 'admin.html';
                     } else {
-                        window.location.href = '../index.html';
+                        window.location.href = 'customer.html';
                     }
                 } catch (err) {
                     let displayMsg = 'Đăng nhập thất bại. Vui lòng thử lại.';

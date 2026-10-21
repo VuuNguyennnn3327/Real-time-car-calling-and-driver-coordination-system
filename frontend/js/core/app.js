@@ -293,7 +293,7 @@ function showToast(message, type = 'info', duration = 3500) {
     };
 
     // Deduplication check: Do not stack duplicate messages
-    const existing = Array.from(container.children);
+    const existing = Array.from(container?.children || []);
     if (existing.some(t => t.textContent.trim().includes(message.trim()))) {
         return () => {};
     }
@@ -681,8 +681,8 @@ class App {
                 return;
             }
 
-            // User Profile triggers: [data-action="profile"]
-            const profileTrigger = event.target.closest('[data-action="profile"]');
+            // User Profile triggers: [data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #home-user-menu-btn
+            const profileTrigger = event.target.closest('[data-action="profile"], .goride-user-avatar-btn, #desktop-user-badge, #home-user-menu-btn, .goride-home-user-menu-btn');
             if (profileTrigger && !profileTrigger.closest('[data-auth="guest"]')) {
                 event.preventDefault();
                 this.showProfileModal();
@@ -1051,6 +1051,10 @@ class App {
      * Centralized logout flow
      */
     handleLogout() {
+        if (typeof sessionManager !== 'undefined' && typeof sessionManager.confirmLogout === 'function') {
+            sessionManager.confirmLogout();
+            return;
+        }
         if (typeof apiClient !== 'undefined') {
             apiClient.logout().catch(() => {});
         }
@@ -1058,107 +1062,95 @@ class App {
             sessionManager.logout();
         }
         try {
-            localStorage.setItem('goride_logged_out', '1');
-            sessionStorage.setItem('goride_logged_out', '1');
-            const clearKeys = [
+            sessionStorage.clear();
+            const keysToRemove = [
                 'ride_rtree_user', 'ride_rtree_token',
                 'goride_user', 'goride_token',
                 'navigo_user', 'navigo_token',
-                'user', 'token', 'currentUser', 'auth_user',
-                'goride_active_trip', 'goride_pending_trip_offers'
+                'user', 'token', 'currentUser',
+                'goride_active_trip', 'goride_driver_online_state',
+                'goride_pending_trip_offers'
             ];
-            clearKeys.forEach(k => {
-                try { localStorage.removeItem(k); } catch (e) {}
-                try { sessionStorage.removeItem(k); } catch (e) {}
+            keysToRemove.forEach(k => {
+                try {
+                    localStorage.removeItem(k);
+                    sessionStorage.removeItem(k);
+                } catch(e) {}
             });
-            try { sessionStorage.clear(); } catch (e) {}
-        } catch (e) {}
+        } catch(e) {}
 
-        showToast('Đã đăng xuất thành công', 'info', 2000);
-
-        const currentPath = (window.location.pathname || '').toLowerCase();
-        const isHomePage = currentPath.endsWith('index.html') || currentPath.endsWith('/') || !currentPath.includes('.html');
-
-        if (isHomePage) {
-            // Immediately update homepage UI to guest mode: restore "Đăng nhập" button and hide avatar
-            if (typeof syncHomeAuthUI === 'function') {
-                syncHomeAuthUI();
-            }
-            if (typeof this.updateAuthUI === 'function') {
-                this.updateAuthUI();
-            }
-            const dropdown = document.getElementById('home-user-dropdown');
-            if (dropdown) dropdown.style.display = 'none';
-            const modal = document.getElementById('profile-modal');
-            if (modal) modal.style.display = 'none';
-            const activeTripBanner = document.getElementById('goride-active-trip-banner');
-            if (activeTripBanner) activeTripBanner.remove();
-        } else {
-            setTimeout(() => {
-                const isPagesDir = currentPath.includes('/pages/');
-                window.location.href = isPagesDir ? '../index.html' : 'index.html';
-            }, 300);
+        if (typeof showToast === 'function') {
+            showToast('Đã đăng xuất thành công', 'info', 2000);
         }
+        setTimeout(() => {
+            if (typeof router !== 'undefined' && typeof router.navigate === 'function') {
+                router.navigate('login', { logout: 'true' });
+            } else {
+                const isPagesDir = window.location.pathname.includes('/pages/');
+                window.location.href = isPagesDir ? 'login.html?logout=true' : 'pages/login.html?logout=true';
+            }
+        }, 200);
     }
 
     /**
      * Floating Active Trip Window (Banner) on Homepage & Outside Views
-     * Shows current ride status ONLY if the logged-in customer currently has an active trip.
-     * Strictly hidden for Admin and Driver roles, and strictly isolated to the trip's actual owner.
+     * Shows current ride status if a trip is currently requested or in progress.
+     * Clicking returns immediately to the live map tracking view.
      */
     initActiveTripBanner() {
-        const path = (window.location.pathname || '').toLowerCase();
-        const isCustomerPage = path.includes('customer.html') || path.endsWith('/customer') || path.endsWith('/customer.html') || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
-        const isDriverPage = path.includes('driver.html') || path.endsWith('/driver');
-        const isAdminPage = path.includes('admin.html') || path.endsWith('/admin');
-        const isPagesDir = path.includes('/pages/');
+        // PER USER REQUIREMENT: No intrusive popup notification spam across pages.
+        // All trip notifications & promos belong strictly inside notifications.html.
+        const existing = document.getElementById('goride-floating-active-trip');
+        if (existing) existing.remove();
+        return;
+        const pathname = (window.location.pathname || '').toLowerCase();
+        const isAdminPage = pathname.includes('admin.html');
+        const isLoginPage = pathname.includes('login.html');
+        const isRegisterPage = pathname.includes('register.html');
+        const isDriverPage = pathname.includes('driver.html');
+        const isCustomerPage = pathname.includes('customer.html');
+
+        // Strictly forbidden pages: Admin, Login, Register, Driver, Customer (booking section has its own dedicated UI)
+        if (isAdminPage || isLoginPage || isRegisterPage || isDriverPage || isCustomerPage) {
+            const existing = document.getElementById('goride-floating-active-trip');
+            if (existing) existing.remove();
+            return;
+        }
+
+        const isPagesDir = window.location.pathname.includes('/pages/');
         const customerUrl = isPagesDir ? 'customer.html' : 'pages/customer.html';
 
-        const extractLocationString = (loc, fallback = '--') => {
+        const getCleanLocationName = (loc, fallback) => {
             if (!loc) return fallback;
             if (typeof loc === 'string') {
-                const trimmed = loc.trim();
-                return (trimmed && trimmed !== '[object Object]') ? trimmed : fallback;
+                return loc.includes('[object') ? fallback : loc;
             }
             if (typeof loc === 'object') {
-                if (typeof loc.name === 'string' && loc.name && loc.name !== '[object Object]') return loc.name.trim();
-                if (typeof loc.address === 'string' && loc.address && loc.address !== '[object Object]') return loc.address.trim();
-                if (typeof loc.title === 'string' && loc.title && loc.title !== '[object Object]') return loc.title.trim();
-                if (loc.lat && loc.lng) return `${Number(loc.lat).toFixed(4)}, ${Number(loc.lng).toFixed(4)}`;
+                const val = loc.name || loc.address || loc.title;
+                if (typeof val === 'string' && !val.includes('[object')) return val;
             }
             return fallback;
         };
 
         const updateBanner = () => {
-            let container = document.getElementById('goride-floating-active-trip');
-
-            // 1. Strictly NEVER show inside Customer booking page, Admin or Driver portals
-            const onCustomerBookingPage = isCustomerPage || (typeof document !== 'undefined' && document.body && document.body.classList.contains('customer-body'));
-            if (onCustomerBookingPage || isAdminPage || isDriverPage) {
-                if (container) container.remove();
+            const currentContainer = document.getElementById('goride-floating-active-trip');
+            const currentPath = (window.location.pathname || '').toLowerCase();
+            if (currentPath.includes('customer.html') || currentPath.includes('driver.html') || currentPath.includes('admin.html') || currentPath.includes('login.html') || currentPath.includes('register.html')) {
+                if (currentContainer) currentContainer.remove();
                 return;
             }
 
-            // 2. Identify current authenticated user and role
-            let currentUser = null;
+            // Strictly check role: must be authenticated as customer
             if (typeof sessionManager !== 'undefined') {
-                currentUser = sessionManager.getCurrentUser?.() || sessionManager.getUser?.();
-            }
-            if (!currentUser) {
-                try {
-                    const raw = localStorage.getItem('navigo_user') || localStorage.getItem('goride_user') || localStorage.getItem('ride_rtree_user');
-                    if (raw && raw !== 'null') currentUser = JSON.parse(raw);
-                } catch (e) {}
-            }
-            const userRole = currentUser ? (currentUser.role || 'customer') : 'guest';
-
-            // 3. Admin and Driver accounts NEVER see customer booking floating banners
-            if (userRole === 'admin' || userRole === 'driver') {
-                if (container) container.remove();
-                return;
+                const role = sessionManager.getRole();
+                const isAuth = sessionManager.isAuthenticated();
+                if (!isAuth || role !== 'customer') {
+                    if (currentContainer) currentContainer.remove();
+                    return;
+                }
             }
 
-            // 4. Check active trip strictly for the current customer (NEVER grab random trips from goride_admin_trips)
+            // Check active trip exclusively from customer's personal active trip storage
             let activeTrip = null;
             try {
                 const raw = localStorage.getItem('goride_active_trip');
@@ -1166,32 +1158,25 @@ class App {
                     const parsed = JSON.parse(raw);
                     const validStatuses = ['REQUESTED', 'OFFERED', 'ACCEPTED', 'ARRIVED', 'IN_PROGRESS'];
                     if (parsed && parsed.status && validStatuses.includes(parsed.status.toUpperCase())) {
-                        // Strict owner verification
-                        if (currentUser) {
-                            const isOwner = (
-                                (parsed.customerId && parsed.customerId === currentUser.id) ||
-                                (parsed.customerEmail && currentUser.email && parsed.customerEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
-                                (parsed.customerPhone && currentUser.phone && parsed.customerPhone === currentUser.phone) ||
-                                (parsed.customerName && currentUser.name && parsed.customerName === currentUser.name)
-                            );
-                            if (isOwner) {
-                                activeTrip = parsed;
-                            }
-                        } else if (parsed.isGuestTrip || !parsed.customerId) {
-                            activeTrip = parsed;
-                        }
+                        activeTrip = parsed;
                     }
                 }
             } catch (e) {}
 
-            if (!activeTrip) {
-                if (container) container.remove();
+            // If we are on customer page and in tracking view, hide floating banner (as map itself is tracking)
+            if (isCustomerPage && window.customerAppController && window.customerAppController.currentView === 'tracking') {
+                if (currentContainer) currentContainer.remove();
                 return;
             }
 
-            // 6. Check if user dismissed this trip banner for current browser session
-            if (sessionStorage.getItem('goride_dismissed_active_banner_' + activeTrip.id) === '1') {
-                if (container) container.remove();
+            if (!activeTrip) {
+                if (currentContainer) currentContainer.remove();
+                return;
+            }
+
+            // Check if dismissed in this session
+            if (sessionStorage.getItem('goride_dismissed_active_banner') === String(activeTrip.id)) {
+                if (currentContainer) currentContainer.remove();
                 return;
             }
 
@@ -1216,17 +1201,11 @@ class App {
                 pulseClass = 'pulse-moving';
             }
 
-            const pickupName = extractLocationString(activeTrip.pickupName, null)
-                || extractLocationString(activeTrip.pickup, null)
-                || extractLocationString(activeTrip.pickupAddress, null)
-                || 'Điểm đón';
-            const destName = extractLocationString(activeTrip.dropoffName, null)
-                || extractLocationString(activeTrip.destinationName, null)
-                || extractLocationString(activeTrip.destination, null)
-                || extractLocationString(activeTrip.dropoffAddress, null)
-                || 'Điểm đến';
-            const fareFormatted = formatCurrency(activeTrip.fareAmount || activeTrip.fare || 45000);
+            const pickupName = getCleanLocationName(activeTrip.pickup, activeTrip.pickupName || 'Điểm đón');
+            const destName = getCleanLocationName(activeTrip.destination, activeTrip.dropoffName || 'Điểm đến');
+            const fareFormatted = formatCurrency(activeTrip.fareAmount || 45000);
 
+            let container = document.getElementById('goride-floating-active-trip');
             if (!container) {
                 container = document.createElement('div');
                 container.id = 'goride-floating-active-trip';
@@ -1236,6 +1215,7 @@ class App {
 
             container.innerHTML = `
                 <div class="gfat-card ${pulseClass}">
+                    <button type="button" class="gfat-close-btn" id="gfat-close-btn" title="Đóng thông báo" aria-label="Đóng">&times;</button>
                     <div class="gfat-icon-col">
                         <div class="gfat-radar-pulse">
                             <span class="gfat-pulse-ring"></span>
@@ -1255,73 +1235,26 @@ class App {
                         </div>
                     </div>
                     <div class="gfat-action-col">
-                        <button type="button" class="gfat-action-btn" id="gfat-btn-view">
+                        <button type="button" class="gfat-action-btn">
                             <span>${actionText}</span>
                             <span class="gfat-btn-arrow">&rarr;</span>
                         </button>
-                        ${status === 'REQUESTED' ? `<button type="button" class="gfat-cancel-btn" id="gfat-btn-cancel" title="Hủy chuyến xe này">Hủy chuyến</button>` : ''}
-                        <button type="button" class="gfat-close-btn" id="gfat-btn-close" title="Tắt thanh thông báo">&times;</button>
                     </div>
                 </div>
             `;
 
-            // Close / Dismiss button action
-            const closeBtn = container.querySelector('#gfat-btn-close');
+            const closeBtn = container.querySelector('#gfat-close-btn');
             if (closeBtn) {
                 closeBtn.onclick = (e) => {
-                    e.preventDefault();
                     e.stopPropagation();
-                    sessionStorage.setItem('goride_dismissed_active_banner_' + activeTrip.id, '1');
+                    e.preventDefault();
+                    sessionStorage.setItem('goride_dismissed_active_banner', String(activeTrip.id));
                     container.remove();
-                    if (typeof showToast === 'function') {
-                        showToast('Đã đóng thông báo chuyến đi.', 'info', 2500);
-                    }
                 };
             }
 
-            // Cancel trip button action
-            const cancelBtn = container.querySelector('#gfat-btn-cancel');
-            if (cancelBtn) {
-                cancelBtn.onclick = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const confirmCancel = confirm('Bạn có chắc chắn muốn hủy yêu cầu đặt chuyến này không?');
-                    if (confirmCancel) {
-                        const tripId = activeTrip.id;
-                        localStorage.removeItem('goride_active_trip');
-                        localStorage.removeItem('goride_pending_trip_offers');
-
-                        try {
-                            const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                            const idx = adminTrips.findIndex(t => t.id === tripId);
-                            if (idx !== -1) {
-                                adminTrips[idx].status = 'cancelled';
-                                localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
-                            }
-                        } catch (err) {}
-
-                        if (window.realtimeSync && window.realtimeSync.isAvailable()) {
-                            try {
-                                window.realtimeSync.db.ref('goride_trips/' + tripId).update({
-                                    status: 'cancelled',
-                                    cancelledAt: new Date().toISOString()
-                                });
-                            } catch (err) {}
-                        }
-
-                        container.remove();
-                        if (typeof showToast === 'function') {
-                            showToast('Đã hủy chuyến đi thành công.', 'success', 3000);
-                        }
-                    }
-                };
-            }
-
-            // Card click (navigates to tracking view)
             container.onclick = (e) => {
-                if (e.target.closest('#gfat-btn-close') || e.target.closest('#gfat-btn-cancel')) {
-                    return;
-                }
+                if (e.target.closest('#gfat-close-btn')) return;
                 e.preventDefault();
                 if (isCustomerPage) {
                     if (window.customerAppController) {
@@ -1336,15 +1269,15 @@ class App {
         // Run immediately
         updateBanner();
 
-        // Listen for cross-tab storage changes
+        // Listen for cross-tab storage changes (e.g. driver accepts trip in driver portal)
         window.addEventListener('storage', (e) => {
-            if (e.key === 'goride_active_trip' || e.key === 'goride_user' || e.key === 'navigo_user') {
+            if (e.key === 'goride_active_trip' || e.key === 'goride_pending_trip_offers') {
                 updateBanner();
             }
         });
 
-        // Periodic check every 1500ms
-        setInterval(updateBanner, 1500);
+        // Periodic check every 2000ms
+        setInterval(updateBanner, 2000);
     }
 
     /**
@@ -1357,17 +1290,15 @@ class App {
     initMobileBottomNav() {
         if (typeof document === 'undefined') return;
 
-        const path = (window.location.pathname || '').toLowerCase();
-        const href = (window.location.href || '').toLowerCase();
-        const hasAuthElements = !!document.querySelector('.auth-layout, .auth-container, .auth-card, #login-form, #register-form, .auth-page');
-        const isAuthUrl = path.includes('login') || href.includes('login') || path.includes('register') || href.includes('register');
-
-        if (hasAuthElements || isAuthUrl) {
-            const existingNavs = document.querySelectorAll('#mobile-bottom-nav, .bottom-nav, .goride-mobile-nav-bar');
-            existingNavs.forEach(navEl => {
-                navEl.style.setProperty('display', 'none', 'important');
-                navEl.remove();
-            });
+        const path = window.location.pathname.toLowerCase();
+        const isLogin = path.includes('login.html');
+        const isRegister = path.includes('register.html');
+        if (isLogin || isRegister) {
+            const existingNav = document.getElementById('mobile-bottom-nav') || document.querySelector('.bottom-nav');
+            if (existingNav) {
+                existingNav.style.setProperty('display', 'none', 'important');
+                existingNav.remove();
+            }
             return;
         }
 

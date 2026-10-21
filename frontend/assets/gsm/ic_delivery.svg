@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="14" fill="#f0f9ff"/>
+    <!-- 3D Gift / Package Box -->
+    <path d="M24 12 L37 19 L24 26 L11 19 Z" fill="#67e8f9"/>
+    <path d="M11 19 L24 26 L24 38 L11 31 Z" fill="#00b1a9"/>
+    <path d="M37 19 L24 26 L24 38 L37 31 Z" fill="#0891b2"/>
+    <!-- Yellow Ribbon -->
+    <path d="M22 13 L26 15 L26 38 L22 36 Z" fill="#fde047" opacity="0.85"/>
+    <circle cx="24" cy="19" r="3" fill="#f59e0b"/>
+  </svg>

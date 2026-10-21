@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hoạt động — Navigo</title>
+    <meta name="description" content="Xem lại lịch sử các chuyến xe, đơn giao hàng và dịch vụ thuần điện cùng Navigo.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/gsm-app.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        .gsm-trip-card {
+            background: #ffffff;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .gsm-trip-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+        }
+        .gsm-trip-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e2e8f0;
+        }
+        .gsm-trip-service {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            color: #0f2d3c;
+        }
+        .gsm-trip-service-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #e6f7f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gsm-trip-badge {
+            background: #e6f7f6;
+            color: #007d77;
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 9999px;
+        }
+        .gsm-trip-pts {
+            margin-bottom: 12px;
+        }
+        .gsm-trip-pt {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #334155;
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+        .gsm-trip-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-top: 4px;
+            flex-shrink: 0;
+        }
+        .gsm-trip-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 8px;
+        }
+        .gsm-trip-fare {
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #0f2d3c;
+        }
+        .gsm-trip-rebook-btn {
+            background: #f1f5f9;
+            color: #0f2d3c;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .gsm-trip-rebook-btn:hover {
+            background: #00b1a9;
+            color: #ffffff;
+        }
+
+        /* Floating Navigation Bar: prominently float on top across all pages */
+        .gsm-floating-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            pointer-events: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            pointer-events: auto !important;
+        }
+    </style>
+</head>
+<body class="gsm-theme">
+    <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
+            </div>
+        </a>
+
+        <div class="gsm-pc-nav-links">
+            <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
+            <a href="customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
+            <a href="customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
+            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
+            <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div data-auth="guest" style="display:flex; align-items:center; gap:8px;">
+                <a href="login.html" class="gsm-btn-primary-cta" style="height:36px; padding:0 16px; border-radius:9999px; text-decoration:none; font-size:0.85rem;">
+                    Đăng nhập
+                </a>
+                <a href="register.html" style="height:36px; padding:0 14px; border-radius:9999px; text-decoration:none; font-size:0.85rem; font-weight:700; color:#0f2d3c; border:1px solid #cbd5e1; display:flex; align-items:center;">
+                    Đăng ký
+                </a>
+            </div>
+            <div data-auth="user" style="display:none; align-items:center; gap:10px;">
+                <a href="profile.html" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:#0f2d3c; font-weight:700; font-size:0.9rem;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:#e6f7f6; color:#00b1a9; display:flex; align-items:center; justify-content:center; font-weight:800;" data-user-avatar>U</div>
+                    <span data-user-name>Người dùng</span>
+                </a>
+                <button type="button" data-action="logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.82rem;">
+                    Đăng xuất
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Desktop Layout Wrapper -->
+    <div class="gsm-desktop-container">
+        <!-- Sidebar Phone App Shell -->
+        <div class="gsm-desktop-sidebar">
+            <div class="gsm-screen-wrapper">
+                <!-- Activity Screen Content -->
+                <div class="gsm-activity-screen">
+                    <!-- Screen Header -->
+                    <div class="gsm-screen-header-row">
+                        <h1 class="gsm-screen-main-title">Hoạt động</h1>
+                        <button type="button" class="gsm-screen-header-action" id="btn-toggle-demo-trips" title="Lịch sử chi tiết">
+                            🗓️
+                        </button>
+                    </div>
+
+                    <!-- Filter Pills Row -->
+                    <div class="gsm-filter-pills-row">
+                        <button type="button" class="gsm-filter-pill active" data-filter="all">Di chuyển</button>
+                        <button type="button" class="gsm-filter-pill" data-filter="food">Đồ ăn</button>
+                        <button type="button" class="gsm-filter-pill" data-filter="delivery">Giao hàng</button>
+                        <button type="button" class="gsm-filter-pill" data-filter="hourly">Xe theo giờ</button>
+                    </div>
+
+                    <!-- Trips Container -->
+                    <div id="activity-trips-container" style="flex:1; display:flex; flex-direction:column;">
+                        <!-- Default Empty State -->
+                        <div class="gsm-empty-state-box" id="activity-empty-state">
+                            <img src="../assets/gsm/sleeping_car.svg" alt="Chưa có chuyến đi" class="gsm-empty-img">
+                            <div class="gsm-empty-title">Bạn chưa có chuyến đi nào</div>
+                            <p style="font-size:0.85rem; color:#64748b; line-height:1.45; margin:0 0 20px 0; max-width:260px;">
+                                Mọi chuyến xe thuần điện êm ái cùng Navigo sẽ được tự động ghi nhận tại đây.
+                            </p>
+                            <a href="customer.html" class="gsm-btn-empty-cta" style="text-decoration:none;">
+                                Đặt Xe Ngay
+                            </a>
+                        </div>
+
+                        <!-- Trip List -->
+                        <div id="activity-list" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div style="height: 40px;"></div>
+            </div>
+        </div>
+
+        <!-- Desktop Wide Canvas (Interactive Map & Impact Dashboard) -->
+        <div class="gsm-desktop-wide-canvas">
+            <div style="background:#ffffff; border-radius:24px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.06); height:100%; display:flex; flex-direction:column; overflow-y:auto;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                    <div>
+                        <h2 style="font-size:1.4rem; font-weight:900; color:#0f2d3c; margin:0 0 4px 0;">Hành Trình Di Chuyển Thuần Điện</h2>
+                        <p style="font-size:0.88rem; color:#64748b; margin:0;">Theo dõi tác động môi trường và mạng lưới chuyến đi của bạn cùng Navigo</p>
+                    </div>
+                    <a href="customer.html" class="gsm-btn-primary-cta" style="padding:10px 22px; text-decoration:none; font-size:0.9rem; border-radius:12px;">
+                        + Đặt Chuyến Xe Mới
+                    </a>
+                </div>
+
+                <!-- Stat Cards -->
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">TỔNG QUÃNG ĐƯỜNG</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">23,4 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span></div>
+                        <div style="font-size:0.75rem; color:#00b1a9; font-weight:700; margin-top:4px;">100% thuần điện</div>
+                    </div>
+                    <div style="background:#e6f7f6; border:1px solid #bbf2ee; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#007d77; font-weight:700; margin-bottom:6px;">CO₂ CẮT GIẢM</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#007d77;">3,8 <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span></div>
+                        <div style="font-size:0.75rem; color:#007d77; font-weight:700; margin-top:4px;">So với xe xăng truyền thống</div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CÂY XANH ĐÓNG GÓP</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">18 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span></div>
+                        <div style="font-size:0.75rem; color:#10b981; font-weight:700; margin-top:4px;">🌱 Quỹ Vì Tương Lai Xanh</div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">ĐIỂM TÍCH LŨY CLUB</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">420 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">điểm</span></div>
+                        <div style="font-size:0.75rem; color:#d97706; font-weight:700; margin-top:4px;">Hạng Bạc (Silver)</div>
+                    </div>
+                </div>
+
+                <!-- Leaflet Map Container for Trip History Overview -->
+                <div style="flex:1; border-radius:16px; overflow:hidden; position:relative; border:1px solid #e2e8f0;">
+                    <div id="desktop-activity-map" style="width:100%; height:100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="activity.html" class="gsm-nav-btn active" title="Hoạt động">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </a>
+            <a href="notifications.html" class="gsm-nav-btn " title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot"></span>
+                </div>
+            </a>
+            <a href="profile.html" class="gsm-nav-btn " title="Tài khoản">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Separate Circular Floating Glass Trophy Orb -->
+        <a href="profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../js/core/firebase-config.js"></script>
+    <script src="../js/core/api.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/realtime.js"></script>
+    <script src="../js/core/notifications.js"></script>
+    <script>
+        // Filter Pills toggle
+        const filterPills = document.querySelectorAll('.gsm-filter-pill');
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                filterPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                renderTrips();
+        if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.getUserTrips === 'function') {
+            const curUser = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            if (curUser) {
+                const uKey = curUser.id || curUser.phone || curUser.email;
+                realtimeSync.getUserTrips(uKey).then(dbTrips => {
+                    if (Array.isArray(dbTrips) && dbTrips.length > 0) {
+                        const sKey = 'goride_trips_' + String(uKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                        const local = JSON.parse(localStorage.getItem(sKey) || '[]');
+                        dbTrips.forEach(dt => {
+                            if (!local.some(l => l.id === dt.id)) local.push(dt);
+                        });
+                        localStorage.setItem(sKey, JSON.stringify(local));
+                        renderTrips();
+                    }
+                }).catch(() => {});
+            }
+        }
+            });
+        });
+
+        // Demo sample trips to display when toggled or booked
+        const demoTrips = [
+            {
+                id: 'NAV-84920',
+                type: 'car',
+                title: 'Navigo Car (VF 5 Plus)',
+                time: 'Hôm nay, 10:15',
+                pickup: '789/12 Tỉnh lộ 43, Tam Phú, TP. Thủ Đức',
+                dropoff: 'Ga Quốc Nội (Ga T3) — Sân bay Tân Sơn Nhất',
+                fare: '189.000đ',
+                status: 'Hoàn thành'
+            },
+            {
+                id: 'NAV-83112',
+                type: 'bike',
+                title: 'Navigo Bike (Feliz S)',
+                time: 'Hôm qua, 18:30',
+                pickup: 'Tòa nhà Landmark 81, Vinhomes Central Park',
+                dropoff: 'Nhà thờ Đức Bà, Bến Nghé, Quận 1',
+                fare: '42.000đ',
+                status: 'Hoàn thành'
+            }
+        ];
+
+        let showTripsMode = false;
+
+        function renderTrips() {
+            const activeFilter = document.querySelector('.gsm-filter-pill.active')?.getAttribute('data-filter') || 'all';
+            const emptyBox = document.getElementById('activity-empty-state');
+            const listEl = document.getElementById('activity-list');
+
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
+            const userStorageKey = 'goride_trips_' + String(userKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+            const userTrips = JSON.parse(localStorage.getItem(userStorageKey) || '[]').map(t => ({
+                id: t.id,
+                type: (t.vehicleType === 'bike') ? 'bike' : 'car',
+                title: t.vehicleName || 'Navigo Car',
+                time: t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' }) : 'Vừa xong',
+                pickup: t.pickup?.name || 'Điểm đón',
+                dropoff: t.destination?.name || 'Điểm đến',
+                fare: (Number(t.fareAmount || t.fare || 0)).toLocaleString('vi-VN') + 'đ',
+                status: (t.status === 'completed' || t.status === 'COMPLETED') ? 'Hoàn thành' : (t.status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý')
+            }));
+            const savedBookings = [...userTrips, ...JSON.parse(localStorage.getItem('navigo_bookings') || '[]')];
+            const allTrips = [...savedBookings, ...(showTripsMode ? demoTrips : [])];
+
+            let filtered = allTrips;
+            if (activeFilter === 'food' || activeFilter === 'delivery' || activeFilter === 'hourly') {
+                filtered = [];
+            }
+
+            if (filtered.length === 0) {
+                emptyBox.style.display = 'flex';
+                listEl.style.display = 'none';
+                listEl.innerHTML = '';
+            } else {
+                emptyBox.style.display = 'none';
+                listEl.style.display = 'block';
+                listEl.innerHTML = filtered.map(t => `
+                    <div class="gsm-trip-card">
+                        <div class="gsm-trip-header">
+                            <div class="gsm-trip-service">
+                                <div class="gsm-trip-service-icon">
+                                    ${t.type === 'bike' ? '🛵' : '🚗'}
+                                </div>
+                                <div>
+                                    <div>${t.title}</div>
+                                    <div style="font-size:0.75rem; color:#94a3b8; font-weight:500;">${t.time}</div>
+                                </div>
+                            </div>
+                            <span class="gsm-trip-badge">${t.status}</span>
+                        </div>
+                        <div class="gsm-trip-pts">
+                            <div class="gsm-trip-pt">
+                                <span class="gsm-trip-dot" style="background:#00b1a9;"></span>
+                                <span style="font-weight:600;">${t.pickup}</span>
+                            </div>
+                            <div class="gsm-trip-pt">
+                                <span class="gsm-trip-dot" style="background:#ef4444;"></span>
+                                <span>${t.dropoff}</span>
+                            </div>
+                        </div>
+                        <div class="gsm-trip-footer">
+                            <div class="gsm-trip-fare">${t.fare}</div>
+                            <button type="button" class="gsm-trip-rebook-btn" onclick="window.location.href='customer.html'">Đặt lại</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        document.getElementById('btn-toggle-demo-trips')?.addEventListener('click', () => {
+            showTripsMode = !showTripsMode;
+            renderTrips();
+        });
+
+        renderTrips();
+
+        // Initialize Desktop Leaflet Map
+        const mapEl = document.getElementById('desktop-activity-map');
+        if (mapEl) {
+            const actMap = L.map('desktop-activity-map', {
+                center: [10.7769, 106.7009],
+                zoom: 12,
+                zoomControl: true
+            });
+            L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}', {
+                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                maxZoom: 20,
+                attribution: '&copy; Bản đồ Google Việt Nam'
+            }).addTo(actMap);
+
+            const routeCoords = [
+                [10.8643, 106.7570],
+                [10.8490, 106.7500],
+                [10.8250, 106.7200],
+                [10.8185, 106.6588]
+            ];
+            L.polyline(routeCoords, { color: '#00b1a9', weight: 5, opacity: 0.85 }).addTo(actMap);
+
+            L.circleMarker([10.8643, 106.7570], { radius: 7, fillColor: '#00b1a9', color: '#fff', weight: 2, fillOpacity: 1 })
+                .bindPopup('<b>Điểm đón</b>: 789/12 Tỉnh lộ 43')
+                .addTo(actMap);
+
+            L.circleMarker([10.8185, 106.6588], { radius: 7, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 1 })
+                .bindPopup('<b>Điểm đến</b>: Ga Quốc Nội Sân Bay Tân Sơn Nhất')
+                .addTo(actMap);
+
+            setTimeout(() => { actMap.invalidateSize(); }, 300);
+        }
+    </script>
+</body>
+</html>

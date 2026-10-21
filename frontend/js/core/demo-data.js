@@ -56,8 +56,8 @@ class DemoDataAdapter {
                     type: 'car4',
                     typeName: 'Ô tô 4 chỗ',
                     plate: '51G-889.24',
-                    model: 'Toyota Vios 2023',
-                    color: 'Bạc Kim Loại'
+                    model: 'Navigo Car E-Series',
+                    color: 'Xanh Lục Lam Navigo (Teal)'
                 },
                 rating: 5.0,
                 totalTrips: 0,
@@ -429,7 +429,7 @@ class DemoDataAdapter {
                 phone: '0918765432',
                 rating: 4.88,
                 plate: '51G-889.24',
-                model: 'Toyota Vios 2023',
+                model: 'Navigo Car E-Series',
                 avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=120&q=80',
                 currentLocation: {
                     lat: 10.7745,
