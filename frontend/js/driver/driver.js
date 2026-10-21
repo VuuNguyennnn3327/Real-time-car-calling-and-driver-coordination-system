@@ -12,6 +12,17 @@ class DriverController {
     this.activeTrip = null;
     this.incomingRequests = [];
     this.declinedTripIds = new Set();
+    this.alertedTripIds = new Set();
+    this.handledTripIds = new Set();
+    try {
+      const savedHandled = JSON.parse(sessionStorage.getItem('goride_handled_offers') || '[]');
+      if (Array.isArray(savedHandled)) {
+        savedHandled.forEach(id => {
+          this.handledTripIds.add(String(id));
+          this.declinedTripIds.add(String(id));
+        });
+      }
+    } catch (e) {}
     this.pollIntervalId = null;
     this.geoWatchId = null;
     this.broadcastIntervalId = null;
@@ -868,6 +879,13 @@ class DriverController {
       return;
     }
 
+    const offerIdStr = String(offer.id || offer.tripId);
+    if (this.handledTripIds.has(offerIdStr) || this.declinedTripIds.has(offerIdStr)) {
+      modal.style.display = 'none';
+      this.currentOffer = null;
+      return;
+    }
+
     this.currentOffer = offer;
 
     const fareFormatted = Number(offer.fareNum || 45000).toLocaleString('vi-VN') + ' ₫';
@@ -1092,11 +1110,12 @@ class DriverController {
       const myDriverPhone = curUser?.phone || '';
 
       // Filter requests:
-      // 1. Exclude declined trips
+      // 1. Exclude declined/already handled trips
       // 2. Targeted drivers filtering (closest 2 -> 30s -> closest 4 -> 60s -> all within 20km)
       // 3. Strict 20km maximum distance limit: Tài xế xa hơn điểm đón khách 20km TUYỆT ĐỐI không nhận được thông tin
       const filteredRequests = requests.filter(req => {
-        if (this.declinedTripIds.has(req.id)) return false;
+        const reqIdStr = String(req.id || req.tripId);
+        if (this.declinedTripIds.has(reqIdStr) || this.declinedTripIds.has(Number(reqIdStr)) || this.handledTripIds.has(reqIdStr)) return false;
 
         // Trích xuất tọa độ đón khách từ mọi định dạng payload
         let pLat = null;
@@ -1138,8 +1157,10 @@ class DriverController {
         return true;
       });
 
-      // Notice when a new request arrives
-      if (filteredRequests.length > 0 && filteredRequests.length > this.incomingRequests.length) {
+      // Notice when a new request arrives - strictly alert once per trip ID (no spam)
+      const trulyNewRequests = filteredRequests.filter(r => !this.alertedTripIds.has(String(r.id || r.tripId)));
+      if (trulyNewRequests.length > 0) {
+        trulyNewRequests.forEach(r => this.alertedTripIds.add(String(r.id || r.tripId)));
         this.showToast('🔔 Bạn có cuốc xe mới trong khu vực!', 'info', 4000);
       }
 
@@ -1190,8 +1211,20 @@ class DriverController {
   }
 
   async handleAcceptRequest(requestId) {
-    const req = this.currentOffer || this.incomingRequests.find(r => r.id === requestId);
+    const req = this.currentOffer || this.incomingRequests.find(r => String(r.id) === String(requestId));
     if (!req) return;
+
+    // Immediately register as handled to prevent duplicate alerts or modal re-opening
+    const reqIdStr = String(req.tripId || req.id);
+    this.handledTripIds.add(reqIdStr);
+    this.declinedTripIds.add(reqIdStr);
+    try {
+      sessionStorage.setItem('goride_handled_offers', JSON.stringify(Array.from(this.handledTripIds)));
+    } catch (e) {}
+
+    // Hide floating incoming offer modal immediately
+    this.renderIncomingOfferDialog(null);
+    this.incomingRequests = [];
 
     try {
       this.showToast('Đang tiếp nhận cuốc xe...', 'info');
@@ -1347,14 +1380,19 @@ class DriverController {
 
   handleDeclineRequest(requestId) {
     if (requestId) {
-      this.declinedTripIds.add(requestId);
+      const idStr = String(requestId);
+      this.declinedTripIds.add(idStr);
+      this.handledTripIds.add(idStr);
+      try {
+        sessionStorage.setItem('goride_handled_offers', JSON.stringify(Array.from(this.handledTripIds)));
+      } catch (e) {}
     }
     this.renderIncomingOfferDialog(null);
-    this.incomingRequests = this.incomingRequests.filter(r => r.id !== requestId);
+    this.incomingRequests = this.incomingRequests.filter(r => String(r.id) !== String(requestId));
     try {
       localStorage.removeItem('goride_pending_trip_offers');
     } catch (e) {}
-    this.showToast('Đã đóng thông báo cuốc xe.', 'info', 2000);
+    this.showToast('Đã từ chối nhận chuyến xe.', 'info', 2000);
   }
 
   /* ==========================================================================
@@ -2074,10 +2112,15 @@ class DriverController {
           <textarea id="driver-rating-comment" rows="2" placeholder="Ghi chú thêm về hành khách (tùy chọn)..." style="width:100%; border:1px solid #cbd5e1; border-radius:12px; padding:10px 12px; font-size:0.85rem; font-family:inherit; resize:none; box-sizing:border-box; outline:none;"></textarea>
         </div>
 
-        <button type="button" id="btn-submit-customer-rating" style="width:100%; height:46px; border-radius:14px; border:none; background:linear-gradient(135deg, #0288d1 0%, #00b1a9 100%); color:#ffffff; font-size:0.95rem; font-weight:800; cursor:pointer; box-shadow:0 6px 18px rgba(0,177,169,0.35); display:flex; align-items:center; justify-content:center; gap:8px;">
-          <span>✓</span>
-          <span>Gửi đánh giá hành khách</span>
-        </button>
+        <div style="display:flex; gap:10px;">
+          <button type="button" id="btn-skip-customer-rating" style="flex:1; height:46px; border-radius:14px; border:1px solid #cbd5e1; background:#f8fafc; color:#64748b; font-size:0.92rem; font-weight:700; cursor:pointer;">
+            Bỏ qua
+          </button>
+          <button type="button" id="btn-submit-customer-rating" style="flex:1.4; height:46px; border-radius:14px; border:none; background:linear-gradient(135deg, #0288d1 0%, #00b1a9 100%); color:#ffffff; font-size:0.95rem; font-weight:800; cursor:pointer; box-shadow:0 6px 18px rgba(0,177,169,0.35); display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span>✓</span>
+            <span>Gửi đánh giá</span>
+          </button>
+        </div>
       </div>
     `;
 
@@ -2129,6 +2172,13 @@ class DriverController {
 
     const btnClose = modal.querySelector('#btn-close-rate-modal');
     if (btnClose) btnClose.onclick = closeModal;
+    const btnSkip = modal.querySelector('#btn-skip-customer-rating');
+    if (btnSkip) {
+      btnSkip.onclick = () => {
+        closeModal();
+        this.showToast('Đã bỏ qua đánh giá hành khách.', 'info', 2500);
+      };
+    }
 
     const btnSubmit = modal.querySelector('#btn-submit-customer-rating');
     if (btnSubmit) {

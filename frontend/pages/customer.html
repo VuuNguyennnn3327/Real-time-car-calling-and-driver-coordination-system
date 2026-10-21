@@ -91,9 +91,195 @@
             flex-direction: column;
             gap: 14px;
         }
+
+        /* Strictly eliminate bottom nav on booking page across all screens */
+        body.gsm-booking-page .bottom-nav,
+        body.gsm-booking-page #mobile-bottom-nav,
+        body.gsm-booking-page .gsm-floating-bottom-nav {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Desktop Sidebar Flow: Eliminate blank spaces, move lower UI up */
+        @media (min-width: 1025px) {
+            .gsm-desktop-sidebar .gsm-screen-wrapper {
+                height: 100% !important;
+                max-height: 100% !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .gsm-desktop-sidebar .goride-view-layer {
+                width: 100%;
+                height: auto;
+                min-height: 100%;
+                flex: 1 1 auto;
+            }
+
+            .gsm-desktop-sidebar .goride-view-layer.active {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+
+            .gsm-desktop-sidebar .gsm-search-screen,
+            .gsm-desktop-sidebar .gsm-route-preview-screen,
+            .gsm-desktop-sidebar .gsm-map-fullscreen-container {
+                min-height: auto !important;
+                height: auto !important;
+                flex: 1 1 auto !important;
+                display: flex !important;
+                flex-direction: column !important;
+                position: relative !important;
+                overflow: visible !important;
+                padding: 16px 16px 24px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Reset Top Floating Header to natural flow */
+            .gsm-desktop-sidebar .gsm-map-floating-header {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 0 12px 0 !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* Reset Floating Route Capsule (Screen 4) to natural flow */
+            .gsm-desktop-sidebar .gsm-floating-route-box {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                margin: 0 0 14px 0 !important;
+                box-sizing: border-box !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* Hide mobile artifacts in desktop sidebar */
+            .gsm-desktop-sidebar .gsm-sheet-drag-handle,
+            .gsm-desktop-sidebar .gsm-floating-shield-btn,
+            .gsm-desktop-sidebar .gsm-center-target-pin {
+                display: none !important;
+            }
+
+            /* Vehicle Selection Sheet in Desktop Sidebar (Screen 4):
+               Eliminates blank space by sitting directly below route capsule */
+            .gsm-desktop-sidebar .gsm-vehicle-sheet {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-height: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+                overflow: visible !important;
+            }
+
+            /* Searching Radar Panel in Desktop Sidebar (Screen 5) */
+            .gsm-desktop-sidebar #tracking-searching-panel {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                margin: 0 0 14px 0 !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Driver Card in Desktop Sidebar (Screen 5 - Image 1):
+               Eliminates blank space by sitting directly below header */
+            .gsm-desktop-sidebar #tracking-driver-sheet {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-height: none !important;
+                box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 18px !important;
+                padding: 16px !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                box-sizing: border-box !important;
+                flex-direction: column !important;
+            }
+
+            /* Pickup Confirm Sheet in Desktop Sidebar (Screen 3) */
+            .gsm-desktop-sidebar .gsm-pickup-bottom-sheet {
+                position: static !important;
+                inset: auto !important;
+                width: 100% !important;
+                max-height: none !important;
+                box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+                border: 1.5px solid #e2e8f0 !important;
+                border-radius: 18px !important;
+                padding: 16px !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+                box-sizing: border-box !important;
+            }
+        }
+
+        /* Mobile & Tablet Bottom Sheet Enhancements */
+        @media (max-width: 1024px) {
+            body.gsm-booking-page .gsm-vehicle-sheet {
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                position: absolute !important;
+                max-height: min(78vh, 580px) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding: 12px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+                box-sizing: border-box !important;
+                border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+                box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+                background: #ffffff !important;
+                z-index: 500 !important;
+            }
+
+            body.gsm-booking-page #vehicle-options-container {
+                flex: 1 1 auto !important;
+                max-height: 220px !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                padding-right: 2px !important;
+                margin-bottom: 6px !important;
+            }
+
+            body.gsm-booking-page .gsm-save-more-banner,
+            body.gsm-booking-page .gsm-payment-promo-row,
+            body.gsm-booking-page .gsm-cta-action-row {
+                flex-shrink: 0 !important;
+            }
+
+            body.gsm-booking-page #tracking-driver-sheet {
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                position: absolute !important;
+                max-height: none !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding: 14px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+                box-sizing: border-box !important;
+                border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+                box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+                background: #ffffff !important;
+                z-index: 500 !important;
+            }
+        }
     </style>
 </head>
-<body class="gsm-theme gsm-booking-page">
+<body class="gsm-theme gsm-booking-page customer-body" data-page="customer">
     <!-- Desktop Top Navigation Bar (>= 1025px) -->
     <nav class="gsm-pc-navbar">
         <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
@@ -109,7 +295,6 @@
             <a href="customer.html" class="gsm-pc-nav-link active">Đặt xe Navigo</a>
             <a href="customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
             <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
-            <a href="customer.html?view=charging" class="gsm-pc-nav-link">Trạm sạc Navigo EV</a>
             <a href="driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
             <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
         </div>
@@ -156,7 +341,7 @@
                                 <span style="width:14px; height:14px; border-radius:50%; background:#00b1a9; display:inline-block; flex-shrink:0; box-shadow:0 0 0 3px #e6f7f6;"></span>
                                 <div style="flex:1; display:flex; flex-direction:column;">
                                     <span style="font-size:0.68rem; font-weight:800; color:#007d77; text-transform:uppercase; letter-spacing:0.5px;">Điểm đón</span>
-                                    <input type="text" id="input-pickup" placeholder="Chọn hoặc nhập điểm đón..." value="789/12 Tỉnh lộ 43, Thành phố Hồ Chí Minh" style="border:none; background:transparent; font-size:0.92rem; font-weight:700; color:#0f2d3c; outline:none; padding:2px 0;">
+                                    <input type="text" id="input-pickup" placeholder="Chọn hoặc nhập điểm đón..." value="" style="border:none; background:transparent; font-size:0.92rem; font-weight:700; color:#0f2d3c; outline:none; padding:2px 0;">
                                 </div>
                                 <button type="button" id="btn-clear-pickup" style="display:none; border:none; background:transparent; font-size:1.2rem; color:#94a3b8; cursor:pointer; padding:0 4px;" title="Xóa điểm đón">&times;</button>
                                 <button type="button" id="btn-swap-locations" style="border:none; background:#e6f7f6; color:#007d77; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:0.95rem; font-weight:800;" title="Đổi chiều điểm đón và điểm đến">⇅</button>
@@ -258,17 +443,8 @@
                             <div class="gsm-pickup-suggestion-card" id="pickup-card-primary">
                                 <span style="font-size:1.25rem; color:#00b1a9;">📍</span>
                                 <div>
-                                    <div class="gsm-pickup-addr-title" id="pickup-confirmed-title">789/12 Tỉnh lộ 43</div>
-                                    <div class="gsm-pickup-addr-desc" id="pickup-confirmed-desc">22 m &bull; Thành phố Hồ Chí Minh, Việt Nam</div>
-                                </div>
-                            </div>
-
-                            <!-- Secondary nearby suggestion -->
-                            <div class="gsm-pickup-suggestion-card secondary" style="cursor:pointer;" onclick="document.getElementById('pickup-confirmed-title').textContent='789/12';">
-                                <span style="font-size:1.25rem; color:#94a3b8;">📍</span>
-                                <div>
-                                    <div class="gsm-pickup-addr-title">789/12</div>
-                                    <div class="gsm-pickup-addr-desc">22 m &bull; Tl43, Ho Chi Minh City, 75000</div>
+                                    <div class="gsm-pickup-addr-title" id="pickup-confirmed-title">Vị trí của bạn</div>
+                                    <div class="gsm-pickup-addr-desc" id="pickup-confirmed-desc">Đang tải địa chỉ...</div>
                                 </div>
                             </div>
 
@@ -299,7 +475,7 @@
                             <div class="gsm-route-top-row">
                                 <div class="gsm-route-point-text" id="btn-change-pickup-pt">
                                     <span style="color:#00b1a9;">●</span>
-                                    <span id="route-sum-pickup">789/12 Tỉnh lộ 43, Thàn...</span>
+                                    <span id="route-sum-pickup">Điểm đón của bạn</span>
                                     <span class="arrow">&gt;</span>
                                 </div>
                                 <button type="button" id="btn-change-route" style="border:none; background:#f1f5f9; border-radius:50%; width:30px; height:30px; cursor:pointer; font-size:0.95rem; display:flex; align-items:center; justify-content:center;" title="Đổi chiều đón - trả">⇅</button>
@@ -460,9 +636,6 @@
 
             <!-- Floating Top Tool Pills on Map -->
             <div style="position:absolute; top:18px; left:20px; z-index:500; display:flex; gap:10px;">
-                <button type="button" class="gsm-search-action-pill" id="btn-toggle-vgreen" style="background:#ffffff; box-shadow:0 4px 12px rgba(0,0,0,0.12); cursor:pointer;">
-                    <span style="color:#00b1a9;">⚡</span> Trạm sạc Navigo EV
-                </button>
                 <button type="button" class="gsm-search-action-pill" id="btn-gps-recenter" style="background:#ffffff; box-shadow:0 4px 12px rgba(0,0,0,0.12); cursor:pointer;">
                     <span>🎯</span> Vị trí của tôi
                 </button>

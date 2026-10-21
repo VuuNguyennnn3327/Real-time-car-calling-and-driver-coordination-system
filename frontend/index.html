@@ -28,7 +28,6 @@
             <a href="pages/customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
             <a href="pages/customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
             <a href="pages/customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
-            <a href="pages/customer.html?view=charging" class="gsm-pc-nav-link">Trạm sạc Navigo EV</a>
             <a href="pages/driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
             <a href="pages/admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
         </div>
@@ -304,6 +303,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <script src="js/core/firebase-config.js"></script>
+    <script src="js/core/geocoder.js"></script>
     <script src="js/core/api.js"></script>
     <script src="js/core/session.js"></script>
     <script src="js/core/realtime.js"></script>
@@ -320,63 +320,59 @@
                     attribution: '&copy; Bản đồ Google Việt Nam'
                 }).addTo(map);
 
-                // Add sample Cyan EV car markers
-                const evPositions = [
-                    [10.7769, 106.7009, 'Navigo Car (51K-889.24)'],
-                    [10.7820, 106.7080, 'Navigo Taxi 7 chỗ (51K-992.11)'],
-                    [10.7725, 106.6980, 'Navigo Bike (59A-123.45)'],
-                    [10.7951, 106.7218, 'Trạm sạc Navigo EV Landmark 81'],
-                    [10.8185, 106.6588, 'Trạm sạc Navigo EV Tân Sơn Nhất']
-                ];
-                evPositions.forEach(p => {
-                    const isStation = p[2].includes('Trạm sạc') || p[2].includes('V-GREEN');
-                    const icon = L.divIcon({
-                        className: 'gsm-map-marker',
-                        html: `<div style="background:${isStation ? '#f59e0b' : '#00b1a9'}; color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2.5px solid #fff; font-size:16px;">${isStation ? '⚡' : '🚗'}</div>`,
-                        iconSize: [32, 32],
-                        iconAnchor: [16, 16]
-                    });
-                    L.marker([p[0], p[1]], { icon }).addTo(map).bindPopup(`<b>${p[2]}</b>`);
-                });
+                let homeUserMarker = null;
 
-                
+                const setHomeUserLocation = (lat, lng, address) => {
+                    if (homeUserMarker) {
+                        homeUserMarker.setLatLng([lat, lng]);
+                    } else {
+                        homeUserMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                className: 'gsm-home-user-gps',
+                                html: '<div style="background:#00b1a9; color:#fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 6px rgba(0,177,169,0.25); font-size:14px; border:2px solid #fff;">📍</div>',
+                                iconSize: [28, 28],
+                                iconAnchor: [14, 14]
+                            })
+                        }).addTo(map);
+                    }
+                    if (address) {
+                        homeUserMarker.bindPopup(`<b>Vị trí của bạn</b><br><span style="font-size:0.8rem; color:#475569;">${address}</span>`);
+                    }
+                };
+
+                // Request/Load user location permission & center map on user's location
+                if (typeof window.navigoEnsureLocationPermission === 'function') {
+                    window.navigoEnsureLocationPermission((loc) => {
+                        if (loc && loc.lat && loc.lng) {
+                            map.setView([loc.lat, loc.lng], 15);
+                            setHomeUserLocation(loc.lat, loc.lng, loc.address || loc.name);
+                        }
+                    });
+                }
+
                 // Recenter Desktop Home Map on GPS
                 const btnHomeGps = document.getElementById('btn-home-gps');
                 if (btnHomeGps) {
                     btnHomeGps.addEventListener('click', () => {
-                        const doRecenterHome = (lat, lng) => {
-                            map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
-                            L.marker([lat, lng], {
-                                icon: L.divIcon({
-                                    className: 'gsm-home-user-gps',
-                                    html: '<div style="background:#00b1a9; color:#fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 6px rgba(0,177,169,0.25); font-size:14px; border:2px solid #fff;">📍</div>',
-                                    iconSize: [28, 28],
-                                    iconAnchor: [14, 14]
-                                })
-                            }).addTo(map);
-
-                            if (typeof window.showNavigoModal === 'function') {
-                                window.showNavigoModal({
-                                    title: 'Vị trí của tôi',
-                                    message: 'Bản đồ đã chuyển hướng về giữa vị trí GPS hiện tại của bạn. Bạn có muốn đặt xe đón tại đây không?',
-                                    icon: '🎯',
-                                    confirmText: 'Đặt xe ngay',
-                                    cancelText: 'Hủy / Đóng',
-                                    onConfirm: () => {
-                                        window.location.href = 'pages/customer.html?lat=' + lat + '&lng=' + lng;
+                        if (typeof window.navigoEnsureLocationPermission === 'function') {
+                            window.navigoEnsureLocationPermission((loc) => {
+                                if (loc && loc.lat && loc.lng) {
+                                    map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 1.2 });
+                                    setHomeUserLocation(loc.lat, loc.lng, loc.address || loc.name);
+                                    if (typeof window.showNavigoModal === 'function') {
+                                        window.showNavigoModal({
+                                            title: 'Vị trí của tôi',
+                                            message: 'Bản đồ đã chuyển hướng về giữa vị trí của bạn (' + (loc.name || loc.address || 'GPS') + '). Bạn có muốn đặt xe đón tại đây không?',
+                                            icon: '🎯',
+                                            confirmText: 'Đặt xe ngay',
+                                            cancelText: 'Đóng',
+                                            onConfirm: () => {
+                                                window.location.href = 'pages/customer.html?lat=' + loc.lat + '&lng=' + loc.lng;
+                                            }
+                                        });
                                     }
-                                });
-                            }
-                        };
-
-                        if (navigator.geolocation) {
-                            navigator.geolocation.getCurrentPosition(
-                                (pos) => doRecenterHome(pos.coords.latitude, pos.coords.longitude),
-                                () => doRecenterHome(10.7769, 106.7009),
-                                { timeout: 5000 }
-                            );
-                        } else {
-                            doRecenterHome(10.7769, 106.7009);
+                                }
+                            }, false);
                         }
                     });
                 }

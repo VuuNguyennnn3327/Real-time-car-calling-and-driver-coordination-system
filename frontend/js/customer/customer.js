@@ -15,13 +15,8 @@ class CustomerAppController {
         // Current Active View: 'search' | 'pickup-confirm' | 'vehicle-select' | 'tracking' | 'history'
         this.currentView = 'search';
 
-        // Locations (no default prefill, user selects or enters pickup)
-        this.pickup = {
-            name: '789/12 Tỉnh lộ 43',
-            address: '789/12 Tỉnh lộ 43, Thành phố Hồ Chí Minh, Việt Nam',
-            lat: 10.8715,
-            lng: 106.7490
-        };
+        // Locations (default initialized to user's current GPS location on load)
+        this.pickup = null;
         this.destination = null;
 
         // Selected Vehicle Type
@@ -327,6 +322,61 @@ class CustomerAppController {
             }
         });
 
+        // Universal user location permission & initial pickup initialization
+        if (typeof window.navigoEnsureLocationPermission === 'function') {
+            window.navigoEnsureLocationPermission((loc) => {
+                if (loc && loc.lat && loc.lng) {
+                    this.userGpsPosition = { lat: loc.lat, lng: loc.lng };
+                    if (!this.pickup) {
+                        this.pickup = {
+                            lat: loc.lat,
+                            lng: loc.lng,
+                            name: loc.name || 'Vị trí của tôi',
+                            address: loc.address || 'Vị trí hiện tại của bạn'
+                        };
+                        const pickupInput = document.getElementById('input-pickup');
+                        if (pickupInput && (!pickupInput.value || pickupInput.value.includes('789/12'))) {
+                            pickupInput.value = this.pickup.name || this.pickup.address;
+                        }
+                        const pickupConfirmedTitle = document.getElementById('pickup-confirmed-title');
+                        if (pickupConfirmedTitle) pickupConfirmedTitle.textContent = this.pickup.name;
+                        const pickupConfirmedDesc = document.getElementById('pickup-confirmed-desc');
+                        if (pickupConfirmedDesc) pickupConfirmedDesc.textContent = this.pickup.address;
+                        const routeSumPickup = document.getElementById('route-sum-pickup');
+                        if (routeSumPickup) routeSumPickup.textContent = this.pickup.name;
+                    }
+                    if (this.mapController && this.mapController.map) {
+                        this.mapController.map.setView([loc.lat, loc.lng], 15);
+                        if (typeof this.mapController.setUserLocation === 'function') {
+                            this.mapController.setUserLocation(loc.lat, loc.lng);
+                        }
+                    }
+                }
+            });
+        }
+
+        // Realtime cross-tab sync with driver portal
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips') {
+                try {
+                    let act = JSON.parse(localStorage.getItem('goride_active_trip') || 'null');
+                    if (!act && e.key === 'goride_admin_trips') {
+                        const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                        act = adminTrips.find(x => x.id === (this.activeTripId || this.activeTrip?.id));
+                    }
+                    if (act && (act.id === (this.activeTripId || this.activeTrip?.id) || !this.activeTripId)) {
+                        const curStatus = (this.activeTrip?.status || 'REQUESTED').toUpperCase();
+                        const newStatus = (act.status || 'REQUESTED').toUpperCase();
+                        if (newStatus !== curStatus || (act.driverName && act.driverName !== this.activeTrip?.driverName)) {
+                            this.activeTrip = { ...this.activeTrip, ...act, status: newStatus };
+                            this.activeTripId = act.id;
+                            this.updateTrackingUI(this.activeTrip);
+                        }
+                    }
+                } catch (err) {}
+            }
+        });
+
         console.log('[GoRide Customer] Ready.');
     }
 
@@ -373,7 +423,7 @@ class CustomerAppController {
         const container = document.getElementById('customer-map-container');
         if (!container || typeof MapController === 'undefined') return;
 
-        const defaultCenter = this.pickup ? [this.pickup.lat, this.pickup.lng] : [10.7760, 106.7000];
+        const defaultCenter = this.pickup ? [this.pickup.lat, this.pickup.lng] : [10.7769, 106.7009];
         this.mapController = new MapController('customer-map-container', {
             center: defaultCenter,
             zoom: 15,
@@ -386,10 +436,6 @@ class CustomerAppController {
             this.mapRenderer = new MapRenderer(this.mapController);
         }
 
-        // Place initial pickup pin so customer sees and can drag it immediately
-        if (this.pickup && this.mapController) {
-            this.mapController.addPickupMarker(this.pickup.lat, this.pickup.lng, this.pickup.name);
-        }
         if (this.destination && this.mapController) {
             this.mapController.addDestinationMarker(this.destination.lat, this.destination.lng, this.destination.name);
         }
@@ -668,49 +714,6 @@ class CustomerAppController {
             }
         } else {
             this.hideRadar();
-        }
-
-        // V-GREEN Charging Stations Layer Toggle (Pure EV Feature)
-        const btnToggleVGreen = document.getElementById('btn-toggle-vgreen');
-        if (btnToggleVGreen) {
-            let vgreenMarkers = [];
-            let vgreenVisible = false;
-            btnToggleVGreen.addEventListener('click', () => {
-                vgreenVisible = !vgreenVisible;
-                if (vgreenVisible) {
-                    btnToggleVGreen.style.background = '#00b1a9';
-                    btnToggleVGreen.style.color = '#ffffff';
-                    const stations = [
-                        { name: 'Trạm Sạc V-GREEN Landmark 81', lat: 10.7951, lng: 106.7218, type: 'Siêu nhanh 250kW', slots: '8/12 rảnh' },
-                        { name: 'Trạm Sạc V-GREEN Vincom Đồng Khởi', lat: 10.7778, lng: 106.7025, type: 'Sạc nhanh 60kW', slots: '4/6 rảnh' },
-                        { name: 'Trạm Sạc V-GREEN Sân Bay Tân Sơn Nhất', lat: 10.8185, lng: 106.6588, type: 'Siêu nhanh 250kW', slots: '10/16 rảnh' },
-                        { name: 'Trạm Sạc V-GREEN Vincom Thảo Điền', lat: 10.8038, lng: 106.7412, type: 'Sạc nhanh 60kW', slots: '6/8 rảnh' },
-                        { name: 'Trạm Sạc V-GREEN Bách Khoa TP.HCM', lat: 10.7725, lng: 106.6580, type: 'Sạc nhanh 30kW', slots: '3/4 rảnh' }
-                    ];
-                    if (this.mapController && this.mapController.map) {
-                        stations.forEach(st => {
-                            if (typeof L !== 'undefined') {
-                                const icon = L.divIcon({
-                                    className: 'vgreen-marker',
-                                    html: '<div style="background:#00b1a9; color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 10px rgba(0,177,169,0.5); border:2px solid #fff; font-size:16px;">⚡</div>',
-                                    iconSize: [32, 32],
-                                    iconAnchor: [16, 16]
-                                });
-                                const m = L.marker([st.lat, st.lng], { icon }).addTo(this.mapController.map);
-                                m.bindPopup('<b>' + st.name + '</b><br/>Công suất: <span style="color:#00b1a9; font-weight:700;">' + st.type + '</span><br/>Khả dụng: <span style="color:#10b981; font-weight:700;">' + st.slots + '</span>');
-                                vgreenMarkers.push(m);
-                            }
-                        });
-                        this.showToast('Đã hiển thị các trạm sạc V-GREEN trên bản đồ ⚡', 'info');
-                    }
-                } else {
-                    btnToggleVGreen.style.background = '#e6f7f6';
-                    btnToggleVGreen.style.color = '#007d77';
-                    vgreenMarkers.forEach(m => m.remove());
-                    vgreenMarkers = [];
-                    this.showToast('Đã ẩn trạm sạc V-GREEN', 'info');
-                }
-            });
         }
 
         const btnTrackRecenter = document.getElementById('btn-track-recenter');
@@ -3817,9 +3820,20 @@ class CustomerAppController {
             }
             if (driverRatingEl) driverRatingEl.textContent = trip.driverRating ? `★ ${trip.driverRating}` : '★ 5.0';
 
+            const statusIcon = document.getElementById('tracking-status-icon');
+            if (statusIcon) statusIcon.textContent = '🚗';
+
+            const btnCallDriver = document.getElementById('btn-call-driver');
+            if (btnCallDriver) {
+                btnCallDriver.onclick = () => {
+                    const phone = trip.driverPhone || '0901234567';
+                    window.location.href = `tel:${phone}`;
+                };
+            }
+
             if (status === 'ACCEPTED') {
                 if (prog2) prog2.classList.add('active');
-                if (statusText) statusText.textContent = `Tài xế ${trip.driverName || ''} (${vDetails.name}) đã nhận chuyến! Đang di chuyển đến điểm đón bạn.`;
+                if (statusText) statusText.textContent = `Tài xế ${trip.driverName || 'đối tác'} đã nhận cuốc!`;
             } else if (status === 'ARRIVED') {
                 if (prog2) prog2.classList.add('active');
                 if (statusText) statusText.textContent = 'Tài xế đã có mặt tại điểm đón! Xin vui lòng ra xe.';
@@ -3986,9 +4000,14 @@ class CustomerAppController {
                         <div style="text-align:center; font-size:0.8rem; color:#64748b; margin-top:4px;" id="rating-label">Tuyệt vời (5 sao)</div>
                     </div>
 
-                    <button type="button" class="goride-btn-solicitar" id="btn-finish-trip-dialog" style="margin-top:16px;">
-                        Hoàn tất & Đặt chuyến mới
-                    </button>
+                    <div style="display:flex; gap:10px; margin-top:16px;">
+                        <button type="button" id="btn-skip-rating" style="flex:1; height:44px; border-radius:12px; border:1px solid #cbd5e1; background:#f8fafc; color:#64748b; font-weight:700; font-size:0.92rem; cursor:pointer;">
+                            Bỏ qua
+                        </button>
+                        <button type="button" class="goride-btn-solicitar" id="btn-finish-trip-dialog" style="flex:1.4; height:44px; margin-top:0; font-size:0.92rem;">
+                            Gửi đánh giá
+                        </button>
+                    </div>
                 </div>
             `);
 
@@ -4017,21 +4036,31 @@ class CustomerAppController {
                 });
             }
 
-            // Wire corner close button (allows user to skip rating)
+            // Wire corner close button & skip button (allows user to skip rating)
+            const handleSkipRating = (e) => {
+                if (e) e.preventDefault();
+                if (tripData) {
+                    this.saveUserTrip({ ...tripData, status: 'completed' });
+                }
+                this.closeDialog();
+                this.activeTrip = null;
+                this.activeTripId = null;
+                try {
+                    localStorage.removeItem('goride_active_trip');
+                } catch (err) {}
+                this.updatePersistentBanner();
+                this.switchView('search');
+                this.resetBookingState();
+                this.showToast('Đã hoàn tất chuyến xe.', 'info', 2500);
+            };
+
             const btnCloseCorner = document.getElementById('btn-close-rating-corner');
             if (btnCloseCorner) {
-                btnCloseCorner.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.closeDialog();
-                    this.activeTrip = null;
-                    this.activeTripId = null;
-                    try {
-                        localStorage.removeItem('goride_active_trip');
-                    } catch (e) {}
-                    this.updatePersistentBanner();
-                    this.switchView('search');
-                    this.resetBookingState();
-                });
+                btnCloseCorner.addEventListener('click', handleSkipRating);
+            }
+            const btnSkipRating = document.getElementById('btn-skip-rating');
+            if (btnSkipRating) {
+                btnSkipRating.addEventListener('click', handleSkipRating);
             }
 
             const btnFinish = document.getElementById('btn-finish-trip-dialog');
@@ -4052,6 +4081,7 @@ class CustomerAppController {
                             userKey: this.getCurrentUserKey()
                         });
                     }
+                    this.showToast(`Cảm ơn bạn đã đánh giá tài xế (${selectedRating} ⭐)!`, 'success', 3500);
                     this.closeDialog();
                     this.activeTrip = null;
                     this.activeTripId = null;

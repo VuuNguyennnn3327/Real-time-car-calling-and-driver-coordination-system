@@ -220,6 +220,119 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
     cursor: grabbing;
   }
 
+  /* ==========================================================================
+     DESKTOP CUSTOMER SIDEBAR FLOW: ELIMINATE BLANK SPACES & MOVE LOWER UI UP
+     ========================================================================== */
+  .gsm-desktop-sidebar .goride-view-layer {
+    width: 100%;
+    height: auto;
+    min-height: 100%;
+    flex: 1 1 auto;
+  }
+
+  .gsm-desktop-sidebar .goride-view-layer.active {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .gsm-desktop-sidebar .gsm-search-screen,
+  .gsm-desktop-sidebar .gsm-route-preview-screen,
+  .gsm-desktop-sidebar .gsm-map-fullscreen-container {
+    min-height: auto !important;
+    height: auto !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    overflow: visible !important;
+    padding: 16px 16px 24px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 1. Reset Top Floating Header to natural block flow */
+  .gsm-desktop-sidebar .gsm-map-floating-header {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 0 12px 0 !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 2. Reset Floating Route Capsule (Screen 4) to natural block flow */
+  .gsm-desktop-sidebar .gsm-floating-route-box {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    margin: 0 0 14px 0 !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 3. Hide mobile artifacts in desktop sidebar */
+  .gsm-desktop-sidebar .gsm-sheet-drag-handle,
+  .gsm-desktop-sidebar .gsm-floating-shield-btn,
+  .gsm-desktop-sidebar .gsm-center-target-pin {
+    display: none !important;
+  }
+
+  /* 4. Vehicle Selection Sheet in Desktop Sidebar (Screen 4):
+     ELIMINATES THE BLANK SPACE: Sits directly below the route capsule, not bottom: 0! */
+  .gsm-desktop-sidebar .gsm-vehicle-sheet {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  /* 5. Searching Radar Panel in Desktop Sidebar (Screen 5):
+     Sits directly below the header */
+  .gsm-desktop-sidebar #tracking-searching-panel {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    margin: 0 0 14px 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 6. Driver Card in Desktop Sidebar (Screen 5 - Image 1):
+     ELIMINATES THE BLANK SPACE: Sits directly below header, action buttons fully visible! */
+  .gsm-desktop-sidebar #tracking-driver-sheet {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+    flex-direction: column !important;
+  }
+
+  /* 7. Pickup Confirm Sheet in Desktop Sidebar (Screen 3) */
+  .gsm-desktop-sidebar .gsm-pickup-bottom-sheet {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 18px !important;
+    padding: 16px !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
   .gsm-desktop-wide-canvas {
     flex: 1;
     height: 100%;
@@ -1445,6 +1558,70 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   body.gsm-booking-page #view-vehicle-select > *,
   body.gsm-booking-page #view-tracking > * {
     pointer-events: auto !important;
+  }
+
+  /* Strictly eliminate mobile bottom navigation bar on customer booking page across all screens */
+  body.gsm-booking-page .bottom-nav,
+  body.gsm-booking-page #mobile-bottom-nav,
+  body.gsm-booking-page .gsm-floating-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    opacity: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Mobile/Tablet Vehicle Selection Sheet:
+     Ensure content does not overflow and buttons are always visible above screen bottom */
+  body.gsm-booking-page .gsm-vehicle-sheet {
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: absolute !important;
+    max-height: min(78vh, 580px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+    box-sizing: border-box !important;
+    border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+    box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+    background: #ffffff !important;
+    z-index: 500 !important;
+  }
+
+  body.gsm-booking-page #vehicle-options-container {
+    flex: 1 1 auto !important;
+    max-height: 220px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-right: 2px !important;
+    margin-bottom: 6px !important;
+  }
+
+  body.gsm-booking-page .gsm-save-more-banner,
+  body.gsm-booking-page .gsm-payment-promo-row,
+  body.gsm-booking-page .gsm-cta-action-row {
+    flex-shrink: 0 !important;
+  }
+
+  body.gsm-booking-page #tracking-driver-sheet {
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    position: absolute !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 14px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+    box-sizing: border-box !important;
+    border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
+    box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
+    background: #ffffff !important;
+    z-index: 500 !important;
   }
 
   /* FOR ALL OTHER SCREENS (Home, Notifications, Activity, Profile):

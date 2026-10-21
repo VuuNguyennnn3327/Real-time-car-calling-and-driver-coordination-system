@@ -121,6 +121,107 @@ window.showNavigoModal = function(options) {
 };
 
 /**
+ * Global User Location Permission & Geolocation Service
+ * - Prompts modal "Cho phép truy cập vị trí" only once per device/browser or after logout.
+ * - Saves permission flag in localStorage (navigo_location_permission_granted).
+ * - Saves last known location in localStorage (navigo_user_location).
+ * - Automatically dispatches 'navigo:location_updated' event.
+ */
+window.navigoEnsureLocationPermission = function(callback, forcePrompt = false) {
+    const isGranted = localStorage.getItem('navigo_location_permission_granted') === 'true';
+    const cached = localStorage.getItem('navigo_user_location');
+    let cachedLoc = null;
+    try {
+        if (cached) cachedLoc = JSON.parse(cached);
+    } catch (e) {}
+
+    const obtainPosition = (onSuccess) => {
+        if (!navigator.geolocation) {
+            const fallback = { lat: 10.7769, lng: 106.7009, address: 'Thành phố Hồ Chí Minh, Việt Nam', name: 'TP. Hồ Chí Minh' };
+            localStorage.setItem('navigo_location_permission_granted', 'true');
+            localStorage.setItem('navigo_user_location', JSON.stringify(fallback));
+            window.dispatchEvent(new CustomEvent('navigo:location_updated', { detail: fallback }));
+            if (typeof onSuccess === 'function') onSuccess(fallback);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                const lat = Number(pos.coords.latitude);
+                const lng = Number(pos.coords.longitude);
+                let address = 'Vị trí hiện tại của bạn';
+                let name = 'Vị trí của tôi';
+
+                try {
+                    if (window.geocoderService && typeof window.geocoderService.reverse === 'function') {
+                        const rev = await window.geocoderService.reverse(lat, lng);
+                        if (rev) {
+                            address = rev.address || address;
+                            name = rev.name || name;
+                        }
+                    } else {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, { headers: { 'Accept': 'application/json' } });
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data && data.display_name) {
+                                address = data.display_name;
+                                name = data.name || (data.address && (data.address.road || data.address.suburb)) || 'Vị trí của tôi';
+                            }
+                        }
+                    }
+                } catch (e) {}
+
+                const locData = { lat, lng, address, name };
+                localStorage.setItem('navigo_location_permission_granted', 'true');
+                localStorage.setItem('navigo_user_location', JSON.stringify(locData));
+                window.dispatchEvent(new CustomEvent('navigo:location_updated', { detail: locData }));
+                if (typeof onSuccess === 'function') onSuccess(locData);
+            },
+            (err) => {
+                console.warn('[NavigoLocation] Geolocation query notice:', err.message);
+                const fallback = cachedLoc || { lat: 10.7769, lng: 106.7009, address: 'Thành phố Hồ Chí Minh, Việt Nam', name: 'TP. Hồ Chí Minh' };
+                localStorage.setItem('navigo_location_permission_granted', 'true');
+                localStorage.setItem('navigo_user_location', JSON.stringify(fallback));
+                window.dispatchEvent(new CustomEvent('navigo:location_updated', { detail: fallback }));
+                if (typeof onSuccess === 'function') onSuccess(fallback);
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
+        );
+    };
+
+    if (isGranted && !forcePrompt) {
+        if (cachedLoc && typeof callback === 'function') {
+            callback(cachedLoc);
+        }
+        obtainPosition((freshLoc) => {
+            if (!cachedLoc && typeof callback === 'function') {
+                callback(freshLoc);
+            }
+        });
+        return;
+    }
+
+    if (typeof window.showNavigoModal === 'function') {
+        window.showNavigoModal({
+            title: 'Cho phép truy cập vị trí',
+            message: 'Navigo cần truy cập vị trí của bạn để xác định địa chỉ đón và hiển thị bản đồ trung tâm tại vị trí của bạn.',
+            icon: '📍',
+            confirmText: 'Cho phép',
+            cancelText: 'Từ chối',
+            onConfirm: () => {
+                obtainPosition(callback);
+            },
+            onCancel: () => {
+                const fallback = cachedLoc || { lat: 10.7769, lng: 106.7009, address: 'Thành phố Hồ Chí Minh, Việt Nam', name: 'TP. Hồ Chí Minh' };
+                if (typeof callback === 'function') callback(fallback);
+            }
+        });
+    } else {
+        obtainPosition(callback);
+    }
+};
+
+/**
  * RIDE-RTREE Session Manager
  * 
  * NOTE: This is a client-side UI session manager using sessionStorage.
@@ -369,7 +470,8 @@ class SessionManager {
                 'navigo_user', 'navigo_token',
                 'user', 'token', 'currentUser', 'user_token',
                 'goride_active_trip', 'goride_driver_online_state',
-                'goride_pending_trip_offers', 'goride_current_order'
+                'goride_pending_trip_offers', 'goride_current_order',
+                'navigo_location_permission_granted', 'navigo_user_location'
             ];
             keysToRemove.forEach(k => {
                 try {
@@ -580,7 +682,6 @@ if (typeof document !== 'undefined') {
                     <a href="${customerUrl}" class="gsm-pc-nav-link ${isCustomerPage && !curSearch ? 'active' : ''}">Đặt xe Navigo</a>
                     <a href="${customerUrl}?service=bike" class="gsm-pc-nav-link ${isCustomerPage && curSearch.includes('bike') ? 'active' : ''}">Xe máy điện</a>
                     <a href="${customerUrl}?service=delivery" class="gsm-pc-nav-link ${isCustomerPage && curSearch.includes('delivery') ? 'active' : ''}">Giao hàng</a>
-                    <a href="${customerUrl}?view=charging" class="gsm-pc-nav-link ${isCustomerPage && curSearch.includes('charging') ? 'active' : ''}">Trạm sạc Navigo EV</a>
                     <a href="${notificationsUrl}" class="gsm-pc-nav-link ${isNotificationsPage ? 'active' : ''}" style="position:relative;">
                         🔔 Thông báo
                         <span class="gsm-nav-badge-dot" style="position:absolute; top:7px; right:5px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span>
@@ -594,7 +695,6 @@ if (typeof document !== 'undefined') {
                     <a href="${customerUrl}" class="gsm-pc-nav-link ${isCustomerPage && !curSearch ? 'active' : ''}">Đặt xe Navigo</a>
                     <a href="${customerUrl}?service=bike" class="gsm-pc-nav-link ${isCustomerPage && curSearch.includes('bike') ? 'active' : ''}">Xe máy điện</a>
                     <a href="${customerUrl}?service=delivery" class="gsm-pc-nav-link ${isCustomerPage && curSearch.includes('delivery') ? 'active' : ''}">Giao hàng</a>
-                    <a href="${customerUrl}?view=charging" class="gsm-pc-nav-link ${isCustomerPage && curSearch.includes('charging') ? 'active' : ''}">Trạm sạc Navigo EV</a>
                     <a href="${driverUrl}" class="gsm-pc-nav-link ${isDriverPage ? 'active' : ''}">Cổng Tài xế</a>
                 `;
             }
