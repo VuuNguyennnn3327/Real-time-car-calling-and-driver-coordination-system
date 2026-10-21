@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" width="160" height="120" fill="none">
+  <!-- Crescent Moon -->
+  <path d="M125 18 C120 18 112 24 112 32 C112 41 120 48 130 48 C132 48 134 47 136 46 C132 52 124 55 116 53 C106 50 100 40 102 30 C104 22 110 16 118 15 C120 15 123 16 125 18 Z" fill="#FCD34D" opacity="0.85"/>
+  <!-- Little stars -->
+  <circle cx="100" cy="18" r="2" fill="#FCD34D" opacity="0.7"/>
+  <circle cx="138" cy="22" r="1.5" fill="#FCD34D" opacity="0.6"/>
+  <circle cx="92" cy="30" r="1.5" fill="#FCD34D" opacity="0.5"/>
+
+  <!-- Sleeping "zzZ" -->
+  <text x="75" y="45" font-family="system-ui, sans-serif" font-size="12" font-weight="800" fill="#00B1A9" opacity="0.5">z</text>
+  <text x="82" y="38" font-family="system-ui, sans-serif" font-size="15" font-weight="800" fill="#00B1A9" opacity="0.7">Z</text>
+  <text x="92" y="30" font-family="system-ui, sans-serif" font-size="18" font-weight="900" fill="#00B1A9" opacity="0.9">Z</text>
+
+  <!-- Shadow below car -->
+  <ellipse cx="78" cy="104" rx="55" ry="7" fill="#E2E8F0"/>
+
+  <!-- Car Body Base -->
+  <rect x="25" y="65" width="105" height="30" rx="14" fill="#00B1A9"/>
+  <!-- Car Cabin / Roof -->
+  <path d="M42 66 Q52 48 68 46 L95 46 Q112 48 118 66 Z" fill="#00968F"/>
+  <!-- Windows -->
+  <path d="M48 65 Q56 50 70 49 L76 49 L76 65 Z" fill="#E0F7F6"/>
+  <path d="M81 49 L94 49 Q106 51 112 65 L81 65 Z" fill="#E0F7F6"/>
+
+  <!-- Sleeping Eyes (curved arc) on windshield/headlight -->
+  <path d="M32 75 Q36 78 40 75" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M115 75 Q119 78 123 75" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+  <!-- Night Cap on car roof -->
+  <path d="M68 47 Q65 32 50 30 Q44 29 40 33 Q45 38 60 47 Z" fill="#F43F5E"/>
+  <circle cx="39" cy="33" r="5" fill="#FFFFFF"/>
+  <ellipse cx="65" cy="47" rx="8" ry="3" fill="#FFFFFF"/>
+
+  <!-- Wheels -->
+  <!-- Left Wheel -->
+  <circle cx="48" cy="95" r="13" fill="#1E293B"/>
+  <circle cx="48" cy="95" r="8" fill="#F1F5F9"/>
+  <circle cx="48" cy="95" r="4" fill="#00B1A9"/>
+  <!-- Right Wheel -->
+  <circle cx="108" cy="95" r="13" fill="#1E293B"/>
+  <circle cx="108" cy="95" r="8" fill="#F1F5F9"/>
+  <circle cx="108" cy="95" r="4" fill="#00B1A9"/>
+
+  <!-- Teal Glow / Heart / Eco Leaf badge -->
+  <path d="M78 72 C78 70 76 68 74 68 C72 68 71 69 70 71 C69 69 68 68 66 68 C64 68 62 70 62 72 C62 75 70 80 70 80 C70 80 78 75 78 72 Z" fill="#FFFFFF" opacity="0.9"/>
+</svg>

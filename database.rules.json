@@ -1,0 +1,76 @@
+{
+  "rules": {
+    "goride_users": {
+      "$userId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_drivers": {
+      "$driverId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_pending_drivers": {
+      "$driverId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_online_drivers": {
+      "$driverId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_trips": {
+      "$tripId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_active_offers": {
+      "$tripId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_user_trips": {
+      "$userKey": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_user_notifications": {
+      "$userKey": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_broadcasts": {
+      "$broadcastId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_eco_stats": {
+      "$userKey": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_chat": {
+      "$tripId": {
+        ".read": true,
+        ".write": true
+      }
+    },
+    "goride_health_ping": {
+      ".read": true,
+      ".write": true
+    },
+    ".read": true,
+    ".write": true
+  }
+}

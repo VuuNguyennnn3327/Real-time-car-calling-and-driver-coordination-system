@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="14" fill="#ecfdf5"/>
+    <!-- VinBus Electric Bus -->
+    <rect x="10" y="15" width="28" height="18" rx="4" fill="#10b981"/>
+    <!-- Roof White / Yellow -->
+    <rect x="11" y="14" width="26" height="3" rx="1" fill="#fef08a"/>
+    <!-- Windows -->
+    <rect x="13" y="19" width="6" height="5" rx="1" fill="#064e3b"/>
+    <rect x="21" y="19" width="6" height="5" rx="1" fill="#064e3b"/>
+    <rect x="29" y="19" width="7" height="5" rx="1" fill="#064e3b"/>
+    <!-- Wheels -->
+    <circle cx="16" cy="33" r="3.5" fill="#1e293b"/>
+    <circle cx="32" cy="33" r="3.5" fill="#1e293b"/>
+    <!-- Green EV Leaf Badge -->
+    <circle cx="24" cy="28" r="2.5" fill="#34d399"/>
+  </svg>

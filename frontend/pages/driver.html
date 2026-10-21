@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cổng Đối tác Tài xế | Navigo — Dẫn lối chuẩn xác, đón rước tận nơi</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        /* Ensure app-header and user-menu have absolute top stacking priority */
+        .app-header {
+            z-index: 2500 !important;
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-bottom: 1px solid var(--color-gray-200, #e2e8f0);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+        .user-menu {
+            position: relative !important;
+            z-index: 2600 !important;
+        }
+        .user-menu-dropdown {
+            position: absolute !important;
+            top: calc(100% + 8px) !important;
+            right: 0 !important;
+            min-width: 230px !important;
+            background: #ffffff !important;
+            border: 1.5px solid var(--color-gray-200, #e2e8f0) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 14px 35px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+            padding: 8px !important;
+            z-index: 2700 !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            transform: none !important;
+        }
+        .user-menu-item {
+            padding: 9px 12px !important;
+            border-radius: 8px !important;
+            font-size: 0.88rem !important;
+            font-weight: 600 !important;
+            transition: all 0.15s ease !important;
+        }
+        .user-menu-item:hover {
+            background: #f1f5f9 !important;
+        }
+
+        /* Specialized Driver Portal Layout Adjustments */
+        .driver-app-main {
+            margin-top: var(--header-height, 56px);
+            min-height: calc(100vh - var(--header-height, 56px));
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+        /* Modern Driver Full-Map Floating Widget (Left aligned to avoid dropdown collisions) */
+        .driver-floating-top-widget {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 500 !important;
+            display: inline-flex;
+            align-items: center;
+            pointer-events: none;
+        }
+        /* Ensure Leaflet zoom buttons sit cleanly below the top status widget without overlap */
+        #driver-map .leaflet-top.leaflet-left {
+            top: 74px !important;
+            left: 14px !important;
+        }
+        .driver-status-chip {
+            pointer-events: auto;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(226, 232, 240, 0.95);
+            padding: 8px 16px;
+            border-radius: 9999px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none !important;
+            color: #1e293b !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+            cursor: pointer;
+        }
+        .driver-status-chip:hover {
+            border-color: #0288d1;
+            transform: translateY(-1.5px);
+            box-shadow: 0 6px 18px rgba(2, 136, 209, 0.18);
+            background: #ffffff;
+        }
+        .driver-status-chip:active {
+            transform: scale(0.97);
+        }
+        .status-pulse-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+            display: inline-block;
+            animation: pulse-dot-anim 1.8s infinite;
+            flex-shrink: 0;
+        }
+        .status-pulse-dot.offline {
+            background: #94a3b8;
+            box-shadow: none;
+            animation: none;
+        }
+        @keyframes pulse-dot-anim {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* Floating Incoming Offer Modal */
+        .incoming-offer-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            animation: fadeIn 0.2s ease;
+        }
+        .incoming-offer-card {
+            background: #ffffff;
+            border: 2px solid #0288d1;
+            border-radius: 20px;
+            padding: 22px 24px;
+            max-width: 440px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 0 20px rgba(2, 136, 209, 0.2);
+            animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes scaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .offer-top-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .offer-pulse-icon {
+            font-size: 1.25rem;
+            animation: ringBell 0.8s infinite alternate;
+        }
+        @keyframes ringBell {
+            from { transform: rotate(-15deg); }
+            to { transform: rotate(15deg); }
+        }
+        .offer-timer-badge {
+            background: #fee2e2;
+            color: #ef4444;
+            font-weight: 800;
+            font-size: 0.78rem;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            border: 1px solid #fecaca;
+        }
+        .offer-fare-hero {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #10b981;
+            text-align: center;
+            margin: 4px 0 2px 0;
+            letter-spacing: -0.5px;
+        }
+        .offer-customer-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin: 12px 0;
+            border: 1px solid #e2e8f0;
+        }
+        .offer-cust-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #e0f2fe;
+            color: #0288d1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+        .offer-rating-tag {
+            background: #fef3c7;
+            color: #d97706;
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 8px;
+        }
+        .offer-route-container {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+        .offer-route-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .offer-route-line {
+            width: 2px;
+            height: 14px;
+            background: #cbd5e1;
+            margin: 3px 0 3px 9px;
+        }
+        .offer-info-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #f1f5f9;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+        .offer-actions-row {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 10px;
+        }
+        .btn-offer-decline {
+            padding: 11px;
+            border-radius: 12px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1.5px solid #cbd5e1;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-offer-decline:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .btn-offer-accept {
+            padding: 11px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff;
+            border: none;
+            font-size: 0.98rem;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .btn-offer-accept:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Floating Active Trip Navigation Card */
+        .active-trip-card {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            max-width: 480px;
+            margin: 0 auto;
+            z-index: 1000;
+            background: #ffffff;
+            border: 2px solid #0288d1;
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Trip History Cards (Matches user screenshot ref) */
+        .driver-trip-card {
+            background: #ffffff;
+            border: 1px solid var(--color-gray-200, #e2e8f0);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .driver-trip-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        /* Earnings Cards */
+        .earnings-wallet-card {
+            background: linear-gradient(135deg, #0288d1 0%, #01579b 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 20px rgba(2, 136, 209, 0.25);
+            margin-bottom: 20px;
+        }
+
+        .earnings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .earnings-kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--color-gray-200, #e2e8f0);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .filter-pill {
+            padding: 7px 18px;
+            border-radius: 9999px;
+            background: #ffffff;
+            border: 1.5px solid var(--color-gray-300, #cbd5e1);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--color-gray-600, #475569);
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .filter-pill:hover {
+            border-color: var(--color-primary, #0288d1);
+            color: var(--color-primary, #0288d1);
+            background: #f0f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(2, 136, 209, 0.15);
+        }
+        .filter-pill.active {
+            background: linear-gradient(135deg, #0288d1 0%, #01579b 100%);
+            color: #ffffff;
+            border-color: #01579b;
+            box-shadow: 0 4px 14px rgba(2, 136, 209, 0.3);
+            transform: translateY(-1px);
+        }
+        .filter-pill:active {
+            transform: scale(0.95) translateY(0);
+        }
+
+        /* Responsive Navigation Guarantee (Desktop, Tablet, Split-Screen, Mobile) */
+        @media (min-width: 768px) {
+            .app-header .header-nav {
+                display: flex !important;
+                align-items: center;
+                gap: 8px;
+            }
+            .bottom-nav {
+                display: none !important;
+            }
+        }
+        @media (max-width: 767px) {
+            html, body {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+            }
+            .app-header {
+                padding: 0 12px !important;
+                height: 52px !important;
+            }
+            .app-header .header-nav {
+                display: none !important;
+            }
+            .bottom-nav {
+                display: flex !important;
+            }
+            .driver-app-main {
+                padding-bottom: 75px !important;
+            }
+            .driver-floating-top-widget {
+                top: 10px !important;
+                left: 10px !important;
+                max-width: calc(100vw - 20px) !important;
+            }
+            .driver-status-chip {
+                padding: 6px 12px !important;
+                gap: 6px !important;
+            }
+            #driver-current-address {
+                max-width: 150px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+            .active-trip-card {
+                bottom: 80px !important;
+                left: 10px !important;
+                right: 10px !important;
+                padding: 14px 16px !important;
+                max-width: 100% !important;
+            }
+            .incoming-offer-card {
+                max-width: 95vw !important;
+                padding: 16px 14px !important;
+                border-radius: 16px !important;
+            }
+            .offer-fare-hero {
+                font-size: 1.85rem !important;
+            }
+            .offer-actions-row {
+                gap: 8px !important;
+            }
+            .btn-offer-decline, .btn-offer-accept {
+                padding: 10px 8px !important;
+                font-size: 0.88rem !important;
+            }
+        }
+    </style>
+    <!-- Allow testing and driver portal access across all roles -->
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-logo">
+                <a href="../index.html" style="text-decoration:none; display:flex; align-items:center; gap:var(--space-2);">
+                    <span style="font-size:1.35rem;">🚗</span>
+                    <span class="header-brand" style="color:var(--color-primary); font-weight:800;">Navigo</span>
+                </a>
+                <span class="badge badge-info" style="margin-left:var(--space-2); font-weight:700;">Tài xế</span>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="header-nav desktop-only-flex" style="display:flex !important; align-items:center; gap:var(--space-2);">
+                <a href="../index.html" class="nav-link">🏠 Trang chủ</a>
+                <a href="#home" class="nav-link active" data-tab="home">🚗 Nhận chuyến</a>
+                <a href="#trips" class="nav-link" data-tab="trips">📋 Lịch sử</a>
+                <a href="#earnings" class="nav-link" data-tab="earnings">💰 Thu nhập</a>
+                <a href="notifications.html" class="nav-link" style="position:relative;">🔔 Thông báo <span class="gsm-nav-badge-dot" style="position:absolute; top:6px; right:4px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span></a>
+                <a href="profile.html" class="nav-link">👤 Hồ sơ</a>
+            </nav>
+
+            <!-- User Menu -->
+            <div class="user-menu">
+                <button class="user-menu-trigger" id="user-menu-btn" style="display:flex; align-items:center; gap:8px;">
+                    <div class="avatar avatar-sm" id="driver-user-avatar" style="background:#0288d1; color:#fff; font-weight:700; overflow:hidden; padding:0;" data-user-avatar>T</div>
+                    <span class="user-menu-name desktop-only" data-user-name style="font-weight:600;">Tài xế đối tác</span>
+                    <span class="desktop-only" style="font-size:0.75rem; color:#64748b;">▼</span>
+                </button>
+                <div class="user-menu-dropdown" id="user-menu-dropdown" style="display:none;">
+                    <div class="user-menu-item" style="font-weight:700; color:#1e293b;" data-user-name>Tài xế đối tác</div>
+                    <a href="notifications.html" class="user-menu-item" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:6px;">🔔 Thông báo & Ưu đãi</a>
+                    <a href="profile.html" class="user-menu-item" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:6px;">👤 Xem Profile & Trạng thái</a>
+                    <a href="../index.html" class="user-menu-item" style="text-decoration:none; color:inherit;">🏠 Trang chủ Navigo</a>
+                    <div class="user-menu-divider" style="height:1px; background:#e2e8f0; margin:4px 0;"></div>
+                    <div class="user-menu-item user-menu-item-danger" data-action="logout" style="color:#ef4444; cursor:pointer;">🚪 Đăng xuất</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="app-main driver-app-main">
+            
+            <!-- TAB 1: NHẬN CHUYẾN (FULL-SCREEN MAP & FLOATING DISPATCH WIDGETS) -->
+            <div id="driver-tab-home" class="driver-tab-pane" style="display:flex; flex-direction:column; flex:1 1 auto; height:calc(100vh - var(--header-height, 56px)); position:relative; overflow:hidden;">
+                
+                <!-- Full-Screen Map Container -->
+                <div id="driver-map" style="width:100%; height:100%; z-index:1;"></div>
+
+                <!-- Floating Recenter FAB Button for Driver -->
+                <div class="driver-map-fab-stack">
+                    <button type="button" class="goride-map-fab" id="btn-driver-gps-recenter" title="Định vị vị trí GPS của tôi">
+                        🎯
+                    </button>
+                </div>
+
+                <!-- Top Floating Status Widget (Anchored cleanly at top-left, 0 collisions with user dropdown) -->
+                <div class="driver-floating-top-widget">
+                    <a href="profile.html" class="driver-status-chip" id="driver-status-chip" title="Chạm để mở trang Hồ sơ cá nhân & Đối tác (Đổi trạng thái trực tuyến & thu nhập)">
+                        <span class="status-pulse-dot" id="driver-status-dot"></span>
+                        <div style="line-height:1.2;">
+                            <div style="font-weight:700; font-size:0.85rem;" id="driver-status-text">Đang trực tuyến</div>
+                            <div style="font-size:0.72rem; color:#64748b;" id="driver-current-address">TP. Hồ Chí Minh • Chạm để đổi trạng thái</div>
+                        </div>
+                        <span style="font-size:0.85rem; color:#0288d1; margin-left:4px; font-weight:700;">➔</span>
+                    </a>
+                </div>
+
+                <!-- Floating Incoming Offer Modal / Card (Hỏi nhận cuốc xe) -->
+                <div id="driver-incoming-offer-modal" class="incoming-offer-overlay" style="display:none;">
+                    <div class="incoming-offer-card">
+                        <button type="button" class="btn-close-incoming-offer" id="btn-close-offer-modal" aria-label="Đóng thông báo" title="Bỏ qua">&times;</button>
+                        <div class="offer-top-badge">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <span class="offer-pulse-icon">🔔</span>
+                                <span style="font-weight:800; font-size:0.95rem; color:#1e293b;">BẠN CÓ CUỐC XE MỚI!</span>
+                            </div>
+                            <span class="offer-timer-badge" id="offer-timer">Nhận ngay</span>
+                        </div>
+                        
+                        <div class="offer-fare-hero" id="offer-fare-hero">45.000 ₫</div>
+                        <div style="font-size:0.75rem; color:#64748b; text-align:center; margin-top:-4px; margin-bottom:12px;">Cước phí thực nhận vào ví</div>
+
+                        <div class="offer-customer-box">
+                            <div class="offer-cust-avatar">👤</div>
+                            <div style="flex:1;">
+                                <div style="font-weight:700; font-size:1rem; color:#1e293b;" id="offer-cust-name">Khách hàng Navigo</div>
+                                <div style="font-size:0.75rem; color:#0288d1; font-weight:600;" id="offer-vehicle-label">Chuyến xe Navigo</div>
+                            </div>
+                            <div class="offer-rating-tag">★ 5.0</div>
+                        </div>
+
+                        <div class="offer-route-container">
+                            <div class="offer-route-item">
+                                <span style="color:#10b981; font-size:1.1rem;">🟢</span>
+                                <div>
+                                    <div style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Điểm đón khách:</div>
+                                    <div style="font-weight:700; font-size:0.88rem; color:#1e293b;" id="offer-pickup-address">Chợ Bến Thành, Quận 1</div>
+                                </div>
+                            </div>
+                            <div class="offer-route-line"></div>
+                            <div class="offer-route-item">
+                                <span style="color:#ef4444; font-size:1.1rem;">🔴</span>
+                                <div>
+                                    <div style="font-size:0.72rem; color:#64748b; font-weight:600; text-transform:uppercase;">Điểm đến:</div>
+                                    <div style="font-weight:700; font-size:0.88rem; color:#1e293b;" id="offer-destination-address">Landmark 81, Bình Thạnh</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="offer-info-bar">
+                            <span>Quãng đường: <strong id="offer-distance-text">3.2 km</strong></span>
+                            <span>Thời gian: <strong id="offer-duration-text">8 phút</strong></span>
+                        </div>
+
+                        <div class="offer-actions-row">
+                            <button type="button" class="btn-offer-decline" id="btn-decline-offer">
+                                ✕ Từ chối
+                            </button>
+                            <button type="button" class="btn-offer-accept" id="btn-accept-offer">
+                                ✓ Nhận cuốc xe
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Floating Active Trip Navigation Card -->
+                <div id="driver-active-trip-card" class="active-trip-card" style="display:none;">
+                    <!-- Rendered dynamically during active trip progression -->
+                </div>
+
+            </div>
+
+            <!-- TAB 2: LỊCH SỬ CHUYẾN ĐI (COMPLETED TRIPS MATCHING USER SCREENSHOT) -->
+            <div id="driver-tab-trips" class="driver-tab-pane" style="display:none; padding:24px 20px; max-width:850px; margin:0 auto; width:100%;">
+                <div class="page-header" style="margin-bottom:16px;">
+                    <div>
+                        <h2 style="margin:0; font-size:1.4rem;">Lịch sử chuyến đi</h2>
+                        <p style="margin:4px 0 0 0; color:#64748b; font-size:0.875rem;">Theo dõi chi tiết các cuốc xe đã hoàn thành và cước phí thực nhận.</p>
+                    </div>
+                    <button class="btn btn-sm btn-ghost" onclick="driverController.renderTripHistory()" title="Làm mới">🔄 Cập nhật</button>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="filter-pills">
+                    <button class="filter-pill active" onclick="driverController.filterTripHistory('all')">Tất cả</button>
+                    <button class="filter-pill" onclick="driverController.filterTripHistory('today')">Hôm nay</button>
+                    <button class="filter-pill" onclick="driverController.filterTripHistory('week')">Tuần này</button>
+                </div>
+
+                <!-- Trips List Container -->
+                <div id="driver-trips-list">
+                    <!-- Populated dynamically via driver.js -->
+                </div>
+            </div>
+
+            <!-- TAB 3: BÁO CÁO THU NHẬP (WALLET, METRICS & SETTLEMENTS) -->
+            <div id="driver-tab-earnings" class="driver-tab-pane" style="display:none; padding:24px 20px; max-width:920px; margin:0 auto; width:100%;">
+                <div class="page-header" style="margin-bottom:20px;">
+                    <div>
+                        <h2 style="margin:0; font-size:1.4rem;">Báo cáo thu nhập đối tác</h2>
+                        <p style="margin:4px 0 0 0; color:#64748b; font-size:0.875rem;">Quản lý doanh thu minh bạch, số dư ví tài xế và lịch sử thanh toán.</p>
+                    </div>
+                    <button class="btn btn-sm btn-ghost" onclick="driverController.renderEarningsReport()" title="Làm mới">🔄 Cập nhật</button>
+                </div>
+
+                <!-- Wallet Hero Card -->
+                <div class="earnings-wallet-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+                        <div>
+                            <span style="font-size:0.85rem; opacity:0.9; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Số dư ví tài xế khả dụng</span>
+                            <div style="font-size:2.4rem; font-weight:800; margin:4px 0 2px 0;" id="wallet-balance-amount">0 ₫</div>
+                            <span style="font-size:0.8rem; opacity:0.85;">Tài khoản nhận tiền: Đã liên kết tài khoản ngân hàng</span>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-sm" style="background:#ffffff; color:#0288d1; font-weight:700; border-radius:9999px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:all 0.22s cubic-bezier(0.16,1,0.3,1);" onclick="driverController.showWithdrawDialog()">
+                                💳 Rút tiền
+                            </button>
+                            <button class="btn btn-sm" style="background:rgba(255,255,255,0.22); color:#ffffff; font-weight:700; border-radius:9999px; border:1.5px solid rgba(255,255,255,0.45); backdrop-filter:blur(8px); transition:all 0.22s cubic-bezier(0.16,1,0.3,1);" onclick="driverController.showDepositDialog()">
+                                ➕ Nạp ví ký quỹ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 KPI Cards Grid -->
+                <div class="earnings-grid">
+                    <div class="earnings-kpi-card">
+                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Doanh thu hôm nay</div>
+                        <div style="font-size:1.35rem; font-weight:800; color:#10b981; margin:6px 0 2px 0;" id="kpi-earn-today">0 ₫</div>
+                        <span style="font-size:0.78rem; color:#64748b;" id="kpi-trips-today">0 chuyến hoàn thành</span>
+                    </div>
+                    <div class="earnings-kpi-card">
+                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Doanh thu tuần này</div>
+                        <div style="font-size:1.35rem; font-weight:800; color:#0288d1; margin:6px 0 2px 0;" id="kpi-earn-week">0 ₫</div>
+                        <span style="font-size:0.78rem; color:#64748b;">Tổng kết 7 ngày qua</span>
+                    </div>
+                    <div class="earnings-kpi-card">
+                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Doanh thu tháng này</div>
+                        <div style="font-size:1.35rem; font-weight:800; color:#8b5cf6; margin:6px 0 2px 0;" id="kpi-earn-month">0 ₫</div>
+                        <span style="font-size:0.78rem; color:#64748b;">Tháng 10/2026</span>
+                    </div>
+                    <div class="earnings-kpi-card">
+                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Tỷ lệ nhận chuyến</div>
+                        <div style="font-size:1.35rem; font-weight:800; color:#f59e0b; margin:6px 0 2px 0;" id="kpi-accept-rate">100%</div>
+                        <span style="font-size:0.78rem; color:#10b981;">Hiệu suất xuất sắc ★</span>
+                    </div>
+                </div>
+
+                <!-- Transaction / Settlement Breakdown -->
+                <div class="dashboard-section" style="background:#ffffff; border:1px solid var(--color-gray-200); border-radius:14px; overflow:hidden;">
+                    <div style="padding:16px 20px; border-bottom:1px solid var(--color-gray-200); display:flex; justify-content:space-between; align-items:center;">
+                        <h4 style="margin:0; font-size:1rem; color:#1e293b;">Bảng kê các khoản thu nhập gần đây</h4>
+                        <span style="font-size:0.8rem; color:#64748b;">Tỷ lệ chia sẻ doanh thu: 100% đối tác</span>
+                    </div>
+                    <div class="data-table-responsive">
+                        <table class="data-table admin-table" style="margin:0;">
+                            <thead>
+                                <tr>
+                                    <th>MÃ CHUYẾN</th>
+                                    <th>THỜI GIAN</th>
+                                    <th>KHÁCH HÀNG</th>
+                                    <th>PHƯƠNG THỨC</th>
+                                    <th>CƯỚC PHÍ</th>
+                                    <th style="text-align:right;">THỰC NHẬN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="earnings-history-body">
+                                <tr><td colspan="6" class="text-center" style="padding:24px; color:#64748b;">Chưa có giao dịch thu nhập nào được ghi nhận.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: THÔNG TIN TÀI KHOẢN (FOR MOBILE) -->
+            <div id="driver-tab-account" class="driver-tab-pane" style="display:none; padding:24px 20px; max-width:600px; margin:0 auto; width:100%;">
+                <div class="card" style="padding:24px; border-radius:16px; background:#fff; border:1px solid var(--color-gray-200);">
+                    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+                        <div class="avatar avatar-lg" style="background:#0288d1; color:#fff; font-size:1.5rem; font-weight:700; overflow:hidden; cursor:pointer;" data-user-avatar data-action="profile" title="Bấm để đổi ảnh đại diện">T</div>
+                        <div style="flex:1;">
+                            <h3 style="margin:0; font-size:1.2rem;" data-user-name>Tài xế Navigo</h3>
+                            <button type="button" class="btn btn-sm btn-ghost" data-action="profile" style="margin-top:6px; font-size:0.8rem; padding:3px 10px; border:1px solid #cbd5e1; border-radius:8px; display:inline-flex; align-items:center; gap:5px; background:#f8fafc; font-weight:600;">
+                                📷 Đổi ảnh đại diện
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:12px; font-size:0.9rem;">
+                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9;">
+                            <span style="color:#64748b;">Số điện thoại</span>
+                            <strong id="account-phone">--</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9;">
+                            <span style="color:#64748b;">Email</span>
+                            <strong id="account-email">--</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9;">
+                            <span style="color:#64748b;">Biển số phương tiện</span>
+                            <strong id="account-plate" style="color:var(--color-primary);">--</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9;">
+                            <span style="color:#64748b;">Loại phương tiện</span>
+                            <strong id="account-vehicle">Ô tô 4 chỗ (GoCar)</strong>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-danger btn-block" style="margin-top:24px;" data-action="logout">
+                        🚪 Đăng xuất tài khoản
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
+        <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav">
+            <a href="../index.html" class="bottom-nav-item" id="bnav-driver-landing" title="Về trang chủ">
+                <span class="bottom-nav-icon">🏠</span>
+                <span class="bottom-nav-label">Trang chủ</span>
+            </a>
+            <a href="#home" class="bottom-nav-item active" data-tab="home" id="bnav-driver-home">
+                <span class="bottom-nav-icon">🚗</span>
+                <span class="bottom-nav-label">Nhận chuyến</span>
+            </a>
+            <a href="#trips" class="bottom-nav-item" data-tab="trips" id="bnav-driver-trips">
+                <span class="bottom-nav-icon">📋</span>
+                <span class="bottom-nav-label">Lịch sử</span>
+            </a>
+            <a href="#earnings" class="bottom-nav-item" data-tab="earnings" id="bnav-driver-earnings">
+                <span class="bottom-nav-icon">💰</span>
+                <span class="bottom-nav-label">Thu nhập</span>
+            </a>
+            <a href="notifications.html" class="bottom-nav-item" id="bnav-driver-notifications" title="Thông báo" style="position:relative;">
+                <span class="bottom-nav-icon">🔔</span>
+                <span class="bottom-nav-label">Thông báo</span>
+                <span class="gsm-nav-badge-dot" style="position:absolute; top:6px; right:18px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span>
+            </a>
+            <a href="profile.html" class="bottom-nav-item" id="bnav-driver-account">
+                <span class="bottom-nav-icon">👤</span>
+                <span class="bottom-nav-label">Hồ sơ</span>
+            </a>
+        </nav>
+
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../js/core/firebase-config.js"></script>
+    <script src="../js/core/realtime.js"></script>
+    <script src="../js/core/api.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/notifications.js"></script>
+    <script src="../js/core/router.js"></script>
+    <script src="../js/core/demo-data.js"></script>
+    <script src="../js/core/app.js"></script>
+    <script src="../js/map/map-controller.js"></script>
+    <script src="../js/map/map-renderer.js"></script>
+    <script src="../js/driver/driver.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof sessionManager !== 'undefined') {
+                const user = sessionManager.getCurrentUser();
+                if (user && user.role === 'admin') {
+                    window.location.replace('admin.html');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

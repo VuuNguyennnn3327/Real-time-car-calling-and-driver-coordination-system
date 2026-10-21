@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Navigo</title>
+    <meta name="description" content="Đăng nhập tài khoản Navigo - Dẫn lối chuẩn xác, đón rước tận nơi.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+    <div class="auth-layout">
+        <div class="auth-container">
+            <!-- Auth Card -->
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="auth-logo">🚗</div>
+                    <h1 class="auth-title">Navigo</h1>
+                    <p class="auth-subtitle">Dẫn lối chuẩn xác, đón rước tận nơi</p>
+                </div>
+
+                <form id="login-form" class="auth-form" novalidate>
+                    <div id="login-success" class="app-alert alert-success" style="display:none; color:#15803d; background:#f0fdf4; border:1.5px solid #bbf7d0; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:14px; font-weight:600; align-items:center; gap:8px;">
+                        <span id="login-success-msg">✅ Đã đăng xuất tài khoản thành công.</span>
+                        <button type="button" class="app-alert-close" onclick="this.parentElement.style.display='none'" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:18px; line-height:1; color:#15803d;">&times;</button>
+                    </div>
+
+                    <div id="login-error" class="app-alert alert-error" style="display:none;">
+                        <span id="login-error-msg"></span>
+                        <button type="button" class="app-alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="login-email">Tài khoản / Email <span style="color:var(--color-error);">*</span></label>
+                        <input type="text" id="login-email" class="form-input" placeholder="Nhập email hoặc tên tài khoản" required autocomplete="username" autofocus>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="login-password">Mật khẩu <span style="color:var(--color-error);">*</span></label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="login-password" class="form-input" placeholder="Nhập mật khẩu tài khoản" required autocomplete="current-password" minlength="6">
+                            <button type="button" class="password-toggle-btn" id="toggle-password" title="Hiện mật khẩu" aria-label="Hiện mật khẩu">
+                                <svg class="eye-icon eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-icon eye-closed" style="display:none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/>
+                                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/>
+                                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/>
+                                    <line x1="2" x2="22" y1="2" y2="22"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-check">
+                        <input type="checkbox" id="remember-me" class="form-check-input">
+                        <label for="remember-me" class="form-check-label">Ghi nhớ đăng nhập</label>
+                    </div>
+
+                    <button type="submit" id="login-btn" class="btn btn-primary btn-block btn-lg">
+                        Đăng nhập
+                    </button>
+                </form>
+
+                <div class="auth-footer" style="display:flex; flex-wrap:wrap; justify-content:center; gap:8px; align-items:center;">
+                    <span>Chưa có tài khoản?</span>
+                    <a href="register.html">Đăng ký khách hàng</a>
+                    <span style="color:var(--color-border);">•</span>
+                    <a href="register.html?role=driver" style="color:var(--color-primary); font-weight:700;">Đăng ký đối tác tài xế 🚗</a>
+                    <span style="color:var(--color-border);">•</span>
+                    <a href="../index.html">Về trang chủ</a>
+                </div>
+            </div>
+
+            <!-- Page Footer (neatly below card, never peeking behind) -->
+            <p class="auth-page-footer">
+                Navigo • Đồ án môn học Cấu trúc Dữ liệu & Giải thuật (DSA) • 
+                <a href="../index.html">Trang chủ</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../js/core/firebase-config.js"></script>
+    <script src="../js/core/realtime.js"></script>
+    <script src="../js/core/api.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/router.js"></script>
+    <script src="../js/core/demo-data.js"></script>
+    <script src="../js/core/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('login-form');
+            const emailInput = document.getElementById('login-email');
+            const passwordInput = document.getElementById('login-password');
+            const togglePasswordBtn = document.getElementById('toggle-password');
+            const btn = document.getElementById('login-btn');
+            const errorDiv = document.getElementById('login-error');
+            const errorMsg = document.getElementById('login-error-msg');
+            const successDiv = document.getElementById('login-success');
+
+            // Handle logout confirmation banner
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('logout') === 'true' || urlParams.get('logged_out') === '1') {
+                    if (typeof sessionManager !== 'undefined' && sessionManager.logout) {
+                        sessionManager.logout();
+                    }
+                    if (successDiv) {
+                        successDiv.style.display = 'flex';
+                    }
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                }
+            } catch (err) {}
+
+            // Password visibility toggle (Eye Icon)
+            if (togglePasswordBtn && passwordInput) {
+                togglePasswordBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const isPassword = passwordInput.type === 'password';
+                    passwordInput.type = isPassword ? 'text' : 'password';
+
+                    const eyeOpen = togglePasswordBtn.querySelector('.eye-open');
+                    const eyeClosed = togglePasswordBtn.querySelector('.eye-closed');
+                    if (eyeOpen && eyeClosed) {
+                        eyeOpen.style.display = isPassword ? 'none' : 'block';
+                        eyeClosed.style.display = isPassword ? 'block' : 'none';
+                    }
+                    const titleText = isPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
+                    togglePasswordBtn.setAttribute('title', titleText);
+                    togglePasswordBtn.setAttribute('aria-label', titleText);
+                });
+            }
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                const normInput = email.toLowerCase();
+
+                if (!email) {
+                    errorMsg.textContent = 'Vui lòng nhập tài khoản hoặc địa chỉ email.';
+                    errorDiv.style.display = 'flex';
+                    emailInput.focus();
+                    return;
+                }
+
+                if (!password || password.length < 6) {
+                    errorMsg.textContent = 'Mật khẩu phải có độ dài tối thiểu 6 ký tự.';
+                    errorDiv.style.display = 'flex';
+                    passwordInput.focus();
+                    return;
+                }
+
+                errorDiv.style.display = 'none';
+                btn.disabled = true;
+                btn.textContent = 'Đang xác thực...';
+
+                try {
+                    let result = null;
+
+                    // 1. Attempt authentic C++ backend API connection
+                    if (typeof apiClient !== 'undefined') {
+                        try {
+                            const apiRes = await apiClient.post('/auth/login', { email, password });
+                            if (apiRes && apiRes.data && apiRes.data.user) {
+                                result = apiRes.data;
+                            }
+                        } catch (apiErr) {
+                            // If backend is active and returns an explicit 401 Unauthorized, check offline accounts first
+                            if (apiErr instanceof ApiError && apiErr.status === 401) {
+                                const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                                const hasOffline = offlineUsers.some(u => 
+                                    (u.email && u.email.toLowerCase() === normInput) || 
+                                    (u.phone && u.phone === normInput)
+                                );
+                                if (!hasOffline) {
+                                    throw new Error(apiErr.message || 'Tài khoản hoặc mật khẩu không chính xác.');
+                                }
+                            }
+                            console.warn('[Navigo Login] Backend API unreachable or 404 (static hosting / Vercel), falling back to offline & demo accounts.');
+                        }
+                    }
+
+                    // 2. Offline / Cloud authentication fallback
+                    if (!result) {
+                        const offlineUsers = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                        let matchedUser = offlineUsers.find(u => 
+                            (u.email && u.email.toLowerCase() === normInput) || 
+                            (u.name && u.name.toLowerCase() === normInput) ||
+                            (u.phone && u.phone === normInput)
+                        );
+
+                        // Cross-device Cloud check: If not in local offline users, query Firebase Cloud!
+                        if (!matchedUser && window.realtimeSync) {
+                            try {
+                                // 1. Check goride_users
+                                let allUsers = {};
+                                if (window.realtimeSync.isAvailable()) {
+                                    const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
+                                    allUsers = uSnap.val() || {};
+                                } else if (typeof window.realtimeSync._restGet === 'function') {
+                                    allUsers = await window.realtimeSync._restGet('goride_users') || {};
+                                }
+                                for (const k of Object.keys(allUsers)) {
+                                    const u = allUsers[k];
+                                    if (u && ((u.email && u.email.toLowerCase() === normInput) || (u.phone && u.phone === normInput) || (u.name && u.name.toLowerCase() === normInput))) {
+                                        matchedUser = u;
+                                        break;
+                                    }
+                                }
+
+                                // 2. Check goride_drivers if not found
+                                if (!matchedUser) {
+                                    let allDrivers = {};
+                                    if (window.realtimeSync.isAvailable()) {
+                                        const dSnap = await window.realtimeSync.db.ref('goride_drivers').once('value');
+                                        allDrivers = dSnap.val() || {};
+                                    } else if (typeof window.realtimeSync._restGet === 'function') {
+                                        allDrivers = await window.realtimeSync._restGet('goride_drivers') || {};
+                                    }
+                                    for (const k of Object.keys(allDrivers)) {
+                                        const d = allDrivers[k];
+                                        if (d && ((d.email && d.email.toLowerCase() === normInput) || (d.phone && d.phone === normInput))) {
+                                            matchedUser = { ...d, role: 'driver' };
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                // 3. Check goride_pending_drivers if still not found
+                                if (!matchedUser) {
+                                    let allPending = {};
+                                    if (window.realtimeSync.isAvailable()) {
+                                        const pSnap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                                        allPending = pSnap.val() || {};
+                                    } else if (typeof window.realtimeSync._restGet === 'function') {
+                                        allPending = await window.realtimeSync._restGet('goride_pending_drivers') || {};
+                                    }
+                                    for (const k of Object.keys(allPending)) {
+                                        const p = allPending[k];
+                                        if (p && ((p.email && p.email.toLowerCase() === normInput) || (p.phone && p.phone === normInput))) {
+                                            matchedUser = { ...p, role: 'driver', status: 'pending' };
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (fbErr) {
+                                console.warn('[Login] Firebase cloud query check warning:', fbErr.message);
+                            }
+                        }
+
+                        if (matchedUser) {
+                            // Check latest driver status from Firebase if applicable
+                            if (matchedUser.role === 'driver' && window.realtimeSync && window.realtimeSync.isAvailable()) {
+                                try {
+                                    const liveDSnap = await window.realtimeSync.db.ref(`goride_drivers/${matchedUser.id}`).once('value');
+                                    const liveD = liveDSnap.val();
+                                    if (liveD && liveD.status) {
+                                        matchedUser.status = liveD.status;
+                                    }
+                                } catch (e) {}
+                            }
+
+                            if (matchedUser.password && matchedUser.password !== password) {
+                                throw new Error('Mật khẩu không chính xác. Vui lòng kiểm tra lại.');
+                            }
+                            if (matchedUser.role === 'driver' && matchedUser.status === 'pending') {
+                                throw new Error('Hồ sơ tài xế của bạn đang trong trạng thái CHỜ PHÊ DUYỆT bởi Quản trị viên (Admin). Vui lòng đợi Admin duyệt hồ sơ trước khi đăng nhập.');
+                            }
+                            if (matchedUser.role === 'driver' && matchedUser.status === 'rejected') {
+                                throw new Error('Hồ sơ đăng ký tài xế của bạn đã bị Quản trị viên từ chối.');
+                            }
+
+                            // Cache into local offline users for subsequent instant loads
+                            const uIdx = offlineUsers.findIndex(u => u.id === matchedUser.id || (matchedUser.email && u.email === matchedUser.email));
+                            if (uIdx === -1) {
+                                offlineUsers.push(matchedUser);
+                            } else {
+                                offlineUsers[uIdx] = { ...offlineUsers[uIdx], ...matchedUser };
+                            }
+                            localStorage.setItem('goride_offline_users', JSON.stringify(offlineUsers));
+
+                            result = {
+                                user: matchedUser,
+                                token: `cloud_token_${matchedUser.id}_${Date.now()}`
+                            };
+                        } else {
+                            // Standard baseline & demo accounts (Full admin & user support)
+                            const defaultAccounts = [
+                                {
+                                    identifiers: ['admin', 'admin@demo.com', 'admin@navigo.vn', 'admin@goride.vn', 'adm_admin'],
+                                    passwords: ['admin@123', 'admin123', 'password123', '123456'],
+                                    role: 'admin',
+                                    id: 'adm_admin',
+                                    name: 'Quản trị viên Hệ thống',
+                                    email: 'admin@navigo.vn',
+                                    phone: '0988888888',
+                                    walletBalance: 0
+                                },
+                                {
+                                    identifiers: ['customer@demo.com', 'customer@navigo.vn', 'customer@goride.vn', 'customer', 'khach', 'usr_c101'],
+                                    passwords: ['123456', 'password123', 'customer123'],
+                                    role: 'customer',
+                                    id: 'usr_c101',
+                                    name: 'Nguyễn Văn An',
+                                    email: 'customer@demo.com',
+                                    phone: '0901234567',
+                                    walletBalance: 0
+                                },
+                                {
+                                    identifiers: ['driver@demo.com', 'driver@navigo.vn', 'driver@goride.vn', 'driver', 'drv_d202'],
+                                    passwords: ['123456', 'password123', 'driver123'],
+                                    role: 'driver',
+                                    id: 'drv_d202',
+                                    name: 'Trần Văn Bình',
+                                    email: 'driver@demo.com',
+                                    phone: '0918765432',
+                                    walletBalance: 0,
+                                    vehicleType: 'car4',
+                                    licensePlate: '51G-889.24',
+                                    vehicle: {
+                                        type: 'car4',
+                                        typeName: 'Ô tô 4 chỗ (Navigo Car)',
+                                        plate: '51G-889.24',
+                                        model: 'Toyota Vios 2023'
+                                    }
+                                },
+                                {
+                                    identifiers: ['driver.bike@demo.com', 'driver.bike@navigo.vn', 'driver.bike@goride.vn', 'driver.bike', 'taixebike', 'drv_bike'],
+                                    passwords: ['123456', 'password123', 'driver123'],
+                                    role: 'driver',
+                                    id: 'drv_bike',
+                                    name: 'Nguyễn Văn Hùng (Xe máy)',
+                                    email: 'driver.bike@demo.com',
+                                    phone: '0919888999',
+                                    walletBalance: 0,
+                                    vehicleType: 'motorbike',
+                                    licensePlate: '59-S3 123.45',
+                                    vehicle: {
+                                        type: 'motorbike',
+                                        typeName: 'Xe máy (Navigo Bike)',
+                                        plate: '59-S3 123.45',
+                                        model: 'Honda Wave Alpha'
+                                    }
+                                }
+                            ];
+
+                            const matchedDemo = defaultAccounts.find(d => 
+                                d.identifiers.some(id => id.toLowerCase() === normInput)
+                            );
+
+                            if (matchedDemo) {
+                                const isPassValid = matchedDemo.passwords.includes(password);
+                                if (!isPassValid) {
+                                    throw new Error('Mật khẩu không chính xác. Vui lòng kiểm tra lại.');
+                                }
+                                result = {
+                                    user: {
+                                        id: matchedDemo.id,
+                                        name: matchedDemo.name,
+                                        email: matchedDemo.email,
+                                        phone: matchedDemo.phone || '0988888888',
+                                        role: matchedDemo.role,
+                                        walletBalance: matchedDemo.walletBalance || 0,
+                                        vehicle: matchedDemo.vehicle || null,
+                                        vehicleType: matchedDemo.vehicleType || matchedDemo.vehicle?.type || null,
+                                        licensePlate: matchedDemo.licensePlate || matchedDemo.vehicle?.plate || null
+                                    },
+                                    token: `demo_token_${matchedDemo.role}_${Date.now()}`
+                                };
+                            } else {
+                                throw new Error('Email hoặc mật khẩu không chính xác. Bạn có thể bấm "Đăng ký" để tạo tài khoản mới ngay lập tức.');
+                            }
+                        }
+                    }
+
+                    if (!result || !result.user) {
+                        throw new Error('Không thể xác thực thông tin tài khoản. Vui lòng thử lại.');
+                    }
+
+                    // Save session
+                    sessionManager.login(result.user, result.token);
+
+                    // Role-based routing: Admin MUST ALWAYS route to admin.html
+                    const role = result.user.role;
+                    if (role === 'admin') {
+                        window.location.href = 'admin.html';
+                        return;
+                    }
+
+                    // Check redirect parameter for non-admin roles
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectTarget = urlParams.get('redirect');
+
+                    if (redirectTarget) {
+                        const targetKey = redirectTarget.replace('.html', '').toLowerCase();
+                        if (role === 'driver' && targetKey === 'driver') {
+                            window.location.href = 'driver.html';
+                            return;
+                        } else if (role === 'customer' && targetKey === 'customer') {
+                            window.location.href = 'customer.html';
+                            return;
+                        }
+                    }
+
+                    // Default role-based routing
+                    if (role === 'driver') {
+                        window.location.href = 'driver.html';
+                    } else {
+                        window.location.href = 'customer.html';
+                    }
+                } catch (err) {
+                    let displayMsg = 'Đăng nhập thất bại. Vui lòng thử lại.';
+                    if (typeof err === 'string') {
+                        displayMsg = err;
+                    } else if (err && typeof err.message === 'string' && err.message !== '[object Object]') {
+                        displayMsg = err.message;
+                    } else if (err && err.data) {
+                        displayMsg = typeof err.data.error === 'string' ? err.data.error : (typeof err.data.message === 'string' ? err.data.message : displayMsg);
+                    }
+                    errorMsg.textContent = displayMsg;
+                    errorDiv.style.display = 'flex';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Đăng nhập';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

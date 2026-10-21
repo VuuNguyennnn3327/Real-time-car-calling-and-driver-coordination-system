@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Navigo — Di chuyển xanh thuần điện</title>
+    <meta name="description" content="Navigo - Nền tảng di chuyển thuần điện 100% bằng ô tô và xe máy điện. Không khói, không mùi, không tiếng ồn.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/design-system.css">
+    <link rel="stylesheet" href="css/gsm-app.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+</head>
+<body class="gsm-theme">
+    <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
+            </div>
+        </a>
+
+        <div class="gsm-pc-nav-links">
+            <a href="index.html" class="gsm-pc-nav-link active">Trang chủ</a>
+            <a href="pages/customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
+            <a href="pages/customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
+            <a href="pages/customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="pages/customer.html?view=charging" class="gsm-pc-nav-link">Trạm sạc Navigo EV</a>
+            <a href="pages/driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
+            <a href="pages/admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div data-auth="guest" style="display:flex; align-items:center; gap:8px;">
+                <a href="pages/register.html?role=driver" style="height:38px; padding:0 14px; border-radius:9999px; text-decoration:none; font-size:0.85rem; font-weight:700; color:#007d77; background:#e6f7f6; border:1px solid #a7f3d0; display:flex; align-items:center; gap:4px;" title="Đăng ký trở thành đối tác tài xế Navigo">
+                    <span>🚗</span> Đăng ký tài xế
+                </a>
+                <a href="pages/login.html" class="gsm-btn-primary-cta" style="height:38px; padding:0 18px; border-radius:9999px; text-decoration:none; font-size:0.88rem;">
+                    Đăng nhập
+                </a>
+                <a href="pages/register.html" style="height:38px; padding:0 16px; border-radius:9999px; text-decoration:none; font-size:0.88rem; font-weight:700; color:#0f2d3c; border:1px solid #cbd5e1; display:flex; align-items:center;">
+                    Đăng ký
+                </a>
+            </div>
+            <div data-auth="user" style="display:none; align-items:center; gap:10px;">
+                <a href="pages/profile.html" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:#0f2d3c; font-weight:700; font-size:0.9rem;">
+                    <div style="width:34px; height:34px; border-radius:50%; background:#00b1a9; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800;" data-user-avatar>U</div>
+                    <span data-user-name>Người dùng</span>
+                </a>
+                <button type="button" data-action="logout" id="btn-desktop-logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 14px; border-radius:8px; font-weight:700; cursor:pointer;">
+                    Đăng xuất
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Desktop Layout Wrapper -->
+    <div class="gsm-desktop-container">
+        <!-- Sidebar Phone App Shell (Exact Screen 1 Replica) -->
+        <div class="gsm-desktop-sidebar">
+            <div class="gsm-screen-wrapper">
+                <!-- 1. Header with Top Search Pill and 3D City Background -->
+                <div class="gsm-home-header">
+                    <!-- Top Pill Search Bar -->
+                    <a href="pages/customer.html" class="gsm-top-search-pill">
+                        <span class="gsm-search-icon">🔍</span>
+                        <span class="gsm-search-placeholder">Bạn muốn đi đâu, ăn gì?</span>
+                    </a>
+                </div>
+
+                <!-- 2. Food Section Carousel -->
+                <div class="gsm-food-section">
+                    <div class="gsm-food-header">
+                        <div class="gsm-food-title">
+                            <span style="color:#f59e0b;">✦</span> Đói chưa? Mấy quán ngon gần đây đang chờ bạn.
+                        </div>
+                        <span style="color:#94a3b8; font-size:1.1rem; cursor:pointer;">•••</span>
+                    </div>
+
+                    <div class="gsm-food-carousel">
+                        <!-- Food 1 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=MiCaySeoul'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=300&q=80" alt="Mì Cay Seoul" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 4.8</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Mì Cay Seoul - Tỉnh Lộ 43
+                            </div>
+                            <div class="gsm-food-dist">📍 0.4 km</div>
+                        </div>
+
+                        <!-- Food 2 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=PizzaHongSon'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=300&q=80" alt="Pizza Hồng Sơn" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 4.7</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Hồng Sơn - Pizza, Gà Rán
+                            </div>
+                            <div class="gsm-food-dist">📍 1.3 km</div>
+                        </div>
+
+                        <!-- Food 3 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=TraSuaToco'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1558857563-b37cfb84c99c?auto=format&fit=crop&w=300&q=80" alt="Trà Sữa ToCoToCo" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 4.9</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Trà Sữa ToCoToCo
+                            </div>
+                            <div class="gsm-food-dist">📍 1.4 km</div>
+                        </div>
+
+                        <!-- Food 4 -->
+                        <div class="gsm-food-card" onclick="window.location.href='pages/customer.html?dest=ChanGaVemy'">
+                            <div class="gsm-food-img-wrapper">
+                                <img src="https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=300&q=80" alt="Chân Gà Thái" class="gsm-food-img">
+                                <div class="gsm-food-rating-pill">★ 5.0</div>
+                            </div>
+                            <div class="gsm-food-name">
+                                <span style="color:#00b1a9;">✔</span> Chân Gà Sốt Thái
+                            </div>
+                            <div class="gsm-food-dist">📍 2.1 km</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Two Big Hero Cards: Đặt xe (Car) & Đặt xe máy (Bike) -->
+                <div class="gsm-hero-cards-row">
+                    <a href="pages/customer.html?service=car4" class="gsm-hero-service-card" title="Đặt ô tô điện Navigo">
+                        <div class="gsm-hero-service-title">Đặt xe</div>
+                        <img src="assets/gsm/car_vf5.svg" alt="Navigo Car" class="gsm-hero-service-img">
+                    </a>
+
+                    <a href="pages/customer.html?service=bike" class="gsm-hero-service-card" title="Đặt xe máy điện Navigo">
+                        <div class="gsm-hero-service-title">Đặt xe máy</div>
+                        <img src="assets/gsm/bike_feliz.svg" alt="Navigo Bike" class="gsm-hero-service-img">
+                    </a>
+                </div>
+
+                <!-- 4. 4x2 Other Services Grid (Dịch vụ khác) -->
+                <div class="gsm-services-section">
+                    <div class="gsm-services-header">
+                        <div class="gsm-services-title">Dịch vụ khác</div>
+                        <a href="pages/customer.html" class="gsm-services-more">Xem tất cả</a>
+                    </div>
+
+                    <div class="gsm-services-grid">
+                        <!-- 1. Liên tỉnh -->
+                        <a href="pages/customer.html?service=intercity" class="gsm-grid-item">
+                            <div class="gsm-grid-badge">-20%</div>
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_lientinh.svg" alt="Liên tỉnh">
+                            </div>
+                            <div class="gsm-grid-label">Liên tỉnh</div>
+                        </a>
+
+                        <!-- 2. Đặt taxi -->
+                        <a href="pages/customer.html?service=car4" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_taxi.svg" alt="Đặt taxi">
+                            </div>
+                            <div class="gsm-grid-label">Đặt taxi</div>
+                        </a>
+
+                        <!-- 3. Đồ ăn -->
+                        <a href="pages/customer.html?service=food" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_food.svg" alt="Đồ ăn">
+                            </div>
+                            <div class="gsm-grid-label">Đồ ăn</div>
+                        </a>
+
+                        <!-- 4. Giao hàng -->
+                        <a href="pages/customer.html?service=delivery" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_delivery.svg" alt="Giao hàng">
+                            </div>
+                            <div class="gsm-grid-label">Giao hàng</div>
+                        </a>
+
+                        <!-- 5. Hội viên -->
+                        <a href="pages/profile.html#membership" class="gsm-grid-item">
+                            <div class="gsm-grid-badge">MỚI</div>
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_member.svg" alt="Hội viên">
+                            </div>
+                            <div class="gsm-grid-label">Hội viên</div>
+                        </a>
+
+                        <!-- 6. Thuê xe tự lái -->
+                        <a href="pages/customer.html?service=rental" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_rent.svg" alt="Thuê xe tự lái">
+                            </div>
+                            <div class="gsm-grid-label">Thuê xe tự lái</div>
+                        </a>
+
+                        <!-- 7. Thẻ quà tặng -->
+                        <a href="pages/customer.html?service=gift" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_gift.svg" alt="Thẻ quà tặng">
+                            </div>
+                            <div class="gsm-grid-label">Thẻ quà tặng</div>
+                        </a>
+
+                        <!-- 8. VinBus -->
+                        <a href="pages/customer.html?service=vinbus" class="gsm-grid-item">
+                            <div class="gsm-grid-icon-wrap">
+                                <img src="assets/gsm/ic_vinbus.svg" alt="VinBus">
+                            </div>
+                            <div class="gsm-grid-label">VinBus</div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. Promotional Banner Card (BIC & BIDV) -->
+                <div class="gsm-banner-card" onclick="window.location.href='pages/customer.html'">
+                    <div class="gsm-banner-left">
+                        <h4>🛡️ NHÂN ĐÔI BẢO VỆ CÙNG BIC & BIDV</h4>
+                        <p>Bảo hiểm hành trình tự động 100% cho mọi cuốc xe Navigo</p>
+                    </div>
+                    <div class="gsm-banner-graphic">🎉</div>
+                </div>
+
+                <div style="height: 80px;"></div>
+
+                <!-- 6. Bottom Navigation Bar anchored to viewport center -->
+            </div>
+        </div>
+
+        <!-- Desktop Wide Live Interactive Canvas (PC & Tablet View) -->
+        <div class="gsm-desktop-wide-canvas">
+            <!-- Leaflet Map Container for Desktop -->
+            <div id="desktop-home-map" style="flex:1; width:100%; height:100%; position:relative;">
+                <button type="button" id="btn-home-gps" style="position:absolute; bottom:20px; right:20px; z-index:500; background:#ffffff; border:1px solid #cbd5e1; border-radius:9999px; padding:8px 16px; font-weight:800; font-size:0.85rem; color:#0f2d3c; box-shadow:0 4px 14px rgba(0,0,0,0.15); cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <span>🎯</span> Vị trí của tôi
+                </button>
+            </div>
+        </div>
+    </div>
+
+        <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="index.html" class="gsm-nav-btn active" title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="pages/activity.html" class="gsm-nav-btn " title="Hoạt động">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </a>
+            <a href="pages/notifications.html" class="gsm-nav-btn " title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot"></span>
+                </div>
+            </a>
+            <a href="pages/profile.html" class="gsm-nav-btn " title="Tài khoản">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Separate Circular Floating Glass Trophy Orb -->
+        <a href="pages/profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="js/core/firebase-config.js"></script>
+    <script src="js/core/api.js"></script>
+    <script src="js/core/session.js"></script>
+    <script src="js/core/realtime.js"></script>
+    <script src="js/core/notifications.js"></script>
+    <script>
+        // Init Desktop Map exclusively with Google Maps VN (hl=vi&gl=VN)
+        document.addEventListener('DOMContentLoaded', () => {
+            const mapEl = document.getElementById('desktop-home-map');
+            if (mapEl && typeof L !== 'undefined') {
+                const map = L.map('desktop-home-map', { zoomControl: true }).setView([10.7769, 106.7009], 13);
+                L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}', {
+                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                    maxZoom: 20,
+                    attribution: '&copy; Bản đồ Google Việt Nam'
+                }).addTo(map);
+
+                // Add sample Cyan EV car markers
+                const evPositions = [
+                    [10.7769, 106.7009, 'Navigo Car (51K-889.24)'],
+                    [10.7820, 106.7080, 'Navigo Taxi 7 chỗ (51K-992.11)'],
+                    [10.7725, 106.6980, 'Navigo Bike (59A-123.45)'],
+                    [10.7951, 106.7218, 'Trạm sạc Navigo EV Landmark 81'],
+                    [10.8185, 106.6588, 'Trạm sạc Navigo EV Tân Sơn Nhất']
+                ];
+                evPositions.forEach(p => {
+                    const isStation = p[2].includes('Trạm sạc') || p[2].includes('V-GREEN');
+                    const icon = L.divIcon({
+                        className: 'gsm-map-marker',
+                        html: `<div style="background:${isStation ? '#f59e0b' : '#00b1a9'}; color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.25); border:2.5px solid #fff; font-size:16px;">${isStation ? '⚡' : '🚗'}</div>`,
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+                    L.marker([p[0], p[1]], { icon }).addTo(map).bindPopup(`<b>${p[2]}</b>`);
+                });
+
+                
+                // Recenter Desktop Home Map on GPS
+                const btnHomeGps = document.getElementById('btn-home-gps');
+                if (btnHomeGps) {
+                    btnHomeGps.addEventListener('click', () => {
+                        const doRecenterHome = (lat, lng) => {
+                            map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
+                            L.marker([lat, lng], {
+                                icon: L.divIcon({
+                                    className: 'gsm-home-user-gps',
+                                    html: '<div style="background:#00b1a9; color:#fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 6px rgba(0,177,169,0.25); font-size:14px; border:2px solid #fff;">📍</div>',
+                                    iconSize: [28, 28],
+                                    iconAnchor: [14, 14]
+                                })
+                            }).addTo(map);
+
+                            if (typeof window.showNavigoModal === 'function') {
+                                window.showNavigoModal({
+                                    title: 'Vị trí của tôi',
+                                    message: 'Bản đồ đã chuyển hướng về giữa vị trí GPS hiện tại của bạn. Bạn có muốn đặt xe đón tại đây không?',
+                                    icon: '🎯',
+                                    confirmText: 'Đặt xe ngay',
+                                    cancelText: 'Hủy / Đóng',
+                                    onConfirm: () => {
+                                        window.location.href = 'pages/customer.html?lat=' + lat + '&lng=' + lng;
+                                    }
+                                });
+                            }
+                        };
+
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(
+                                (pos) => doRecenterHome(pos.coords.latitude, pos.coords.longitude),
+                                () => doRecenterHome(10.7769, 106.7009),
+                                { timeout: 5000 }
+                            );
+                        } else {
+                            doRecenterHome(10.7769, 106.7009);
+                        }
+                    });
+                }
+
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 300);
+
+                window.addEventListener('resize', () => {
+                    map.invalidateSize();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

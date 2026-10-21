@@ -1,0 +1,62 @@
+# ==========================================
+# Navigo .gitignore
+# ==========================================
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# AI Assistant artifacts & scratch reports
+.gemini/
+.antigravity/
+.system_generated/
+scratch/
+*scratch*
+*report*.md
+*REPORT*.md
+*summary*.md
+*ai*.md
+*AI*.md
+*walkthrough*.md
+*task*.md
+!README.md
+
+# Build outputs & C++ binaries
+build/
+bin/
+lib/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.exe
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+
+# Node & package manager logs
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+*.log

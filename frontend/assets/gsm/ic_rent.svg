@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+    <rect width="48" height="48" rx="14" fill="#f1f5f9"/>
+    <!-- Smart Key Fob -->
+    <path d="M24 10 Q31 10 31 18 L30 32 Q29 38 24 38 Q19 38 18 32 L17 18 Q17 10 24 10 Z" fill="#1e293b"/>
+    <rect x="22" y="16" width="4" height="4" rx="1" fill="#00b1a9"/>
+    <circle cx="24" cy="24" r="2" fill="#94a3b8"/>
+    <circle cx="24" cy="30" r="2" fill="#94a3b8"/>
+    <!-- Key Ring -->
+    <circle cx="24" cy="8" r="4" fill="none" stroke="#64748b" stroke-width="2"/>
+  </svg>

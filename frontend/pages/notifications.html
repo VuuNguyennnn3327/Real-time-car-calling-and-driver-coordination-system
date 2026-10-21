@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Thông báo & Ưu đãi — Navigo</title>
+    <meta name="description" content="Cập nhật khuyến mãi, ưu đãi chuyến đi và thông tin hành trình di chuyển xanh Navigo.">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/gsm-app.css">
+    <style>
+        .gsm-notif-tab-nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 16px;
+        }
+        .gsm-notif-tab {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: #64748b;
+            padding: 8px 4px 12px;
+            cursor: pointer;
+            position: relative;
+            background: none;
+            border: none;
+            transition: color 0.2s;
+        }
+        .gsm-notif-tab.active {
+            color: #00b1a9;
+            font-weight: 800;
+        }
+        .gsm-notif-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #00b1a9;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="gsm-theme">
+    <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
+            </div>
+        </a>
+
+        <div class="gsm-pc-nav-links">
+            <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
+            <a href="customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
+            <a href="customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
+            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="customer.html?view=charging" class="gsm-pc-nav-link">Trạm sạc Navigo EV</a>
+            <a href="driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
+            <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div data-auth="guest" style="display:flex; align-items:center; gap:8px;">
+                <a href="login.html" class="gsm-btn-primary-cta" style="height:36px; padding:0 16px; border-radius:9999px; text-decoration:none; font-size:0.85rem;">
+                    Đăng nhập
+                </a>
+                <a href="register.html" style="height:36px; padding:0 14px; border-radius:9999px; text-decoration:none; font-size:0.85rem; font-weight:700; color:#0f2d3c; border:1px solid #cbd5e1; display:flex; align-items:center;">
+                    Đăng ký
+                </a>
+            </div>
+            <div data-auth="user" style="display:none; align-items:center; gap:10px;">
+                <a href="profile.html" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:#0f2d3c; font-weight:700; font-size:0.9rem;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:#e6f7f6; color:#00b1a9; display:flex; align-items:center; justify-content:center; font-weight:800;" data-user-avatar>U</div>
+                    <span data-user-name>Người dùng</span>
+                </a>
+                <button type="button" data-action="logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.82rem;">
+                    Đăng xuất
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Desktop Layout Wrapper -->
+    <div class="gsm-desktop-container">
+        <!-- Sidebar Phone App Shell -->
+        <div class="gsm-desktop-sidebar">
+            <div class="gsm-screen-wrapper">
+                <!-- Notifications Screen Content -->
+                <div class="gsm-notif-screen">
+                    <!-- Screen Header -->
+                    <div class="gsm-screen-header-row">
+                        <h1 class="gsm-screen-main-title">Thông báo</h1>
+                        <button type="button" class="gsm-screen-header-action" title="Đánh dấu tất cả đã đọc" onclick="window.showNavigoModal({ title: 'Đánh dấu đã đọc', message: 'Bạn có muốn đánh dấu toàn bộ thông báo và ưu đãi là đã đọc không?', icon: '✓', confirmText: 'Xác nhận', cancelText: 'Hủy', onConfirm: () => { if (typeof navigoNotifications !== 'undefined') navigoNotifications.markAllAsRead(); renderNotifications(); } });">
+                            ✓✓
+                        </button>
+                    </div>
+
+                    <!-- Category Tabs (Tất cả / Cuốc xe / Khuyến mãi) -->
+                    <div class="gsm-notif-tab-nav">
+                        <button type="button" class="gsm-notif-tab active" data-tab="all">Tất cả</button>
+                        <button type="button" class="gsm-notif-tab" data-tab="trips">Cuốc xe</button>
+                        <button type="button" class="gsm-notif-tab" data-tab="promo">Khuyến mãi</button>
+                    </div>
+
+                    <!-- Notifications List Container (Dynamic per Account) -->
+                    <div id="notif-list-container">
+                        <div style="text-align:center; padding:40px 20px;">
+                            <div class="spinner" style="width:32px; height:32px; border:3px solid #e2e8f0; border-top-color:#00b1a9; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px;"></div>
+                            <div style="font-size:0.9rem; color:#64748b; font-weight:600;">Đang tải thông báo của bạn...</div>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="activity.html" class="gsm-nav-btn " title="Hoạt động">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </a>
+            <a href="notifications.html" class="gsm-nav-btn active" title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot"></span>
+                </div>
+            </a>
+            <a href="profile.html" class="gsm-nav-btn " title="Tài khoản">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Separate Circular Floating Glass Trophy Orb -->
+        <a href="profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
+            </div>
+        </div>
+
+        <!-- Desktop Wide Canvas (Promotions & Solar Holidays Showcase) -->
+        <div class="gsm-desktop-wide-canvas">
+            <div style="background:#ffffff; border-radius:24px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.06); height:100%; display:flex; flex-direction:column; overflow-y:auto;">
+                <!-- Wide Canvas Header -->
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #f1f5f9; padding-bottom:16px;">
+                    <div>
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                            <span style="font-size:1.4rem;">🎉</span>
+                            <h2 style="font-size:1.35rem; font-weight:900; color:#0f2d3c; margin:0;">Trung Tâm Ưu Đãi & Sự Kiện Navigo</h2>
+                        </div>
+                        <p style="font-size:0.88rem; color:#64748b; margin:0;">Tổng hợp mã giảm giá chuyến xe và lời chúc các ngày lễ dương lịch Việt Nam từ Navigo</p>
+                    </div>
+                    <a href="customer.html" class="gsm-btn-primary-cta" style="padding:10px 22px; text-decoration:none; font-size:0.88rem; border-radius:12px; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+                        <span>🚗</span> Đặt Chuyến Đi Ngay
+                    </a>
+                </div>
+
+                <!-- Featured Solar Calendar Banner -->
+                <div style="background:linear-gradient(135deg, #00b1a9 0%, #0f2d3c 100%); border-radius:20px; padding:24px; color:#ffffff; margin-bottom:24px; position:relative; overflow:hidden; box-shadow:0 10px 25px rgba(0,177,169,0.25);">
+                    <div style="position:relative; z-index:2; max-width:560px;">
+                        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.2); backdrop-filter:blur(8px); padding:4px 12px; border-radius:9999px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px; margin-bottom:10px;">
+                            <span>🇻🇳</span> DI CHUYỂN XANH THUẦN ĐIỆN VIỆT NAM
+                        </div>
+                        <h3 style="font-size:1.35rem; font-weight:900; margin:0 0 8px; line-height:1.25;">Đồng Hành Cùng Các Ngày Lễ Dương Lịch Việt Nam</h3>
+                        <p style="font-size:0.88rem; opacity:0.9; margin:0 0 16px; line-height:1.45;">Cùng gia đình đón các dịp lễ lớn trong năm với xe thuần điện êm ái, bảo vệ môi trường và nhận ưu đãi giảm giá lên đến 50% cước phí chuyến đi!</p>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <a href="customer.html" style="background:#ffffff; color:#0f2d3c; padding:9px 18px; border-radius:10px; font-weight:800; font-size:0.85rem; text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+                                Đặt xe ngay <span>→</span>
+                            </a>
+                            <span style="font-size:0.8rem; opacity:0.85;">100% Không mùi khói xăng • 0 Phát thải</span>
+                        </div>
+                    </div>
+                    <div style="position:absolute; right:-20px; bottom:-20px; font-size:9rem; opacity:0.12; pointer-events:none;">
+                        ⚡
+                    </div>
+                </div>
+
+                <!-- Solar Calendar Holiday Cards Grid -->
+                <div style="margin-bottom:24px;">
+                    <h3 style="font-size:1.05rem; font-weight:800; color:#0f2d3c; margin:0 0 14px; display:flex; align-items:center; gap:8px;">
+                        <span>🗓️</span> Các Sự Kiện Lễ Dương Lịch Tiêu Biểu Trong Năm
+                    </h3>
+                    <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:14px;" id="solar-holidays-grid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Green Mobility Service Highlights -->
+                <div>
+                    <h3 style="font-size:1.05rem; font-weight:800; color:#0f2d3c; margin:0 0 14px; display:flex; align-items:center; gap:8px;">
+                        <span>⚡</span> Đội Xe Thuần Điện Navigo
+                    </h3>
+                    <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; text-align:center;">
+                            <div style="font-size:2rem; margin-bottom:6px;">🚗</div>
+                            <div style="font-weight:800; color:#0f2d3c; font-size:0.95rem;">Navigo Taxi</div>
+                            <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">Navigo Car 4 chỗ thuần điện</div>
+                            <a href="customer.html?service=car4" style="display:inline-block; margin-top:10px; font-size:0.8rem; font-weight:700; color:#00b1a9; text-decoration:none;">Đặt xe 4 chỗ →</a>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; text-align:center;">
+                            <div style="font-size:2rem; margin-bottom:6px;">✨</div>
+                            <div style="font-weight:800; color:#0f2d3c; font-size:0.95rem;">Navigo Luxury</div>
+                            <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">Navigo Luxury chuẩn 5 sao</div>
+                            <a href="customer.html?service=car7" style="display:inline-block; margin-top:10px; font-size:0.8rem; font-weight:700; color:#00b1a9; text-decoration:none;">Trải nghiệm cao cấp →</a>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; text-align:center;">
+                            <div style="font-size:2rem; margin-bottom:6px;">🛵</div>
+                            <div style="font-weight:800; color:#0f2d3c; font-size:0.95rem;">Navigo Bike</div>
+                            <div style="font-size:0.78rem; color:#64748b; margin-top:2px;">Navigo Bike thuần điện êm ái</div>
+                            <a href="customer.html?service=bike" style="display:inline-block; margin-top:10px; font-size:0.8rem; font-weight:700; color:#00b1a9; text-decoration:none;">Di chuyển linh hoạt →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="../js/core/firebase-config.js"></script>
+    <script src="../js/core/api.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/realtime.js"></script>
+    <script src="../js/core/notifications.js"></script>
+    <script>
+        let currentTab = 'all';
+
+        function copyVoucherCode(code) {
+            if (!code) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => {
+                    if (typeof window.showNavigoModal === 'function') {
+                        window.showNavigoModal({
+                            title: 'Đã sao chép mã voucher!',
+                            message: 'Mã ưu đãi "' + code + '" đã được sao chép vào bộ nhớ tạm. Dán mã này tại màn hình đặt xe để nhận ưu đãi ngay!',
+                            icon: '🎟️',
+                            confirmText: 'Đặt xe ngay',
+                            cancelText: 'Đóng',
+                            onConfirm: () => {
+                                window.location.href = 'customer.html?promo=' + encodeURIComponent(code);
+                            }
+                        });
+                    }
+                }).catch(() => {
+                    alert('Đã chọn mã: ' + code);
+                });
+            } else {
+                alert('Mã ưu đãi: ' + code);
+            }
+        }
+
+        function renderSolarHolidayCards() {
+            const grid = document.getElementById('solar-holidays-grid');
+            if (!grid || typeof VIETNAM_SOLAR_HOLIDAYS === 'undefined') return;
+
+            grid.innerHTML = VIETNAM_SOLAR_HOLIDAYS.slice(0, 6).map(h => `
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px; display:flex; flex-direction:column; justify-content:space-between; transition:all 0.2s;" onmouseover="this.style.borderColor='#00b1a9'; this.style.boxShadow='0 4px 14px rgba(0,177,169,0.12)';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.boxShadow='none';">
+                    <div>
+                        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:8px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:1.5rem;">${h.icon || '🇻🇳'}</span>
+                                <div style="font-weight:800; color:#0f2d3c; font-size:0.92rem; line-height:1.2;">${h.name}</div>
+                            </div>
+                            <span style="background:#e6f7f6; color:#007d77; font-weight:800; font-size:0.75rem; padding:3px 8px; border-radius:9999px; white-space:nowrap;">-${h.discountPercent}%</span>
+                        </div>
+                        <p style="font-size:0.82rem; color:#64748b; margin:0 0 12px; line-height:1.4;">${h.body}</p>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; pt:8px; border-top:1px dashed #e2e8f0; padding-top:10px;">
+                        <code style="background:#ffffff; border:1px solid #cbd5e1; padding:3px 8px; border-radius:6px; font-weight:800; color:#0f2d3c; font-size:0.85rem;">${h.promoCode}</code>
+                        <button type="button" onclick="copyVoucherCode('${h.promoCode}')" style="background:#00b1a9; color:#fff; border:none; padding:5px 12px; border-radius:8px; font-size:0.78rem; font-weight:700; cursor:pointer;">
+                            Sao chép
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notif-list-container');
+            if (!container) return;
+
+            if (typeof sessionManager === 'undefined' || !sessionManager.isAuthenticated()) {
+                // GUEST STATE: Strictly isolated, NO notifications shown
+                container.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="width:72px; height:72px; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 16px; box-shadow:0 4px 14px rgba(0,0,0,0.06);">🔒</div>
+                        <h3 style="font-size:1.15rem; font-weight:800; color:#0f2d3c; margin:0 0 8px;">Vui lòng đăng nhập</h3>
+                        <p style="font-size:0.88rem; color:#64748b; margin:0 0 20px; line-height:1.45;">Bạn cần đăng nhập tài khoản Navigo để xem các thông báo cuốc xe và ưu đãi dành riêng cho bạn.</p>
+                        <a href="login.html?redirect=notifications.html" class="gsm-btn-primary-cta" style="display:inline-flex; align-items:center; justify-content:center; height:44px; padding:0 28px; border-radius:12px; text-decoration:none; font-weight:800;">Đăng nhập ngay</a>
+                    </div>
+                `;
+                document.querySelectorAll('.gsm-nav-badge-dot').forEach(d => d.style.display = 'none');
+                return;
+            }
+
+            const allNotifs = (typeof navigoNotifications !== 'undefined') ? navigoNotifications.getNotifications() : [];
+
+            // Filter by active category tab
+            const filtered = allNotifs.filter(n => {
+                if (currentTab === 'all') return true;
+                if (currentTab === 'trips') return n.category === 'trips';
+                if (currentTab === 'promo') return n.category === 'promo' || n.category === 'system';
+                return true;
+            });
+
+            // Update badge dot
+            const hasUnread = allNotifs.some(n => n.unread);
+            document.querySelectorAll('.gsm-nav-badge-dot').forEach(d => {
+                d.style.display = hasUnread ? 'block' : 'none';
+            });
+
+            if (filtered.length === 0) {
+                const emptyMsg = currentTab === 'trips'
+                    ? 'Bạn chưa có thông báo cuốc xe nào. Hãy đặt chuyến xe mới để nhận cập nhật!'
+                    : (currentTab === 'promo' ? 'Hiện chưa có ưu đãi nào trong mục này.' : 'Chưa có thông báo nào trong hộp thư của bạn.');
+
+                container.innerHTML = `
+                    <div style="text-align:center; padding:60px 20px;">
+                        <div style="width:72px; height:72px; border-radius:50%; background:#e6f7f6; color:#00b1a9; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 16px;">🔔</div>
+                        <h3 style="font-size:1.15rem; font-weight:800; color:#0f2d3c; margin:0 0 8px;">Không có thông báo</h3>
+                        <p style="font-size:0.88rem; color:#64748b; margin:0; line-height:1.45;">${emptyMsg}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(n => `
+                <div class="gsm-notif-card" data-id="${n.id}" data-category="${n.category}" style="cursor:pointer;">
+                    <div class="gsm-notif-header-row">
+                        <div class="gsm-notif-icon-circle" style="background:#e6f7f6; color:#00b1a9;">${n.icon || '⚡'}</div>
+                        <div class="gsm-notif-title-area">
+                            <div class="gsm-notif-title">${n.title}</div>
+                        </div>
+                        <div class="gsm-notif-date-col">
+                            <div class="gsm-notif-date">${n.date}</div>
+                            ${n.unread ? '<span class="gsm-notif-unread-dot"></span>' : ''}
+                        </div>
+                    </div>
+                    <div class="gsm-notif-body">${n.body}</div>
+                    ${n.actionUrl ? `
+                        <a href="${n.actionUrl}" class="gsm-notif-action-btn" onclick="event.stopPropagation();">
+                            ${n.actionText || 'Xem chi tiết'} →
+                        </a>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            // Click card to view details in Liquid Glass modal & mark as read
+            container.querySelectorAll('.gsm-notif-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const id = card.getAttribute('data-id');
+                    const notif = allNotifs.find(item => item.id === id);
+                    if (!notif) return;
+
+                    if (typeof navigoNotifications !== 'undefined') {
+                        navigoNotifications.markAsRead(id);
+                        renderNotifications();
+                    }
+
+                    if (typeof window.showNavigoModal === 'function') {
+                        window.showNavigoModal({
+                            title: notif.title,
+                            message: notif.body,
+                            icon: notif.icon || '🔔',
+                            confirmText: notif.actionText || 'Đã hiểu',
+                            cancelText: 'Đóng',
+                            onConfirm: () => {
+                                if (notif.actionUrl) window.location.href = notif.actionUrl;
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        // Tab Switching
+        document.querySelectorAll('.gsm-notif-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.gsm-notif-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.getAttribute('data-tab');
+                renderNotifications();
+            });
+        });
+
+        // Initialize on load & sync on session changes
+        document.addEventListener('DOMContentLoaded', async () => {
+            renderNotifications();
+            renderSolarHolidayCards();
+            if (typeof navigoNotifications !== 'undefined' && typeof navigoNotifications.syncFromDatabase === 'function') {
+                await navigoNotifications.syncFromDatabase();
+                renderNotifications();
+            }
+        });
+        window.addEventListener('session:change', renderNotifications);
+        window.addEventListener('session:login', renderNotifications);
+        window.addEventListener('session:logout', renderNotifications);
+        window.addEventListener('navigo:notification', renderNotifications);
+        window.addEventListener('storage', renderNotifications);
+    </script>
+</body>
+</html>
