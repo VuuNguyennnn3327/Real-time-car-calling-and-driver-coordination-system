@@ -43,6 +43,23 @@
             background: #00b1a9;
             border-radius: 2px;
         }
+
+        /* Floating Navigation Bar: prominently float on top across all pages */
+        .gsm-floating-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            pointer-events: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body class="gsm-theme">
@@ -116,58 +133,7 @@
                         </div>
                     </div>
                 </div>
-
-                    <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
-    <nav class="gsm-floating-bottom-nav">
-        <div class="gsm-bottom-nav-pill">
-            <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
-                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
-                </svg>
-            </a>
-            <a href="activity.html" class="gsm-nav-btn " title="Hoạt động">
-                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
-                </svg>
-            </a>
-            <a href="notifications.html" class="gsm-nav-btn active" title="Thông báo">
-                <div class="gsm-nav-bell-wrapper">
-                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
-                    </svg>
-                    <span class="gsm-nav-badge-dot"></span>
-                </div>
-            </a>
-            <a href="profile.html" class="gsm-nav-btn " title="Tài khoản">
-                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                </svg>
-            </a>
-        </div>
-
-        <!-- Separate Circular Floating Glass Trophy Orb -->
-        <a href="profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
-            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
-                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
-                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
-                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
-                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
-                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
-                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
-                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
-                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
-                <defs>
-                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
-                        <stop offset="0%" stop-color="#fde047"/>
-                        <stop offset="50%" stop-color="#f59e0b"/>
-                        <stop offset="100%" stop-color="#d97706"/>
-                    </linearGradient>
-                </defs>
-            </svg>
-        </a>
-    </nav>
+                <div style="height: 40px;"></div>
             </div>
         </div>
 
@@ -247,6 +213,58 @@
             </div>
         </div>
     </div>
+
+    <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="activity.html" class="gsm-nav-btn " title="Hoạt động">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6.5v5.5l3.5 2" stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none"/>
+                </svg>
+            </a>
+            <a href="notifications.html" class="gsm-nav-btn active" title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot"></span>
+                </div>
+            </a>
+            <a href="profile.html" class="gsm-nav-btn " title="Tài khoản">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
+
+        <!-- Separate Circular Floating Glass Trophy Orb -->
+        <a href="profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
 
     <!-- Scripts -->
     <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->

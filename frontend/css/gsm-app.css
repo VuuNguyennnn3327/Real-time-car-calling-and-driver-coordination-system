@@ -348,12 +348,12 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
 
   /* Ensure bottom nav remains centered at screen bottom on PC desktop */
   .gsm-floating-bottom-nav {
-    display: flex !important;
+    display: inline-flex !important;
     position: fixed !important;
-    bottom: 16px !important;
+    bottom: 20px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
-    z-index: 99999 !important;
+    z-index: 2147483640 !important;
   }
 }
 
@@ -708,7 +708,7 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   align-items: center !important;
   justify-content: center !important;
   gap: 12px !important;
-  z-index: 99999 !important;
+  z-index: 2147483640 !important;
   pointer-events: none !important;
   width: auto !important;
   max-width: calc(100vw - 24px) !important;
@@ -717,6 +717,14 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  height: auto !important;
+}
+
+.gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+.gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+  pointer-events: auto !important;
 }
 
 /* 1. Main Navigation Frosted Glass Capsule Pill */
@@ -1526,6 +1534,7 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
     width: 100% !important;
     position: relative !important;
     z-index: 10 !important;
+    pointer-events: none !important;
   }
   body.gsm-booking-page .gsm-desktop-sidebar .gsm-screen-wrapper {
     background: transparent !important;
@@ -1533,9 +1542,6 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
     border: none !important;
     height: 100vh !important;
     pointer-events: none !important;
-  }
-  body.gsm-booking-page .gsm-screen-wrapper > * {
-    pointer-events: auto !important;
   }
   body.gsm-booking-page #view-search,
   body.gsm-booking-page #view-history {
@@ -1554,16 +1560,46 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
     z-index: 20;
     height: 100vh;
   }
+  body.gsm-booking-page .gsm-map-fullscreen-container,
+  body.gsm-booking-page .gsm-route-preview-screen {
+    pointer-events: none !important;
+    background: transparent !important;
+  }
   body.gsm-booking-page #view-pickup-confirm > *,
   body.gsm-booking-page #view-vehicle-select > *,
   body.gsm-booking-page #view-tracking > * {
+    pointer-events: none !important;
+  }
+  /* Explicitly enable pointer events on all interactive customer cards & controls */
+  body.gsm-booking-page .gsm-map-floating-header,
+  body.gsm-booking-page .gsm-floating-route-box,
+  body.gsm-booking-page .gsm-vehicle-sheet,
+  body.gsm-booking-page .gsm-pickup-bottom-sheet,
+  body.gsm-booking-page #tracking-searching-panel,
+  body.gsm-booking-page #tracking-driver-sheet,
+  body.gsm-booking-page .gsm-search-screen,
+  body.gsm-booking-page .gsm-search-bottom-actions,
+  body.gsm-booking-page .gsm-search-action-pill,
+  body.gsm-booking-page .floating-map-pick-banner,
+  body.gsm-booking-page .gsm-map-round-gps-btn,
+  body.gsm-booking-page .gsm-floating-shield-btn,
+  body.gsm-booking-page .goride-dialog-card {
+    pointer-events: auto !important;
+  }
+  /* Map canvas must always be fully interactive */
+  body.gsm-booking-page #customer-map-container,
+  body.gsm-booking-page .gsm-desktop-wide-canvas,
+  body.gsm-booking-page .leaflet-container,
+  body.gsm-booking-page .leaflet-pane {
     pointer-events: auto !important;
   }
 
-  /* Strictly eliminate mobile bottom navigation bar on customer booking page across all screens */
+  /* Strictly hide bottom navigation on customer booking portal */
   body.gsm-booking-page .bottom-nav,
   body.gsm-booking-page #mobile-bottom-nav,
-  body.gsm-booking-page .gsm-floating-bottom-nav {
+  body.gsm-booking-page .gsm-floating-bottom-nav,
+  body.customer-body .gsm-floating-bottom-nav,
+  [data-page="customer"] .gsm-floating-bottom-nav {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
@@ -2316,4 +2352,17 @@ body.gsm-role-admin [data-auth="admin"],
 body.gsm-role-admin .gsm-nav-admin-only,
 body.gsm-role-admin a.gsm-pc-nav-link[href*="admin.html"] {
   display: inline-flex !important;
+}
+
+/* Strictly hide bottom navigation on customer booking portal */
+body.gsm-booking-page .gsm-floating-bottom-nav,
+body.customer-body .gsm-floating-bottom-nav,
+[data-page="customer"] .gsm-floating-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }

@@ -103,6 +103,23 @@
             background: #00b1a9;
             color: #ffffff;
         }
+
+        /* Floating Navigation Bar: prominently float on top across all pages */
+        .gsm-floating-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            pointer-events: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body class="gsm-theme">
@@ -188,9 +205,56 @@
                     </div>
                 </div>
 
-                <div style="height: 80px;"></div>
+                <div style="height: 40px;"></div>
+            </div>
+        </div>
 
-                    <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
+        <!-- Desktop Wide Canvas (Interactive Map & Impact Dashboard) -->
+        <div class="gsm-desktop-wide-canvas">
+            <div style="background:#ffffff; border-radius:24px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.06); height:100%; display:flex; flex-direction:column; overflow-y:auto;">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+                    <div>
+                        <h2 style="font-size:1.4rem; font-weight:900; color:#0f2d3c; margin:0 0 4px 0;">Hành Trình Di Chuyển Thuần Điện</h2>
+                        <p style="font-size:0.88rem; color:#64748b; margin:0;">Theo dõi tác động môi trường và mạng lưới chuyến đi của bạn cùng Navigo</p>
+                    </div>
+                    <a href="customer.html" class="gsm-btn-primary-cta" style="padding:10px 22px; text-decoration:none; font-size:0.9rem; border-radius:12px;">
+                        + Đặt Chuyến Xe Mới
+                    </a>
+                </div>
+
+                <!-- Stat Cards -->
+                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">TỔNG QUÃNG ĐƯỜNG</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">23,4 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span></div>
+                        <div style="font-size:0.75rem; color:#00b1a9; font-weight:700; margin-top:4px;">100% thuần điện</div>
+                    </div>
+                    <div style="background:#e6f7f6; border:1px solid #bbf2ee; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#007d77; font-weight:700; margin-bottom:6px;">CO₂ CẮT GIẢM</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#007d77;">3,8 <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span></div>
+                        <div style="font-size:0.75rem; color:#007d77; font-weight:700; margin-top:4px;">So với xe xăng truyền thống</div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CÂY XANH ĐÓNG GÓP</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">18 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span></div>
+                        <div style="font-size:0.75rem; color:#10b981; font-weight:700; margin-top:4px;">🌱 Quỹ Vì Tương Lai Xanh</div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">ĐIỂM TÍCH LŨY CLUB</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">420 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">điểm</span></div>
+                        <div style="font-size:0.75rem; color:#d97706; font-weight:700; margin-top:4px;">Hạng Bạc (Silver)</div>
+                    </div>
+                </div>
+
+                <!-- Leaflet Map Container for Trip History Overview -->
+                <div style="flex:1; border-radius:16px; overflow:hidden; position:relative; border:1px solid #e2e8f0;">
+                    <div id="desktop-activity-map" style="width:100%; height:100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
     <nav class="gsm-floating-bottom-nav">
         <div class="gsm-bottom-nav-pill">
             <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
@@ -241,53 +305,6 @@
             </svg>
         </a>
     </nav>
-            </div>
-        </div>
-
-        <!-- Desktop Wide Canvas (Interactive Map & Impact Dashboard) -->
-        <div class="gsm-desktop-wide-canvas">
-            <div style="background:#ffffff; border-radius:24px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.06); height:100%; display:flex; flex-direction:column; overflow-y:auto;">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
-                    <div>
-                        <h2 style="font-size:1.4rem; font-weight:900; color:#0f2d3c; margin:0 0 4px 0;">Hành Trình Di Chuyển Thuần Điện</h2>
-                        <p style="font-size:0.88rem; color:#64748b; margin:0;">Theo dõi tác động môi trường và mạng lưới chuyến đi của bạn cùng Navigo</p>
-                    </div>
-                    <a href="customer.html" class="gsm-btn-primary-cta" style="padding:10px 22px; text-decoration:none; font-size:0.9rem; border-radius:12px;">
-                        + Đặt Chuyến Xe Mới
-                    </a>
-                </div>
-
-                <!-- Stat Cards -->
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">TỔNG QUÃNG ĐƯỜNG</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">23,4 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span></div>
-                        <div style="font-size:0.75rem; color:#00b1a9; font-weight:700; margin-top:4px;">100% thuần điện</div>
-                    </div>
-                    <div style="background:#e6f7f6; border:1px solid #bbf2ee; border-radius:16px; padding:16px;">
-                        <div style="font-size:0.8rem; color:#007d77; font-weight:700; margin-bottom:6px;">CO₂ CẮT GIẢM</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#007d77;">3,8 <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span></div>
-                        <div style="font-size:0.75rem; color:#007d77; font-weight:700; margin-top:4px;">So với xe xăng truyền thống</div>
-                    </div>
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CÂY XANH ĐÓNG GÓP</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">18 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span></div>
-                        <div style="font-size:0.75rem; color:#10b981; font-weight:700; margin-top:4px;">🌱 Quỹ Vì Tương Lai Xanh</div>
-                    </div>
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">ĐIỂM TÍCH LŨY CLUB</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">420 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">điểm</span></div>
-                        <div style="font-size:0.75rem; color:#d97706; font-weight:700; margin-top:4px;">Hạng Bạc (Silver)</div>
-                    </div>
-                </div>
-
-                <!-- Leaflet Map Container for Trip History Overview -->
-                <div style="flex:1; border-radius:16px; overflow:hidden; position:relative; border:1px solid #e2e8f0;">
-                    <div id="desktop-activity-map" style="width:100%; height:100%;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

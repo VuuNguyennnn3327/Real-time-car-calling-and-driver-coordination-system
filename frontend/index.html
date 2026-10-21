@@ -10,9 +10,223 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/design-system.css">
     <link rel="stylesheet" href="css/gsm-app.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <style>
+        /* ==========================================================================
+           ENLARGED SPACIOUS PC DESKTOP HOME PAGE (NO MAP ON HOME)
+           ========================================================================== */
+        @media (min-width: 1025px) {
+            body.gsm-home-page {
+                background: #f8fafc !important;
+                height: auto !important;
+                min-height: 100vh !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+            }
+
+            body.gsm-home-page .gsm-desktop-container {
+                max-width: 1240px !important;
+                margin: 0 auto !important;
+                padding: 24px 32px 60px !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: calc(100vh - 64px) !important;
+                overflow: visible !important;
+                background: transparent !important;
+                display: block !important;
+            }
+
+            body.gsm-home-page .gsm-desktop-sidebar {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                height: auto !important;
+                border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                position: static !important;
+                overflow: visible !important;
+            }
+
+            body.gsm-home-page .gsm-screen-wrapper {
+                max-width: 100% !important;
+                width: 100% !important;
+                height: auto !important;
+                min-height: auto !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                overflow: visible !important;
+            }
+
+            /* No map on home page */
+            body.gsm-home-page .gsm-desktop-wide-canvas,
+            body.gsm-home-page #desktop-home-map {
+                display: none !important;
+            }
+
+            /* Floating Navigation Bar: prominently float on top across all screens */
+            body.gsm-home-page .gsm-floating-bottom-nav,
+            .gsm-floating-bottom-nav {
+                display: inline-flex !important;
+                visibility: visible !important;
+                position: fixed !important;
+                bottom: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 2147483640 !important;
+                pointer-events: none !important;
+                opacity: 1 !important;
+            }
+            body.gsm-home-page .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            body.gsm-home-page .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+            .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+                pointer-events: auto !important;
+            }
+
+            /* Hero Banner */
+            body.gsm-home-page .gsm-home-header {
+                border-radius: 28px !important;
+                padding: 56px 40px 48px !important;
+                margin-bottom: 32px !important;
+                background: linear-gradient(135deg, rgba(15, 45, 60, 0.45), rgba(0, 177, 169, 0.4)), url('assets/gsm/city_bg.jpg') no-repeat center center !important;
+                background-size: cover !important;
+                text-align: center !important;
+                box-shadow: 0 12px 35px rgba(15, 45, 60, 0.12) !important;
+            }
+
+            body.gsm-home-page .gsm-home-hero-text {
+                display: block !important;
+                margin-bottom: 24px !important;
+            }
+
+            body.gsm-home-page .gsm-top-search-pill {
+                max-width: 720px !important;
+                margin: 0 auto !important;
+                padding: 18px 28px !important;
+                border-radius: 9999px !important;
+                box-shadow: 0 14px 40px rgba(0, 0, 0, 0.15) !important;
+                background: #ffffff !important;
+                border: 1.5px solid rgba(0, 177, 169, 0.25) !important;
+            }
+            body.gsm-home-page .gsm-top-search-pill .gsm-search-placeholder {
+                font-size: 1.1rem !important;
+                font-weight: 600 !important;
+            }
+
+            /* Hero Cards: Đặt xe & Đặt xe máy */
+            body.gsm-home-page .gsm-hero-cards-row {
+                display: flex !important;
+                gap: 28px !important;
+                padding: 0 !important;
+                margin-bottom: 36px !important;
+            }
+            body.gsm-home-page .gsm-hero-service-card {
+                flex: 1 !important;
+                height: 185px !important;
+                padding: 24px 30px !important;
+                border-radius: 24px !important;
+                border: 1.5px solid #ccfbf1 !important;
+                box-shadow: 0 8px 24px rgba(0, 177, 169, 0.1) !important;
+            }
+            body.gsm-home-page .gsm-hero-service-title {
+                font-size: 1.65rem !important;
+                font-weight: 900 !important;
+            }
+            body.gsm-home-page .gsm-hero-service-img {
+                width: 220px !important;
+                height: 115px !important;
+            }
+
+            /* Food Section */
+            body.gsm-home-page .gsm-food-section {
+                padding: 24px 28px !important;
+                margin-bottom: 36px !important;
+                background: #ffffff !important;
+                border-radius: 24px !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            body.gsm-home-page .gsm-food-title {
+                font-size: 1.3rem !important;
+                font-weight: 800 !important;
+            }
+            body.gsm-home-page .gsm-food-carousel {
+                gap: 22px !important;
+                padding-bottom: 6px !important;
+            }
+            body.gsm-home-page .gsm-food-card {
+                width: 250px !important;
+            }
+            body.gsm-home-page .gsm-food-img-wrapper {
+                width: 250px !important;
+                height: 160px !important;
+                border-radius: 18px !important;
+            }
+            body.gsm-home-page .gsm-food-name {
+                font-size: 1rem !important;
+                font-weight: 800 !important;
+                margin-top: 10px !important;
+            }
+            body.gsm-home-page .gsm-food-dist {
+                font-size: 0.85rem !important;
+            }
+
+            /* Services Grid */
+            body.gsm-home-page .gsm-services-section {
+                padding: 24px 28px !important;
+                margin-bottom: 36px !important;
+                background: #ffffff !important;
+                border-radius: 24px !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            body.gsm-home-page .gsm-services-title {
+                font-size: 1.3rem !important;
+                font-weight: 800 !important;
+                margin-bottom: 22px !important;
+            }
+            body.gsm-home-page .gsm-services-grid {
+                grid-template-columns: repeat(8, 1fr) !important;
+                gap: 20px 14px !important;
+            }
+            body.gsm-home-page .gsm-grid-icon-wrap {
+                width: 72px !important;
+                height: 72px !important;
+                border-radius: 22px !important;
+                background: #f0fdfa !important;
+                border: 1.5px solid #ccfbf1 !important;
+            }
+            body.gsm-home-page .gsm-grid-icon-wrap img {
+                width: 48px !important;
+                height: 48px !important;
+            }
+            body.gsm-home-page .gsm-grid-label {
+                font-size: 0.9rem !important;
+                font-weight: 700 !important;
+                margin-top: 8px !important;
+            }
+
+            /* Promo Banner */
+            body.gsm-home-page .gsm-banner-card {
+                margin: 0 0 32px 0 !important;
+                padding: 28px 36px !important;
+                border-radius: 24px !important;
+                border: 1.5px solid #a7f3d0 !important;
+            }
+            body.gsm-home-page .gsm-banner-left h4 {
+                font-size: 1.25rem !important;
+            }
+            body.gsm-home-page .gsm-banner-left p {
+                font-size: 0.98rem !important;
+            }
+            body.gsm-home-page .gsm-banner-graphic {
+                font-size: 3rem !important;
+            }
+        }
+    </style>
 </head>
-<body class="gsm-theme">
+<body class="gsm-theme gsm-home-page">
     <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
     <nav class="gsm-pc-navbar">
         <a href="index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
@@ -63,6 +277,10 @@
             <div class="gsm-screen-wrapper">
                 <!-- 1. Header with Top Search Pill and 3D City Background -->
                 <div class="gsm-home-header">
+                    <div class="gsm-home-hero-text" style="display:none;">
+                        <h1 style="color:#ffffff; font-size:2.4rem; font-weight:900; margin:0 0 10px 0; text-shadow:0 2px 12px rgba(0,0,0,0.45); letter-spacing:-0.5px;">Di chuyển xanh thuần điện cùng Navigo</h1>
+                        <p style="color:rgba(255,255,255,0.92); font-size:1.1rem; margin:0; text-shadow:0 1px 5px rgba(0,0,0,0.45);">Đặt ô tô và xe máy điện nhanh chóng, êm ái, không mùi xăng khói</p>
+                    </div>
                     <!-- Top Pill Search Bar -->
                     <a href="pages/customer.html" class="gsm-top-search-pill">
                         <span class="gsm-search-icon">🔍</span>
@@ -228,19 +446,9 @@
                     <div class="gsm-banner-graphic">🎉</div>
                 </div>
 
-                <div style="height: 80px;"></div>
+                <div style="height: 90px;"></div>
 
                 <!-- 6. Bottom Navigation Bar anchored to viewport center -->
-            </div>
-        </div>
-
-        <!-- Desktop Wide Live Interactive Canvas (PC & Tablet View) -->
-        <div class="gsm-desktop-wide-canvas">
-            <!-- Leaflet Map Container for Desktop -->
-            <div id="desktop-home-map" style="flex:1; width:100%; height:100%; position:relative;">
-                <button type="button" id="btn-home-gps" style="position:absolute; bottom:20px; right:20px; z-index:500; background:#ffffff; border:1px solid #cbd5e1; border-radius:9999px; padding:8px 16px; font-weight:800; font-size:0.85rem; color:#0f2d3c; box-shadow:0 4px 14px rgba(0,0,0,0.15); cursor:pointer; display:flex; align-items:center; gap:6px;">
-                    <span>🎯</span> Vị trí của tôi
-                </button>
             </div>
         </div>
     </div>
@@ -298,7 +506,6 @@
     </nav>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Firebase Realtime Cloud SDK (Compatible with all modern browsers without build step) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -308,84 +515,5 @@
     <script src="js/core/session.js"></script>
     <script src="js/core/realtime.js"></script>
     <script src="js/core/notifications.js"></script>
-    <script>
-        // Init Desktop Map exclusively with Google Maps VN (hl=vi&gl=VN)
-        document.addEventListener('DOMContentLoaded', () => {
-            const mapEl = document.getElementById('desktop-home-map');
-            if (mapEl && typeof L !== 'undefined') {
-                const map = L.map('desktop-home-map', { zoomControl: true }).setView([10.7769, 106.7009], 13);
-                L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}', {
-                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                    maxZoom: 20,
-                    attribution: '&copy; Bản đồ Google Việt Nam'
-                }).addTo(map);
-
-                let homeUserMarker = null;
-
-                const setHomeUserLocation = (lat, lng, address) => {
-                    if (homeUserMarker) {
-                        homeUserMarker.setLatLng([lat, lng]);
-                    } else {
-                        homeUserMarker = L.marker([lat, lng], {
-                            icon: L.divIcon({
-                                className: 'gsm-home-user-gps',
-                                html: '<div style="background:#00b1a9; color:#fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 6px rgba(0,177,169,0.25); font-size:14px; border:2px solid #fff;">📍</div>',
-                                iconSize: [28, 28],
-                                iconAnchor: [14, 14]
-                            })
-                        }).addTo(map);
-                    }
-                    if (address) {
-                        homeUserMarker.bindPopup(`<b>Vị trí của bạn</b><br><span style="font-size:0.8rem; color:#475569;">${address}</span>`);
-                    }
-                };
-
-                // Request/Load user location permission & center map on user's location
-                if (typeof window.navigoEnsureLocationPermission === 'function') {
-                    window.navigoEnsureLocationPermission((loc) => {
-                        if (loc && loc.lat && loc.lng) {
-                            map.setView([loc.lat, loc.lng], 15);
-                            setHomeUserLocation(loc.lat, loc.lng, loc.address || loc.name);
-                        }
-                    });
-                }
-
-                // Recenter Desktop Home Map on GPS
-                const btnHomeGps = document.getElementById('btn-home-gps');
-                if (btnHomeGps) {
-                    btnHomeGps.addEventListener('click', () => {
-                        if (typeof window.navigoEnsureLocationPermission === 'function') {
-                            window.navigoEnsureLocationPermission((loc) => {
-                                if (loc && loc.lat && loc.lng) {
-                                    map.flyTo([loc.lat, loc.lng], 16, { animate: true, duration: 1.2 });
-                                    setHomeUserLocation(loc.lat, loc.lng, loc.address || loc.name);
-                                    if (typeof window.showNavigoModal === 'function') {
-                                        window.showNavigoModal({
-                                            title: 'Vị trí của tôi',
-                                            message: 'Bản đồ đã chuyển hướng về giữa vị trí của bạn (' + (loc.name || loc.address || 'GPS') + '). Bạn có muốn đặt xe đón tại đây không?',
-                                            icon: '🎯',
-                                            confirmText: 'Đặt xe ngay',
-                                            cancelText: 'Đóng',
-                                            onConfirm: () => {
-                                                window.location.href = 'pages/customer.html?lat=' + loc.lat + '&lng=' + loc.lng;
-                                            }
-                                        });
-                                    }
-                                }
-                            }, false);
-                        }
-                    });
-                }
-
-                setTimeout(() => {
-                    map.invalidateSize();
-                }, 300);
-
-                window.addEventListener('resize', () => {
-                    map.invalidateSize();
-                });
-            }
-        });
-    </script>
 </body>
 </html>

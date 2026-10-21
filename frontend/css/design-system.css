@@ -1690,24 +1690,46 @@ code, kbd, samp, pre, .font-mono, .monospace {
 }
 
 /* Universal Floating Bottom Navigation Bar (Centered on Mobile, Tablet & PC Desktop) */
-.gsm-floating-bottom-nav {
+.gsm-floating-bottom-nav,
+body .gsm-floating-bottom-nav,
+body.gsm-home-page .gsm-floating-bottom-nav {
   position: fixed !important;
-  bottom: 16px !important;
+  bottom: 20px !important;
   left: 50% !important;
   transform: translateX(-50%) !important;
-  width: calc(100% - 32px) !important;
-  max-width: 440px !important;
-  height: 60px !important;
-  background: rgba(255, 255, 255, 0.92) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
-  border-radius: 9999px !important;
-  box-shadow: 0 10px 35px rgba(15, 45, 60, 0.18) !important;
-  display: flex !important;
+  width: auto !important;
+  max-width: calc(100vw - 24px) !important;
+  height: auto !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
   align-items: center !important;
-  justify-content: space-around !important;
-  padding: 0 8px !important;
-  z-index: 99999 !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  padding: 0 !important;
+  z-index: 2147483640 !important;
+  pointer-events: none !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+.gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+body .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+body .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
   pointer-events: auto !important;
+}
+
+/* Strictly hide bottom navigation on customer booking portal */
+body.gsm-booking-page .gsm-floating-bottom-nav,
+body.customer-body .gsm-floating-bottom-nav,
+[data-page="customer"] .gsm-floating-bottom-nav {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }

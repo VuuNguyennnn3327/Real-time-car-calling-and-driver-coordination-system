@@ -92,10 +92,13 @@
             gap: 14px;
         }
 
-        /* Strictly eliminate bottom nav on booking page across all screens */
+        /* Strictly hide bottom navigation on customer booking portal */
+        .gsm-floating-bottom-nav,
+        body.gsm-booking-page .gsm-floating-bottom-nav,
+        body.customer-body .gsm-floating-bottom-nav,
+        [data-page="customer"] .gsm-floating-bottom-nav,
         body.gsm-booking-page .bottom-nav,
-        body.gsm-booking-page #mobile-bottom-nav,
-        body.gsm-booking-page .gsm-floating-bottom-nav {
+        body.gsm-booking-page #mobile-bottom-nav {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -107,7 +110,7 @@
             padding: 0 !important;
         }
 
-        /* Desktop Sidebar Flow: Eliminate blank spaces, move lower UI up */
+        /* Desktop Sidebar Flow: Eliminate blank spaces, elevate booking button */
         @media (min-width: 1025px) {
             .gsm-desktop-sidebar .gsm-screen-wrapper {
                 height: 100% !important;
@@ -140,7 +143,7 @@
                 flex-direction: column !important;
                 position: relative !important;
                 overflow: visible !important;
-                padding: 16px 16px 24px !important;
+                padding: 16px 16px 36px !important;
                 box-sizing: border-box !important;
             }
 
@@ -150,7 +153,7 @@
                 inset: auto !important;
                 width: 100% !important;
                 padding: 0 !important;
-                margin: 0 0 12px 0 !important;
+                margin: 0 0 10px 0 !important;
                 flex-shrink: 0 !important;
             }
 
@@ -159,7 +162,7 @@
                 position: static !important;
                 inset: auto !important;
                 width: 100% !important;
-                margin: 0 0 14px 0 !important;
+                margin: 0 0 10px 0 !important;
                 box-sizing: border-box !important;
                 flex-shrink: 0 !important;
             }
@@ -172,7 +175,7 @@
             }
 
             /* Vehicle Selection Sheet in Desktop Sidebar (Screen 4):
-               Eliminates blank space by sitting directly below route capsule */
+               Compact vehicle list, pushing booking button UP and fully visible on PC */
             .gsm-desktop-sidebar .gsm-vehicle-sheet {
                 position: static !important;
                 inset: auto !important;
@@ -184,6 +187,64 @@
                 margin: 0 !important;
                 background: transparent !important;
                 overflow: visible !important;
+                display: flex !important;
+                flex-direction: column !important;
+                padding-bottom: 24px !important;
+            }
+
+            .gsm-desktop-sidebar #vehicle-options-container {
+                max-height: 220px !important;
+                overflow-y: auto !important;
+                padding-right: 4px !important;
+                margin-bottom: 8px !important;
+                flex-shrink: 1 !important;
+                scrollbar-width: thin;
+                scrollbar-color: #cbd5e1 transparent;
+            }
+            .gsm-desktop-sidebar #vehicle-options-container::-webkit-scrollbar {
+                width: 5px;
+            }
+            .gsm-desktop-sidebar #vehicle-options-container::-webkit-scrollbar-thumb {
+                background-color: #cbd5e1;
+                border-radius: 9999px;
+            }
+
+            .gsm-desktop-sidebar .gsm-save-more-banner {
+                margin: 4px 0 8px 0 !important;
+                flex-shrink: 0 !important;
+            }
+
+            .gsm-desktop-sidebar .gsm-payment-promo-row {
+                margin-bottom: 10px !important;
+                flex-shrink: 0 !important;
+            }
+
+            /* Elevated CTA Action Row on PC: prominently pushed UP with plenty of breathing space */
+            .gsm-desktop-sidebar .gsm-cta-action-row {
+                margin-top: 6px !important;
+                margin-bottom: 24px !important;
+                padding-bottom: 6px !important;
+                flex-shrink: 0 !important;
+                position: relative !important;
+                z-index: 100 !important;
+            }
+
+            .gsm-desktop-sidebar .gsm-main-book-btn {
+                height: 52px !important;
+                font-size: 1.05rem !important;
+                font-weight: 800 !important;
+                cursor: pointer !important;
+                pointer-events: auto !important;
+                position: relative !important;
+                z-index: 101 !important;
+                box-shadow: 0 6px 20px rgba(0, 177, 169, 0.45) !important;
+            }
+
+            body.gsm-booking-page .gsm-desktop-sidebar,
+            body.gsm-booking-page .gsm-desktop-sidebar *,
+            body.gsm-booking-page .gsm-cta-action-row,
+            body.gsm-booking-page .gsm-main-book-btn {
+                pointer-events: auto !important;
             }
 
             /* Searching Radar Panel in Desktop Sidebar (Screen 5) */
@@ -205,7 +266,7 @@
                 box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
                 border: 1.5px solid #e2e8f0 !important;
                 border-radius: 18px !important;
-                padding: 16px !important;
+                padding: 16px 16px 24px !important;
                 margin: 0 !important;
                 background: #ffffff !important;
                 box-sizing: border-box !important;
@@ -221,7 +282,7 @@
                 box-shadow: 0 4px 20px rgba(15, 45, 60, 0.08) !important;
                 border: 1.5px solid #e2e8f0 !important;
                 border-radius: 18px !important;
-                padding: 16px !important;
+                padding: 16px 16px 24px !important;
                 margin: 0 !important;
                 background: #ffffff !important;
                 box-sizing: border-box !important;
@@ -235,10 +296,10 @@
                 left: 0 !important;
                 right: 0 !important;
                 position: absolute !important;
-                max-height: min(78vh, 580px) !important;
+                max-height: min(78vh, 560px) !important;
                 display: flex !important;
                 flex-direction: column !important;
-                padding: 12px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+                padding: 12px 18px max(24px, env(safe-area-inset-bottom, 24px)) !important;
                 box-sizing: border-box !important;
                 border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
                 box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
@@ -248,7 +309,7 @@
 
             body.gsm-booking-page #vehicle-options-container {
                 flex: 1 1 auto !important;
-                max-height: 220px !important;
+                max-height: 180px !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch !important;
                 padding-right: 2px !important;
@@ -261,6 +322,20 @@
                 flex-shrink: 0 !important;
             }
 
+            body.gsm-booking-page .gsm-cta-action-row {
+                margin-top: 4px !important;
+                margin-bottom: 12px !important;
+                padding-bottom: 4px !important;
+                position: relative !important;
+                z-index: 501 !important;
+            }
+
+            body.gsm-booking-page .gsm-main-book-btn {
+                height: 50px !important;
+                pointer-events: auto !important;
+                cursor: pointer !important;
+            }
+
             body.gsm-booking-page #tracking-driver-sheet {
                 bottom: 0 !important;
                 left: 0 !important;
@@ -269,13 +344,65 @@
                 max-height: none !important;
                 display: flex !important;
                 flex-direction: column !important;
-                padding: 14px 18px max(18px, env(safe-area-inset-bottom, 18px)) !important;
+                padding: 14px 18px max(24px, env(safe-area-inset-bottom, 24px)) !important;
                 box-sizing: border-box !important;
                 border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
                 box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
                 background: #ffffff !important;
                 z-index: 500 !important;
             }
+        }
+
+        /* Complete Map Interactivity & Pass-Through on Customer Portal */
+        body.gsm-booking-page #customer-map-container,
+        body.gsm-booking-page .gsm-desktop-wide-canvas,
+        body.gsm-booking-page .leaflet-container,
+        body.gsm-booking-page .leaflet-pane {
+            pointer-events: auto !important;
+        }
+
+        @media (max-width: 1024px) {
+            body.gsm-booking-page .gsm-desktop-sidebar {
+                pointer-events: none !important;
+            }
+            body.gsm-booking-page .gsm-desktop-sidebar .gsm-screen-wrapper {
+                pointer-events: none !important;
+            }
+            body.gsm-booking-page #view-search,
+            body.gsm-booking-page #view-history {
+                pointer-events: auto !important;
+            }
+            body.gsm-booking-page #view-pickup-confirm,
+            body.gsm-booking-page #view-vehicle-select,
+            body.gsm-booking-page #view-tracking {
+                pointer-events: none !important;
+            }
+            body.gsm-booking-page .gsm-map-fullscreen-container,
+            body.gsm-booking-page .gsm-route-preview-screen {
+                pointer-events: none !important;
+            }
+            body.gsm-booking-page #view-pickup-confirm > *,
+            body.gsm-booking-page #view-vehicle-select > *,
+            body.gsm-booking-page #view-tracking > * {
+                pointer-events: none !important;
+            }
+        }
+
+        /* Interactive floating cards and buttons inside customer views */
+        body.gsm-booking-page .gsm-map-floating-header,
+        body.gsm-booking-page .gsm-floating-route-box,
+        body.gsm-booking-page .gsm-vehicle-sheet,
+        body.gsm-booking-page .gsm-pickup-bottom-sheet,
+        body.gsm-booking-page #tracking-searching-panel,
+        body.gsm-booking-page #tracking-driver-sheet,
+        body.gsm-booking-page .gsm-search-screen,
+        body.gsm-booking-page .gsm-search-bottom-actions,
+        body.gsm-booking-page .gsm-search-action-pill,
+        body.gsm-booking-page .floating-map-pick-banner,
+        body.gsm-booking-page .gsm-map-round-gps-btn,
+        body.gsm-booking-page .gsm-floating-shield-btn,
+        body.gsm-booking-page .goride-dialog-card {
+            pointer-events: auto !important;
         }
     </style>
 </head>
@@ -655,6 +782,8 @@
     <div class="goride-dialog-overlay" id="dialog-overlay">
         <div class="goride-dialog-card" id="dialog-card-content"></div>
     </div>
+
+
 
     <div class="toast-container" id="toast-container"></div>
 

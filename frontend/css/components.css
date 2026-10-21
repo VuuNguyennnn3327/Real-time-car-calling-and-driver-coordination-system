@@ -5744,10 +5744,13 @@ body.gsm-booking-page #mobile-bottom-nav,
 body.gsm-booking-page .gsm-floating-bottom-nav,
 body.customer-body .bottom-nav,
 body.customer-body #mobile-bottom-nav,
+body.customer-body .gsm-floating-bottom-nav,
 .customer-body .bottom-nav,
 .customer-body #mobile-bottom-nav,
+.customer-body .gsm-floating-bottom-nav,
 [data-page="customer"] .bottom-nav,
-[data-page="customer"] #mobile-bottom-nav {
+[data-page="customer"] #mobile-bottom-nav,
+[data-page="customer"] .gsm-floating-bottom-nav {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;

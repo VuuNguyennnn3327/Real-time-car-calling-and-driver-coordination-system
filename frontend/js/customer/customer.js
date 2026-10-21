@@ -451,6 +451,53 @@ class CustomerAppController {
                     this.updateCenterPinAddress(center.lat, center.lng);
                 }
             });
+
+            // Map click event: Allows seamless tapping on map across views
+            this.mapController.map.on('click', async (e) => {
+                const { lat, lng } = e.latlng;
+
+                // Pickup confirm mode: pan map to clicked spot & update address
+                if (this.currentView === 'pickup-confirm') {
+                    this.mapController.map.panTo([lat, lng]);
+                    this.updateCenterPinAddress(lat, lng);
+                    return;
+                }
+
+                // If in search or map-select-destination mode and click-to-select is not overriding
+                if ((this.currentView === 'search' || this.currentView === 'map-select-destination') && !this.mapController.isClickToSelectActive) {
+                    let placeName = `Vị trí đã chọn (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                    let placeAddr = '';
+                    if (typeof geocoderService !== 'undefined') {
+                        try {
+                            const rev = await geocoderService.reverse(lat, lng);
+                            if (rev && rev.name) {
+                                placeName = rev.name;
+                                placeAddr = rev.address || rev.name;
+                            }
+                        } catch (err) {}
+                    }
+
+                    if (!this.destination) {
+                        this.selectDestination({
+                            name: placeName,
+                            address: placeAddr || placeName,
+                            lat: lat,
+                            lng: lng
+                        });
+                    } else if (!this.pickup) {
+                        this.pickup = {
+                            name: placeName,
+                            address: placeAddr || placeName,
+                            lat: lat,
+                            lng: lng
+                        };
+                        const pInput = document.getElementById('input-pickup');
+                        if (pInput) pInput.value = placeName;
+                        this.switchView('vehicle-select');
+                        this.renderRouteOnMap();
+                    }
+                }
+            });
         }
 
         // Initialize Google Maps style real-time GPS pulsing blue dot
@@ -641,6 +688,21 @@ class CustomerAppController {
         const pickBanner = document.getElementById('floating-map-pick-banner');
         if (pickBanner && viewName !== 'map-select-destination') {
             pickBanner.style.display = 'none';
+        }
+
+        const sidebar = document.querySelector('.gsm-desktop-sidebar');
+        if (sidebar) {
+            if (viewName === 'map-select-destination') {
+                sidebar.style.setProperty('pointer-events', 'none', 'important');
+            } else {
+                sidebar.style.removeProperty('pointer-events');
+            }
+        }
+
+        if (this.mapController && this.mapController.map) {
+            setTimeout(() => {
+                this.mapController.map.invalidateSize();
+            }, 100);
         }
         // Update active state of mobile bottom nav items
         const bNavBooking = document.getElementById('bnav-cust-booking');
@@ -991,6 +1053,9 @@ class CustomerAppController {
         if (btnPinPickup) {
             btnPinPickup.addEventListener('click', () => {
                 if (!this.mapController || !this.mapController.map) return;
+                if (window.innerWidth <= 1024) {
+                    this.switchView('pickup-confirm');
+                }
                 const pLat = this.pickup ? Number(this.pickup.lat) : 10.8715;
                 const pLng = this.pickup ? Number(this.pickup.lng) : 106.7490;
                 this.mapController.setView(pLat, pLng, 16);
@@ -1007,6 +1072,14 @@ class CustomerAppController {
         if (btnPinDest) {
             btnPinDest.addEventListener('click', () => {
                 if (!this.mapController || !this.mapController.map) return;
+                if (window.innerWidth <= 1024) {
+                    if (this.pickup && this.destination) {
+                        this.switchView('vehicle-select');
+                    } else {
+                        btnMapDest?.click();
+                        return;
+                    }
+                }
                 let dLat = this.destination ? Number(this.destination.lat) : null;
                 let dLng = this.destination ? Number(this.destination.lng) : null;
                 if (!dLat || !dLng) {
@@ -1177,6 +1250,30 @@ class CustomerAppController {
                         banner.style.display = 'none';
                         this.switchView('search');
                     };
+                }
+
+                if (this.mapController) {
+                    this.mapController.enableClickToSelect(async (location) => {
+                        banner.style.display = 'none';
+                        this.mapController.disableClickToSelect();
+                        let placeName = `Điểm đến (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})`;
+                        let placeAddr = '';
+                        if (typeof geocoderService !== 'undefined') {
+                            try {
+                                const rev = await geocoderService.reverse(location.lat, location.lng);
+                                if (rev && rev.name) {
+                                    placeName = rev.name;
+                                    placeAddr = rev.address || rev.name;
+                                }
+                            } catch (err) {}
+                        }
+                        this.selectDestination({
+                            name: placeName,
+                            address: placeAddr || placeName,
+                            lat: location.lat,
+                            lng: location.lng
+                        });
+                    });
                 }
 
                 this.showToast('Chạm vào điểm bất kỳ trên bản đồ để chọn điểm đến', 'info');
@@ -1959,6 +2056,7 @@ class CustomerAppController {
 
         // Switch to vehicle selection view (ref-04)
         this.switchView('vehicle-select');
+        this.renderRouteOnMap();
     }
 
     /**

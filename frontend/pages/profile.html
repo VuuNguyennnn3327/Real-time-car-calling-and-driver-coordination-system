@@ -77,6 +77,23 @@
         .gsm-account-badge:active {
             transform: scale(0.97);
         }
+
+        /* Floating Navigation Bar: prominently float on top across all pages */
+        .gsm-floating-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            pointer-events: none !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            pointer-events: auto !important;
+        }
     </style>
 </head>
 <body class="gsm-theme">
