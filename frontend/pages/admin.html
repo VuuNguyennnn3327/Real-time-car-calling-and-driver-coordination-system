@@ -60,6 +60,47 @@
             vertical-align: middle;
             white-space: nowrap;
         }
+        /* Strict Route Ellipsis and Column Containment (No bleeding into Status / Fare) */
+        .admin-table .col-route-cell {
+            width: 280px !important;
+            max-width: 280px !important;
+            min-width: 200px !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+        }
+        .admin-table .route-ellipsis-row {
+            display: flex !important;
+            align-items: center !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            white-space: nowrap !important;
+            line-height: 1.45;
+        }
+        .admin-table .route-ellipsis-row strong.route-label {
+            flex-shrink: 0 !important;
+            margin-right: 5px !important;
+        }
+        .admin-table .route-ellipsis-row span.route-text {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+        .admin-table .col-single-loc {
+            width: 180px !important;
+            max-width: 190px !important;
+            min-width: 130px !important;
+            overflow: hidden !important;
+        }
+        .admin-table .col-single-loc span {
+            display: inline-block !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            vertical-align: middle;
+        }
         .table-actions {
             display: inline-flex;
             gap: 6px;
@@ -930,14 +971,14 @@
                         <table class="data-table admin-table" id="recent-trips-table">
                             <thead>
                                 <tr>
-                                    <th>MÃ CHUYẾN</th>
-                                    <th>THỜI GIAN</th>
-                                    <th>KHÁCH HÀNG</th>
-                                    <th>TÀI XẾ</th>
-                                    <th>LỘ TRÌNH (ĐÓN &rarr; ĐẾN)</th>
-                                    <th>TRẠNG THÁI</th>
-                                    <th>GIÁ CƯỚC</th>
-                                    <th style="text-align:right;">THAO TÁC</th>
+                                    <th style="width:85px; min-width:80px;">MÃ CHUYẾN</th>
+                                    <th style="width:105px; min-width:95px;">THỜI GIAN</th>
+                                    <th style="width:140px; min-width:120px;">KHÁCH HÀNG</th>
+                                    <th style="width:115px; min-width:95px;">TÀI XẾ</th>
+                                    <th class="col-route-cell" style="width:280px; max-width:280px; min-width:200px;">LỘ TRÌNH (ĐÓN &rarr; ĐẾN)</th>
+                                    <th style="width:130px; min-width:110px; text-align:center;">TRẠNG THÁI</th>
+                                    <th style="width:115px; min-width:95px;">GIÁ CƯỚC</th>
+                                    <th style="text-align:right; width:140px; min-width:130px;">THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody id="recent-trips-body">
@@ -976,17 +1017,17 @@
 
                     <!-- Trips Data Table -->
                     <div class="data-table-responsive" style="background:#fff; border:1px solid var(--color-gray-200); border-radius:12px; overflow-x:auto; -webkit-overflow-scrolling:touch;">
-                        <table class="data-table admin-table">
+                        <table class="data-table admin-table" id="all-trips-table">
                             <thead>
                                 <tr>
-                                    <th>MÃ CHUYẾN</th>
-                                    <th>KHÁCH HÀNG</th>
-                                    <th>TÀI XẾ</th>
-                                    <th>ĐIỂM ĐÓN</th>
-                                    <th>ĐIỂM ĐẾN</th>
-                                    <th>TRẠNG THÁI</th>
-                                    <th>GIÁ CƯỚC</th>
-                                    <th style="text-align:right;">THAO TÁC</th>
+                                    <th style="width:85px; min-width:80px;">MÃ CHUYẾN</th>
+                                    <th style="width:140px; min-width:120px;">KHÁCH HÀNG</th>
+                                    <th style="width:115px; min-width:95px;">TÀI XẾ</th>
+                                    <th class="col-single-loc" style="width:180px; max-width:190px; min-width:130px;">ĐIỂM ĐÓN</th>
+                                    <th class="col-single-loc" style="width:180px; max-width:190px; min-width:130px;">ĐIỂM ĐẾN</th>
+                                    <th style="width:130px; min-width:110px; text-align:center;">TRẠNG THÁI</th>
+                                    <th style="width:115px; min-width:95px;">GIÁ CƯỚC</th>
+                                    <th style="text-align:right; width:140px; min-width:130px;">THAO TÁC</th>
                                 </tr>
                             </thead>
                             <tbody id="all-trips-body">

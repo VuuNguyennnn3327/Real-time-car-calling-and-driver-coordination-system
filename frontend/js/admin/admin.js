@@ -1175,15 +1175,21 @@ class AdminController {
                 <tr>
                     <td style="font-weight:700; color:var(--color-primary); font-family:monospace;">#${t.id}</td>
                     <td style="font-size:0.8rem; color:var(--color-gray-500); white-space:nowrap;">${timeFormatted}</td>
-                    <td style="font-weight:600;">${this.escapeHtml(t.customerName || '--')}</td>
-                    <td>${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
-                    <td style="font-size:0.82rem; max-width:240px; line-height:1.4;">
-                        <div style="color:var(--color-gray-700);"><strong style="color:#059669;">Đón:</strong> ${pickupShort}</div>
-                        <div style="color:var(--color-gray-700);"><strong style="color:#e11d48;">Đến:</strong> ${dropoffShort}</div>
+                    <td style="font-weight:600; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(t.customerName || '--')}">${this.escapeHtml(t.customerName || '--')}</td>
+                    <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${t.driverName ? this.escapeHtml(t.driverName) : 'Chưa gán'}">${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
+                    <td class="col-route-cell" style="font-size:0.82rem; width:280px; max-width:280px; min-width:200px; overflow:hidden; vertical-align:middle; line-height:1.45;">
+                        <div class="route-ellipsis-row" style="display:flex; align-items:center; max-width:100%; overflow:hidden; white-space:nowrap;" title="Đón: ${pickupShort}">
+                            <strong class="route-label" style="color:#059669; font-weight:700; flex-shrink:0; margin-right:5px;">Đón:</strong>
+                            <span class="route-text" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; color:var(--color-gray-700);">${pickupShort}</span>
+                        </div>
+                        <div class="route-ellipsis-row" style="display:flex; align-items:center; max-width:100%; overflow:hidden; white-space:nowrap; margin-top:3px;" title="Đến: ${dropoffShort}">
+                            <strong class="route-label" style="color:#e11d48; font-weight:700; flex-shrink:0; margin-right:5px;">Đến:</strong>
+                            <span class="route-text" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; min-width:0; color:var(--color-gray-700);">${dropoffShort}</span>
+                        </div>
                     </td>
-                    <td><span class="badge ${badge.cls}">${badge.label}</span></td>
-                    <td style="font-weight:700; color:#0f766e;">${fareFormatted}</td>
-                    <td style="text-align:right;">
+                    <td style="text-align:center; white-space:nowrap;"><span class="badge ${badge.cls}">${badge.label}</span></td>
+                    <td style="font-weight:700; color:#0f766e; white-space:nowrap;">${fareFormatted}</td>
+                    <td style="text-align:right; white-space:nowrap;">
                         <div class="table-actions">
                             <button class="btn-action-edit" onclick="adminController.openEditTripModal('${t.id}')">✏️ Sửa</button>
                             <button class="btn-action-delete" onclick="adminController.openDeleteModal('trip', '${t.id}')">🗑️ Xóa</button>
@@ -1268,15 +1274,19 @@ class AdminController {
                 <tr>
                     <td style="font-weight:700; color:var(--color-primary); font-family:monospace;">#${t.id}</td>
                     <td>
-                        <div style="font-weight:600;">${this.escapeHtml(t.customerName || '--')}</div>
+                        <div style="font-weight:600; max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${this.escapeHtml(t.customerName || '--')}">${this.escapeHtml(t.customerName || '--')}</div>
                         <div style="font-size:0.75rem; color:var(--color-gray-500);">${this.escapeHtml(t.customerPhone || '')}</div>
                     </td>
-                    <td>${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${pickupText}">${pickupText}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${dropoffText}">${dropoffText}</td>
-                    <td><span class="badge ${badge.cls}">${badge.label}</span></td>
-                    <td style="font-weight:700; color:#0f766e;">${fareFormatted}</td>
-                    <td style="text-align:right;">
+                    <td style="max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${t.driverName ? this.escapeHtml(t.driverName) : 'Chưa gán'}">${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
+                    <td class="col-single-loc" style="max-width:190px; min-width:130px; overflow:hidden; vertical-align:middle;" title="${pickupText}">
+                        <span style="display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; color:var(--color-gray-700);">${pickupText}</span>
+                    </td>
+                    <td class="col-single-loc" style="max-width:190px; min-width:130px; overflow:hidden; vertical-align:middle;" title="${dropoffText}">
+                        <span style="display:inline-block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; vertical-align:middle; color:var(--color-gray-700);">${dropoffText}</span>
+                    </td>
+                    <td style="text-align:center; white-space:nowrap;"><span class="badge ${badge.cls}">${badge.label}</span></td>
+                    <td style="font-weight:700; color:#0f766e; white-space:nowrap;">${fareFormatted}</td>
+                    <td style="text-align:right; white-space:nowrap;">
                         <div class="table-actions">
                             <button class="btn-action-edit" onclick="adminController.openEditTripModal('${t.id}')">✏️ Sửa</button>
                             <button class="btn-action-delete" onclick="adminController.openDeleteModal('trip', '${t.id}')">🗑️ Xóa</button>
