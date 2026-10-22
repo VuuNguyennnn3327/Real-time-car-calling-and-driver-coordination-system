@@ -1411,6 +1411,8 @@ class DriverController {
 
     const fareFormatted = Number(this.activeTrip.fare || 0).toLocaleString('vi-VN') + ' ₫';
     const isStage1 = (this.activeTrip.stage === 'heading_to_pickup');
+    const pDisplay = (this.activeTrip.pickup && typeof this.activeTrip.pickup === 'object') ? (this.activeTrip.pickup.name || this.activeTrip.pickup.address) : (this.activeTrip.pickupName || this.activeTrip.pickup || 'Điểm hẹn đón');
+    const dDisplay = (this.activeTrip.destination && typeof this.activeTrip.destination === 'object') ? (this.activeTrip.destination.name || this.activeTrip.destination.address) : (this.activeTrip.dropoffName || this.activeTrip.destination || 'Điểm đến của khách');
 
     if (isStage1) {
       // Stage 1: Heading to pickup location
@@ -1437,7 +1439,7 @@ class DriverController {
             <span style="font-size:1.2rem; color:#0288d1;">🟢</span>
             <div>
               <div style="font-size:0.72rem; color:#0369a1; font-weight:700; text-transform:uppercase;">Chỉ dẫn tới điểm hẹn đón:</div>
-              <div style="font-weight:700; font-size:0.92rem; color:#0f172a;" id="active-trip-pickup-text">${this.activeTrip.pickup}</div>
+              <div style="font-weight:700; font-size:0.92rem; color:#0f172a;" id="active-trip-pickup-text">${pDisplay}</div>
             </div>
           </div>
         </div>
@@ -1469,7 +1471,7 @@ class DriverController {
             <span style="font-size:1.2rem; color:#ef4444;">🔴</span>
             <div>
               <div style="font-size:0.72rem; color:#065f46; font-weight:700; text-transform:uppercase;">Chỉ dẫn tới điểm đến của khách:</div>
-              <div style="font-weight:700; font-size:0.92rem; color:#0f172a;" id="active-trip-destination-text">${this.activeTrip.destination}</div>
+              <div style="font-weight:700; font-size:0.92rem; color:#0f172a;" id="active-trip-destination-text">${dDisplay}</div>
             </div>
           </div>
         </div>

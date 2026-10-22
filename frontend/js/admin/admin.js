@@ -98,12 +98,109 @@ class AdminController {
         }
     }
 
+    getTripLocationText(loc, fallback = '--') {
+        if (!loc) return fallback;
+        if (typeof loc === 'string') {
+            const trimmed = loc.trim();
+            if (!trimmed || trimmed === '[object Object]' || trimmed === 'null' || trimmed === 'undefined') {
+                return fallback;
+            }
+            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                try {
+                    const parsed = JSON.parse(trimmed);
+                    return this.getTripLocationText(parsed, fallback);
+                } catch (e) {}
+            }
+            return trimmed;
+        }
+        if (typeof loc === 'object') {
+            const candidate = loc.name || loc.address || loc.title || loc.desc || loc.displayName || loc.display_name;
+            if (candidate && typeof candidate === 'string') {
+                const cTrim = candidate.trim();
+                if (cTrim && cTrim !== '[object Object]') return cTrim;
+            }
+            if (loc.lat !== undefined && loc.lng !== undefined) {
+                return `Tọa độ (${Number(loc.lat).toFixed(4)}, ${Number(loc.lng).toFixed(4)})`;
+            }
+        }
+        return fallback;
+    }
+
+    getPickupText(trip, fallback = 'Điểm đón khách') {
+        if (!trip) return fallback;
+        const candidates = [
+            trip.pickupName,
+            trip.pickupAddress,
+            trip.pickup_address,
+            trip.pickup_name,
+            trip.pickup
+        ];
+        for (const c of candidates) {
+            const res = this.getTripLocationText(c, null);
+            if (res && res !== '--' && res !== '[object Object]') return res;
+        }
+        if (trip.pickupCoords && Array.isArray(trip.pickupCoords) && trip.pickupCoords.length >= 2) {
+            return `Tọa độ (${Number(trip.pickupCoords[0]).toFixed(4)}, ${Number(trip.pickupCoords[1]).toFixed(4)})`;
+        }
+        if (trip.pickupLat && trip.pickupLon) {
+            return `Tọa độ (${Number(trip.pickupLat).toFixed(4)}, ${Number(trip.pickupLon).toFixed(4)})`;
+        }
+        return fallback;
+    }
+
+    getDestinationText(trip, fallback = 'Điểm đến khách') {
+        if (!trip) return fallback;
+        const candidates = [
+            trip.dropoffName,
+            trip.destinationName,
+            trip.dropoffAddress,
+            trip.destinationAddress,
+            trip.dropoff_address,
+            trip.dropoff_name,
+            trip.destination,
+            trip.dropoff
+        ];
+        for (const c of candidates) {
+            const res = this.getTripLocationText(c, null);
+            if (res && res !== '--' && res !== '[object Object]') return res;
+        }
+        if (trip.destinationCoords && Array.isArray(trip.destinationCoords) && trip.destinationCoords.length >= 2) {
+            return `Tọa độ (${Number(trip.destinationCoords[0]).toFixed(4)}, ${Number(trip.destinationCoords[1]).toFixed(4)})`;
+        }
+        if (trip.dropoffLat && trip.dropoffLon) {
+            return `Tọa độ (${Number(trip.dropoffLat).toFixed(4)}, ${Number(trip.dropoffLon).toFixed(4)})`;
+        }
+        return fallback;
+    }
+
     getStoredTrips() {
         try {
             const trips = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.TRIPS)) || [];
             const deletedIds = new Set(this.getDeletedTripIds());
             const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => ['trip_vn_101', 'trip_vn_102', 'trip_vn_103', 'trip_vn_104'].includes(t?.id));
-            return trips.filter(t => t && t.id && !deletedIds.has(t.id) && !checkMock(t));
+            let needsResave = false;
+
+            const cleaned = trips.filter(t => t && t.id && !deletedIds.has(t.id) && !checkMock(t)).map(t => {
+                const pText = this.getPickupText(t);
+                const dText = this.getDestinationText(t);
+                if (typeof t.pickup === 'object' || t.pickup === '[object Object]' || !t.pickup) {
+                    t.pickup = pText;
+                    needsResave = true;
+                }
+                if (typeof t.destination === 'object' || t.destination === '[object Object]' || !t.destination) {
+                    t.destination = dText;
+                    needsResave = true;
+                }
+                return t;
+            });
+
+            if (needsResave) {
+                try {
+                    localStorage.setItem(this.STORAGE_KEYS.TRIPS, JSON.stringify(cleaned));
+                } catch (e) {}
+            }
+
+            return cleaned;
         } catch {
             return [];
         }
@@ -1030,13 +1127,17 @@ class AdminController {
         }
 
         if (query) {
-            filtered = filtered.filter(t =>
-                (t.id && String(t.id).toLowerCase().includes(query)) ||
-                (t.customerName && t.customerName.toLowerCase().includes(query)) ||
-                (t.driverName && t.driverName.toLowerCase().includes(query)) ||
-                (t.pickup && t.pickup.toLowerCase().includes(query)) ||
-                (t.destination && t.destination.toLowerCase().includes(query))
-            );
+            filtered = filtered.filter(t => {
+                const pStr = this.getPickupText(t).toLowerCase();
+                const dStr = this.getDestinationText(t).toLowerCase();
+                return (
+                    (t.id && String(t.id).toLowerCase().includes(query)) ||
+                    (t.customerName && String(t.customerName).toLowerCase().includes(query)) ||
+                    (t.driverName && String(t.driverName).toLowerCase().includes(query)) ||
+                    pStr.includes(query) ||
+                    dStr.includes(query)
+                );
+            });
         }
 
         if (countText) {
@@ -1067,8 +1168,8 @@ class AdminController {
             const badge = this.getStatusBadge(t.status);
             const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
             const timeFormatted = t.createdAt ? new Date(t.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : 'Vừa xong';
-            const pickupShort = t.pickup ? this.escapeHtml(t.pickup) : '--';
-            const dropoffShort = t.destination ? this.escapeHtml(t.destination) : '--';
+            const pickupShort = this.escapeHtml(this.getPickupText(t));
+            const dropoffShort = this.escapeHtml(this.getDestinationText(t));
 
             return `
                 <tr>
@@ -1127,12 +1228,14 @@ class AdminController {
         const allTrips = this.getStoredTrips();
         const filtered = allTrips.filter(t => {
             const matchStatus = (status === 'all') || (t.status === status);
+            const pStr = this.getPickupText(t).toLowerCase();
+            const dStr = this.getDestinationText(t).toLowerCase();
             const matchQuery = !query || 
-                (t.id && t.id.toLowerCase().includes(query)) ||
-                (t.customerName && t.customerName.toLowerCase().includes(query)) ||
-                (t.driverName && t.driverName.toLowerCase().includes(query)) ||
-                (t.pickup && t.pickup.toLowerCase().includes(query)) ||
-                (t.destination && t.destination.toLowerCase().includes(query));
+                (t.id && String(t.id).toLowerCase().includes(query)) ||
+                (t.customerName && String(t.customerName).toLowerCase().includes(query)) ||
+                (t.driverName && String(t.driverName).toLowerCase().includes(query)) ||
+                pStr.includes(query) ||
+                dStr.includes(query);
             return matchStatus && matchQuery;
         });
 
@@ -1159,16 +1262,18 @@ class AdminController {
         tbody.innerHTML = trips.map(t => {
             const badge = this.getStatusBadge(t.status);
             const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
+            const pickupText = this.escapeHtml(this.getPickupText(t));
+            const dropoffText = this.escapeHtml(this.getDestinationText(t));
             return `
                 <tr>
                     <td style="font-weight:700; color:var(--color-primary); font-family:monospace;">#${t.id}</td>
                     <td>
-                        <div style="font-weight:600;">${t.customerName || '--'}</div>
-                        <div style="font-size:0.75rem; color:var(--color-gray-500);">${t.customerPhone || ''}</div>
+                        <div style="font-weight:600;">${this.escapeHtml(t.customerName || '--')}</div>
+                        <div style="font-size:0.75rem; color:var(--color-gray-500);">${this.escapeHtml(t.customerPhone || '')}</div>
                     </td>
-                    <td>${t.driverName || '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${t.pickup || ''}">${t.pickup || '--'}</td>
-                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${t.destination || ''}">${t.destination || '--'}</td>
+                    <td>${t.driverName ? this.escapeHtml(t.driverName) : '<span style="color:var(--color-gray-400);">Chưa gán</span>'}</td>
+                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${pickupText}">${pickupText}</td>
+                    <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis;" title="${dropoffText}">${dropoffText}</td>
                     <td><span class="badge ${badge.cls}">${badge.label}</span></td>
                     <td style="font-weight:700; color:#0f766e;">${fareFormatted}</td>
                     <td style="text-align:right;">
@@ -1201,8 +1306,8 @@ class AdminController {
         document.getElementById('trip-form-customer').value = trip.customerName || '';
         document.getElementById('trip-form-phone').value = trip.customerPhone || '';
         document.getElementById('trip-form-driver').value = trip.driverName || '';
-        document.getElementById('trip-form-pickup').value = trip.pickup || '';
-        document.getElementById('trip-form-dest').value = trip.destination || '';
+        document.getElementById('trip-form-pickup').value = this.getPickupText(trip, '');
+        document.getElementById('trip-form-dest').value = this.getDestinationText(trip, '');
         document.getElementById('trip-form-fare').value = trip.fare || 40000;
         document.getElementById('trip-form-status').value = trip.status || 'requested';
 

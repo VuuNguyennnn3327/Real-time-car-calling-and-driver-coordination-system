@@ -383,8 +383,8 @@
                 type: (t.vehicleType === 'bike') ? 'bike' : 'car',
                 title: t.vehicleName || 'Navigo Car',
                 time: t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' }) : 'Vừa xong',
-                pickup: t.pickup?.name || 'Điểm đón',
-                dropoff: t.destination?.name || 'Điểm đến',
+                pickup: t.pickupName || (typeof t.pickup === 'object' ? (t.pickup?.name || t.pickup?.address) : t.pickup) || 'Điểm đón',
+                dropoff: t.dropoffName || (typeof t.destination === 'object' ? (t.destination?.name || t.destination?.address) : t.destination) || 'Điểm đến',
                 fare: (Number(t.fareAmount || t.fare || 0)).toLocaleString('vi-VN') + 'đ',
                 status: (t.status === 'completed' || t.status === 'COMPLETED') ? 'Hoàn thành' : (t.status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý')
             }));
