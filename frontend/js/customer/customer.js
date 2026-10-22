@@ -4618,8 +4618,23 @@ class CustomerAppController {
                 id: tripData.id,
                 userId: userKey,
                 status: (tripData.status || 'completed').toLowerCase(),
-                pickup: { name: pName },
-                destination: { name: dName },
+                pickup: { 
+                    name: pName, 
+                    lat: tripData.pickupLat || (tripData.pickup && tripData.pickup.lat) || (this.pickup && this.pickup.lat), 
+                    lng: tripData.pickupLon || (tripData.pickup && tripData.pickup.lng) || (this.pickup && this.pickup.lng) 
+                },
+                destination: { 
+                    name: dName, 
+                    lat: tripData.dropoffLat || (tripData.destination && tripData.destination.lat) || (this.destination && this.destination.lat), 
+                    lng: tripData.dropoffLon || (tripData.destination && tripData.destination.lng) || (this.destination && this.destination.lng) 
+                },
+                pickupCoords: tripData.pickupCoords || (tripData.pickupLat ? [Number(tripData.pickupLat), Number(tripData.pickupLon)] : null) || (this.pickup ? [Number(this.pickup.lat), Number(this.pickup.lng)] : null),
+                destinationCoords: tripData.destinationCoords || (tripData.dropoffLat ? [Number(tripData.dropoffLat), Number(tripData.dropoffLon)] : null) || (this.destination ? [Number(this.destination.lat), Number(this.destination.lng)] : null),
+                pickupLat: Number(tripData.pickupLat || (this.pickup && this.pickup.lat) || 0),
+                pickupLon: Number(tripData.pickupLon || (this.pickup && this.pickup.lng) || 0),
+                dropoffLat: Number(tripData.dropoffLat || (this.destination && this.destination.lat) || 0),
+                dropoffLon: Number(tripData.dropoffLon || (this.destination && this.destination.lng) || 0),
+                routeGeometry: tripData.routeGeometry || this.currentRouteGeometry || null,
                 fare: fare,
                 fareAmount: fare,
                 distance: dist,

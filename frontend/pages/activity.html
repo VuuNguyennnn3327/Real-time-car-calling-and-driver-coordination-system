@@ -15,15 +15,47 @@
         .gsm-trip-card {
             background: #ffffff;
             border-radius: 16px;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #e2e8f0;
             padding: 16px;
             margin-bottom: 14px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-            transition: transform 0.15s, box-shadow 0.15s;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
         }
         .gsm-trip-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 14px rgba(0,0,0,0.07);
+            border-color: #a7f3d0;
+            box-shadow: 0 6px 18px rgba(0, 177, 169, 0.12);
+        }
+        .gsm-trip-card.is-selected-trip {
+            border-color: #00b1a9 !important;
+            background: #f0fdfa !important;
+            box-shadow: 0 6px 20px rgba(0, 177, 169, 0.22) !important;
+        }
+        .gsm-trip-card.is-selected-trip::before {
+            content: 'ĐANG XEM TRÊN BẢN ĐỒ';
+            position: absolute;
+            top: -10px;
+            right: 14px;
+            background: #00b1a9;
+            color: #ffffff;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0, 177, 169, 0.4);
+        }
+        .gsm-trip-badge.badge-completed {
+            background: #ecfdf5 !important;
+            color: #059669 !important;
+            border: 1px solid #a7f3d0 !important;
+        }
+        .gsm-trip-badge.badge-cancelled {
+            background: #fef2f2 !important;
+            color: #dc2626 !important;
+            border: 1px solid #fecaca !important;
         }
         .gsm-trip-header {
             display: flex;
@@ -223,8 +255,8 @@
             <div style="background:#ffffff; border-radius:24px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.06); height:100%; display:flex; flex-direction:column; overflow-y:auto;">
                 <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
                     <div>
-                        <h2 style="font-size:1.4rem; font-weight:900; color:#0f2d3c; margin:0 0 4px 0;">Hành Trình Di Chuyển Thuần Điện</h2>
-                        <p style="font-size:0.88rem; color:#64748b; margin:0;">Theo dõi tác động môi trường và mạng lưới chuyến đi của bạn cùng Navigo</p>
+                        <h2 style="font-size:1.4rem; font-weight:900; color:#0f2d3c; margin:0 0 4px 0;" id="map-trip-title">Hành Trình Di Chuyển Thuần Điện</h2>
+                        <p style="font-size:0.88rem; color:#64748b; margin:0;" id="map-trip-subtitle">Chọn một chuyến đi ở danh sách bên trái để xem lộ trình chi tiết trên bản đồ</p>
                     </div>
                     <a href="customer.html" class="gsm-btn-primary-cta" style="padding:10px 22px; text-decoration:none; font-size:0.9rem; border-radius:12px;">
                         + Đặt Chuyến Xe Mới
@@ -234,24 +266,24 @@
                 <!-- Stat Cards -->
                 <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">TỔNG QUÃNG ĐƯỜNG</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">23,4 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span></div>
-                        <div style="font-size:0.75rem; color:#00b1a9; font-weight:700; margin-top:4px;">100% thuần điện</div>
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">QUÃNG ĐƯỜNG</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;" id="stat-card-distance">15,6 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span></div>
+                        <div style="font-size:0.75rem; color:#00b1a9; font-weight:700; margin-top:4px;" id="stat-card-distance-sub">100% thuần điện</div>
                     </div>
                     <div style="background:#e6f7f6; border:1px solid #bbf2ee; border-radius:16px; padding:16px;">
                         <div style="font-size:0.8rem; color:#007d77; font-weight:700; margin-bottom:6px;">CO₂ CẮT GIẢM</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#007d77;">3,8 <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span></div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#007d77;" id="stat-card-co2">2,5 <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span></div>
                         <div style="font-size:0.75rem; color:#007d77; font-weight:700; margin-top:4px;">So với xe xăng truyền thống</div>
                     </div>
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
                         <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CÂY XANH ĐÓNG GÓP</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">18 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span></div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;" id="stat-card-trees">12 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span></div>
                         <div style="font-size:0.75rem; color:#10b981; font-weight:700; margin-top:4px;">🌱 Quỹ Vì Tương Lai Xanh</div>
                     </div>
                     <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
-                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">ĐIỂM TÍCH LŨY CLUB</div>
-                        <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;">420 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">điểm</span></div>
-                        <div style="font-size:0.75rem; color:#d97706; font-weight:700; margin-top:4px;">Hạng Bạc (Silver)</div>
+                        <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CƯỚC PHÍ CHUYẾN</div>
+                        <div style="font-size:1.6rem; font-weight:900; color:#0f766e;" id="stat-card-fare">253.000 <span style="font-size:0.9rem; font-weight:700; color:#0f766e;">₫</span></div>
+                        <div style="font-size:0.75rem; color:#059669; font-weight:700; margin-top:4px;" id="stat-card-status">Đã hoàn thành chuyến</div>
                     </div>
                 </div>
 
@@ -326,164 +358,527 @@
     <script src="../js/core/realtime.js"></script>
     <script src="../js/core/notifications.js"></script>
     <script>
-        // Filter Pills toggle
-        const filterPills = document.querySelectorAll('.gsm-filter-pill');
-        filterPills.forEach(pill => {
-            pill.addEventListener('click', () => {
-                filterPills.forEach(p => p.classList.remove('active'));
-                pill.classList.add('active');
-                renderTrips();
-        if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.getUserTrips === 'function') {
-            const curUser = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
-            if (curUser) {
-                const uKey = curUser.id || curUser.phone || curUser.email;
-                realtimeSync.getUserTrips(uKey).then(dbTrips => {
-                    if (Array.isArray(dbTrips) && dbTrips.length > 0) {
-                        const sKey = 'goride_trips_' + String(uKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
-                        const local = JSON.parse(localStorage.getItem(sKey) || '[]');
-                        dbTrips.forEach(dt => {
-                            if (!local.some(l => l.id === dt.id)) local.push(dt);
-                        });
-                        localStorage.setItem(sKey, JSON.stringify(local));
-                        renderTrips();
-                    }
-                }).catch(() => {});
-            }
+        // Strip Vietnamese diacritics for flexible fuzzy location matching
+        function stripVietnameseDiacritics(str) {
+            if (!str) return '';
+            return String(str)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[đĐ]/g, (match) => (match === 'đ' ? 'd' : 'D'))
+                .toLowerCase()
+                .trim();
         }
-            });
-        });
 
-        // Demo sample trips to display when toggled or booked
+        // Comprehensive HCMC location dictionary for instantaneous coordinate resolution
+        const KNOWN_LOCATIONS = [
+            { keys: ['giao thong van tai', 'dh giao thong', 'gtvt', 'uth', 'dai hoc gtvt', 'truong dai hoc giao thong van tai'], lat: 10.8456, lng: 106.7946, name: 'Đại học Giao thông Vận tải (Phân hiệu TP.HCM)' },
+            { keys: ['cho dong an', 'dong an'], lat: 10.8845, lng: 106.7020, name: 'Chợ Đồng An (Thủ Đức / Thuận An)' },
+            { keys: ['vincom center dong khoi', 'vincom dong khoi', 'dong khoi'], lat: 10.7781, lng: 106.7023, name: 'Vincom Center Đồng Khởi' },
+            { keys: ['ga quoc te', 'ga t2', 'quoc te tan son nhat'], lat: 10.8185, lng: 106.6588, name: 'Ga Quốc Tế (T2) — Sân bay Tân Sơn Nhất' },
+            { keys: ['ga quoc noi', 'ga t1', 'ga t3', 'quoc noi tan son nhat', 'tan son nhat', 'san bay'], lat: 10.8160, lng: 106.6620, name: 'Ga Quốc Nội (T1) — Sân bay Tân Sơn Nhất' },
+            { keys: ['vincom plaza thu duc', 'vincom thu duc'], lat: 10.8528, lng: 106.7661, name: 'Vincom Plaza Thủ Đức' },
+            { keys: ['ben thanh', 'cho ben thanh'], lat: 10.7725, lng: 106.6980, name: 'Chợ Bến Thành' },
+            { keys: ['landmark 81', 'vinhomes central park'], lat: 10.7951, lng: 106.7219, name: 'Landmark 81, Vinhomes Central Park' },
+            { keys: ['ben xe mien dong'], lat: 10.8142, lng: 106.7115, name: 'Bến Xe Miền Đông Cũ' },
+            { keys: ['van lang', 'dai hoc van lang'], lat: 10.8282, lng: 106.6967, name: 'Trường Đại Học Văn Lang (Cơ sở 3)' },
+            { keys: ['bach khoa', 'dai hoc bach khoa'], lat: 10.7721, lng: 106.6578, name: 'Đại học Bách Khoa TP.HCM' },
+            { keys: ['khoa hoc tu nhien'], lat: 10.7628, lng: 106.6825, name: 'Đại học Khoa học Tự nhiên TP.HCM' },
+            { keys: ['duc ba', 'nha tho duc ba'], lat: 10.7798, lng: 106.6990, name: 'Nhà Thờ Đức Bà Sài Gòn' },
+            { keys: ['nguyen hue', 'pho di bo'], lat: 10.7743, lng: 106.7036, name: 'Phố đi bộ Nguyễn Huệ' },
+            { keys: ['cho ray', 'benh vien cho ray'], lat: 10.7578, lng: 106.6593, name: 'Bệnh viện Chợ Rẫy' },
+            { keys: ['crescent mall', 'phu my hung'], lat: 10.7297, lng: 106.7222, name: 'Crescent Mall Phú Mỹ Hưng' },
+            { keys: ['thao cam vien'], lat: 10.7875, lng: 106.7053, name: 'Thảo Cầm Viên Sài Gòn' },
+            { keys: ['ho con rua'], lat: 10.7827, lng: 106.6958, name: 'Hồ Con Rùa' },
+            { keys: ['cho lon', 'binh tay'], lat: 10.7502, lng: 106.6517, name: 'Chợ Lớn (Chợ Bình Tây)' },
+            { keys: ['mien tay', 'ben xe mien tay'], lat: 10.7418, lng: 106.6172, name: 'Bến xe Miền Tây' },
+            { keys: ['tinh lo 43', 'tam phu'], lat: 10.8643, lng: 106.7570, name: '789/12 Tỉnh lộ 43, Tam Phú, TP. Thủ Đức' }
+        ];
+
+        // Resolves latitude & longitude array [lat, lng] from coordinate objects, arrays or string names
+        function resolveCoords(loc) {
+            if (!loc) return [10.7769, 106.7009];
+            if (Array.isArray(loc) && loc.length >= 2 && !isNaN(loc[0]) && !isNaN(loc[1])) {
+                return [Number(loc[0]), Number(loc[1])];
+            }
+            if (typeof loc === 'object') {
+                if (loc.lat !== undefined && loc.lng !== undefined && !isNaN(loc.lat) && !isNaN(loc.lng)) {
+                    return [Number(loc.lat), Number(loc.lng)];
+                }
+                if (loc.lat !== undefined && loc.lon !== undefined && !isNaN(loc.lat) && !isNaN(loc.lon)) {
+                    return [Number(loc.lat), Number(loc.lon)];
+                }
+                if (loc.pickupCoords) return resolveCoords(loc.pickupCoords);
+                if (loc.destinationCoords) return resolveCoords(loc.destinationCoords);
+                loc = loc.name || loc.address || loc.title || '';
+            }
+
+            const cleanStr = stripVietnameseDiacritics(String(loc));
+            for (const item of KNOWN_LOCATIONS) {
+                if (item.keys.some(k => cleanStr.includes(k))) {
+                    return [item.lat, item.lng];
+                }
+            }
+
+            // Pseudo-random deterministic fallback inside HCMC bounds if location name is novel
+            let hash = 0;
+            for (let i = 0; i < cleanStr.length; i++) hash = (hash << 5) - hash + cleanStr.charCodeAt(i);
+            const deltaLat = ((Math.abs(hash) % 800) - 400) / 10000;
+            const deltaLon = ((Math.abs(hash >> 3) % 800) - 400) / 10000;
+            return [10.7769 + deltaLat, 106.7009 + deltaLon];
+        }
+
+        // Calculate straight road-adjusted distance in kilometers
+        function calculateDistanceKm(c1, c2) {
+            if (!c1 || !c2 || !Array.isArray(c1) || !Array.isArray(c2)) return '8.5';
+            const R = 6371;
+            const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+            const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) *
+                      Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const d = R * c * 1.32;
+            return d.toFixed(1);
+        }
+
+        // Demo fallback sample trips exactly matching the user's interface
         const demoTrips = [
             {
-                id: 'NAV-84920',
+                id: 'trip_demo_101',
                 type: 'car',
-                title: 'Navigo Car (VF 5 Plus)',
-                time: 'Hôm nay, 10:15',
-                pickup: '789/12 Tỉnh lộ 43, Tam Phú, TP. Thủ Đức',
-                dropoff: 'Ga Quốc Nội (Ga T3) — Sân bay Tân Sơn Nhất',
-                fare: '189.000đ',
-                status: 'Hoàn thành'
+                title: 'Green Car - 4 khách',
+                time: '02:46 22-10',
+                pickup: 'Đại học Giao thông Vận tải',
+                dropoff: 'Chợ Đồng An',
+                pickupCoords: [10.8456, 106.7946],
+                destinationCoords: [10.8845, 106.7020],
+                fare: '126.000đ',
+                fareAmount: 126000,
+                distance: '11.8',
+                status: 'Đã hủy',
+                isCompleted: false
             },
             {
-                id: 'NAV-83112',
-                type: 'bike',
-                title: 'Navigo Bike (Feliz S)',
-                time: 'Hôm qua, 18:30',
-                pickup: 'Tòa nhà Landmark 81, Vinhomes Central Park',
-                dropoff: 'Nhà thờ Đức Bà, Bến Nghé, Quận 1',
-                fare: '42.000đ',
-                status: 'Hoàn thành'
+                id: 'trip_demo_102',
+                type: 'car',
+                title: 'Green Premium - 4 khách',
+                time: '02:18 22-10',
+                pickup: 'Chợ Đồng An',
+                dropoff: 'Vincom Center Đồng Khởi',
+                pickupCoords: [10.8845, 106.7020],
+                destinationCoords: [10.7781, 106.7023],
+                fare: '253.000đ',
+                fareAmount: 253000,
+                distance: '15.6',
+                status: 'Hoàn thành',
+                isCompleted: true
+            },
+            {
+                id: 'trip_demo_103',
+                type: 'car',
+                title: 'Green Luxury - 5 khách',
+                time: '01:34 22-10',
+                pickup: 'Chợ Đồng An',
+                dropoff: 'Ga Quốc Tế (Ga T2) - Sân Bay Quốc Tế Tân Sơn Nhất',
+                pickupCoords: [10.8845, 106.7020],
+                destinationCoords: [10.8185, 106.6588],
+                fare: '254.000đ',
+                fareAmount: 254000,
+                distance: '14.8',
+                status: 'Đã hủy',
+                isCompleted: false
             }
         ];
 
         let showTripsMode = false;
-
-        function renderTrips() {
-            const activeFilter = document.querySelector('.gsm-filter-pill.active')?.getAttribute('data-filter') || 'all';
-            const emptyBox = document.getElementById('activity-empty-state');
-            const listEl = document.getElementById('activity-list');
-
-            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
-            const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
-            const userStorageKey = 'goride_trips_' + String(userKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
-            const userTrips = JSON.parse(localStorage.getItem(userStorageKey) || '[]').map(t => ({
-                id: t.id,
-                type: (t.vehicleType === 'bike') ? 'bike' : 'car',
-                title: t.vehicleName || 'Navigo Car',
-                time: t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit' }) : 'Vừa xong',
-                pickup: t.pickupName || (typeof t.pickup === 'object' ? (t.pickup?.name || t.pickup?.address) : t.pickup) || 'Điểm đón',
-                dropoff: t.dropoffName || (typeof t.destination === 'object' ? (t.destination?.name || t.destination?.address) : t.destination) || 'Điểm đến',
-                fare: (Number(t.fareAmount || t.fare || 0)).toLocaleString('vi-VN') + 'đ',
-                status: (t.status === 'completed' || t.status === 'COMPLETED') ? 'Hoàn thành' : (t.status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý')
-            }));
-            const savedBookings = [...userTrips, ...JSON.parse(localStorage.getItem('navigo_bookings') || '[]')];
-            const allTrips = [...savedBookings, ...(showTripsMode ? demoTrips : [])];
-
-            let filtered = allTrips;
-            if (activeFilter === 'food' || activeFilter === 'delivery' || activeFilter === 'hourly') {
-                filtered = [];
-            }
-
-            if (filtered.length === 0) {
-                emptyBox.style.display = 'flex';
-                listEl.style.display = 'none';
-                listEl.innerHTML = '';
-            } else {
-                emptyBox.style.display = 'none';
-                listEl.style.display = 'block';
-                listEl.innerHTML = filtered.map(t => `
-                    <div class="gsm-trip-card">
-                        <div class="gsm-trip-header">
-                            <div class="gsm-trip-service">
-                                <div class="gsm-trip-service-icon">
-                                    ${t.type === 'bike' ? '🛵' : '🚗'}
-                                </div>
-                                <div>
-                                    <div>${t.title}</div>
-                                    <div style="font-size:0.75rem; color:#94a3b8; font-weight:500;">${t.time}</div>
-                                </div>
-                            </div>
-                            <span class="gsm-trip-badge">${t.status}</span>
-                        </div>
-                        <div class="gsm-trip-pts">
-                            <div class="gsm-trip-pt">
-                                <span class="gsm-trip-dot" style="background:#00b1a9;"></span>
-                                <span style="font-weight:600;">${t.pickup}</span>
-                            </div>
-                            <div class="gsm-trip-pt">
-                                <span class="gsm-trip-dot" style="background:#ef4444;"></span>
-                                <span>${t.dropoff}</span>
-                            </div>
-                        </div>
-                        <div class="gsm-trip-footer">
-                            <div class="gsm-trip-fare">${t.fare}</div>
-                            <button type="button" class="gsm-trip-rebook-btn" onclick="window.location.href='customer.html'">Đặt lại</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
-
-        document.getElementById('btn-toggle-demo-trips')?.addEventListener('click', () => {
-            showTripsMode = !showTripsMode;
-            renderTrips();
-        });
-
-        renderTrips();
+        let selectedTripId = null;
+        let currentRenderedTrips = [];
+        let actMap = null;
+        let activeRouteLayer = null;
+        let activeMarkersGroup = null;
 
         // Initialize Desktop Leaflet Map
-        const mapEl = document.getElementById('desktop-activity-map');
-        if (mapEl) {
-            const actMap = L.map('desktop-activity-map', {
+        function initDesktopMap() {
+            const mapEl = document.getElementById('desktop-activity-map');
+            if (!mapEl || actMap) return;
+
+            actMap = L.map('desktop-activity-map', {
                 center: [10.7769, 106.7009],
                 zoom: 12,
                 zoomControl: true
             });
+
             L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}', {
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 maxZoom: 20,
                 attribution: '&copy; Bản đồ Google Việt Nam'
             }).addTo(actMap);
 
-            const routeCoords = [
-                [10.8643, 106.7570],
-                [10.8490, 106.7500],
-                [10.8250, 106.7200],
-                [10.8185, 106.6588]
-            ];
-            L.polyline(routeCoords, { color: '#00b1a9', weight: 5, opacity: 0.85 }).addTo(actMap);
-
-            L.circleMarker([10.8643, 106.7570], { radius: 7, fillColor: '#00b1a9', color: '#fff', weight: 2, fillOpacity: 1 })
-                .bindPopup('<b>Điểm đón</b>: 789/12 Tỉnh lộ 43')
-                .addTo(actMap);
-
-            L.circleMarker([10.8185, 106.6588], { radius: 7, fillColor: '#ef4444', color: '#fff', weight: 2, fillOpacity: 1 })
-                .bindPopup('<b>Điểm đến</b>: Ga Quốc Nội Sân Bay Tân Sơn Nhất')
-                .addTo(actMap);
-
-            setTimeout(() => { actMap.invalidateSize(); }, 300);
+            setTimeout(() => { actMap.invalidateSize(); }, 350);
         }
+
+        // Draw dynamic route from pickup to destination on the right map
+        async function displayTripOnMap(trip) {
+            initDesktopMap();
+            if (!actMap || !trip) return;
+
+            const pCoords = resolveCoords(trip.pickupCoords || trip.pickup);
+            const dCoords = resolveCoords(trip.destinationCoords || trip.dropoff);
+
+            // Clear previous map layers
+            if (activeRouteLayer) {
+                actMap.removeLayer(activeRouteLayer);
+                activeRouteLayer = null;
+            }
+            if (activeMarkersGroup) {
+                actMap.removeLayer(activeMarkersGroup);
+                activeMarkersGroup = null;
+            }
+            activeMarkersGroup = L.featureGroup().addTo(actMap);
+
+            // 1. Pickup Pin Marker (🟢 Green Pulse Pin)
+            const pickupMarker = L.marker([pCoords[0], pCoords[1]], {
+                icon: L.divIcon({
+                    className: 'custom-map-pin-pickup',
+                    html: `
+                        <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:#10b981; border:3px solid #ffffff; box-shadow:0 4px 12px rgba(16,185,129,0.5); font-size:16px;">
+                            🟢
+                        </div>
+                    `,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
+                })
+            }).bindPopup(`
+                <div style="font-family:system-ui,-apple-system,sans-serif; padding:4px;">
+                    <div style="font-size:0.75rem; color:#059669; font-weight:800; text-transform:uppercase;">Điểm đón khách</div>
+                    <div style="font-size:0.92rem; font-weight:700; color:#0f2d3c; margin-top:2px;">${trip.pickup}</div>
+                </div>
+            `);
+            activeMarkersGroup.addLayer(pickupMarker);
+
+            // 2. Destination Pin Marker (🔴 Red Pin)
+            const destMarker = L.marker([dCoords[0], dCoords[1]], {
+                icon: L.divIcon({
+                    className: 'custom-map-pin-dest',
+                    html: `
+                        <div style="display:flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:#ef4444; border:3px solid #ffffff; box-shadow:0 4px 12px rgba(239,68,68,0.5); font-size:16px;">
+                            🔴
+                        </div>
+                    `,
+                    iconSize: [34, 34],
+                    iconAnchor: [17, 17]
+                })
+            }).bindPopup(`
+                <div style="font-family:system-ui,-apple-system,sans-serif; padding:4px;">
+                    <div style="font-size:0.75rem; color:#dc2626; font-weight:800; text-transform:uppercase;">Điểm đến của khách</div>
+                    <div style="font-size:0.92rem; font-weight:700; color:#0f2d3c; margin-top:2px;">${trip.dropoff}</div>
+                </div>
+            `);
+            activeMarkersGroup.addLayer(destMarker);
+
+            // 3. Fetch Real Street Turn-By-Turn Geometry from OSRM
+            let lineCoordinates = null;
+            if (trip.routeGeometry && Array.isArray(trip.routeGeometry) && trip.routeGeometry.length > 1) {
+                lineCoordinates = trip.routeGeometry;
+            } else {
+                try {
+                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pCoords[1]},${pCoords[0]};${dCoords[1]},${dCoords[0]}?overview=full&geometries=geojson`;
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 4000);
+                    const res = await fetch(osrmUrl, { signal: controller.signal });
+                    clearTimeout(timeout);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.routes && data.routes[0] && data.routes[0].geometry) {
+                            lineCoordinates = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                            trip.routeGeometry = lineCoordinates;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[ActivityMap] OSRM route fetch fallback:', e);
+                }
+            }
+
+            // Realistic road path fallback if offline
+            if (!lineCoordinates || lineCoordinates.length < 2) {
+                const midLat = (pCoords[0] + dCoords[0]) / 2 + 0.005;
+                const midLon = (pCoords[1] + dCoords[1]) / 2 - 0.006;
+                lineCoordinates = [
+                    [pCoords[0], pCoords[1]],
+                    [midLat, midLon],
+                    [dCoords[0], dCoords[1]]
+                ];
+            }
+
+            // Draw Polyline (Soft Mint Ambient Glow + Solid Polyline)
+            activeRouteLayer = L.featureGroup().addTo(actMap);
+
+            L.polyline(lineCoordinates, {
+                color: '#00b1a9',
+                weight: 9,
+                opacity: 0.35,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(activeRouteLayer);
+
+            const mainPolyline = L.polyline(lineCoordinates, {
+                color: '#00b1a9',
+                weight: 5,
+                opacity: 0.95,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(activeRouteLayer);
+
+            // Fit map bounds smoothly with padding
+            try {
+                const allBounds = activeMarkersGroup.getBounds().extend(mainPolyline.getBounds());
+                actMap.fitBounds(allBounds, { padding: [55, 55], maxZoom: 15 });
+            } catch (err) {}
+
+            pickupMarker.openPopup();
+            updateWideCanvasHeader(trip);
+        }
+
+        // Update dashboard title & impact stat cards to reflect the selected trip
+        function updateWideCanvasHeader(trip) {
+            const titleEl = document.getElementById('map-trip-title');
+            const subtitleEl = document.getElementById('map-trip-subtitle');
+            const distEl = document.getElementById('stat-card-distance');
+            const co2El = document.getElementById('stat-card-co2');
+            const treesEl = document.getElementById('stat-card-trees');
+            const fareEl = document.getElementById('stat-card-fare');
+            const statusEl = document.getElementById('stat-card-status');
+
+            if (titleEl) {
+                titleEl.textContent = `Lộ Trình: ${trip.pickup} → ${trip.dropoff}`;
+            }
+            if (subtitleEl) {
+                subtitleEl.textContent = `${trip.title} • ${trip.time} • Trạng thái: ${trip.status}`;
+            }
+            const distNum = parseFloat(trip.distance) || 8.5;
+            if (distEl) {
+                distEl.innerHTML = `${distNum.toFixed(1).replace('.', ',')} <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span>`;
+            }
+            if (co2El) {
+                const co2Val = (distNum * 0.162).toFixed(1).replace('.', ',');
+                co2El.innerHTML = `${co2Val} <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span>`;
+            }
+            if (treesEl) {
+                const treeVal = Math.max(1, Math.round(distNum * 0.8));
+                treesEl.innerHTML = `${treeVal} <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span>`;
+            }
+            if (fareEl) {
+                fareEl.innerHTML = `${trip.fare || '150.000đ'}`;
+            }
+            if (statusEl) {
+                statusEl.textContent = trip.status === 'Hoàn thành' ? 'Đã hoàn thành chuyến' : (trip.status === 'Đã hủy' ? 'Chuyến đã hủy' : 'Đang xử lý');
+                statusEl.style.color = trip.status === 'Hoàn thành' ? '#059669' : (trip.status === 'Đã hủy' ? '#dc2626' : '#d97706');
+            }
+        }
+
+        // Select a trip and update card highlight & map route
+        window.selectTrip = function(tripId) {
+            selectedTripId = tripId;
+
+            // Highlight selected card on the left
+            document.querySelectorAll('.gsm-trip-card').forEach(card => {
+                const id = card.getAttribute('data-trip-id');
+                card.classList.toggle('is-selected-trip', id === tripId);
+            });
+
+            const trip = currentRenderedTrips.find(t => String(t.id) === String(tripId));
+            if (trip) {
+                displayTripOnMap(trip);
+            }
+        };
+
+        // Retrieve and synthesize user trips across all persistence stores
+        function getStoredUserTrips() {
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
+            const userStorageKey = 'goride_trips_' + String(userKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+            const rawUserList = JSON.parse(localStorage.getItem(userStorageKey) || '[]');
+            const rawAdminList = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+            const rawBookings = JSON.parse(localStorage.getItem('navigo_bookings') || '[]');
+
+            // Map admin trips for rapid coordinate and status lookup
+            const adminMap = new Map();
+            rawAdminList.forEach(t => { if (t && t.id) adminMap.set(String(t.id), t); });
+
+            let combined = [...rawUserList];
+
+            rawAdminList.forEach(at => {
+                if (!combined.some(u => String(u.id) === String(at.id))) {
+                    if (user && (at.customerId === user.id || at.customerPhone === user.phone || at.customerName === user.name)) {
+                        combined.push(at);
+                    }
+                }
+            });
+
+            rawBookings.forEach(b => {
+                if (!combined.some(u => String(u.id) === String(b.id))) combined.push(b);
+            });
+
+            // If user has no saved history or demo mode is on, fallback to authentic demo trips
+            if (combined.length === 0 || showTripsMode) {
+                combined = [...combined, ...demoTrips];
+            }
+
+            return combined.map(t => {
+                const tId = String(t.id || '');
+                const adminData = adminMap.get(tId) || {};
+
+                const pName = t.pickupName || (typeof t.pickup === 'object' ? (t.pickup?.name || t.pickup?.address) : t.pickup) || adminData.pickupName || adminData.pickup || 'Điểm đón';
+                const dName = t.dropoffName || (typeof t.destination === 'object' ? (t.destination?.name || t.destination?.address) : t.destination) || adminData.dropoffName || adminData.destination || 'Điểm đến';
+
+                const pCoords = t.pickupCoords || adminData.pickupCoords || (t.pickupLat ? [Number(t.pickupLat), Number(t.pickupLon)] : null) || (adminData.pickupLat ? [Number(adminData.pickupLat), Number(adminData.pickupLon)] : null) || resolveCoords(pName);
+                const dCoords = t.destinationCoords || adminData.destinationCoords || (t.dropoffLat ? [Number(t.dropoffLat), Number(t.dropoffLon)] : null) || (adminData.dropoffLat ? [Number(adminData.dropoffLat), Number(adminData.dropoffLon)] : null) || resolveCoords(dName);
+
+                const fareNum = Number(t.fareAmount || t.fare || adminData.fare || 0);
+                const isCompleted = (t.status === 'completed' || t.status === 'COMPLETED' || adminData.status === 'completed');
+                const isCancelled = (t.status === 'cancelled' || t.status === 'CANCELLED' || adminData.status === 'cancelled');
+
+                return {
+                    id: t.id || 'NAV-' + Math.floor(10000 + Math.random() * 90000),
+                    type: (t.vehicleType === 'bike') ? 'bike' : 'car',
+                    title: t.vehicleName || t.vehicleTypeName || adminData.vehicleTypeName || 'Green Car - 4 khách',
+                    time: t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : (t.time || 'Vừa xong'),
+                    pickup: pName,
+                    dropoff: dName,
+                    pickupCoords: pCoords,
+                    destinationCoords: dCoords,
+                    fare: fareNum > 0 ? fareNum.toLocaleString('vi-VN') + 'đ' : (t.fare || '120.000đ'),
+                    fareAmount: fareNum,
+                    distance: t.distance || adminData.distance || calculateDistanceKm(pCoords, dCoords),
+                    status: isCompleted ? 'Hoàn thành' : (isCancelled ? 'Đã hủy' : 'Đang xử lý'),
+                    isCompleted: isCompleted,
+                    routeGeometry: t.routeGeometry || adminData.routeGeometry || null
+                };
+            });
+        }
+
+        // Render the Trip Cards list on the left column
+        function renderTrips() {
+            const activeFilter = document.querySelector('.gsm-filter-pill.active')?.getAttribute('data-filter') || 'all';
+            const emptyBox = document.getElementById('activity-empty-state');
+            const listEl = document.getElementById('activity-list');
+
+            const allTrips = getStoredUserTrips();
+            let filtered = allTrips;
+
+            if (activeFilter === 'food' || activeFilter === 'delivery' || activeFilter === 'hourly') {
+                filtered = [];
+            }
+
+            currentRenderedTrips = filtered;
+
+            if (filtered.length === 0) {
+                if (emptyBox) emptyBox.style.display = 'flex';
+                if (listEl) {
+                    listEl.style.display = 'none';
+                    listEl.innerHTML = '';
+                }
+            } else {
+                if (emptyBox) emptyBox.style.display = 'none';
+                if (listEl) {
+                    listEl.style.display = 'block';
+                    listEl.innerHTML = filtered.map(t => {
+                        const isSelected = String(t.id) === String(selectedTripId);
+                        return `
+                            <div class="gsm-trip-card ${isSelected ? 'is-selected-trip' : ''}" data-trip-id="${t.id}" onclick="selectTrip('${t.id}')">
+                                <div class="gsm-trip-header">
+                                    <div class="gsm-trip-service">
+                                        <div class="gsm-trip-service-icon">
+                                            ${t.type === 'bike' ? '🛵' : '🚗'}
+                                        </div>
+                                        <div>
+                                            <div>${t.title}</div>
+                                            <div style="font-size:0.75rem; color:#94a3b8; font-weight:500;">${t.time}</div>
+                                        </div>
+                                    </div>
+                                    <span class="gsm-trip-badge ${t.isCompleted ? 'badge-completed' : (t.status === 'Đã hủy' ? 'badge-cancelled' : '')}">
+                                        ${t.status}
+                                    </span>
+                                </div>
+                                <div class="gsm-trip-pts">
+                                    <div class="gsm-trip-pt">
+                                        <span class="gsm-trip-dot" style="background:#00b1a9;"></span>
+                                        <span style="font-weight:600; color:#0f2d3c;">${t.pickup}</span>
+                                    </div>
+                                    <div class="gsm-trip-pt" style="margin-top:6px;">
+                                        <span class="gsm-trip-dot" style="background:#ef4444;"></span>
+                                        <span style="color:#475569;">${t.dropoff}</span>
+                                    </div>
+                                </div>
+                                <div class="gsm-trip-footer">
+                                    <div class="gsm-trip-fare">${t.fare}</div>
+                                    <button type="button" class="gsm-trip-rebook-btn" onclick="event.stopPropagation(); window.location.href='customer.html?pickup=' + encodeURIComponent('${t.pickup}') + '&dest=' + encodeURIComponent('${t.dropoff}')">
+                                        Đặt lại
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // If no trip is selected, automatically select the completed trip or the first trip
+                const hasCurrentSelected = filtered.some(t => String(t.id) === String(selectedTripId));
+                if (!hasCurrentSelected) {
+                    const defaultTrip = filtered.find(t => t.isCompleted) || filtered[0];
+                    if (defaultTrip) {
+                        selectTrip(defaultTrip.id);
+                    }
+                } else {
+                    selectTrip(selectedTripId);
+                }
+            }
+        }
+
+        // Filter Pills toggle listener
+        const filterPills = document.querySelectorAll('.gsm-filter-pill');
+        filterPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                filterPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                renderTrips();
+            });
+        });
+
+        // Header calendar button toggles demo trips
+        document.getElementById('btn-toggle-demo-trips')?.addEventListener('click', () => {
+            showTripsMode = !showTripsMode;
+            renderTrips();
+        });
+
+        // Initial setup on DOM ready
+        document.addEventListener('DOMContentLoaded', () => {
+            initDesktopMap();
+            renderTrips();
+
+            // Sync trips from Cloud database if user is logged in
+            if (typeof realtimeSync !== 'undefined' && typeof realtimeSync.getUserTrips === 'function') {
+                const curUser = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+                if (curUser) {
+                    const uKey = curUser.id || curUser.phone || curUser.email;
+                    realtimeSync.getUserTrips(uKey).then(dbTrips => {
+                        if (Array.isArray(dbTrips) && dbTrips.length > 0) {
+                            const sKey = 'goride_trips_' + String(uKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+                            const local = JSON.parse(localStorage.getItem(sKey) || '[]');
+                            dbTrips.forEach(dt => {
+                                if (!local.some(l => l.id === dt.id)) local.push(dt);
+                            });
+                            localStorage.setItem(sKey, JSON.stringify(local));
+                            renderTrips();
+                        }
+                    }).catch(() => {});
+                }
+            }
+        });
+
+        // Immediate run
+        initDesktopMap();
+        renderTrips();
     </script>
 </body>
 </html>
