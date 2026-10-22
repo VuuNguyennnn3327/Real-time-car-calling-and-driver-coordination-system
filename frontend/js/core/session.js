@@ -52,10 +52,16 @@ if (typeof window !== 'undefined') {
 window.showNavigoModal = function(options) {
     if (typeof document === 'undefined') return;
 
-    // Strictly suppress all modals/alerts while loading screen is active
-    if (sessionStorage.getItem('navigo_loading_screen_active') === 'true') {
-        console.log('[NavigoModal] Suppressed during active loading screen');
-        return;
+    // Check whether loading splash screen is physically in DOM
+    const isLoadingElement = document.getElementById('loading-splash-screen') || document.querySelector('.loading-splash-overlay');
+    if (!isLoadingElement) {
+        try { sessionStorage.removeItem('navigo_loading_screen_active'); } catch(e) {}
+    } else if (sessionStorage.getItem('navigo_loading_screen_active') === 'true') {
+        // Only suppress automatic prompts during loading; never suppress explicit user clicks or danger/logout actions
+        if (options && (options.isAutoPrompt || (!options.danger && !options.onConfirm))) {
+            console.log('[NavigoModal] Auto prompt suppressed during active loading screen');
+            return;
+        }
     }
 
     const config = typeof options === 'string' ? { message: options } : (options || {});
@@ -503,22 +509,55 @@ class SessionManager {
      * Show centered floating modal confirmation for logout (Hủy / Xác nhận)
      */
     confirmLogout() {
+        const doLogout = () => {
+            try {
+                this.logout();
+                const keysToRemove = [
+                    'ride_rtree_user', 'ride_rtree_token',
+                    'goride_user', 'goride_token',
+                    'navigo_user', 'navigo_token',
+                    'user', 'token', 'currentUser', 'session_user',
+                    'goride_active_trip', 'goride_driver_online_state',
+                    'goride_pending_trip_offers'
+                ];
+                keysToRemove.forEach(k => {
+                    try { localStorage.removeItem(k); } catch(e) {}
+                    try { sessionStorage.removeItem(k); } catch(e) {}
+                });
+            } catch(e) {}
+
+            const isPagesDir = window.location.pathname.includes('/pages/');
+            const targetUrl = isPagesDir ? 'login.html?logout=true' : 'pages/login.html?logout=true';
+            window.location.href = targetUrl;
+        };
+
         if (typeof window.showNavigoModal === 'function') {
             window.showNavigoModal({
                 title: 'Xác nhận đăng xuất',
                 message: 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản Navigo không?',
                 icon: '🚪',
-                confirmText: 'Xác nhận',
+                confirmText: 'Đăng xuất',
                 cancelText: 'Hủy',
                 danger: true,
-                onConfirm: () => {
-                    this.logout();
-                    const isPagesDir = window.location.pathname.includes('/pages/');
-                    const targetUrl = isPagesDir ? 'login.html?logout=true' : 'pages/login.html?logout=true';
-                    window.location.href = targetUrl;
-                }
+                onConfirm: doLogout
             });
+            // Fail-safe timeout: If modal was not rendered in DOM within 200ms, fallback to native confirm
+            setTimeout(() => {
+                if (!document.getElementById('navigo-liquid-glass-modal')) {
+                    if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?')) {
+                        doLogout();
+                    }
+                }
+            }, 200);
+        } else {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?')) {
+                doLogout();
+            }
         }
+    }
+
+    logoutWithConfirmation() {
+        this.confirmLogout();
     }
 
     /**
@@ -561,21 +600,31 @@ if (typeof module !== 'undefined' && module.exports) {
 // Universal Click Delegation for Logout & Dynamic Auth Header Sync
 if (typeof document !== 'undefined') {
     document.addEventListener('click', (e) => {
-        const logoutTrigger = e.target.closest('[data-action="logout"], #btn-logout-account, #btn-profile-logout, .admin-logout-btn, .btn-logout');
+        const logoutTrigger = e.target.closest('[data-action="logout"], #btn-logout-account, #btn-profile-logout, .admin-logout-btn, .btn-logout, .admin-sidebar-btn-logout, #btn-desktop-logout, #btn-customer-logout, .user-menu-item-danger');
         if (logoutTrigger) {
             e.preventDefault();
             e.stopPropagation();
-            sessionManager.confirmLogout();
+            if (typeof sessionManager !== 'undefined') {
+                sessionManager.confirmLogout();
+            } else {
+                if (confirm('Bạn có chắc chắn muốn đăng xuất không?')) {
+                    window.location.href = window.location.pathname.includes('/pages/') ? 'login.html?logout=true' : 'pages/login.html?logout=true';
+                }
+            }
             return;
         }
 
-        // Also catch any button or link whose text is exactly 'Đăng xuất'
-        if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A')) {
+        // Also catch any button or link whose text contains 'Đăng xuất'
+        if (e.target && (e.target.tagName === 'BUTTON' || e.target.tagName === 'A' || e.target.tagName === 'DIV')) {
             const txt = (e.target.textContent || '').trim().toLowerCase();
-            if (txt === 'đăng xuất') {
-                e.preventDefault();
-                e.stopPropagation();
-                sessionManager.confirmLogout();
+            if (txt === 'đăng xuất' || txt === '🚪 đăng xuất' || txt.includes('đăng xuất')) {
+                if (e.target.closest('.user-menu-item-danger, .gsm-btn-logout-row, .admin-sidebar-btn-logout, [data-action="logout"], .btn-danger')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof sessionManager !== 'undefined') {
+                        sessionManager.confirmLogout();
+                    }
+                }
             }
         }
     });

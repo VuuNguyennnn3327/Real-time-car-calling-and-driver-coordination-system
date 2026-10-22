@@ -984,33 +984,20 @@ class AdminController {
     }
 
     setupLogout() {
-        document.querySelectorAll('[data-action="logout"]').forEach(el => {
+        document.querySelectorAll('[data-action="logout"], .admin-sidebar-btn-logout').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.preventDefault();
-                try {
-                    if (typeof apiClient !== 'undefined' && apiClient.logout) {
-                        apiClient.logout().catch(() => {});
+                if (typeof sessionManager !== 'undefined' && sessionManager.confirmLogout) {
+                    sessionManager.confirmLogout();
+                } else {
+                    if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi phiên quản trị?')) {
+                        try {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                        } catch(err) {}
+                        window.location.href = 'login.html?logout=true';
                     }
-                } catch (err) {}
-                if (typeof sessionManager !== 'undefined') {
-                    sessionManager.logout();
                 }
-                try {
-                    sessionStorage.clear();
-                    const keysToRemove = [
-                        'ride_rtree_user', 'ride_rtree_token',
-                        'goride_user', 'goride_token',
-                        'navigo_user', 'navigo_token',
-                        'user', 'token', 'currentUser',
-                        'goride_active_trip', 'goride_driver_online_state',
-                        'goride_pending_trip_offers'
-                    ];
-                    keysToRemove.forEach(k => {
-                        localStorage.removeItem(k);
-                        sessionStorage.removeItem(k);
-                    });
-                } catch(e) {}
-                window.location.href = 'login.html?logout=true';
             });
         });
     }

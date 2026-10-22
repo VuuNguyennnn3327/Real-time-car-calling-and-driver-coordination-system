@@ -84,6 +84,15 @@
             .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
                 pointer-events: auto !important;
             }
+            .gsm-floating-bottom-nav .gsm-bottom-nav-pill *,
+            .gsm-floating-bottom-nav .gsm-bottom-nav-trophy *,
+            .gsm-nav-btn {
+                pointer-events: auto !important;
+                cursor: pointer !important;
+            }
+            .gsm-nav-btn svg, .gsm-nav-btn path, .gsm-nav-btn circle {
+                pointer-events: none !important;
+            }
 
             /* Hero Banner */
             body.gsm-home-page .gsm-home-header {
@@ -360,7 +369,7 @@
                         <div class="gsm-food-title">
                             <span style="color:#f59e0b;">✦</span> Đói chưa? Mấy quán ngon gần đây đang chờ bạn.
                         </div>
-                        <span style="color:#94a3b8; font-size:1.1rem; cursor:pointer;">•••</span>
+                        <span style="color:#94a3b8; font-size:1.1rem; cursor:pointer;" onclick="window.location.href='pages/customer.html?service=food'" title="Xem tất cả quán ngon">•••</span>
                     </div>
 
                     <div class="gsm-food-carousel">

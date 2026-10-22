@@ -1330,6 +1330,133 @@ class CustomerAppController {
             });
         }
 
+        // Back from Pickup Confirm to Search
+        const btnBackToSearch = document.getElementById('btn-back-to-search');
+        if (btnBackToSearch) {
+            btnBackToSearch.addEventListener('click', () => {
+                this.switchView('search');
+            });
+        }
+
+        // Top Search Capsule on Pickup Confirm Screen
+        const btnPickupSearchCapsule = document.getElementById('btn-pickup-search-capsule');
+        if (btnPickupSearchCapsule) {
+            btnPickupSearchCapsule.addEventListener('click', () => {
+                this.switchView('search');
+            });
+        }
+
+        // Tap Pickup point text in Vehicle Select to edit pickup
+        const btnChangePickupPt = document.getElementById('btn-change-pickup-pt');
+        if (btnChangePickupPt) {
+            btnChangePickupPt.addEventListener('click', () => {
+                this.switchView('search');
+                setTimeout(() => document.getElementById('input-pickup')?.focus(), 100);
+            });
+        }
+
+        // Tap Destination point text in Vehicle Select to edit destination
+        const btnChangeDestPt = document.getElementById('btn-change-dest-pt');
+        if (btnChangeDestPt) {
+            btnChangeDestPt.addEventListener('click', () => {
+                this.switchView('search');
+                setTimeout(() => document.getElementById('input-destination')?.focus(), 100);
+            });
+        }
+
+        // Book For Other Passenger ("Đặt hộ")
+        const btnBookForOther = document.getElementById('btn-book-for-other');
+        if (btnBookForOther) {
+            btnBookForOther.addEventListener('click', () => {
+                const name = prompt('Nhập tên người đi xe bạn muốn đặt hộ:', this.bookForOtherName || '');
+                if (name !== null && name.trim()) {
+                    const phone = prompt('Nhập số điện thoại người nhận chuyến (để tài xế liên hệ):', this.bookForOtherPhone || '0901234567');
+                    this.bookForOtherName = name.trim();
+                    this.bookForOtherPhone = phone ? phone.trim() : '';
+                    btnBookForOther.innerHTML = `<span style="color:#ef4444;">👤</span> Đặt hộ: ${this.bookForOtherName}`;
+                    this.showToast(`Đã lưu thông tin đặt hộ cho ${this.bookForOtherName} (${this.bookForOtherPhone || 'Chưa có SĐT'})`, 'success');
+                }
+            });
+        }
+
+        // Safety & Insurance Shield ("Bảo hiểm Navigo BIC & BIDV")
+        const btnShieldSafety = document.getElementById('btn-shield-safety');
+        if (btnShieldSafety) {
+            btnShieldSafety.addEventListener('click', () => {
+                if (typeof window.showNavigoModal === 'function') {
+                    window.showNavigoModal({
+                        title: 'An toàn & Bảo hiểm Navigo',
+                        message: '🛡️ Nhân đôi bảo vệ cùng BIC & BIDV: 100% cuốc xe Navigo đều được bảo hiểm hành trình tự động trị giá lên đến 100.000.000đ. Đội ngũ tổng đài SOS 1900 2088 hỗ trợ 24/7.',
+                        icon: '🛡️',
+                        confirmText: 'Đã hiểu',
+                        showCancel: false
+                    });
+                } else {
+                    alert('🛡️ 100% cuốc xe Navigo được bảo vệ bởi bảo hiểm hành trình BIC & BIDV lên tới 100.000.000đ.');
+                }
+            });
+        }
+
+        // Schedule Ride ("Hẹn giờ đón")
+        const btnSchedule = document.getElementById('btn-schedule-action');
+        if (btnSchedule) {
+            btnSchedule.addEventListener('click', () => {
+                const timeChoices = ['Sau 15 phút nữa', 'Sau 30 phút nữa', 'Sau 1 giờ nữa', 'Sau 2 giờ nữa'];
+                const selected = prompt(`Hẹn giờ đón xe Navigo:\n1. ${timeChoices[0]}\n2. ${timeChoices[1]}\n3. ${timeChoices[2]}\n4. ${timeChoices[3]}\n\nNhập số (1-4) hoặc thời gian mong muốn (VD: 14:30):`, '1');
+                if (selected !== null && selected.trim()) {
+                    let timeStr = selected.trim();
+                    if (selected === '1') timeStr = timeChoices[0];
+                    else if (selected === '2') timeStr = timeChoices[1];
+                    else if (selected === '3') timeStr = timeChoices[2];
+                    else if (selected === '4') timeStr = timeChoices[3];
+                    btnSchedule.style.background = '#e6f7f6';
+                    btnSchedule.style.color = '#007d77';
+                    btnSchedule.style.fontWeight = '700';
+                    this.showToast(`Đã hẹn giờ xe đón: ${timeStr}`, 'success');
+                }
+            });
+        }
+
+        // NavigoNow Priority Matching
+        const btnNavigoNow = document.getElementById('btn-navigonow-action');
+        if (btnNavigoNow) {
+            btnNavigoNow.addEventListener('click', () => {
+                this.isNavigoNow = !this.isNavigoNow;
+                btnNavigoNow.style.background = this.isNavigoNow ? '#ecfdf5' : '';
+                btnNavigoNow.style.color = this.isNavigoNow ? '#047857' : '';
+                btnNavigoNow.style.border = this.isNavigoNow ? '1.5px solid #10b981' : '';
+                btnNavigoNow.style.fontWeight = this.isNavigoNow ? '800' : '';
+                this.showToast(this.isNavigoNow ? '⚡ Đã bật NavigoNow: Ưu tiên tìm tài xế gần nhất trong 30 giây!' : 'Đã tắt chế độ ưu tiên NavigoNow', 'info');
+            });
+        }
+
+        // Saved Places Button
+        const btnSavedPlaces = document.getElementById('btn-saved-places');
+        if (btnSavedPlaces) {
+            btnSavedPlaces.addEventListener('click', () => {
+                const choice = prompt('Chọn địa điểm nhanh:\n1. 🏠 Nhà riêng: 123 Lê Lợi, Bến Nghé, Quận 1\n2. 🏢 Công ty: Tòa nhà Bitexco Financial Tower, Quận 1\n3. ☕ Quán quen: Highlands Coffee Landmark 81\n\nNhập số (1, 2 hoặc 3):', '1');
+                if (choice === '1') {
+                    this.selectDestination({ name: 'Nhà riêng (123 Lê Lợi, Q.1)', address: '123 Lê Lợi, Bến Nghé, Quận 1', lat: 10.7735, lng: 106.6995 });
+                } else if (choice === '2') {
+                    this.selectDestination({ name: 'Bitexco Financial Tower', address: '2 Hải Triều, Bến Nghé, Quận 1', lat: 10.7717, lng: 106.7042 });
+                } else if (choice === '3') {
+                    this.selectDestination({ name: 'Highlands Coffee Landmark 81', address: '720A Điện Biên Phủ, Phường 22, Bình Thạnh', lat: 10.7950, lng: 106.7219 });
+                }
+            });
+        }
+
+        // Add Stop / Waypoint
+        const handleAddStop = () => {
+            const stopName = prompt('Nhập địa chỉ hoặc tên điểm dừng phụ:', 'Cây xăng gần nhất');
+            if (stopName !== null && stopName.trim()) {
+                this.showToast(`Đã thêm điểm dừng: ${stopName.trim()}`, 'success');
+            }
+        };
+        const btnAddStop = document.getElementById('btn-add-stop');
+        if (btnAddStop) btnAddStop.addEventListener('click', handleAddStop);
+        const btnAddExtraStop = document.getElementById('btn-add-extra-stop');
+        if (btnAddExtraStop) btnAddExtraStop.addEventListener('click', handleAddStop);
+
         // Change Route Button (ref-04)
         const btnChangeRoute = document.getElementById('btn-change-route');
         if (btnChangeRoute) {

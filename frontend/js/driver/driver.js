@@ -187,23 +187,26 @@ class DriverController {
     }
 
     document.querySelectorAll('[data-action="logout"]').forEach(el => {
-      el.addEventListener('click', async (e) => {
+      el.addEventListener('click', (e) => {
         e.preventDefault();
         try {
           this.isOnline = false;
           localStorage.setItem('goride_driver_online_state', '0');
           if (typeof realtimeSync !== 'undefined') {
-            const user = sessionManager.getCurrentUser();
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getCurrentUser() : null;
             const driverId = user?.id || (user?.phone ? ('drv_' + user.phone) : null);
             if (driverId) {
               realtimeSync.setDriverOnline(driverId, false);
             }
           }
         } catch (err) {}
-        if (typeof sessionManager !== 'undefined') {
-          sessionManager.logout();
+        if (typeof sessionManager !== 'undefined' && sessionManager.confirmLogout) {
+          sessionManager.confirmLogout();
+        } else {
+          if (confirm('Bạn có chắc chắn muốn đăng xuất tài khoản tài xế?')) {
+            window.location.href = 'login.html?logout=true';
+          }
         }
-        window.location.href = 'login.html?logout=true';
       });
     });
   }
