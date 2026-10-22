@@ -1590,32 +1590,37 @@ class CustomerAppController {
 
         const btnDesktopHistory = document.getElementById('btn-desktop-history');
         if (btnDesktopHistory) {
-            btnDesktopHistory.addEventListener('click', () => {
-                if (this.currentView === 'history') {
-                    // Toggle back to booking flow if already viewing history
-                    if (window.location.hash === '#history') {
-                        try {
-                            history.replaceState(null, '', window.location.pathname + window.location.search);
-                        } catch (e) {
-                            window.location.hash = '';
-                        }
-                    }
-                    if (this.activeTrip) {
-                        this.switchView('tracking');
-                    } else if (this.pickup && this.destination) {
-                        this.switchView('vehicle-select');
-                    } else {
-                        this.switchView('search');
-                    }
-                    return;
-                }
-                if (window.location.hash !== '#history') {
-                    window.location.hash = 'history';
-                }
-                this.switchView('history');
-                this.loadTripHistory();
+            btnDesktopHistory.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'activity.html';
             });
         }
+
+        // Guarantee all top navbar buttons and links perform direct navigation without obstruction
+        document.querySelectorAll('.gsm-pc-navbar a').forEach(a => {
+            a.style.pointerEvents = 'auto';
+            a.style.cursor = 'pointer';
+            a.addEventListener('click', (e) => {
+                const href = a.getAttribute('href');
+                if (!href || href === '#' || href.startsWith('javascript:')) return;
+                if (href.includes('customer.html?service=')) {
+                    const sType = href.includes('service=bike') ? 'bike' : (href.includes('service=delivery') ? 'delivery' : null);
+                    if (sType) {
+                        e.preventDefault();
+                        this.selectedService = sType;
+                        this.selectedVehicleType = sType;
+                        this.updateVehicleTabsUI(sType);
+                        this.updateVehicleOptions();
+                        try { history.pushState(null, '', href); } catch(err) {}
+                        document.querySelectorAll('.gsm-pc-nav-link').forEach(l => l.classList.remove('active'));
+                        a.classList.add('active');
+                        return;
+                    }
+                }
+                e.preventDefault();
+                window.location.href = href;
+            });
+        });
 
         // Mobile Quick Navigation Pills Event Handlers
         const custPillBooking = document.getElementById('m-cust-pill-booking');

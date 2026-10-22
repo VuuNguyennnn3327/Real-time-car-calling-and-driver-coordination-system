@@ -110,6 +110,25 @@
             padding: 0 !important;
         }
 
+        /* Top Navigation Bar: prominently elevated and guaranteed fully clickable */
+        .gsm-pc-navbar {
+            position: relative !important;
+            z-index: 2147483640 !important;
+            pointer-events: auto !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            background: #ffffff !important;
+        }
+        .gsm-pc-navbar *,
+        .gsm-pc-nav-links,
+        .gsm-pc-nav-links *,
+        .gsm-pc-nav-link,
+        #btn-desktop-history {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            visibility: visible !important;
+        }
+
         /* Desktop Sidebar Flow: Eliminate blank spaces, elevate booking button */
         @media (min-width: 1025px) {
             .gsm-desktop-sidebar .gsm-screen-wrapper {
@@ -418,19 +437,19 @@
         </a>
 
         <div class="gsm-pc-nav-links">
-            <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
-            <a href="customer.html" class="gsm-pc-nav-link active">Đặt xe Navigo</a>
-            <a href="customer.html?service=bike" class="gsm-pc-nav-link">Xe máy điện</a>
-            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
-            <a href="driver.html" class="gsm-pc-nav-link">Cổng Tài xế</a>
-            <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;">Quản trị</a>
+            <a href="../index.html" class="gsm-pc-nav-link" onclick="window.location.href='../index.html'">Trang chủ</a>
+            <a href="customer.html" class="gsm-pc-nav-link active" onclick="window.location.href='customer.html'">Đặt xe Navigo</a>
+            <a href="customer.html?service=bike" class="gsm-pc-nav-link" onclick="window.location.href='customer.html?service=bike'">Xe máy điện</a>
+            <a href="customer.html?service=delivery" class="gsm-pc-nav-link" onclick="window.location.href='customer.html?service=delivery'">Giao hàng</a>
+            <a href="driver.html" class="gsm-pc-nav-link" onclick="window.location.href='driver.html'">Cổng Tài xế</a>
+            <a href="admin.html" class="gsm-pc-nav-link" data-role="admin" style="display:none;" onclick="window.location.href='admin.html'">Quản trị</a>
         </div>
 
         <div style="display:flex; align-items:center; gap:12px;">
-            <a href="activity.html" class="gsm-search-action-pill" id="btn-desktop-history" style="text-decoration:none;">
+            <a href="activity.html" class="gsm-search-action-pill" id="btn-desktop-history" style="text-decoration:none;" onclick="window.location.href='activity.html'">
                 <span>📋</span> Lịch sử
             </a>
-            <a href="profile.html" class="gsm-search-action-pill" style="text-decoration:none;">
+            <a href="profile.html" class="gsm-search-action-pill" style="text-decoration:none;" onclick="window.location.href='profile.html'">
                 <span>👤</span> Hồ sơ
             </a>
             <button type="button" data-action="logout" id="btn-customer-logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer;">

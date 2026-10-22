@@ -753,6 +753,37 @@ if (typeof document !== 'undefined') {
                     <a href="${driverUrl}" class="gsm-pc-nav-link ${isDriverPage ? 'active' : ''}">Cổng Tài xế</a>
                 `;
             }
+
+            // Wire reliable direct navigation for all desktop top nav links
+            container.querySelectorAll('.gsm-pc-nav-link').forEach(link => {
+                link.style.pointerEvents = 'auto';
+                link.style.cursor = 'pointer';
+                link.onclick = (e) => {
+                    const href = link.getAttribute('href');
+                    if (!href || href === '#' || href.startsWith('javascript:')) return;
+
+                    // If currently on customer.html and clicking a customer sub-service (e.g. bike, delivery)
+                    if (isCustomerPage && href.includes('customer.html?service=')) {
+                        const sType = href.includes('service=bike') ? 'bike' : (href.includes('service=delivery') ? 'delivery' : null);
+                        const cCtrl = window.customerAppController || window.customerController;
+                        if (cCtrl && sType) {
+                            e.preventDefault();
+                            cCtrl.selectedService = sType;
+                            cCtrl.selectedVehicleType = sType;
+                            if (typeof cCtrl.updateVehicleTabsUI === 'function') cCtrl.updateVehicleTabsUI(sType);
+                            if (typeof cCtrl.updateVehicleOptions === 'function') cCtrl.updateVehicleOptions();
+                            try { history.pushState(null, '', href); } catch(err) {}
+                            container.querySelectorAll('.gsm-pc-nav-link').forEach(l => l.classList.remove('active'));
+                            link.classList.add('active');
+                            return;
+                        }
+                    }
+
+                    // For all other pages or regular navigation, perform immediate direct redirect
+                    e.preventDefault();
+                    window.location.href = href;
+                };
+            });
         });
 
         // 5. Dynamic Mobile Floating Bottom Navigation (.gsm-floating-bottom-nav)
