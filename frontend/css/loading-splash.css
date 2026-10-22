@@ -1,0 +1,485 @@
+/* ==========================================================================
+   NAVIGO EV PLATFORM — LUXURY SPLASH & LOADING SCREEN STYLES & ANIMATIONS
+   Authentic replica of Navigo mobile onboarding with micro-interactions
+   ========================================================================== */
+
+/* Fullscreen Backdrop */
+.navigo-loading-backdrop,
+.navigo-welcome-splash {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    background: radial-gradient(circle at 50% 30%, #154558 0%, #0a1f29 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.navigo-loading-backdrop.fade-out,
+.navigo-welcome-splash.hidden-splash {
+    opacity: 0 !important;
+    transform: scale(1.025) !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* App Viewport Container (Native Mobile Look on PC, Full Screen on Mobile) */
+.loading-app-container {
+    width: 100%;
+    max-width: 440px;
+    height: 100%;
+    max-height: 100vh;
+    position: relative;
+    background: linear-gradient(180deg, #dcfaf3 0%, #edfef9 28%, #d5f7ef 65%, #9ae7d2 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px 24px 44px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+
+@media (min-width: 1025px) {
+    .loading-app-container {
+        height: 890px;
+        max-height: 92vh;
+        border-radius: 46px;
+        border: 7px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 35px 90px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 177, 169, 0.3);
+    }
+}
+
+/* 1. Authentic Street Map Blueprint Texture at bottom */
+.bg-map-texture {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 52%;
+    background: url('../assets/gsm/loading_map_bottom.jpg') no-repeat center bottom;
+    background-size: cover;
+    mix-blend-mode: multiply;
+    opacity: 0.38;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* 2. Flowing Animated Dashed GPS Track */
+.bg-gps-svg {
+    position: absolute;
+    bottom: 20px;
+    left: -15%;
+    width: 130%;
+    height: 380px;
+    pointer-events: none;
+    z-index: 2;
+    overflow: visible;
+}
+
+.gps-flow-path {
+    stroke: rgba(0, 177, 169, 0.42);
+    stroke-width: 2.5;
+    stroke-dasharray: 6 9;
+    fill: none;
+    animation: gpsFlowing 18s linear infinite;
+}
+
+.gps-flow-path-subtle {
+    stroke: rgba(45, 212, 191, 0.25);
+    stroke-width: 2;
+    stroke-dasharray: 4 7;
+    fill: none;
+    animation: gpsFlowingReverse 22s linear infinite;
+}
+
+@keyframes gpsFlowing {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: -1000; }
+}
+
+@keyframes gpsFlowingReverse {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: 1000; }
+}
+
+/* 3. Ambient Floating Electric Energy Glows */
+.ambient-energy-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    overflow: hidden;
+}
+
+.energy-particle {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 177, 169, 0.65) 0%, rgba(45, 212, 191, 0) 70%);
+    animation: energyFloat linear infinite;
+}
+
+@keyframes energyFloat {
+    0% {
+        transform: translateY(105vh) scale(0.6);
+        opacity: 0;
+    }
+    25% {
+        opacity: 0.75;
+    }
+    75% {
+        opacity: 0.75;
+    }
+    100% {
+        transform: translateY(-40px) scale(1.15);
+        opacity: 0;
+    }
+}
+
+/* 4. Center Hero Section */
+.hero-center-stage {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+/* Illustration Container */
+.illustration-box {
+    position: relative;
+    width: 320px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+/* Base Car + Map Illustration with Suspension Floating */
+.hero-base-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 14px 28px rgba(15, 45, 60, 0.12));
+    animation: carRidePhysics 3.2s ease-in-out infinite;
+    transform-origin: 45% 75%;
+}
+
+@keyframes carRidePhysics {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-4.5px) rotate(-0.5deg);
+    }
+    50% {
+        transform: translateY(-1px) rotate(0.4deg);
+    }
+    75% {
+        transform: translateY(-5px) rotate(-0.3deg);
+    }
+}
+
+/* Dynamic Speed Wind Streaks (Electric Motion Trails) */
+.wind-motion-wrapper {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.wind-streak {
+    position: absolute;
+    height: 3px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, rgba(0, 177, 169, 0) 0%, rgba(0, 177, 169, 0.75) 50%, rgba(45, 212, 191, 0) 100%);
+    animation: windStreakRush 1.6s ease-in-out infinite;
+}
+
+.wind-streak.w1 {
+    top: 55px;
+    left: 20px;
+    width: 75px;
+    animation-delay: 0.1s;
+}
+.wind-streak.w2 {
+    top: 98px;
+    left: 8px;
+    width: 105px;
+    animation-delay: 0.5s;
+}
+.wind-streak.w3 {
+    top: 138px;
+    left: 28px;
+    width: 80px;
+    animation-delay: 0.9s;
+}
+.wind-streak.w4 {
+    top: 162px;
+    left: 45px;
+    width: 90px;
+    animation-delay: 0.3s;
+}
+
+@keyframes windStreakRush {
+    0% {
+        transform: translateX(35px) scaleX(0.7);
+        opacity: 0;
+    }
+    40% {
+        opacity: 0.9;
+    }
+    80% {
+        transform: translateX(-25px) scaleX(1.3);
+        opacity: 0.65;
+    }
+    100% {
+        transform: translateX(-55px) scaleX(0.8);
+        opacity: 0;
+    }
+}
+
+/* Radar Beacon Glow Pulse on Map Location Pin */
+.pin-radar-beacon {
+    position: absolute;
+    top: 24%;
+    left: 71.5%;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0, 177, 169, 0.45);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: radarPulse 2s cubic-bezier(0.2, 0.8, 0.3, 1) infinite;
+}
+
+@keyframes radarPulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.6);
+        opacity: 0.95;
+    }
+    65% {
+        transform: translate(-50%, -50%) scale(2.8);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.6);
+        opacity: 0;
+    }
+}
+
+/* 3 Service Badges Micro-Floating & Hovering */
+.service-bubble {
+    position: absolute;
+    z-index: 12;
+    pointer-events: none;
+    filter: drop-shadow(0 7px 14px rgba(15, 45, 60, 0.16));
+}
+
+.service-bubble.b-food {
+    top: 4%;
+    left: 55.5%;
+    width: 48px;
+    height: 48px;
+    animation: floatBubbleFood 2.8s ease-in-out infinite;
+}
+
+.service-bubble.b-package {
+    top: 2%;
+    left: 79%;
+    width: 49px;
+    height: 49px;
+    animation: floatBubblePackage 3.2s ease-in-out infinite 0.4s;
+}
+
+.service-bubble.b-bus {
+    top: 35%;
+    left: 81%;
+    width: 46px;
+    height: 42px;
+    animation: floatBubbleBus 2.6s ease-in-out infinite 0.8s;
+}
+
+@keyframes floatBubbleFood {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(-3deg);
+    }
+}
+
+@keyframes floatBubblePackage {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-9px) rotate(3deg);
+    }
+}
+
+@keyframes floatBubbleBus {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-6px) rotate(-2deg);
+    }
+}
+
+/* Typography Styling */
+.brand-headline-box {
+    text-align: center;
+    animation: brandEnter 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.brand-name {
+    font-size: 2.45rem;
+    font-weight: 900;
+    color: #0f2d3c;
+    letter-spacing: 1.8px;
+    margin: 0;
+    line-height: 1.1;
+    text-shadow: 0 2px 10px rgba(15, 45, 60, 0.08);
+    position: relative;
+    display: inline-block;
+}
+
+/* Electric Shimmer across NAVIGO */
+.brand-name::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 65%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 177, 169, 0.35), transparent);
+    animation: brandShimmerEffect 3s ease-in-out infinite;
+}
+
+@keyframes brandShimmerEffect {
+    0% { left: -100%; }
+    45%, 100% { left: 190%; }
+}
+
+.brand-greeting {
+    font-size: 1.95rem;
+    font-weight: 700;
+    color: #133e4d;
+    margin-top: 6px;
+    letter-spacing: -0.3px;
+}
+
+@keyframes brandEnter {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* 5. Bottom Circular Loading Spinner & Status */
+.loading-footer-status {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+/* Spinner Wrapper with Soft Glow */
+.spinner-halo-wrap {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner-halo-glow {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0, 177, 169, 0.38) 0%, rgba(45, 212, 191, 0) 70%);
+    animation: spinnerAura 2s ease-in-out infinite;
+}
+
+@keyframes spinnerAura {
+    0%, 100% {
+        transform: scale(0.9);
+        opacity: 0.55;
+    }
+    50% {
+        transform: scale(1.22);
+        opacity: 0.95;
+    }
+}
+
+.spinner-circle-ring {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 4.5px solid rgba(0, 177, 169, 0.2);
+    border-top-color: #00b1a9;
+    border-right-color: #2dd4bf;
+    box-shadow: 0 0 16px rgba(0, 177, 169, 0.28);
+    animation: spinRingSmooth 0.92s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+}
+
+@keyframes spinRingSmooth {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Status Text */
+.status-primary-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f3544;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    letter-spacing: 0.2px;
+}
+
+.status-dots::after {
+    content: '';
+    display: inline-block;
+    width: 18px;
+    text-align: left;
+    animation: dotsCycleAnimation 1.6s steps(4, end) infinite;
+}
+
+@keyframes dotsCycleAnimation {
+    0%, 20% { content: ''; }
+    40% { content: '.'; }
+    60% { content: '..'; }
+    80%, 100% { content: '...'; }
+}
+
+.status-secondary-text {
+    font-size: 0.88rem;
+    color: #476f82;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}

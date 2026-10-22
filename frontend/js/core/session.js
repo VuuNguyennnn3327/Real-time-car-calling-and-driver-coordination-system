@@ -52,6 +52,12 @@ if (typeof window !== 'undefined') {
 window.showNavigoModal = function(options) {
     if (typeof document === 'undefined') return;
 
+    // Strictly suppress all modals/alerts while loading screen is active
+    if (sessionStorage.getItem('navigo_loading_screen_active') === 'true') {
+        console.log('[NavigoModal] Suppressed during active loading screen');
+        return;
+    }
+
     const config = typeof options === 'string' ? { message: options } : (options || {});
     const title = config.title || 'Thông báo Navigo';
     const message = config.message || '';

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Navigo — Đang tải dữ liệu...</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/loading-splash.css">
+</head>
+<body>
+    <div class="navigo-loading-backdrop" id="loading-backdrop">
+        <div class="loading-app-container">
+            <!-- 1. Authentic Blueprint Street Map Texture -->
+            <div class="bg-map-texture"></div>
+
+            <!-- 2. Flowing Dashed GPS Track SVG -->
+            <svg class="bg-gps-svg" viewBox="0 0 500 400" preserveAspectRatio="none">
+                <path class="gps-flow-path" d="M -50,150 C 120,80 180,260 340,190 C 420,160 480,240 550,210" />
+                <path class="gps-flow-path-subtle" d="M -20,240 C 90,180 200,320 360,250 C 440,210 500,290 560,260" />
+            </svg>
+
+            <!-- 3. Ambient Floating Electric Energy Glows -->
+            <div class="ambient-energy-layer">
+                <div class="energy-particle" style="top:18%; left:14%; width:10px; height:10px; animation-duration:4.2s; animation-delay:0.3s;"></div>
+                <div class="energy-particle" style="top:42%; left:84%; width:14px; height:14px; animation-duration:5.4s; animation-delay:1.1s;"></div>
+                <div class="energy-particle" style="top:68%; left:22%; width:8px; height:8px; animation-duration:3.9s; animation-delay:0s;"></div>
+                <div class="energy-particle" style="top:58%; left:76%; width:12px; height:12px; animation-duration:4.7s; animation-delay:1.8s;"></div>
+            </div>
+
+            <!-- 4. Center Hero Section with High-Fidelity Layered Animation -->
+            <div class="hero-center-stage">
+                <div class="illustration-box">
+                    <!-- Dynamic Wind Streaks -->
+                    <div class="wind-motion-wrapper">
+                        <div class="wind-streak w1"></div>
+                        <div class="wind-streak w2"></div>
+                        <div class="wind-streak w3"></div>
+                        <div class="wind-streak w4"></div>
+                    </div>
+
+                    <!-- Base Electric Car + Map with Suspension Floating -->
+                    <img src="assets/gsm/loading_hero_car_map.png" alt="Navigo EV Car" class="hero-base-img">
+
+                    <!-- Radar Pulse on Location Pin -->
+                    <div class="pin-radar-beacon"></div>
+
+                    <!-- Independent Floating Service Badges -->
+                    <img src="assets/gsm/bubble_food.png" alt="Food" class="service-bubble b-food" title="Đồ ăn & Giao món">
+                    <img src="assets/gsm/bubble_package.png" alt="Package" class="service-bubble b-package" title="Giao hàng nhanh">
+                    <img src="assets/gsm/bubble_bus.png" alt="VinBus" class="service-bubble b-bus" title="VinBus thuần điện">
+                </div>
+
+                <!-- Branding Typography -->
+                <div class="brand-headline-box">
+                    <h1 class="brand-name">NAVIGO</h1>
+                    <div class="brand-greeting">Xin Chào</div>
+                </div>
+            </div>
+
+            <!-- 5. Bottom Circular Loading Spinner & Status -->
+            <div class="loading-footer-status">
+                <div class="spinner-halo-wrap">
+                    <div class="spinner-halo-glow"></div>
+                    <div class="spinner-circle-ring"></div>
+                </div>
+                <div class="status-primary-text">
+                    Đang tải dữ liệu<span class="status-dots"></span>
+                </div>
+                <div class="status-secondary-text">
+                    Vui lòng đợi trong giây lát...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script: exactly 2000ms animation, then transition to Trang Chủ -->
+    <script>
+        const LOADING_DURATION_MS = 2000;
+        const FADE_TRANSITION_MS = 380;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Strictly NO location prompts while loading
+            sessionStorage.setItem('navigo_loading_screen_active', 'true');
+
+            setTimeout(() => {
+                const backdrop = document.getElementById('loading-backdrop');
+                if (backdrop) {
+                    backdrop.classList.add('fade-out');
+                }
+
+                setTimeout(() => {
+                    sessionStorage.removeItem('navigo_loading_screen_active');
+                    sessionStorage.setItem('navigo_from_loading', 'true');
+                    sessionStorage.setItem('navigo_initial_loaded', 'true');
+
+                    window.location.replace('index.html?prompt_location=true');
+                }, FADE_TRANSITION_MS);
+            }, LOADING_DURATION_MS);
+        });
+    </script>
+</body>
+</html>
