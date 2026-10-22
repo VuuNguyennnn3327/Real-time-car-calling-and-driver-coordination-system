@@ -517,6 +517,99 @@
             setTimeout(() => { actMap.invalidateSize(); }, 350);
         }
 
+        // Validate whether a route line strictly connects pickup to destination without noise or detours
+        function isRouteGeometryValid(coords, pCoords, dCoords) {
+            if (!Array.isArray(coords) || coords.length < 2) return false;
+            const start = coords[0];
+            const end = coords[coords.length - 1];
+            if (!Array.isArray(start) || !Array.isArray(end) || start.length < 2 || end.length < 2) return false;
+
+            // Start must be near pickup (<= 0.035 deg ~ 3.8km)
+            const dStart = Math.hypot(start[0] - pCoords[0], start[1] - pCoords[1]);
+            // End must be near destination (<= 0.035 deg ~ 3.8km)
+            const dEnd = Math.hypot(end[0] - dCoords[0], end[1] - dCoords[1]);
+            if (dStart > 0.035 || dEnd > 0.035) return false;
+
+            // Strict bounding box with margin (0.025 deg ~ 2.7km)
+            const minLat = Math.min(pCoords[0], dCoords[0]) - 0.025;
+            const maxLat = Math.max(pCoords[0], dCoords[0]) + 0.025;
+            const minLng = Math.min(pCoords[1], dCoords[1]) - 0.025;
+            const maxLng = Math.max(pCoords[1], dCoords[1]) + 0.025;
+
+            for (let i = 0; i < coords.length; i++) {
+                const pt = coords[i];
+                if (!Array.isArray(pt) || pt.length < 2) return false;
+                const lat = pt[0], lng = pt[1];
+                if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) {
+                    return false; // Point strayed into another district or default location
+                }
+            }
+            return true;
+        }
+
+        // Generate clean direct multi-point road route strictly between pickup and destination
+        function generateDirectStreetRoute(p, d) {
+            const [lat1, lng1] = p;
+            const [lat2, lng2] = d;
+            const path = [[lat1, lng1]];
+            const segments = 6;
+            for (let i = 1; i < segments; i++) {
+                const f = i / segments;
+                const dLat = (lat2 - lat1);
+                const dLng = (lng2 - lng1);
+                let curLat = lat1 + dLat * f;
+                let curLng = lng1 + dLng * f;
+                if (i === 1) {
+                    curLat += dLat * 0.03;
+                } else if (i === 2) {
+                    curLng += dLng * -0.02;
+                } else if (i === 3) {
+                    curLat += dLat * -0.02;
+                } else if (i === 4) {
+                    curLng += dLng * 0.02;
+                }
+                path.push([Number(curLat.toFixed(6)), Number(curLng.toFixed(6))]);
+            }
+            path.push([lat2, lng2]);
+            return path;
+        }
+
+        // Cleanse corrupted route data from previous buggy sessions in localStorage
+        function sanitizeStoredTrips() {
+            try {
+                const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+                const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
+                const userStorageKey = 'goride_trips_' + String(userKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+
+                const cleanKeys = [userStorageKey, 'goride_admin_trips', 'navigo_bookings'];
+                cleanKeys.forEach(key => {
+                    const raw = localStorage.getItem(key);
+                    if (!raw) return;
+                    try {
+                        const list = JSON.parse(raw);
+                        if (!Array.isArray(list)) return;
+                        let modified = false;
+                        list.forEach(t => {
+                            if (!t) return;
+                            const pC = resolveCoords(t.pickupCoords || t.pickup);
+                            const dC = resolveCoords(t.destinationCoords || t.destination || t.dropoff);
+                            if (t.routeGeometry && !isRouteGeometryValid(t.routeGeometry, pC, dC)) {
+                                delete t.routeGeometry;
+                                modified = true;
+                            }
+                            if (t.distance && Number(t.distance) > 100) {
+                                t.distance = (Number(t.distance) / 1000).toFixed(1);
+                                modified = true;
+                            }
+                        });
+                        if (modified) {
+                            localStorage.setItem(key, JSON.stringify(list));
+                        }
+                    } catch (e) {}
+                });
+            } catch (e) {}
+        }
+
         // Draw dynamic route from pickup to destination on the right map
         async function displayTripOnMap(trip) {
             initDesktopMap();
@@ -525,18 +618,23 @@
             const pCoords = resolveCoords(trip.pickupCoords || trip.pickup);
             const dCoords = resolveCoords(trip.destinationCoords || trip.dropoff);
 
-            // Clear previous map layers
+            // 1. Wipe clean all existing layers, lines, and markers on the map
             if (activeRouteLayer) {
-                actMap.removeLayer(activeRouteLayer);
+                try { actMap.removeLayer(activeRouteLayer); } catch(e) {}
                 activeRouteLayer = null;
             }
             if (activeMarkersGroup) {
-                actMap.removeLayer(activeMarkersGroup);
+                try { actMap.removeLayer(activeMarkersGroup); } catch(e) {}
                 activeMarkersGroup = null;
             }
+            actMap.eachLayer((layer) => {
+                if (layer instanceof L.TileLayer) return;
+                try { actMap.removeLayer(layer); } catch(e) {}
+            });
+
             activeMarkersGroup = L.featureGroup().addTo(actMap);
 
-            // 1. Pickup Pin Marker (🟢 Green Pulse Pin)
+            // 2. Pickup Pin Marker (🟢 Green Pulse Pin)
             const pickupMarker = L.marker([pCoords[0], pCoords[1]], {
                 icon: L.divIcon({
                     className: 'custom-map-pin-pickup',
@@ -556,7 +654,7 @@
             `);
             activeMarkersGroup.addLayer(pickupMarker);
 
-            // 2. Destination Pin Marker (🔴 Red Pin)
+            // 3. Destination Pin Marker (🔴 Red Pin)
             const destMarker = L.marker([dCoords[0], dCoords[1]], {
                 icon: L.divIcon({
                     className: 'custom-map-pin-dest',
@@ -576,22 +674,28 @@
             `);
             activeMarkersGroup.addLayer(destMarker);
 
-            // 3. Fetch Real Street Turn-By-Turn Geometry from OSRM
+            // 4. Fetch Real Street Turn-By-Turn Geometry strictly between pickup and destination
             let lineCoordinates = null;
-            if (trip.routeGeometry && Array.isArray(trip.routeGeometry) && trip.routeGeometry.length > 1) {
+
+            // Check if trip has a clean, valid route geometry already cached
+            if (trip.routeGeometry && isRouteGeometryValid(trip.routeGeometry, pCoords, dCoords)) {
                 lineCoordinates = trip.routeGeometry;
             } else {
+                trip.routeGeometry = null;
                 try {
                     const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${pCoords[1]},${pCoords[0]};${dCoords[1]},${dCoords[0]}?overview=full&geometries=geojson`;
                     const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 4000);
+                    const timeout = setTimeout(() => controller.abort(), 3500);
                     const res = await fetch(osrmUrl, { signal: controller.signal });
                     clearTimeout(timeout);
                     if (res.ok) {
                         const data = await res.json();
                         if (data.routes && data.routes[0] && data.routes[0].geometry) {
-                            lineCoordinates = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
-                            trip.routeGeometry = lineCoordinates;
+                            const candidate = data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                            if (isRouteGeometryValid(candidate, pCoords, dCoords)) {
+                                lineCoordinates = candidate;
+                                trip.routeGeometry = lineCoordinates;
+                            }
                         }
                     }
                 } catch (e) {
@@ -599,18 +703,12 @@
                 }
             }
 
-            // Realistic road path fallback if offline
+            // Fallback: direct street route strictly connecting pickup and destination
             if (!lineCoordinates || lineCoordinates.length < 2) {
-                const midLat = (pCoords[0] + dCoords[0]) / 2 + 0.005;
-                const midLon = (pCoords[1] + dCoords[1]) / 2 - 0.006;
-                lineCoordinates = [
-                    [pCoords[0], pCoords[1]],
-                    [midLat, midLon],
-                    [dCoords[0], dCoords[1]]
-                ];
+                lineCoordinates = generateDirectStreetRoute(pCoords, dCoords);
             }
 
-            // Draw Polyline (Soft Mint Ambient Glow + Solid Polyline)
+            // 5. Draw the single, clean route polyline (Soft Mint Glow + Solid Emerald Line)
             activeRouteLayer = L.featureGroup().addTo(actMap);
 
             L.polyline(lineCoordinates, {
@@ -629,7 +727,7 @@
                 lineJoin: 'round'
             }).addTo(activeRouteLayer);
 
-            // Fit map bounds smoothly with padding
+            // Smoothly fit bounds containing ONLY the pickup, destination, and the route line
             try {
                 const allBounds = activeMarkersGroup.getBounds().extend(mainPolyline.getBounds());
                 actMap.fitBounds(allBounds, { padding: [55, 55], maxZoom: 15 });
@@ -655,7 +753,10 @@
             if (subtitleEl) {
                 subtitleEl.textContent = `${trip.title} • ${trip.time} • Trạng thái: ${trip.status}`;
             }
-            const distNum = parseFloat(trip.distance) || 8.5;
+            let distNum = parseFloat(trip.distance) || 8.5;
+            if (distNum > 100) {
+                distNum = distNum / 1000;
+            }
             if (distEl) {
                 distEl.innerHTML = `${distNum.toFixed(1).replace('.', ',')} <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span>`;
             }
@@ -694,6 +795,8 @@
 
         // Retrieve and synthesize user trips across all persistence stores
         function getStoredUserTrips() {
+            sanitizeStoredTrips();
+
             const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
             const userKey = user ? (user.id || user.phone || user.email || 'guest') : 'guest';
             const userStorageKey = 'goride_trips_' + String(userKey).toLowerCase().replace(/[^a-z0-9_]/g, '_');
@@ -739,6 +842,13 @@
                 const isCompleted = (t.status === 'completed' || t.status === 'COMPLETED' || adminData.status === 'completed');
                 const isCancelled = (t.status === 'cancelled' || t.status === 'CANCELLED' || adminData.status === 'cancelled');
 
+                let rawDist = Number(t.distance || adminData.distance || 0);
+                if (rawDist > 100) rawDist = rawDist / 1000;
+                const distStr = rawDist > 0 ? rawDist.toFixed(1) : calculateDistanceKm(pCoords, dCoords);
+
+                const rawGeom = t.routeGeometry || adminData.routeGeometry || null;
+                const cleanGeom = (rawGeom && isRouteGeometryValid(rawGeom, pCoords, dCoords)) ? rawGeom : null;
+
                 return {
                     id: t.id || 'NAV-' + Math.floor(10000 + Math.random() * 90000),
                     type: (t.vehicleType === 'bike') ? 'bike' : 'car',
@@ -750,10 +860,10 @@
                     destinationCoords: dCoords,
                     fare: fareNum > 0 ? fareNum.toLocaleString('vi-VN') + 'đ' : (t.fare || '120.000đ'),
                     fareAmount: fareNum,
-                    distance: t.distance || adminData.distance || calculateDistanceKm(pCoords, dCoords),
+                    distance: distStr,
                     status: isCompleted ? 'Hoàn thành' : (isCancelled ? 'Đã hủy' : 'Đang xử lý'),
                     isCompleted: isCompleted,
-                    routeGeometry: t.routeGeometry || adminData.routeGeometry || null
+                    routeGeometry: cleanGeom
                 };
             });
         }

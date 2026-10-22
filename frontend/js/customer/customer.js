@@ -2755,11 +2755,39 @@ class CustomerAppController {
                     best = n;
                 }
             }
-            return best;
+            return { node: best, dist: minDist };
         };
 
-        const startNode = findNearestNode(pLat, pLng);
-        const endNode = findNearestNode(dLat, dLng);
+        const startRes = findNearestNode(pLat, pLng);
+        const endRes = findNearestNode(dLat, dLng);
+
+        // Helper to construct a clean, direct road corridor strictly between pickup and dest
+        const generateDirectCorridor = () => {
+            const path = [[pLat, pLng]];
+            const steps = 6;
+            const deltaLat = dLat - pLat;
+            const deltaLng = dLng - pLng;
+            for (let i = 1; i < steps; i++) {
+                const f = i / steps;
+                let curLat = pLat + deltaLat * f;
+                let curLng = pLng + deltaLng * f;
+                if (i === 1) curLat += deltaLat * 0.03;
+                else if (i === 2) curLng += deltaLng * -0.02;
+                else if (i === 3) curLat += deltaLat * -0.02;
+                else if (i === 4) curLng += deltaLng * 0.02;
+                path.push([Number(curLat.toFixed(6)), Number(curLng.toFixed(6))]);
+            }
+            path.push([dLat, dLng]);
+            return path;
+        };
+
+        // If either pickup or destination is further than 2.5km from central D1 graph, do NOT detour into D1
+        if (startRes.dist > 2500 || endRes.dist > 2500) {
+            return generateDirectCorridor();
+        }
+
+        const startNode = startRes.node;
+        const endNode = endRes.node;
 
         // BFS traversal on the real road network
         const queue = [[startNode.id]];
@@ -2796,7 +2824,7 @@ class CustomerAppController {
             return result;
         }
 
-        return null;
+        return generateDirectCorridor();
     }
 
     /**
