@@ -52,14 +52,19 @@ if (typeof window !== 'undefined') {
 window.showNavigoModal = function(options) {
     if (typeof document === 'undefined') return;
 
-    // Check whether loading splash screen is physically in DOM
-    const isLoadingElement = document.getElementById('loading-splash-screen') || document.querySelector('.loading-splash-overlay');
-    if (!isLoadingElement) {
+    // Check whether loading splash screen is physically in DOM or active
+    const isLoadingElement = document.getElementById('loading-splash-screen') || 
+                             document.getElementById('navigo-welcome-splash') || 
+                             document.getElementById('loading-backdrop') || 
+                             document.querySelector('.loading-splash-overlay') || 
+                             document.querySelector('.navigo-welcome-splash');
+    const isLoadingActive = sessionStorage.getItem('navigo_loading_screen_active') === 'true';
+    if (!isLoadingElement && !isLoadingActive) {
         try { sessionStorage.removeItem('navigo_loading_screen_active'); } catch(e) {}
-    } else if (sessionStorage.getItem('navigo_loading_screen_active') === 'true') {
-        // Only suppress automatic prompts during loading; never suppress explicit user clicks or danger/logout actions
-        if (options && (options.isAutoPrompt || (!options.danger && !options.onConfirm))) {
-            console.log('[NavigoModal] Auto prompt suppressed during active loading screen');
+    } else if (isLoadingActive) {
+        // Strictly suppress location prompts or automatic prompts during loading screen
+        if (options && (options.title === 'Cho phép truy cập vị trí' || options.isAutoPrompt || (!options.danger && !options.onConfirm))) {
+            console.log('[NavigoModal] Suppressed during active loading screen');
             return;
         }
     }
@@ -141,6 +146,7 @@ window.showNavigoModal = function(options) {
  */
 window.navigoEnsureLocationPermission = function(callback, forcePrompt = false) {
     const isGranted = localStorage.getItem('navigo_location_permission_granted') === 'true';
+    const isPromptedInSession = sessionStorage.getItem('navigo_session_location_prompted') === 'true';
     const cached = localStorage.getItem('navigo_user_location');
     let cachedLoc = null;
     try {
@@ -201,7 +207,15 @@ window.navigoEnsureLocationPermission = function(callback, forcePrompt = false) 
         );
     };
 
-    if (isGranted && !forcePrompt) {
+    // If loading screen is currently running, strictly do not show location popup
+    if (sessionStorage.getItem('navigo_loading_screen_active') === 'true') {
+        if (cachedLoc && typeof callback === 'function') callback(cachedLoc);
+        return;
+    }
+
+    // REQUIREMENT: Prompt modal must only appear ONCE per app/web session.
+    // If it has already been prompted in this session OR already granted, do NOT show modal again!
+    if (isPromptedInSession || (isGranted && !forcePrompt)) {
         if (cachedLoc && typeof callback === 'function') {
             callback(cachedLoc);
         }
@@ -212,6 +226,9 @@ window.navigoEnsureLocationPermission = function(callback, forcePrompt = false) 
         });
         return;
     }
+
+    // Mark as prompted in this session so it will NEVER prompt again during this active visit
+    sessionStorage.setItem('navigo_session_location_prompted', 'true');
 
     if (typeof window.showNavigoModal === 'function') {
         window.showNavigoModal({
@@ -483,7 +500,9 @@ class SessionManager {
                 'user', 'token', 'currentUser', 'user_token',
                 'goride_active_trip', 'goride_driver_online_state',
                 'goride_pending_trip_offers', 'goride_current_order',
-                'navigo_location_permission_granted', 'navigo_user_location'
+                'navigo_location_permission_granted', 'navigo_user_location',
+                'navigo_session_loaded', 'navigo_session_location_prompted',
+                'navigo_loading_screen_active', 'navigo_from_loading'
             ];
             keysToRemove.forEach(k => {
                 try {
@@ -518,7 +537,9 @@ class SessionManager {
                     'navigo_user', 'navigo_token',
                     'user', 'token', 'currentUser', 'session_user',
                     'goride_active_trip', 'goride_driver_online_state',
-                    'goride_pending_trip_offers'
+                    'goride_pending_trip_offers',
+                    'navigo_session_loaded', 'navigo_session_location_prompted',
+                    'navigo_loading_screen_active', 'navigo_from_loading'
                 ];
                 keysToRemove.forEach(k => {
                     try { localStorage.removeItem(k); } catch(e) {}

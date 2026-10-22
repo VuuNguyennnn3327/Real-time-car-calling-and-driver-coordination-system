@@ -235,6 +235,20 @@
             }
         }
     </style>
+    <!-- Prevent loading splash flicker when user is already in an active session -->
+    <script>
+        if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+            document.documentElement.classList.add('navigo-session-ready');
+        }
+    </script>
+    <style>
+        html.navigo-session-ready #navigo-welcome-splash {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+    </style>
 </head>
 <body class="gsm-theme gsm-home-page">
     <!-- NAVIGO WELCOME LOADING SCREEN (SPLASH OVERLAY) -->
@@ -598,12 +612,19 @@
             const urlParams = new URLSearchParams(window.location.search);
             const hasPromptParam = urlParams.has('prompt_location') || urlParams.has('from_loading');
             const hasSessionFromLoading = sessionStorage.getItem('navigo_from_loading') === 'true';
+            const isSessionLoaded = sessionStorage.getItem('navigo_session_loaded') === 'true';
+            const isLocationPrompted = sessionStorage.getItem('navigo_session_location_prompted') === 'true';
 
-            // Function to prompt user for location access using Navigo modal
+            // Function to prompt user for location access using Navigo modal (shown strictly ONCE per session)
             const promptForUserLocation = () => {
+                if (sessionStorage.getItem('navigo_session_location_prompted') === 'true') {
+                    return;
+                }
                 setTimeout(() => {
+                    if (sessionStorage.getItem('navigo_session_location_prompted') === 'true') {
+                        return;
+                    }
                     if (typeof window.navigoEnsureLocationPermission === 'function') {
-                        // forcePrompt = true ensures the modal dialog is presented to user
                         window.navigoEnsureLocationPermission((loc) => {
                             if (loc && loc.address) {
                                 console.log('[Navigo] Vị trí người dùng đã sẵn sàng:', loc.address);
@@ -613,13 +634,38 @@
                 }, 400);
             };
 
-            if (hasPromptParam || hasSessionFromLoading) {
-                // Arrived from standalone loading.html (already waited 2s with full animation)
+            // CASE 1: Already loaded previously in this session (e.g. navigating back to Home from other pages)
+            // NEVER show loading screen again, NEVER re-prompt location modal if already asked!
+            if (isSessionLoaded) {
                 if (splash) {
                     splash.style.display = 'none';
                     splash.classList.add('hidden-splash');
                 }
                 sessionStorage.removeItem('navigo_from_loading');
+                sessionStorage.removeItem('navigo_loading_screen_active');
+
+                // Clean any query parameter cleanly from address bar
+                if (window.history && window.history.replaceState && (hasPromptParam || window.location.search)) {
+                    const cleanUrl = window.location.pathname + window.location.hash;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+
+                // If location was somehow never asked yet, ask once; otherwise do nothing
+                if (!isLocationPrompted) {
+                    promptForUserLocation();
+                }
+                return;
+            }
+
+            // CASE 2: Arrived from standalone loading.html (already waited 2s with full animation)
+            if (hasPromptParam || hasSessionFromLoading) {
+                if (splash) {
+                    splash.style.display = 'none';
+                    splash.classList.add('hidden-splash');
+                }
+                sessionStorage.removeItem('navigo_from_loading');
+                sessionStorage.removeItem('navigo_loading_screen_active');
+                sessionStorage.setItem('navigo_session_loaded', 'true');
 
                 // Clean the query parameter from address bar cleanly
                 if (window.history && window.history.replaceState) {
@@ -627,30 +673,36 @@
                     window.history.replaceState({}, document.title, cleanUrl);
                 }
 
-                // Prompt user for location access on home page
-                promptForUserLocation();
-            } else {
-                // Direct visit or reload on index.html:
-                // Show loading splash for exactly 2 seconds (2000ms) with full animations
-                // Ensure NO location modal is shown during this loading duration
-                sessionStorage.setItem('navigo_loading_screen_active', 'true');
-                const LOADING_DURATION_MS = 2000;
-                const FADE_TRANSITION_MS = 420;
-
-                setTimeout(() => {
-                    sessionStorage.removeItem('navigo_loading_screen_active');
-                    if (splash) {
-                        splash.classList.add('hidden-splash');
-                        setTimeout(() => {
-                            splash.style.display = 'none';
-                        }, FADE_TRANSITION_MS);
-                    }
-
-                    // Loading finished and user is now on Trang Chủ!
-                    // Now prompt user for location access
+                // Prompt user for location access on home page ONCE
+                if (!isLocationPrompted) {
                     promptForUserLocation();
-                }, LOADING_DURATION_MS);
+                }
+                return;
             }
+
+            // CASE 3: Direct initial visit to index.html (first time in session):
+            // Show loading splash for exactly 2 seconds (2000ms) with full animations
+            // Ensure NO location modal is shown during this loading duration
+            sessionStorage.setItem('navigo_loading_screen_active', 'true');
+            const LOADING_DURATION_MS = 2000;
+            const FADE_TRANSITION_MS = 420;
+
+            setTimeout(() => {
+                sessionStorage.removeItem('navigo_loading_screen_active');
+                sessionStorage.setItem('navigo_session_loaded', 'true');
+                if (splash) {
+                    splash.classList.add('hidden-splash');
+                    setTimeout(() => {
+                        splash.style.display = 'none';
+                    }, FADE_TRANSITION_MS);
+                }
+
+                // Loading finished and user is now on Trang Chủ!
+                // Now prompt user for location access strictly ONCE
+                if (!isLocationPrompted) {
+                    promptForUserLocation();
+                }
+            }, LOADING_DURATION_MS);
         })();
     </script>
 </body>

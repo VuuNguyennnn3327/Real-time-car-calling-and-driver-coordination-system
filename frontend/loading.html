@@ -8,6 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/loading-splash.css">
+    <script>
+        // If already in an active session, skip loading and go straight to Trang Chủ
+        if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+            window.location.replace('index.html');
+        }
+    </script>
 </head>
 <body>
     <div class="navigo-loading-backdrop" id="loading-backdrop">
@@ -81,6 +87,11 @@
         const FADE_TRANSITION_MS = 380;
 
         window.addEventListener('DOMContentLoaded', () => {
+            if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+                window.location.replace('index.html');
+                return;
+            }
+
             // Strictly NO location prompts while loading
             sessionStorage.setItem('navigo_loading_screen_active', 'true');
 
@@ -93,7 +104,7 @@
                 setTimeout(() => {
                     sessionStorage.removeItem('navigo_loading_screen_active');
                     sessionStorage.setItem('navigo_from_loading', 'true');
-                    sessionStorage.setItem('navigo_initial_loaded', 'true');
+                    sessionStorage.setItem('navigo_session_loaded', 'true');
 
                     window.location.replace('index.html?prompt_location=true');
                 }, FADE_TRANSITION_MS);

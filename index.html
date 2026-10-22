@@ -6,7 +6,11 @@
     <meta http-equiv="refresh" content="0; url=frontend/loading.html">
     <title>Navigo — Đang tải dữ liệu...</title>
     <script>
-        window.location.replace("frontend/loading.html");
+        if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+            window.location.replace("frontend/index.html");
+        } else {
+            window.location.replace("frontend/loading.html");
+        }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

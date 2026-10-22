@@ -5,7 +5,11 @@
     <meta http-equiv="refresh" content="0; url=../loading.html">
     <title>Navigo — Đang tải dữ liệu...</title>
     <script>
-        window.location.replace('../loading.html');
+        if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+            window.location.replace('../index.html');
+        } else {
+            window.location.replace('../loading.html');
+        }
     </script>
 </head>
 <body style="background: #0f2d3c; margin: 0;">
