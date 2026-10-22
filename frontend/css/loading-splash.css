@@ -1,9 +1,9 @@
 /* ==========================================================================
-   NAVIGO EV PLATFORM — LUXURY SPLASH & LOADING SCREEN STYLES & ANIMATIONS
-   Authentic replica of Navigo mobile onboarding with micro-interactions
+   NAVIGO EV PLATFORM — RESPONSIVE SPLASH & LOADING SCREEN (MOBILE, TABLET & PC)
+   Full-screen responsive adaptive loading with authentic GSM animations
    ========================================================================== */
 
-/* Fullscreen Backdrop */
+/* Fullscreen Immersive Loading Backdrop (100% Viewport across Mobile, Tablet & PC) */
 .navigo-loading-backdrop,
 .navigo-welcome-splash {
     position: fixed;
@@ -11,7 +11,7 @@
     width: 100vw;
     height: 100vh;
     z-index: 2147483647;
-    background: radial-gradient(circle at 50% 30%, #154558 0%, #0a1f29 100%);
+    background: linear-gradient(180deg, #dcfaf3 0%, #edfef9 28%, #d5f7ef 65%, #9ae7d2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -27,55 +27,47 @@
     visibility: hidden !important;
 }
 
-/* App Viewport Container (Native Mobile Look on PC, Full Screen on Mobile) */
+/* Adaptive App Viewport Container (Seamlessly expands to full screen on all devices) */
 .loading-app-container {
-    width: 100%;
-    max-width: 440px;
-    height: 100%;
-    max-height: 100vh;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
     position: relative;
-    background: linear-gradient(180deg, #dcfaf3 0%, #edfef9 28%, #d5f7ef 65%, #9ae7d2 100%);
+    background: transparent !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 50px 24px 44px;
+    padding: clamp(32px, 6vh, 64px) 24px clamp(24px, 5vh, 48px);
     overflow: hidden;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
-@media (min-width: 1025px) {
-    .loading-app-container {
-        height: 890px;
-        max-height: 92vh;
-        border-radius: 46px;
-        border: 7px solid rgba(255, 255, 255, 0.35);
-        box-shadow: 0 35px 90px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 177, 169, 0.3);
-    }
-}
-
-/* 1. Authentic Street Map Blueprint Texture at bottom */
+/* 1. Authentic Street Map Blueprint Texture across bottom */
 .bg-map-texture {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 52%;
+    height: clamp(320px, 55vh, 650px);
     background: url('../assets/gsm/loading_map_bottom.jpg') no-repeat center bottom;
     background-size: cover;
     mix-blend-mode: multiply;
-    opacity: 0.38;
+    opacity: 0.35;
     pointer-events: none;
     z-index: 1;
 }
 
-/* 2. Flowing Animated Dashed GPS Track */
+/* 2. Flowing Animated Dashed GPS Road Curves */
 .bg-gps-svg {
     position: absolute;
-    bottom: 20px;
-    left: -15%;
-    width: 130%;
-    height: 380px;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: clamp(260px, 45vh, 550px);
     pointer-events: none;
     z-index: 2;
     overflow: visible;
@@ -153,15 +145,15 @@
     margin-bottom: auto;
 }
 
-/* Illustration Container */
+/* Illustration Container (Responsive Scalable across Mobile, Tablet & PC) */
 .illustration-box {
     position: relative;
-    width: 320px;
-    height: 200px;
+    width: clamp(300px, 36vw, 460px);
+    height: clamp(165px, 20vw, 250px);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: clamp(16px, 2.6vh, 30px);
 }
 
 /* Base Car + Map Illustration with Suspension Floating */
@@ -206,27 +198,27 @@
 }
 
 .wind-streak.w1 {
-    top: 55px;
-    left: 20px;
-    width: 75px;
+    top: 28%;
+    left: 8%;
+    width: 25%;
     animation-delay: 0.1s;
 }
 .wind-streak.w2 {
-    top: 98px;
-    left: 8px;
-    width: 105px;
+    top: 50%;
+    left: 4%;
+    width: 32%;
     animation-delay: 0.5s;
 }
 .wind-streak.w3 {
-    top: 138px;
-    left: 28px;
-    width: 80px;
+    top: 70%;
+    left: 10%;
+    width: 26%;
     animation-delay: 0.9s;
 }
 .wind-streak.w4 {
-    top: 162px;
-    left: 45px;
-    width: 90px;
+    top: 82%;
+    left: 15%;
+    width: 28%;
     animation-delay: 0.3s;
 }
 
@@ -251,10 +243,10 @@
 /* Radar Beacon Glow Pulse on Map Location Pin */
 .pin-radar-beacon {
     position: absolute;
-    top: 24%;
+    top: 27%;
     left: 71.5%;
-    width: 20px;
-    height: 20px;
+    width: clamp(18px, 2.2vw, 24px);
+    height: clamp(18px, 2.2vw, 24px);
     border-radius: 50%;
     background: rgba(0, 177, 169, 0.45);
     pointer-events: none;
@@ -286,26 +278,26 @@
 }
 
 .service-bubble.b-food {
-    top: 4%;
+    top: 3%;
     left: 55.5%;
-    width: 48px;
-    height: 48px;
+    width: clamp(44px, 4.8vw, 60px);
+    height: clamp(44px, 4.8vw, 60px);
     animation: floatBubbleFood 2.8s ease-in-out infinite;
 }
 
 .service-bubble.b-package {
-    top: 2%;
+    top: 1%;
     left: 79%;
-    width: 49px;
-    height: 49px;
+    width: clamp(44px, 4.8vw, 62px);
+    height: clamp(44px, 4.8vw, 62px);
     animation: floatBubblePackage 3.2s ease-in-out infinite 0.4s;
 }
 
 .service-bubble.b-bus {
-    top: 35%;
+    top: 36%;
     left: 81%;
-    width: 46px;
-    height: 42px;
+    width: clamp(40px, 4.5vw, 56px);
+    height: clamp(36px, 4vw, 50px);
     animation: floatBubbleBus 2.6s ease-in-out infinite 0.8s;
 }
 
@@ -336,20 +328,20 @@
     }
 }
 
-/* Typography Styling */
+/* Typography Styling (Fully Responsive) */
 .brand-headline-box {
     text-align: center;
     animation: brandEnter 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .brand-name {
-    font-size: 2.45rem;
+    font-size: clamp(2.4rem, 4.2vw, 3.8rem);
     font-weight: 900;
     color: #0f2d3c;
-    letter-spacing: 1.8px;
+    letter-spacing: clamp(1.6px, 0.25vw, 3.2px);
     margin: 0;
     line-height: 1.1;
-    text-shadow: 0 2px 10px rgba(15, 45, 60, 0.08);
+    text-shadow: 0 2px 12px rgba(15, 45, 60, 0.08);
     position: relative;
     display: inline-block;
 }
@@ -372,7 +364,7 @@
 }
 
 .brand-greeting {
-    font-size: 1.95rem;
+    font-size: clamp(1.85rem, 3vw, 2.7rem);
     font-weight: 700;
     color: #133e4d;
     margin-top: 6px;
@@ -398,15 +390,15 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: 24px;
+    margin-bottom: clamp(16px, 3vh, 32px);
 }
 
 /* Spinner Wrapper with Soft Glow */
 .spinner-halo-wrap {
     position: relative;
-    width: 52px;
-    height: 52px;
-    margin-bottom: 18px;
+    width: clamp(50px, 5.5vw, 62px);
+    height: clamp(50px, 5.5vw, 62px);
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -432,8 +424,8 @@
 }
 
 .spinner-circle-ring {
-    width: 48px;
-    height: 48px;
+    width: clamp(46px, 5vw, 56px);
+    height: clamp(46px, 5vw, 56px);
     border-radius: 50%;
     border: 4.5px solid rgba(0, 177, 169, 0.2);
     border-top-color: #00b1a9;
@@ -453,10 +445,10 @@
 
 /* Status Text */
 .status-primary-text {
-    font-size: 1rem;
+    font-size: clamp(0.98rem, 1.3vw, 1.25rem);
     font-weight: 700;
     color: #0f3544;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     display: flex;
     align-items: center;
     letter-spacing: 0.2px;
@@ -478,7 +470,7 @@
 }
 
 .status-secondary-text {
-    font-size: 0.88rem;
+    font-size: clamp(0.88rem, 1.1vw, 1.05rem);
     color: #476f82;
     font-weight: 500;
     letter-spacing: 0.1px;
