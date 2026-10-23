@@ -116,12 +116,12 @@
                     if (typeof sessionManager !== 'undefined' && sessionManager.logout) {
                         sessionManager.logout();
                     }
-                    if (successDiv) {
-                        successDiv.style.display = 'flex';
-                    }
-                    if (window.history && window.history.replaceState) {
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
+                    try {
+                        sessionStorage.removeItem('navigo_session_loaded');
+                        sessionStorage.removeItem('navigo_loading_screen_active');
+                    } catch(e) {}
+                    window.location.replace('../loading.html?from=logout');
+                    return;
                 }
             } catch (err) {}
 
@@ -394,34 +394,13 @@
                     // Save session
                     sessionManager.login(result.user, result.token);
 
-                    // Role-based routing: Admin MUST ALWAYS route to admin.html
-                    const role = result.user.role;
-                    if (role === 'admin') {
-                        window.location.href = 'admin.html';
-                        return;
-                    }
+                    // Per user requirement: khi người ta đăng nhập lại chuyển về trang loading và về trang chủ
+                    try {
+                        sessionStorage.removeItem('navigo_session_loaded');
+                        sessionStorage.removeItem('navigo_loading_screen_active');
+                    } catch(e) {}
 
-                    // Check redirect parameter for non-admin roles
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const redirectTarget = urlParams.get('redirect');
-
-                    if (redirectTarget) {
-                        const targetKey = redirectTarget.replace('.html', '').toLowerCase();
-                        if (role === 'driver' && targetKey === 'driver') {
-                            window.location.href = 'driver.html';
-                            return;
-                        } else if (role === 'customer' && targetKey === 'customer') {
-                            window.location.href = 'customer.html';
-                            return;
-                        }
-                    }
-
-                    // Default role-based routing
-                    if (role === 'driver') {
-                        window.location.href = 'driver.html';
-                    } else {
-                        window.location.href = 'customer.html';
-                    }
+                    window.location.href = '../loading.html?from=login';
                 } catch (err) {
                     let displayMsg = 'Đăng nhập thất bại. Vui lòng thử lại.';
                     if (typeof err === 'string') {

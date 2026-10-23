@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GoRide Ride-Hailing Platform - Driver Page Controller
  * 100% Real-Data Architecture
  * Handles driver online/offline toggle, dispatch offers, active trip lifecycle,
@@ -113,6 +113,19 @@ class DriverController {
       this.switchTab(hash);
     }
 
+    // Real-time synchronization for driver wallet balance & stats across tabs & pages
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'navigo_wallets' || e.key === 'navigo_wallet_sync_event' || e.key === 'goride_user') {
+        this.syncNaviWalletBalance();
+        this.renderDriverStats();
+      }
+    });
+
+    window.addEventListener('navigo:wallet_sync', () => {
+      this.syncNaviWalletBalance();
+      this.renderDriverStats();
+    });
+
     console.log('[DriverController] Driver portal ready.');
   }
 
@@ -204,7 +217,7 @@ class DriverController {
           sessionManager.confirmLogout();
         } else {
           if (confirm('Bạn có chắc chắn muốn đăng xuất tài khoản tài xế?')) {
-            window.location.href = 'login.html?logout=true';
+            window.location.href = '../loading.html?from=logout';
           }
         }
       });
@@ -877,14 +890,14 @@ class DriverController {
     if (!modal) return;
 
     if (!offer || !this.isOnline || this.activeTrip) {
-      modal.style.display = 'none';
+      modal.style.setProperty('display', 'none', 'important');
       this.currentOffer = null;
       return;
     }
 
     const offerIdStr = String(offer.id || offer.tripId);
     if (this.handledTripIds.has(offerIdStr) || this.declinedTripIds.has(offerIdStr)) {
-      modal.style.display = 'none';
+      modal.style.setProperty('display', 'none', 'important');
       this.currentOffer = null;
       return;
     }
@@ -919,7 +932,7 @@ class DriverController {
     const durEl = document.getElementById('offer-duration-text');
     if (durEl) durEl.textContent = `${offer.duration || 8} phút`;
 
-    modal.style.display = 'flex';
+    modal.style.setProperty('display', 'flex', 'important');
   }
 
   calcDistanceKm(lat1, lon1, lat2, lon2) {
@@ -1168,7 +1181,26 @@ class DriverController {
       }
 
       this.incomingRequests = filteredRequests;
-      this.renderIncomingOfferDialog(filteredRequests.length > 0 ? filteredRequests[0] : null);
+      if (filteredRequests.length > 0) {
+        this.renderIncomingOfferDialog(filteredRequests[0]);
+      } else if (this.currentOffer) {
+        const curId = String(this.currentOffer.id || this.currentOffer.tripId);
+        let isCancelledOrTaken = false;
+        try {
+          const allTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+          const match = allTrips.find(t => String(t.id) === curId);
+          if (match && ['cancelled', 'completed', 'accepted', 'in_progress'].includes(match.status?.toLowerCase())) {
+            isCancelledOrTaken = true;
+          }
+        } catch (e) {}
+
+        if (isCancelledOrTaken || this.handledTripIds.has(curId) || this.declinedTripIds.has(curId)) {
+          this.renderIncomingOfferDialog(null);
+        }
+        // Keep active offer open during polling jitter!
+      } else {
+        this.renderIncomingOfferDialog(null);
+      }
       this.renderRequestsList(filteredRequests);
     } catch (err) {
       console.warn('[Driver] Incoming requests load error:', err.message);
@@ -1283,7 +1315,8 @@ class DriverController {
         pickupCoords: coords.pickup,
         destination: req.destination,
         destinationCoords: coords.destination,
-        fare: Number(req.fareNum || req.fare) || 45000,
+        fare: Number(req.fareNum || req.fare || req.fareAmount) || 45000,
+        customerPhone: req.phone || req.customerPhone || "0901234567",
         distance: req.distance || '3.2',
         stage: 'heading_to_pickup', // Stage 1: heading_to_pickup, Stage 2: trip_in_progress
         driverName: driverName,
@@ -1922,7 +1955,7 @@ class DriverController {
   async completeActiveTrip() {
     if (!this.activeTrip) return;
 
-    const completedFare = Number(this.activeTrip.fare) || 45000;
+    const completedFare = Number(this.activeTrip.fareNum || this.activeTrip.fare || this.activeTrip.fareAmount) || 45000;
     const completedTrip = {
       ...this.activeTrip,
       fare: completedFare,
@@ -1940,6 +1973,22 @@ class DriverController {
     this.driverStats.tripsToday += 1;
     this.driverStats.earnings += completedFare;
     this.driverStats.walletBalance += completedFare;
+
+    // Credit driver NaviPay wallet without deducting (Tài xế nhận chuyến thì KHÔNG bị trừ tiền)
+    if (window.NaviWalletEngine) {
+      try {
+        const curDriver = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+        const drvPhone = curDriver?.phone || '0918765432';
+        window.NaviWalletEngine.creditDriverTrip(drvPhone, completedFare, completedTrip.id, {
+          customerName: completedTrip.customerName || 'Khách hàng Navigo',
+          customerPhone: completedTrip.customerPhone || completedTrip.phone || '0901234567',
+          pickup: completedTrip.pickup?.name || completedTrip.pickup,
+          destination: completedTrip.destination?.name || completedTrip.destination
+        });
+      } catch (drvWalletErr) {
+        console.warn('[DriverWallet] Notice:', drvWalletErr);
+      }
+    }
 
     // 2. Persist in driver's completed trips list
     try {
@@ -2355,17 +2404,16 @@ class DriverController {
     const weekEarn = weekTrips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
     const totalEarn = trips.reduce((s, t) => s + (Number(t.fare) || 0), 0);
 
-    // Get wallet balance from user profile or total completed earnings (Starts at 0 for new drivers)
-    let userWallet = 0;
+    // Get wallet balance from NaviWalletEngine or user profile
     const user = typeof sessionManager !== 'undefined' ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
-    if (user && typeof user.walletBalance === 'number' && user.walletBalance !== 350000 && user.walletBalance !== 1450000) {
+    const drvPhone = user?.phone || '0918765432';
+    let userWallet = 0;
+    if (window.NaviWalletEngine) {
+      const w = window.NaviWalletEngine.getWallet(drvPhone);
+      if (w) userWallet = w.balance;
+    }
+    if (userWallet === 0 && user && typeof user.walletBalance === 'number') {
       userWallet = user.walletBalance;
-    } else {
-      userWallet = totalEarn;
-      if (user) {
-        user.walletBalance = totalEarn;
-        try { localStorage.setItem('goride_user', JSON.stringify(user)); } catch(e) {}
-      }
     }
 
     const fmt = (num) => Number(num || 0).toLocaleString('vi-VN') + ' ₫';
@@ -2478,7 +2526,15 @@ class DriverController {
           }
         });
 
-        if (typeof user.walletBalance === 'number' && user.walletBalance !== 350000 && user.walletBalance !== 1450000) {
+        const drvPhone = user.phone || '0918765432';
+        if (window.NaviWalletEngine) {
+          const w = window.NaviWalletEngine.getWallet(drvPhone);
+          if (w) {
+            this.driverStats.walletBalance = w.balance;
+            user.walletBalance = w.balance;
+            try { localStorage.setItem('goride_user', JSON.stringify(user)); } catch(e) {}
+          }
+        } else if (typeof user.walletBalance === 'number' && user.walletBalance !== 350000 && user.walletBalance !== 1450000) {
           this.driverStats.walletBalance = user.walletBalance;
         } else {
           this.driverStats.walletBalance = 0;
@@ -2507,6 +2563,25 @@ class DriverController {
     } catch (err) {
       console.warn('[Driver] Profile and stats sync error:', err.message);
     }
+  }
+
+  syncNaviWalletBalance() {
+    try {
+      const curUser = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+      const drvPhone = curUser?.phone || '0918765432';
+      if (window.NaviWalletEngine) {
+        const w = window.NaviWalletEngine.getWallet(drvPhone);
+        if (w) {
+          this.driverStats.walletBalance = w.balance;
+          if (curUser) {
+            curUser.walletBalance = w.balance;
+            try { localStorage.setItem('goride_user', JSON.stringify(curUser)); } catch(e) {}
+          }
+          const balEl = document.getElementById('wallet-balance-amount');
+          if (balEl) balEl.textContent = Number(w.balance || 0).toLocaleString('vi-VN') + ' ₫';
+        }
+      }
+    } catch(e) {}
   }
 
   renderDriverStats() {

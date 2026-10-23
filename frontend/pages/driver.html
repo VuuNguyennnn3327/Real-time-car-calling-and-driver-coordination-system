@@ -126,11 +126,12 @@
 
         /* Floating Incoming Offer Modal */
         .incoming-offer-overlay {
-            position: absolute;
-            inset: 0;
-            z-index: 2000;
-            background: rgba(15, 23, 42, 0.55);
-            backdrop-filter: blur(4px);
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999999 !important;
+            background: rgba(15, 23, 42, 0.65) !important;
+            backdrop-filter: blur(6px) !important;
+            -webkit-backdrop-filter: blur(6px) !important;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -144,8 +145,10 @@
             padding: 22px 24px;
             max-width: 440px;
             width: 100%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25), 0 0 20px rgba(2, 136, 209, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35), 0 0 24px rgba(2, 136, 209, 0.25);
             animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 10000000;
         }
         @keyframes scaleUp {
             from { transform: scale(0.9); opacity: 0; }
@@ -400,6 +403,45 @@
             .bottom-nav {
                 display: flex !important;
             }
+            @media (max-width: 480px) {
+                .bottom-nav {
+                    height: calc(54px + env(safe-area-inset-bottom, 0px)) !important;
+                    padding: 0 4px !important;
+                    justify-content: space-evenly !important;
+                }
+                .bottom-nav-item {
+                    font-size: 0.65rem !important;
+                    padding: 2px 2px !important;
+                    min-width: 0 !important;
+                    flex: 1 1 0 !important;
+                }
+                .bottom-nav-icon {
+                    font-size: 1.15rem !important;
+                }
+                .bottom-nav-label {
+                    font-size: 0.65rem !important;
+                    white-space: nowrap !important;
+                    letter-spacing: -0.2px !important;
+                    text-align: center !important;
+                }
+            }
+            @media (max-width: 375px) {
+                .bottom-nav {
+                    height: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+                    padding: 0 2px !important;
+                }
+                .bottom-nav-item {
+                    font-size: 0.58rem !important;
+                    padding: 1px !important;
+                }
+                .bottom-nav-icon {
+                    font-size: 1.05rem !important;
+                }
+                .bottom-nav-label {
+                    font-size: 0.58rem !important;
+                    letter-spacing: -0.3px !important;
+                }
+            }
             .driver-app-main {
                 padding-bottom: 75px !important;
             }
@@ -457,11 +499,11 @@
             </div>
             
             <!-- Desktop Navigation -->
-            <nav class="header-nav desktop-only-flex" style="display:flex !important; align-items:center; gap:var(--space-2);">
+            <nav class="header-nav desktop-only-flex">
                 <a href="../index.html" class="nav-link">🏠 Trang chủ</a>
                 <a href="#home" class="nav-link active" data-tab="home">🚗 Nhận chuyến</a>
                 <a href="#trips" class="nav-link" data-tab="trips">📋 Lịch sử</a>
-                <a href="#earnings" class="nav-link" data-tab="earnings">💰 Thu nhập</a>
+                <a href="wallet.html?role=driver" class="nav-link">💳 Ví Navi</a>
                 <a href="notifications.html" class="nav-link" style="position:relative;">🔔 Thông báo <span class="gsm-nav-badge-dot" style="position:absolute; top:6px; right:4px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span></a>
                 <a href="profile.html" class="nav-link">👤 Hồ sơ</a>
             </nav>
@@ -733,9 +775,9 @@
                 <span class="bottom-nav-icon">📋</span>
                 <span class="bottom-nav-label">Lịch sử</span>
             </a>
-            <a href="#earnings" class="bottom-nav-item" data-tab="earnings" id="bnav-driver-earnings">
-                <span class="bottom-nav-icon">💰</span>
-                <span class="bottom-nav-label">Thu nhập</span>
+            <a href="wallet.html?role=driver" class="bottom-nav-item" id="bnav-driver-wallet" title="Ví Navi">
+                <span class="bottom-nav-icon">💳</span>
+                <span class="bottom-nav-label">Ví Navi</span>
             </a>
             <a href="notifications.html" class="bottom-nav-item" id="bnav-driver-notifications" title="Thông báo" style="position:relative;">
                 <span class="bottom-nav-icon">🔔</span>

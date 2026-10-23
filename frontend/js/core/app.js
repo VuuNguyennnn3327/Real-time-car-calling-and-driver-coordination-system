@@ -1087,7 +1087,7 @@ class App {
                 router.navigate('login', { logout: 'true' });
             } else {
                 const isPagesDir = window.location.pathname.includes('/pages/');
-                window.location.href = isPagesDir ? 'login.html?logout=true' : 'pages/login.html?logout=true';
+                window.location.href = isPagesDir ? '../loading.html?from=logout' : 'loading.html?from=logout';
             }
         }, 200);
     }
@@ -1350,14 +1350,21 @@ class App {
         const adminUrl = isPagesDir ? 'admin.html' : 'pages/admin.html';
         const loginUrl = isPagesDir ? 'login.html' : 'pages/login.html';
         const profileUrl = isPagesDir ? 'profile.html' : 'pages/profile.html';
+        const walletUrl = isPagesDir ? 'wallet.html' : 'pages/wallet.html';
+        const activityUrl = isPagesDir ? 'activity.html' : 'pages/activity.html';
+        const notificationsUrl = isPagesDir ? 'notifications.html' : 'pages/notifications.html';
+
+        const isWalletPage = path.includes('wallet.html');
+        const isActivityPage = path.includes('activity.html');
+        const isNotifPage = path.includes('notifications.html');
+        const isProfPage = path.includes('profile.html');
 
         let itemsHtml = '';
 
         if (role === 'driver') {
-            // DRIVER ROLE: Trang chủ, Nhận chuyến, Lịch sử, Thu nhập, Hồ sơ
+            // DRIVER ROLE: Trang chủ, Nhận chuyến, Ví Navi, Lịch sử, Thông báo, Hồ sơ (6 items)
             const isTabHome = isDriver && (hash === 'home' || hash === '' || !hash);
             const isTabTrips = isDriver && hash === 'trips';
-            const isTabEarnings = isDriver && hash === 'earnings';
 
             itemsHtml = `
                 <a href="${homeUrl}" class="bottom-nav-item ${isHome ? 'active' : ''}" id="bnav-driver-landing" title="Về trang chủ">
@@ -1368,77 +1375,73 @@ class App {
                     <span class="bottom-nav-icon">🚗</span>
                     <span class="bottom-nav-label">Nhận chuyến</span>
                 </a>
+                <a href="${walletUrl}" class="bottom-nav-item ${isWalletPage ? 'active' : ''}" id="bnav-driver-wallet" title="Ví Navi">
+                    <span class="bottom-nav-icon">💳</span>
+                    <span class="bottom-nav-label">Ví</span>
+                </a>
                 <a href="${isDriver ? '#trips' : driverUrl + '#trips'}" class="bottom-nav-item ${isTabTrips ? 'active' : ''}" data-tab="trips" id="bnav-driver-trips">
                     <span class="bottom-nav-icon">📋</span>
                     <span class="bottom-nav-label">Lịch sử</span>
                 </a>
-                <a href="${isDriver ? '#earnings' : driverUrl + '#earnings'}" class="bottom-nav-item ${isTabEarnings ? 'active' : ''}" data-tab="earnings" id="bnav-driver-earnings">
-                    <span class="bottom-nav-icon">💰</span>
-                    <span class="bottom-nav-label">Thu nhập</span>
+                <a href="${notificationsUrl}" class="bottom-nav-item ${isNotifPage ? 'active' : ''}" id="bnav-driver-notifications" title="Thông báo" style="position:relative;">
+                    <span class="bottom-nav-icon">🔔</span>
+                    <span class="bottom-nav-label">Thông báo</span>
                 </a>
-                <a href="${profileUrl}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-driver-account">
+                <a href="${profileUrl}" class="bottom-nav-item ${isProfPage ? 'active' : ''}" id="bnav-driver-account">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Hồ sơ</span>
                 </a>
             `;
         } else if (role === 'admin') {
-            // ADMIN ROLE: Trang chủ, Tổng quan, Chuyến xe, Khách hàng, Tài xế, Hồ sơ
-            const isTabDash = isAdmin && (hash === 'dashboard' || hash === '' || !hash);
-            const isTabTrips = isAdmin && hash === 'trips';
-            const isTabCustomers = isAdmin && hash === 'customers';
-            const isTabDrivers = isAdmin && hash === 'drivers';
-
+            // ADMIN ROLE: Trang chủ, Quản trị, Thông báo, Hồ sơ (4 items)
             itemsHtml = `
                 <a href="${homeUrl}" class="bottom-nav-item ${isHome ? 'active' : ''}" id="bnav-admin-landing" title="Về trang chủ">
                     <span class="bottom-nav-icon">🏠</span>
                     <span class="bottom-nav-label">Trang chủ</span>
                 </a>
-                <a href="${isAdmin ? '#dashboard' : adminUrl + '#dashboard'}" class="bottom-nav-item ${isTabDash ? 'active' : ''}" data-tab="dashboard" id="bnav-admin-dashboard">
-                    <span class="bottom-nav-icon">📊</span>
-                    <span class="bottom-nav-label">Tổng quan</span>
+                <a href="${adminUrl}" class="bottom-nav-item ${isAdmin ? 'active' : ''}" id="bnav-admin-dashboard">
+                    <span class="bottom-nav-icon">🛡️</span>
+                    <span class="bottom-nav-label">Quản trị</span>
                 </a>
-                <a href="${isAdmin ? '#trips' : adminUrl + '#trips'}" class="bottom-nav-item ${isTabTrips ? 'active' : ''}" data-tab="trips" id="bnav-admin-trips">
-                    <span class="bottom-nav-icon">🛣️</span>
-                    <span class="bottom-nav-label">Chuyến xe</span>
+                <a href="${notificationsUrl}" class="bottom-nav-item ${isNotifPage ? 'active' : ''}" id="bnav-admin-notifications">
+                    <span class="bottom-nav-icon">🔔</span>
+                    <span class="bottom-nav-label">Thông báo</span>
                 </a>
-                <a href="${isAdmin ? '#customers' : adminUrl + '#customers'}" class="bottom-nav-item ${isTabCustomers ? 'active' : ''}" data-tab="customers" id="bnav-admin-customers">
-                    <span class="bottom-nav-icon">👥</span>
-                    <span class="bottom-nav-label">Khách hàng</span>
-                </a>
-                <a href="${isAdmin ? '#drivers' : adminUrl + '#drivers'}" class="bottom-nav-item ${isTabDrivers ? 'active' : ''}" data-tab="drivers" id="bnav-admin-drivers">
-                    <span class="bottom-nav-icon">👨‍✈️</span>
-                    <span class="bottom-nav-label">Tài xế</span>
-                </a>
-                <a href="${profileUrl}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-admin-account">
+                <a href="${profileUrl}" class="bottom-nav-item ${isProfPage ? 'active' : ''}" id="bnav-admin-account">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Hồ sơ</span>
                 </a>
             `;
         } else if (role === 'customer') {
-            // CUSTOMER ROLE: Trang chủ, Đặt chuyến, Lịch sử, Hồ sơ
-            const isCustBooking = isCustomer && hash !== 'history';
-            const isCustHistory = isCustomer && hash === 'history';
-
+            // CUSTOMER ROLE: Trang chủ, Đặt xe, Ví, Lịch sử, Thông báo, Hồ sơ (6 items)
             itemsHtml = `
                 <a href="${homeUrl}" class="bottom-nav-item ${isHome ? 'active' : ''}" id="bnav-cust-home">
                     <span class="bottom-nav-icon">🏠</span>
                     <span class="bottom-nav-label">Trang chủ</span>
                 </a>
-                <a href="${customerUrl}" class="bottom-nav-item ${isCustBooking ? 'active' : ''}" id="bnav-cust-booking">
+                <a href="${customerUrl}" class="bottom-nav-item ${isCustomer ? 'active' : ''}" id="bnav-cust-booking">
                     <span class="bottom-nav-icon">🚗</span>
-                    <span class="bottom-nav-label">Đặt chuyến</span>
+                    <span class="bottom-nav-label">Đặt xe</span>
                 </a>
-                <a href="${customerUrl}#history" class="bottom-nav-item ${isCustHistory ? 'active' : ''}" id="bnav-cust-history">
+                <a href="${walletUrl}" class="bottom-nav-item ${isWalletPage ? 'active' : ''}" id="bnav-cust-wallet">
+                    <span class="bottom-nav-icon">💳</span>
+                    <span class="bottom-nav-label">Ví</span>
+                </a>
+                <a href="${activityUrl}" class="bottom-nav-item ${isActivityPage ? 'active' : ''}" id="bnav-cust-history">
                     <span class="bottom-nav-icon">📋</span>
                     <span class="bottom-nav-label">Lịch sử</span>
                 </a>
-                <a href="${profileUrl}" class="bottom-nav-item ${path.includes('profile.html') ? 'active' : ''}" id="bnav-cust-account">
+                <a href="${notificationsUrl}" class="bottom-nav-item ${isNotifPage ? 'active' : ''}" id="bnav-cust-notifications">
+                    <span class="bottom-nav-icon">🔔</span>
+                    <span class="bottom-nav-label">Thông báo</span>
+                </a>
+                <a href="${profileUrl}" class="bottom-nav-item ${isProfPage ? 'active' : ''}" id="bnav-cust-account">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Hồ sơ</span>
                 </a>
             `;
         } else {
-            // GUEST ROLE (Chưa đăng nhập): Trang chủ, Đặt chuyến, Đối tác tài xế, Đăng nhập
+            // GUEST ROLE (Chưa đăng nhập): Trang chủ, Đặt xe, Ví, Lịch sử, Đối tác, Đăng nhập (6 items)
             itemsHtml = `
                 <a href="${homeUrl}" class="bottom-nav-item ${isHome ? 'active' : ''}" id="bnav-guest-home">
                     <span class="bottom-nav-icon">🏠</span>
@@ -1446,13 +1449,21 @@ class App {
                 </a>
                 <a href="${customerUrl}" class="bottom-nav-item ${isCustomer ? 'active' : ''}" id="bnav-guest-booking">
                     <span class="bottom-nav-icon">🚗</span>
-                    <span class="bottom-nav-label">Đặt chuyến</span>
+                    <span class="bottom-nav-label">Đặt xe</span>
+                </a>
+                <a href="${walletUrl}" class="bottom-nav-item ${isWalletPage ? 'active' : ''}" id="bnav-guest-wallet">
+                    <span class="bottom-nav-icon">💳</span>
+                    <span class="bottom-nav-label">Ví</span>
+                </a>
+                <a href="${activityUrl}" class="bottom-nav-item ${isActivityPage ? 'active' : ''}" id="bnav-guest-history">
+                    <span class="bottom-nav-icon">📋</span>
+                    <span class="bottom-nav-label">Lịch sử</span>
                 </a>
                 <a href="${driverUrl}" class="bottom-nav-item" id="bnav-guest-driver">
                     <span class="bottom-nav-icon">🛵</span>
                     <span class="bottom-nav-label">Đối tác</span>
                 </a>
-                <a href="${loginUrl}" class="bottom-nav-item" id="bnav-guest-login">
+                <a href="${loginUrl}" class="bottom-nav-item ${path.includes('login.html') ? 'active' : ''}" id="bnav-guest-login">
                     <span class="bottom-nav-icon">👤</span>
                     <span class="bottom-nav-label">Đăng nhập</span>
                 </a>

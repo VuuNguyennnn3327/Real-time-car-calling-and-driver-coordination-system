@@ -817,8 +817,9 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   fill: #ffffff !important;
 }
 
-.gsm-nav-btn.active .gsm-nav-svg path[stroke] {
-  stroke: #00b1a9 !important;
+.gsm-nav-btn.active .gsm-nav-svg path[stroke],
+.gsm-nav-btn.active .gsm-nav-svg circle[stroke] {
+  stroke: #ffffff !important;
 }
 
 /* 4. Bell with Red Notification Dot Badge */
@@ -878,6 +879,108 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   width: 36px;
   height: 36px;
   filter: drop-shadow(0 2px 6px rgba(245, 158, 11, 0.3));
+}
+
+/* ==========================================================================
+   6. RESPONSIVE MOBILE SIZING FOR 6-ITEM FLOATING BOTTOM NAV + WALLET
+   Guarantees no overflow, overlapping, or breakage on small screens (<= 480px, <= 380px)
+   ========================================================================== */
+@media (max-width: 480px) {
+  .gsm-floating-bottom-nav {
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+    gap: 6px !important;
+    width: calc(100vw - 12px) !important;
+    max-width: calc(100vw - 12px) !important;
+    padding: 0 !important;
+    margin: 0 auto !important;
+    justify-content: center !important;
+  }
+
+  .gsm-bottom-nav-pill {
+    height: 52px !important;
+    padding: 4px 6px !important;
+    gap: 3px !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
+    max-width: 100% !important;
+    justify-content: space-around !important;
+    box-sizing: border-box !important;
+  }
+
+  .gsm-nav-btn {
+    height: 44px !important;
+    min-width: 36px !important;
+    padding: 0 6px !important;
+    flex-shrink: 1 !important;
+  }
+
+  .gsm-nav-btn .gsm-nav-svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .gsm-nav-btn.active {
+    min-width: 50px !important;
+    padding: 0 12px !important;
+  }
+
+  .gsm-bottom-nav-trophy,
+  .gsm-nav-trophy-btn {
+    width: 52px !important;
+    height: 52px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .gsm-nav-trophy-svg {
+    width: 30px !important;
+    height: 30px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .gsm-floating-bottom-nav {
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+    gap: 4px !important;
+    width: calc(100vw - 8px) !important;
+    max-width: calc(100vw - 8px) !important;
+  }
+
+  .gsm-bottom-nav-pill {
+    height: 48px !important;
+    padding: 3px 4px !important;
+    gap: 2px !important;
+    width: auto !important;
+    max-width: 100% !important;
+    justify-content: space-around !important;
+    box-sizing: border-box !important;
+  }
+
+  .gsm-nav-btn {
+    height: 40px !important;
+    min-width: 32px !important;
+    padding: 0 4px !important;
+  }
+
+  .gsm-nav-btn .gsm-nav-svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .gsm-nav-btn.active {
+    min-width: 44px !important;
+    padding: 0 8px !important;
+  }
+
+  .gsm-bottom-nav-trophy,
+  .gsm-nav-trophy-btn {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .gsm-nav-trophy-svg {
+    width: 26px !important;
+    height: 26px !important;
+  }
 }
 
 
@@ -1595,20 +1698,11 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   }
 
   /* Strictly hide bottom navigation on customer booking portal */
-  body.gsm-booking-page .bottom-nav,
-  body.gsm-booking-page #mobile-bottom-nav,
-  body.gsm-booking-page .gsm-floating-bottom-nav,
-  body.customer-body .gsm-floating-bottom-nav,
-  [data-page="customer"] .gsm-floating-bottom-nav {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    max-height: 0 !important;
-    opacity: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  body.gsm-booking-page .gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
   }
 
   /* Mobile/Tablet Vehicle Selection Sheet:
@@ -2354,15 +2448,245 @@ body.gsm-role-admin a.gsm-pc-nav-link[href*="admin.html"] {
   display: inline-flex !important;
 }
 
-/* Strictly hide bottom navigation on customer booking portal */
+/* Ensure bottom navigation is visible and functional on customer booking portal */
 body.gsm-booking-page .gsm-floating-bottom-nav,
 body.customer-body .gsm-floating-bottom-nav,
 [data-page="customer"] .gsm-floating-bottom-nav {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  opacity: 0 !important;
-  height: 0 !important;
-  margin: 0 !important;
+  display: inline-flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  opacity: 1 !important;
+}
+
+/* Active SVG Line stroke & circle enhancement */
+.gsm-nav-btn.active .gsm-nav-svg polyline,
+.gsm-nav-btn.active .gsm-nav-svg circle,
+.gsm-nav-btn.active .gsm-nav-svg[stroke] circle,
+.gsm-nav-btn.active .gsm-nav-svg[stroke] path {
+  stroke: #ffffff !important;
+}
+
+/* Enhanced Mobile Bottom Nav Highlighting (Green / Emerald Glow) */
+.bottom-nav-item.active,
+.bottom-nav-item.is-active {
+  color: #00b1a9 !important;
+  background: rgba(0, 177, 169, 0.12) !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
+.bottom-nav-item.active .bottom-nav-icon {
+  transform: translateY(-2px) scale(1.18) !important;
+  filter: drop-shadow(0 2px 8px rgba(0, 177, 169, 0.45)) !important;
+}
+.bottom-nav-item.active .bottom-nav-label {
+  color: #00b1a9 !important;
+  font-weight: 800 !important;
+}
+
+/* Ultra small device optimization (< 360px): Keep all 6 buttons clean and visible without collision */
+@media (max-width: 360px) {
+  .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
+  }
+  .gsm-floating-bottom-nav .gsm-bottom-nav-pill {
+    max-width: 100vw !important;
+    width: 100% !important;
+    gap: 1px !important;
+    padding: 2px 2px !important;
+  }
+  .gsm-nav-btn {
+    min-width: 30px !important;
+    padding: 0 2px !important;
+  }
+  .gsm-nav-btn.active {
+    min-width: 40px !important;
+    padding: 0 6px !important;
+  }
+}
+
+
+/* ==========================================================================
+   UNIVERSAL ACTIVE & TAP GREEN HIGHLIGHTING ACROSS ALL DEVICES (DESKTOP, TABLET, MOBILE)
+   Ensures crystal-clear visual clarity: User instantly knows their current location
+   ========================================================================== */
+
+/* 1. Desktop & Tablet Top Navbar Active & Tap States */
+.header-nav .nav-link.active,
+.gsm-pc-nav-link.active,
+.nav-link.active {
+  color: #007d77 !important;
+  background: rgba(0, 177, 169, 0.16) !important;
+  border-bottom: 3px solid #00b1a9 !important;
+  font-weight: 800 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(0, 177, 169, 0.25) !important;
+}
+
+.header-nav .nav-link:active,
+.gsm-pc-nav-link:active,
+.nav-link:active {
+  color: #007d77 !important;
+  background: rgba(0, 177, 169, 0.28) !important;
+  transform: scale(0.97) !important;
+}
+
+/* 2. Mobile Floating Bottom Nav Pill & Buttons */
+.gsm-floating-bottom-nav {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: fixed !important;
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 2147483640 !important;
+  width: auto !important;
+  max-width: calc(100vw - 16px) !important;
   padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.gsm-bottom-nav-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+  height: 56px !important;
+  padding: 4px 6px !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.95) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 12px 36px rgba(15, 45, 60, 0.16), 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 1px 1.5px rgba(255, 255, 255, 0.95) !important;
+  box-sizing: border-box !important;
+  width: auto !important;
+  max-width: 100% !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+}
+
+.gsm-nav-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 46px !important;
+  min-width: 36px !important;
+  max-width: 60px !important;
+  padding: 0 6px !important;
+  border-radius: 9999px !important;
+  flex: 1 1 auto !important;
+  flex-shrink: 1 !important;
+  box-sizing: border-box !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  text-decoration: none !important;
+  color: #475569 !important;
+}
+
+.gsm-nav-btn:hover {
+  background: rgba(0, 177, 169, 0.12) !important;
+  color: #00b1a9 !important;
+}
+
+.gsm-nav-btn:active {
+  transform: scale(0.92) !important;
+  background: rgba(0, 177, 169, 0.25) !important;
+  color: #00877f !important;
+}
+
+.gsm-nav-btn.active {
+  background: linear-gradient(135deg, #10b981 0%, #00b1a9 100%) !important;
+  color: #ffffff !important;
+  min-width: 52px !important;
+  max-width: 72px !important;
+  flex: 1.3 1 auto !important;
+  box-shadow: 0 4px 14px rgba(0, 177, 169, 0.45) !important;
+}
+
+.gsm-nav-btn.active .gsm-nav-svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
+  transform: scale(1.08) !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2)) !important;
+}
+
+.gsm-nav-btn.active .gsm-nav-svg path,
+.gsm-nav-btn.active .gsm-nav-svg circle {
+  fill: #ffffff !important;
+}
+
+.gsm-nav-btn.active .gsm-nav-svg polyline,
+.gsm-nav-btn.active .gsm-nav-svg[stroke] circle,
+.gsm-nav-btn.active .gsm-nav-svg[stroke] path {
+  stroke: #ffffff !important;
+}
+
+/* 3. Standard Mobile Bottom Navigation Bar (#mobile-bottom-nav) */
+.bottom-nav-item.active,
+#mobile-bottom-nav .bottom-nav-item.active,
+.goride-nav-item.active {
+  color: #00b1a9 !important;
+  background: rgba(0, 177, 169, 0.16) !important;
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
+
+.bottom-nav-item.active .bottom-nav-icon,
+#mobile-bottom-nav .bottom-nav-item.active .bottom-nav-icon {
+  color: #00b1a9 !important;
+  transform: translateY(-2px) scale(1.2) !important;
+  filter: drop-shadow(0 2px 8px rgba(0, 177, 169, 0.55)) !important;
+}
+
+.bottom-nav-item.active .bottom-nav-label,
+#mobile-bottom-nav .bottom-nav-item.active .bottom-nav-label {
+  color: #00b1a9 !important;
+  font-weight: 800 !important;
+}
+
+.bottom-nav-item:active,
+#mobile-bottom-nav .bottom-nav-item:active {
+  color: #00877f !important;
+  background: rgba(0, 177, 169, 0.25) !important;
+  transform: scale(0.93) !important;
+}
+
+/* Responsive Pill Wrapping: Always encompass all 6 buttons cleanly on any mobile screen */
+@media (max-width: 600px) {
+  .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
+  }
+  .gsm-bottom-nav-pill {
+    max-width: 100% !important;
+    width: auto !important;
+    height: 52px !important;
+    padding: 3px 5px !important;
+    gap: 2px !important;
+  }
+  .gsm-nav-btn {
+    height: 42px !important;
+    min-width: 32px !important;
+    padding: 0 4px !important;
+  }
+  .gsm-nav-btn.active {
+    min-width: 48px !important;
+    padding: 0 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .gsm-bottom-nav-pill {
+    height: 48px !important;
+    padding: 2px 3px !important;
+    gap: 1px !important;
+  }
+  .gsm-nav-btn {
+    height: 38px !important;
+    min-width: 28px !important;
+    padding: 0 2px !important;
+  }
+  .gsm-nav-btn.active {
+    min-width: 40px !important;
+    padding: 0 6px !important;
+  }
 }

@@ -995,7 +995,7 @@ class AdminController {
                             localStorage.clear();
                             sessionStorage.clear();
                         } catch(err) {}
-                        window.location.href = 'login.html?logout=true';
+                        window.location.href = '../loading.html?from=logout';
                     }
                 }
             });

@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Ví Navi — Hệ thống Ví điện tử & Thanh toán Navigo</title>
+    <meta name="description" content="Quản lý số dư, thanh toán chuyến đi không dùng tiền mặt và liên kết ngân hàng số cùng Ví điện tử NaviPay.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <link rel="stylesheet" href="../css/gsm-app.css">
+    <style>
+        /* ==========================================================================
+           NAVIPAY WALLET STYLES
+           ========================================================================== */
+        body.gsm-theme {
+            background: #f8fafc;
+            color: #0f2d3c;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .wallet-container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 24px 20px 80px;
+        }
+
+        /* Top Virtual Card (Holographic Gloss) */
+        .wallet-card-hero {
+            background: linear-gradient(135deg, #0f2d3c 0%, #134e4a 45%, #00b1a9 100%);
+            border-radius: 28px;
+            padding: 32px 36px;
+            color: #ffffff;
+            box-shadow: 0 20px 40px rgba(15, 45, 60, 0.22), 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .wallet-card-hero:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 24px 48px rgba(15, 45, 60, 0.28);
+        }
+        .wallet-card-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .wallet-card-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -60%;
+            left: -10%;
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(0, 229, 204, 0.2) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .card-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 2;
+        }
+        .card-brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .card-brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .card-brand-name {
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+        .card-brand-sub {
+            font-size: 0.72rem;
+            color: #a7f3d0;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+        .card-status-badge {
+            background: rgba(16, 185, 129, 0.22);
+            border: 1px solid rgba(52, 211, 153, 0.6);
+            color: #ecfdf5;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Balance Section */
+        .card-balance-block {
+            margin-bottom: 28px;
+            position: relative;
+            z-index: 2;
+        }
+        .card-balance-label {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .card-balance-toggle-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 1rem;
+            opacity: 0.85;
+            transition: opacity 0.2s;
+        }
+        .card-balance-toggle-btn:hover {
+            opacity: 1;
+        }
+        .card-balance-num {
+            font-size: 2.6rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            color: #ffffff;
+            line-height: 1.1;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .card-balance-num.pulse {
+            animation: balanceFlash 1s ease;
+        }
+        @keyframes balanceFlash {
+            0% { transform: scale(1); color: #ffffff; }
+            40% { transform: scale(1.06); color: #fef08a; }
+            100% { transform: scale(1); color: #ffffff; }
+        }
+
+        /* Bottom Row with Holder Name & Phone/STK */
+        .card-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            position: relative;
+            z-index: 2;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .card-meta-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .card-meta-label {
+            font-size: 0.72rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .card-holder-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .card-stk-value {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #a7f3d0;
+            letter-spacing: 1.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #ffffff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .card-copy-btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        /* Quick Action Bar (Nạp tiền, Mã nhận, Quét QR, Rút tiền) */
+        .wallet-actions-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .action-card-btn {
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 20px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+            text-align: center;
+        }
+        .action-card-btn:hover {
+            transform: translateY(-3px);
+            border-color: #00b1a9;
+            box-shadow: 0 10px 25px rgba(0, 177, 169, 0.15);
+        }
+        .action-icon-circle {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            transition: transform 0.2s ease;
+        }
+        .action-card-btn:hover .action-icon-circle {
+            transform: scale(1.08);
+        }
+        .icon-topup { background: #e6f7f6; color: #007d77; border: 1px solid #a7f3d0; }
+        .icon-myqr { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+        .icon-scan { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+        .icon-withdraw { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+
+        .action-btn-label {
+            font-size: 0.92rem;
+            font-weight: 800;
+            color: #0f2d3c;
+            line-height: 1.25;
+        }
+        .action-btn-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Banner Link to NaviPay Digital Bank (Realistic Flow Simulation) */
+        .bank-bridge-banner {
+            background: linear-gradient(135deg, #0b192c, #1e293b);
+            border: 1.5px solid #334155;
+            border-radius: 20px;
+            padding: 18px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            color: #ffffff;
+            box-shadow: 0 8px 24px rgba(11, 25, 44, 0.15);
+        }
+        .bank-bridge-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .bank-bridge-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: #fff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+        }
+        .bank-bridge-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .bank-bridge-desc {
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+        .bank-bridge-btn {
+            background: linear-gradient(135deg, #00b1a9, #007d77);
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 9999px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 0.88rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            box-shadow: 0 4px 14px rgba(0, 177, 169, 0.35);
+            transition: all 0.2s ease;
+        }
+        .bank-bridge-btn:hover {
+            transform: scale(1.03);
+            background: #009e96;
+        }
+
+        /* Transactions History Card */
+        .history-card {
+            background: #ffffff;
+            border-radius: 24px;
+            border: 1px solid #e2e8f0;
+            padding: 26px 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+        .history-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .history-title {
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #0f2d3c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .history-filter-tabs {
+            display: flex;
+            gap: 6px;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+        }
+        .history-tab-btn {
+            background: none;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .history-tab-btn.active {
+            background: #ffffff;
+            color: #00b1a9;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            font-weight: 800;
+        }
+
+        .txn-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .txn-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid #f1f5f9;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .txn-item:hover {
+            background: #f1f5f9;
+            transform: translateX(2px);
+        }
+        .txn-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .txn-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .txn-icon.topup { background: #dcfce7; color: #15803d; }
+        .txn-icon.payment { background: #fee2e2; color: #b91c1c; }
+        .txn-icon.income { background: #dbeafe; color: #1d4ed8; }
+        .txn-icon.transfer_out { background: #ffedd5; color: #c2410c; }
+        .txn-icon.transfer_in { background: #e0e7ff; color: #4338ca; }
+        .txn-icon.withdraw { background: #fef3c7; color: #b45309; }
+        .txn-icon.activation { background: #f3e8ff; color: #7e22ce; }
+
+        .txn-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .txn-badge-topup { background: #dcfce7; color: #166534; }
+        .txn-badge-income { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .txn-badge-payment { background: #fee2e2; color: #991b1b; }
+        .txn-badge-transfer-in { background: #e0e7ff; color: #3730a3; }
+        .txn-badge-transfer-out { background: #ffedd5; color: #9a3412; }
+        .txn-badge-withdraw { background: #fef3c7; color: #92400e; }
+        .txn-badge-activation { background: #f3e8ff; color: #6b21a8; }
+
+        @media (max-width: 600px) {
+            .txn-item {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: stretch !important;
+                padding: 14px 12px !important;
+                gap: 10px !important;
+                background: #ffffff !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 14px !important;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+            }
+            .txn-left {
+                display: flex !important;
+                align-items: flex-start !important;
+                gap: 10px !important;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+            .txn-icon {
+                width: 38px !important;
+                height: 38px !important;
+                font-size: 1.15rem !important;
+                border-radius: 10px !important;
+                flex-shrink: 0 !important;
+            }
+            .txn-info-title {
+                font-size: 0.92rem !important;
+                font-weight: 800 !important;
+                word-break: break-word !important;
+            }
+            .txn-info-desc {
+                font-size: 0.78rem !important;
+                word-break: break-word !important;
+                line-height: 1.35 !important;
+                margin-top: 2px !important;
+                color: #64748b !important;
+            }
+            .txn-meta-row {
+                margin-top: 4px !important;
+                flex-wrap: wrap !important;
+                gap: 6px !important;
+            }
+            .txn-right {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                width: 100% !important;
+                padding-top: 8px !important;
+                margin-top: 2px !important;
+                border-top: 1px dashed #e2e8f0 !important;
+                text-align: left !important;
+            }
+            .txn-bal-after {
+                order: 1 !important;
+                margin-top: 0 !important;
+                font-size: 0.74rem !important;
+                color: #64748b !important;
+                white-space: nowrap !important;
+            }
+            .txn-amount-pos,
+            .txn-amount-neg {
+                order: 2 !important;
+                font-size: 1.05rem !important;
+                font-weight: 800 !important;
+                text-align: right !important;
+                white-space: nowrap !important;
+            }
+            .history-filter-tabs {
+                gap: 4px !important;
+                padding: 4px !important;
+                overflow-x: auto !important;
+            }
+            .history-tab-btn {
+                padding: 6px 10px !important;
+                font-size: 0.78rem !important;
+                white-space: nowrap !important;
+            }
+        }
+
+        .txn-info-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #0f2d3c;
+            margin-bottom: 3px;
+        }
+        .txn-info-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+        .txn-info-time {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+        .txn-right {
+            text-align: right;
+            flex-shrink: 0;
+        }
+        .txn-amount-pos {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #10b981;
+        }
+        .txn-amount-neg {
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #ef4444;
+        }
+        .txn-bal-after {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 3px;
+        }
+
+        /* Modals & Dialogs */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 45, 60, 0.6);
+            backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.22s ease;
+        }
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 25px 60px rgba(15, 45, 60, 0.35);
+            transform: scale(0.95);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+        .modal-overlay.open .modal-card {
+            transform: scale(1);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 18px;
+            right: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close-btn:hover {
+            background: #e2e8f0;
+            color: #0f2d3c;
+        }
+
+        /* Quick Amount Pills */
+        .amount-pills-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin: 12px 0 16px;
+        }
+        .amount-pill {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            padding: 10px 6px;
+            border-radius: 12px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #0f2d3c;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.15s;
+        }
+        .amount-pill:hover, .amount-pill.selected {
+            background: #e6f7f6;
+            border-color: #00b1a9;
+            color: #007d77;
+        }
+
+        /* Form Inputs */
+        .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .form-input {
+            width: 100%;
+            height: 48px;
+            padding: 0 16px;
+            border-radius: 12px;
+            border: 1.5px solid #cbd5e1;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: #00b1a9;
+            box-shadow: 0 0 0 3px rgba(0, 177, 169, 0.15);
+        }
+        .form-input[readonly] {
+            background: #f1f5f9;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .btn-modal-primary {
+            width: 100%;
+            height: 50px;
+            background: linear-gradient(135deg, #00b1a9, #007d77);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(0, 177, 169, 0.35);
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .btn-modal-primary:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .wallet-card-hero {
+                padding: 24px 20px;
+                border-radius: 22px;
+            }
+            .card-balance-num {
+                font-size: 2.1rem;
+            }
+            .wallet-actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            .bank-bridge-banner {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            .bank-bridge-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="gsm-theme">
+    <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
+    <nav class="gsm-pc-navbar">
+        <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <div>
+                <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
+                <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
+            </div>
+        </a>
+
+        <div class="gsm-pc-nav-links">
+            <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
+            <a href="customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
+            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            <a href="wallet.html" class="gsm-pc-nav-link active">Ví Navi</a>
+            <a href="notifications.html" class="gsm-pc-nav-link" style="position:relative;">
+                🔔 Thông báo
+                <span class="gsm-nav-badge-dot" style="position:absolute; top:7px; right:5px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span>
+            </a>
+            <a href="profile.html" class="gsm-pc-nav-link">👤 Hồ sơ</a>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div data-auth="guest" style="display:flex; align-items:center; gap:8px;">
+                <a href="login.html" class="gsm-btn-primary-cta" style="height:36px; padding:0 16px; border-radius:9999px; text-decoration:none; font-size:0.85rem;">
+                    Đăng nhập
+                </a>
+                <a href="register.html" style="height:36px; padding:0 14px; border-radius:9999px; text-decoration:none; font-size:0.85rem; font-weight:700; color:#0f2d3c; border:1px solid #cbd5e1; display:flex; align-items:center;">
+                    Đăng ký
+                </a>
+            </div>
+            <div data-auth="user" style="display:none; align-items:center; gap:10px;">
+                <a href="profile.html" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:#0f2d3c; font-weight:700; font-size:0.9rem;">
+                    <div style="width:32px; height:32px; border-radius:50%; background:#e6f7f6; color:#00b1a9; display:flex; align-items:center; justify-content:center; font-weight:800;" data-user-avatar>U</div>
+                    <span data-user-name>Người dùng</span>
+                </a>
+                <button type="button" data-action="logout" style="border:none; background:#fef2f2; color:#dc2626; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer; font-size:0.82rem;">
+                    Đăng xuất
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Wallet Content Container -->
+    <div class="wallet-container">
+        
+        <!-- 1. VIRTUAL HOLOGRAPHIC WALLET CARD -->
+        <div class="wallet-card-hero" id="wallet-card-hero">
+            <div class="card-top-row">
+                <div class="card-brand-wrap">
+                    <div class="card-brand-logo">💳</div>
+                    <div>
+                        <div class="card-brand-name">NAVIPAY</div>
+                        <div class="card-brand-sub">Di chuyển xanh thuần điện</div>
+                    </div>
+                </div>
+                <div class="card-status-badge" id="wallet-status-badge">
+                    <span>✓</span> <span id="wallet-status-text">Đã kích hoạt</span>
+                </div>
+            </div>
+
+            <!-- Balance Display -->
+            <div class="card-balance-block">
+                <div class="card-balance-label">
+                    <span>Số dư khả dụng</span>
+                    <button type="button" class="card-balance-toggle-btn" id="btn-toggle-eye" onclick="toggleBalanceVisibility()" title="Ẩn/Hiện số dư">
+                        👁️
+                    </button>
+                </div>
+                <div class="card-balance-num" id="wallet-balance-display">
+                    500.000 ₫
+                </div>
+            </div>
+
+            <!-- Card Bottom Meta: Holder Name & STK/Phone -->
+            <div class="card-bottom-row">
+                <div class="card-meta-col">
+                    <div class="card-meta-label">Chủ tài khoản ví</div>
+                    <div class="card-holder-name" id="wallet-holder-name">NGUYEN VAN AN</div>
+                </div>
+                <div class="card-meta-col" style="text-align:right;">
+                    <div class="card-meta-label">Số tài khoản ví (SĐT)</div>
+                    <div class="card-stk-value">
+                        <span id="wallet-stk-display">0901234567</span>
+                        <button type="button" class="card-copy-btn" onclick="copyWalletSTK()" title="Sao chép STK">Sao chép</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. QUICK ACTION BUTTONS -->
+        <div class="wallet-actions-grid">
+            <!-- Nạp tiền (Tạo mã QR) -->
+            <div class="action-card-btn" onclick="openTopupModal()">
+                <div class="action-icon-circle icon-topup">📥</div>
+                <div>
+                    <div class="action-btn-label">Nạp tiền</div>
+                    <div class="action-btn-desc">Tạo mã QR nạp ví</div>
+                </div>
+            </div>
+
+            <!-- Mã nhận tiền của tôi -->
+            <div class="action-card-btn" onclick="openMyQrModal()">
+                <div class="action-icon-circle icon-myqr">👤</div>
+                <div>
+                    <div class="action-btn-label">Mã nhận tiền</div>
+                    <div class="action-btn-desc">QR cá nhân nhận tiền</div>
+                </div>
+            </div>
+
+            <!-- Quét QR chuyển tiền -->
+            <div class="action-card-btn" onclick="openScanQrModal()">
+                <div class="action-icon-circle icon-scan">📲</div>
+                <div>
+                    <div class="action-btn-label">Quét QR</div>
+                    <div class="action-btn-desc">Chuyển tiền tức thì</div>
+                </div>
+            </div>
+
+            <!-- Rút tiền -->
+            <div class="action-card-btn" onclick="openWithdrawModal()">
+                <div class="action-icon-circle icon-withdraw">📤</div>
+                <div>
+                    <div class="action-btn-label">Rút tiền</div>
+                    <div class="action-btn-desc">Về tài khoản ngân hàng</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. REALISTIC EXTERNAL DIGITAL BANK BRIDGE BANNER -->
+        <div class="bank-bridge-banner">
+            <div class="bank-bridge-left">
+                <div class="bank-bridge-icon">🏦</div>
+                <div>
+                    <div class="bank-bridge-title">Cổng Ngân Hàng Số NaviPay Digital Bank</div>
+                    <div class="bank-bridge-desc">Mô phỏng tài khoản thẻ ATM nguồn (Có sẵn 100 Triệu VND) để quét mã QR và bơm tiền tức thì vào ví.</div>
+                </div>
+            </div>
+            <a href="navipay-bank.html" target="_blank" class="bank-bridge-btn">
+                <span>Mở Ngân Hàng NaviPay</span>
+                <span>↗</span>
+            </a>
+        </div>
+
+        <!-- 4. TRANSACTION HISTORY & BALANCE STATEMENT -->
+        <div class="history-card">
+            <div class="history-header-row">
+                <div class="history-title">
+                    <span>📋</span> Lịch sử thanh toán & biến động số dư
+                </div>
+                <div class="history-filter-tabs">
+                    <button type="button" class="history-tab-btn active" data-filter="all" onclick="filterTransactions('all')">Tất cả</button>
+                    <button type="button" class="history-tab-btn" data-filter="topup" onclick="filterTransactions('topup')">Nạp tiền</button>
+                    <button type="button" class="history-tab-btn" data-filter="payment" onclick="filterTransactions('payment')">Chuyến xe</button>
+                    <button type="button" class="history-tab-btn" data-filter="transfer" onclick="filterTransactions('transfer')">Chuyển/Nhận</button>
+                </div>
+            </div>
+
+            <!-- Transactions List Body -->
+            <div class="txn-list" id="txn-list-container">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- =========================================================================
+         MODAL 1: KÍCH HOẠT VÍ LẦN ĐẦU (FIRST-TIME ONBOARDING SETUP)
+         ========================================================================= -->
+    <div class="modal-overlay" id="modal-activation">
+        <div class="modal-card">
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="width:60px; height:60px; border-radius:20px; background:#e6f7f6; color:#00b1a9; display:flex; align-items:center; justify-content:center; font-size:2rem; margin:0 auto 12px;">⚡</div>
+                <h3 style="margin:0 0 6px 0; font-size:1.35rem; font-weight:900; color:#0f2d3c;">Kích Hoạt Ví NaviPay</h3>
+                <p style="margin:0; font-size:0.88rem; color:#64748b;">Thiết lập định danh tài khoản ví điện tử chính chủ của bạn</p>
+            </div>
+
+            <form id="form-activation" onsubmit="handleActivationSubmit(event)">
+                <!-- Số tài khoản ví (SĐT) - Read-only -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Số tài khoản ví (Trùng khớp Số điện thoại đăng ký)
+                        <span style="color:#10b981; font-weight:700; font-size:0.75rem;">🔒 Mặc định trùng khớp SĐT</span>
+                    </label>
+                    <input type="text" id="setup-phone-input" class="form-input" readonly value="0901234567">
+                </div>
+
+                <!-- Họ và tên chính chủ - Tự động in hoa không dấu -->
+                <div class="form-group">
+                    <label class="form-label">
+                        Họ và tên chính chủ (Chữ in hoa không dấu)
+                        <span style="color:#ef4444;">*</span>
+                    </label>
+                    <input type="text" id="setup-name-input" class="form-input" placeholder="Ví dụ: NGUYEN VAN AN" required autocomplete="off" oninput="handleNameInput(this)">
+                    <small style="color:#64748b; font-size:0.75rem; display:block; margin-top:4px;">
+                        Hệ thống tự động chuyển đổi thành chữ in hoa không dấu theo chuẩn ngân hàng.
+                    </small>
+                </div>
+
+                <div style="margin:18px 0 20px; font-size:0.82rem; color:#475569; display:flex; align-items:flex-start; gap:8px;">
+                    <input type="checkbox" id="setup-agree-terms" checked required style="margin-top:2px;">
+                    <label for="setup-agree-terms">Tôi xác nhận thông tin chính chủ và đồng ý với Điều khoản thanh toán di chuyển không tiền mặt của Navigo.</label>
+                </div>
+
+                <button type="submit" class="btn-modal-primary">
+                    <span>Kích Hoạt Ví Ngay</span>
+                    <span>⚡</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 2: NẠP TIỀN & TẠO MÃ QR NẠP VÍ (TOP-UP QR CODE)
+         ========================================================================= -->
+    <div class="modal-overlay" id="modal-topup">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeModal('modal-topup')">&times;</button>
+            
+            <div style="text-align:center; margin-bottom:18px;">
+                <h3 style="margin:0 0 6px 0; font-size:1.3rem; font-weight:900; color:#0f2d3c;">Nạp Tiền Vào Ví Navi</h3>
+                <p style="margin:0; font-size:0.85rem; color:#64748b;">Tạo mã QR để quét và bơm tiền từ Ngân hàng số NaviPay</p>
+            </div>
+
+            <!-- Quick Amount Selector -->
+            <label class="form-label">Chọn nhanh số tiền cần nạp:</label>
+            <div class="amount-pills-row">
+                <div class="amount-pill" onclick="selectTopupAmount(50000, this)">50.000 ₫</div>
+                <div class="amount-pill" onclick="selectTopupAmount(100000, this)">100.000 ₫</div>
+                <div class="amount-pill selected" onclick="selectTopupAmount(200000, this)">200.000 ₫</div>
+                <div class="amount-pill" onclick="selectTopupAmount(500000, this)">500.000 ₫</div>
+                <div class="amount-pill" onclick="selectTopupAmount(1000000, this)">1.000.000 ₫</div>
+                <div class="amount-pill" onclick="selectTopupAmount(2000000, this)">2.000.000 ₫</div>
+            </div>
+
+            <!-- Custom Amount Input -->
+            <div class="form-group">
+                <label class="form-label">Hoặc nhập số tiền tùy chọn (₫):</label>
+                <input type="number" id="topup-custom-amount" class="form-input" value="200000" min="10000" step="10000" oninput="handleCustomAmountChange(this.value)">
+            </div>
+
+            <!-- Rendered QR Code Container -->
+            <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:18px; padding:20px; text-align:center; margin:16px 0;">
+                <div id="topup-qrcode-canvas" style="display:inline-block; padding:10px; background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.06);"></div>
+                
+                <div style="margin-top:12px;">
+                    <div style="font-weight:800; font-size:1.15rem; color:#00b1a9;" id="topup-preview-amount">200.000 ₫</div>
+                    <div style="font-size:0.82rem; color:#64748b; margin-top:2px;" id="topup-preview-target">Người nhận: NGUYEN VAN AN (0901234567)</div>
+                </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <a href="navipay-bank.html" target="_blank" class="btn-modal-primary" style="text-decoration:none;">
+                    <span>Mở Camera Ngân Hàng NaviPay Quét Mã</span>
+                    <span>📷</span>
+                </a>
+                <button type="button" onclick="simulateInstantTopup()" style="background:#f1f5f9; border:1px solid #cbd5e1; height:42px; border-radius:12px; font-size:0.85rem; font-weight:700; color:#475569; cursor:pointer;">
+                    ⚡ Hoặc bấm Nạp Nhanh Mô Phỏng (Test Không Cần Camera)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 3: MÃ NHẬN TIỀN CỦA TÔI (MY PERSONAL RECEIVE QR)
+         ========================================================================= -->
+    <div class="modal-overlay" id="modal-myqr">
+        <div class="modal-card" style="text-align:center;">
+            <button type="button" class="modal-close-btn" onclick="closeModal('modal-myqr')">&times;</button>
+            
+            <div style="width:50px; height:50px; border-radius:16px; background:#f0fdf4; color:#16a34a; display:flex; align-items:center; justify-content:center; font-size:1.6rem; margin:0 auto 12px;">👤</div>
+            <h3 style="margin:0 0 6px 0; font-size:1.3rem; font-weight:900; color:#0f2d3c;">Mã Nhận Tiền Cá Nhân</h3>
+            <p style="margin:0 0 18px 0; font-size:0.85rem; color:#64748b;">Đưa mã này cho người khác để nhận tiền trực tiếp vào Ví Navi</p>
+
+            <div style="background:#f8fafc; border:1.5px solid #e2e8f0; border-radius:20px; padding:22px; display:inline-block; margin-bottom:16px;">
+                <div id="my-qrcode-canvas" style="display:inline-block; padding:10px; background:#fff; border-radius:12px; box-shadow:0 4px 14px rgba(0,0,0,0.06);"></div>
+                <div style="font-weight:900; font-size:1.15rem; color:#0f2d3c; margin-top:14px;" id="myqr-name">NGUYEN VAN AN</div>
+                <div style="font-weight:700; font-size:0.95rem; color:#00b1a9; letter-spacing:1px;" id="myqr-phone">0901234567</div>
+            </div>
+
+            <button type="button" class="btn-modal-primary" onclick="copyWalletSTK()">
+                <span>Sao Chép Số Tài Khoản / SĐT</span>
+                <span>📋</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 4: QUÉT QR CHUYỂN TIỀN (CAMERA SCANNER VIA HTML5-QRCODE)
+         ========================================================================= -->
+    <div class="modal-overlay" id="modal-scanqr">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeScanQrModal()">&times;</button>
+            
+            <div style="text-align:center; margin-bottom:16px;">
+                <h3 style="margin:0 0 4px 0; font-size:1.3rem; font-weight:900; color:#0f2d3c;">Quét Mã QR Chuyển Tiền</h3>
+                <p style="margin:0; font-size:0.85rem; color:#64748b;">Hướng camera vào mã QR Ví Navi hoặc chọn ảnh mã QR từ thiết bị</p>
+            </div>
+
+            <!-- Camera Viewport -->
+            <div id="wallet-reader" style="width:100%; border-radius:16px; overflow:hidden; background:#000; min-height:260px; margin-bottom:14px;"></div>
+
+            <!-- Alternative file upload / Manual Transfer Form -->
+            <div style="background:#f8fafc; border-radius:14px; padding:14px; margin-bottom:14px; border:1px solid #e2e8f0;">
+                <div style="font-size:0.82rem; font-weight:700; color:#334155; margin-bottom:8px;">Hoặc tải ảnh mã QR / Chuyển nhanh qua SĐT:</div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" id="manual-target-phone" class="form-input" style="height:40px; font-size:0.88rem;" placeholder="Nhập SĐT người nhận (VD: 0918765432)">
+                    <button type="button" onclick="handleManualTargetLookup()" style="height:40px; padding:0 14px; background:#00b1a9; color:#fff; border:none; border-radius:10px; font-weight:700; cursor:pointer; white-space:nowrap;">
+                        Tiếp tục
+                    </button>
+                </div>
+            </div>
+
+            <!-- Target Confirmation Box (Appears after scan/lookup) -->
+            <div id="scan-target-box" style="display:none; background:#ecfdf5; border:1.5px solid #a7f3d0; border-radius:16px; padding:16px; margin-bottom:16px;">
+                <div style="font-weight:800; font-size:0.95rem; color:#065f46; margin-bottom:4px;" id="scan-target-name">NGUOI NHAN</div>
+                <div style="font-size:0.85rem; color:#047857;" id="scan-target-phone">SĐT: 0918765432</div>
+                
+                <div style="margin-top:10px;">
+                    <label class="form-label" style="font-size:0.82rem;">Số tiền muốn chuyển (₫):</label>
+                    <input type="number" id="scan-transfer-amount" class="form-input" style="height:42px;" value="50000" min="5000">
+                </div>
+
+                <button type="button" class="btn-modal-primary" style="margin-top:12px; height:44px;" onclick="confirmQrTransfer()">
+                    Xác Nhận Chuyển Tiền Ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL 5: RÚT TIỀN VỀ NGÂN HÀNG (WITHDRAW)
+         ========================================================================= -->
+    <div class="modal-overlay" id="modal-withdraw">
+        <div class="modal-card">
+            <button type="button" class="modal-close-btn" onclick="closeModal('modal-withdraw')">&times;</button>
+            
+            <div style="text-align:center; margin-bottom:18px;">
+                <h3 style="margin:0 0 6px 0; font-size:1.3rem; font-weight:900; color:#0f2d3c;">Rút Tiền Về Ngân Hàng</h3>
+                <p style="margin:0; font-size:0.85rem; color:#64748b;">Chuyển tiền từ Ví Navi về tài khoản ATM / Ngân hàng liên kết</p>
+            </div>
+
+            <form onsubmit="handleWithdrawSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Ngân hàng thụ hưởng</label>
+                    <input type="text" class="form-input" readonly value="NaviPay Digital Bank (ATM 999988886666)">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tên chủ tài khoản nhận</label>
+                    <input type="text" id="withdraw-name-input" class="form-input" readonly value="NGUYEN VAN AN">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Số tiền muốn rút (₫)</label>
+                    <input type="number" id="withdraw-amount-input" class="form-input" placeholder="Tối thiểu 20.000 ₫" min="20000" step="10000" required>
+                    <small style="color:#64748b; font-size:0.75rem; margin-top:4px; display:block;" id="withdraw-avail-hint">
+                        Số dư khả dụng: 500.000 ₫
+                    </small>
+                </div>
+
+                <button type="submit" class="btn-modal-primary">
+                    <span>Xác Nhận Rút Tiền</span>
+                    <span>📤</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Floating Glassmorphism Bottom Navigation Bar for Mobile -->
+    <nav class="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="customer.html" class="gsm-nav-btn " title="Đặt xe">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17zM7.5 15.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm9 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5z"/>
+                </svg>
+            </a>
+            <a href="wallet.html" class="gsm-nav-btn active" title="Ví Navi">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+            </a>
+            <a href="activity.html" class="gsm-nav-btn " title="Lịch sử">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </a>
+            <a href="notifications.html" class="gsm-nav-btn " title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot" style="display:none;"></span>
+                </div>
+            </a>
+            <a href="profile.html" class="gsm-nav-btn " title="Hồ sơ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
+        <a href="profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGold_wallet)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGold_wallet" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toast-container" style="position:fixed; bottom:24px; right:24px; z-index:999999;"></div>
+
+    <!-- Scripts: QR Core, Scanner, Engine, Session -->
+    <script src="../js/core/qrcode.min.js"></script>
+    <script src="../js/core/html5-qrcode.min.js"></script>
+    <script src="../js/core/session.js"></script>
+    <script src="../js/core/wallet.js"></script>
+    <script src="../js/core/notifications.js"></script>
+
+    <script>
+        // =========================================================================
+        // WALLET CONTROLLER LOGIC
+        // =========================================================================
+        let currentWallet = null;
+        let isBalanceHidden = false;
+        let selectedTopupAmt = 200000;
+        let html5QrScanner = null;
+        let activeFilter = 'all';
+        let scannedTargetPhone = '';
+        let scannedTargetName = '';
+
+        // 1. Initialize Page
+        document.addEventListener('DOMContentLoaded', () => {
+            initWalletState();
+            setupStorageSyncListener();
+        // Active check when QR modal is open (guarantees instantaneous close across frames)
+        setInterval(() => {
+            const isQrOpen = document.getElementById('modal-myqr')?.classList.contains('open') || 
+                             document.getElementById('modal-topup')?.classList.contains('open');
+            if (isQrOpen && window.NaviWalletEngine) {
+                handleExternalSyncUpdate();
+            }
+        }, 800);
+
+        });
+
+        function initWalletState() {
+            if (!window.NaviWalletEngine) return;
+
+            // Resolve wallet (strictly 1 single wallet per logged-in account)
+            currentWallet = window.NaviWalletEngine.getCurrentWallet();
+
+            // If not activated yet, show activation modal
+            if (!currentWallet || !currentWallet.activated) {
+                openActivationModal();
+            } else {
+                renderWalletUI();
+            }
+        }
+
+        // 2. Render Wallet UI Components
+        function renderWalletUI() {
+            if (!currentWallet) return;
+
+            // Balance
+            const balDisplay = document.getElementById('wallet-balance-display');
+            if (balDisplay) {
+                balDisplay.textContent = isBalanceHidden ? '••••••••' : window.formatVND(currentWallet.balance);
+            }
+
+            // Holder Name & STK
+            const nameDisplay = document.getElementById('wallet-holder-name');
+            if (nameDisplay) nameDisplay.textContent = currentWallet.fullName || 'NGUYEN VAN AN';
+
+            const stkDisplay = document.getElementById('wallet-stk-display');
+            if (stkDisplay) stkDisplay.textContent = currentWallet.accountNumber;
+
+            // Badge
+            const badge = document.getElementById('wallet-status-badge');
+            const roleLabel = currentWallet.role === 'driver' ? 'Tài xế đối tác' : 'Khách hàng';
+            if (badge) {
+                badge.innerHTML = `<span>✓</span> <span>Đã kích hoạt (${roleLabel})</span>`;
+            }
+
+            // Render Transactions
+            renderTransactionsList();
+        }
+
+        // 3. Transactions List Rendering with Filter & Distinct Badges
+        function getTxnBadge(t) {
+            switch (t.type) {
+                case 'topup':
+                    return '<span class="txn-badge txn-badge-topup">Nạp tiền</span>';
+                case 'income':
+                    return '<span class="txn-badge txn-badge-income">Thu nhập cuốc</span>';
+                case 'payment':
+                    return '<span class="txn-badge txn-badge-payment">Cước chuyến xe</span>';
+                case 'transfer_in':
+                    return '<span class="txn-badge txn-badge-transfer-in">Nhận tiền ví</span>';
+                case 'transfer_out':
+                    return '<span class="txn-badge txn-badge-transfer-out">Chuyển tiền ví</span>';
+                case 'withdraw':
+                    return '<span class="txn-badge txn-badge-withdraw">Rút tiền</span>';
+                case 'activation':
+                    return '<span class="txn-badge txn-badge-activation">Kích hoạt ví</span>';
+                default:
+                    return '<span class="txn-badge">Giao dịch</span>';
+            }
+        }
+
+        function renderTransactionsList() {
+            const container = document.getElementById('txn-list-container');
+            if (!container || !currentWallet) return;
+
+            let txns = currentWallet.transactions || [];
+
+            if (activeFilter === 'topup') {
+                txns = txns.filter(t => t.type === 'topup' || t.type === 'activation');
+            } else if (activeFilter === 'payment') {
+                // Includes customer trip payments and driver trip earnings
+                txns = txns.filter(t => t.type === 'payment' || t.type === 'income');
+            } else if (activeFilter === 'transfer') {
+                txns = txns.filter(t => t.type.includes('transfer') || t.type === 'withdraw');
+            }
+
+            if (txns.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px 20px; color:#94a3b8;">
+                        <div style="font-size:2.5rem; margin-bottom:8px;">🍃</div>
+                        <div style="font-weight:700;">Chưa có giao dịch nào trong danh mục này</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = txns.map(t => {
+                const isPos = t.amount > 0;
+                const amtClass = isPos ? 'txn-amount-pos' : 'txn-amount-neg';
+                const prefix = isPos ? '+' : '';
+                const timeStr = formatTxnTime(t.timestamp);
+                const icon = getTxnIcon(t.type);
+                const badge = getTxnBadge(t);
+
+                return `
+                    <div class="txn-item">
+                        <div class="txn-left">
+                            <div class="txn-icon ${t.type}">${icon}</div>
+                            <div style="min-width:0;">
+                                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:2px;">
+                                    <span class="txn-info-title">${t.title}</span>
+                                    ${badge}
+                                </div>
+                                <div class="txn-info-desc">${t.description || ''}</div>
+                                <div class="txn-meta-row" style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+                                    <span class="txn-info-time">${timeStr}</span>
+                                    <span style="color:#cbd5e1;">•</span>
+                                    <span class="txn-code" style="font-family:monospace; font-size:0.7rem; color:#94a3b8;">${t.id || ''}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="txn-right">
+                            <div class="${amtClass}">${prefix}${window.formatVND ? window.formatVND(t.amount) : t.amount + ' ₫'}</div>
+                            <div class="txn-bal-after">Số dư sau: ${window.formatVND ? window.formatVND(t.balanceAfter) : t.balanceAfter + ' ₫'}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTxnIcon(type) {
+            switch (type) {
+                case 'topup': return '📥';
+                case 'payment': return '🚗';
+                case 'income': return '💰';
+                case 'transfer_out': return '📤';
+                case 'transfer_in': return '💸';
+                case 'withdraw': return '🏦';
+                case 'activation': return '⚡';
+                default: return '💳';
+            }
+        }
+
+        function formatTxnTime(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return `${d.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})} - ${d.toLocaleDateString('vi-VN')}`;
+        }
+
+        function filterTransactions(cat) {
+            activeFilter = cat;
+            document.querySelectorAll('.history-tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === cat);
+            });
+            renderTransactionsList();
+        }
+
+        // 4. Balance Eye Toggle
+        function toggleBalanceVisibility() {
+            isBalanceHidden = !isBalanceHidden;
+            const btn = document.getElementById('btn-toggle-eye');
+            if (btn) btn.textContent = isBalanceHidden ? '🔒' : '👁️';
+            renderWalletUI();
+        }
+
+        // 5. Activation Flow
+        function openActivationModal() {
+            const modal = document.getElementById('modal-activation');
+            const phoneInput = document.getElementById('setup-phone-input');
+            const nameInput = document.getElementById('setup-name-input');
+
+            if (phoneInput && currentWallet) {
+                phoneInput.value = currentWallet.accountNumber;
+            }
+            if (nameInput && currentWallet) {
+                nameInput.value = currentWallet.fullName || '';
+            }
+            modal?.classList.add('open');
+        }
+
+        // Tự động chuyển đổi thành chữ IN HOA KHÔNG DẤU khi gõ
+        function handleNameInput(input) {
+            if (!input) return;
+            const caret = input.selectionStart;
+            input.value = window.removeVietnameseTones(input.value);
+            try { input.setSelectionRange(caret, caret); } catch(e) {}
+        }
+
+        function handleActivationSubmit(e) {
+            e.preventDefault();
+            const phone = document.getElementById('setup-phone-input').value.trim();
+            const name = document.getElementById('setup-name-input').value.trim();
+
+            if (!name) {
+                alert('Vui lòng nhập Họ và tên chính chủ.');
+                return;
+            }
+
+            try {
+                currentWallet = window.NaviWalletEngine.activateWallet(phone, name, 500000);
+                closeModal('modal-activation');
+                renderWalletUI();
+                showToast(`Chúc mừng ${currentWallet.fullName}! Ví NaviPay đã được kích hoạt thành công.`, 'success');
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // 6. Topup QR Flow
+        function openTopupModal() {
+            if (!currentWallet || !currentWallet.activated) {
+                openActivationModal();
+                return;
+            }
+            document.getElementById('modal-topup')?.classList.add('open');
+            selectTopupAmount(selectedTopupAmt);
+        }
+
+        function selectTopupAmount(amt, pillEl) {
+            selectedTopupAmt = amt;
+            const customInput = document.getElementById('topup-custom-amount');
+            if (customInput) customInput.value = amt;
+
+            document.querySelectorAll('.amount-pill').forEach(p => p.classList.remove('selected'));
+            if (pillEl) {
+                pillEl.classList.add('selected');
+            } else {
+                document.querySelectorAll('.amount-pill').forEach(p => {
+                    if (p.textContent.includes(amt.toLocaleString('vi-VN'))) p.classList.add('selected');
+                });
+            }
+
+            generateTopupQR(amt);
+        }
+
+        function handleCustomAmountChange(val) {
+            const amt = Math.max(10000, Number(val) || 0);
+            selectedTopupAmt = amt;
+            generateTopupQR(amt);
+        }
+
+        function generateTopupQR(amt) {
+            const container = document.getElementById('topup-qrcode-canvas');
+            if (!container || !currentWallet) return;
+            container.innerHTML = '';
+
+            const amtDisplay = document.getElementById('topup-preview-amount');
+            if (amtDisplay) amtDisplay.textContent = window.formatVND(amt);
+
+            const targetDisplay = document.getElementById('topup-preview-target');
+            if (targetDisplay) targetDisplay.textContent = `Người nhận: ${currentWallet.fullName} (${currentWallet.accountNumber})`;
+
+            // Create structured payload
+            const payload = window.NaviWalletEngine.createTopupQRPayload(
+                currentWallet.accountNumber,
+                currentWallet.fullName,
+                amt,
+                `Nap tien Vi NaviPay ${currentWallet.accountNumber}`
+            );
+
+            // Generate with QRCode.js
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(container, {
+                    text: payload,
+                    width: 180,
+                    height: 180,
+                    colorDark: '#0f2d3c',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } else {
+                container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(payload)}" alt="QR Code" style="width:180px;height:180px;border-radius:8px;">`;
+            }
+        }
+
+        // Instant topup simulation for testing
+        function simulateInstantTopup() {
+            try {
+                const res = window.NaviWalletEngine.topup(
+                    currentWallet.accountNumber,
+                    selectedTopupAmt,
+                    'Nạp tiền nhanh mô phỏng',
+                    'NaviPay Digital Bank'
+                );
+                currentWallet = res.wallet;
+                renderWalletUI();
+                closeModal('modal-topup');
+                showToast(`Đã nạp thành công +${window.formatVND(selectedTopupAmt)} vào Ví Navi!`, 'success');
+                flashBalanceAnimation();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // 7. My Personal QR Flow
+        function openMyQrModal() {
+            if (!currentWallet || !currentWallet.activated) {
+                openActivationModal();
+                return;
+            }
+            document.getElementById('modal-myqr')?.classList.add('open');
+            document.getElementById('myqr-name').textContent = currentWallet.fullName;
+            document.getElementById('myqr-phone').textContent = currentWallet.accountNumber;
+
+            const container = document.getElementById('my-qrcode-canvas');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const payload = window.NaviWalletEngine.createTopupQRPayload(
+                currentWallet.accountNumber,
+                currentWallet.fullName,
+                0,
+                `Chuyen tien cho ${currentWallet.fullName}`
+            );
+
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(container, {
+                    text: payload,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#0f2d3c',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            } else {
+                container.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(payload)}" alt="QR Code" style="width:200px;height:200px;border-radius:8px;">`;
+            }
+        }
+
+        // 8. Scan QR & Transfer Flow (Camera via Html5Qrcode)
+        function openScanQrModal() {
+            if (!currentWallet || !currentWallet.activated) {
+                openActivationModal();
+                return;
+            }
+            document.getElementById('modal-scanqr')?.classList.add('open');
+            startCameraScanner();
+        }
+
+        function closeScanQrModal() {
+            stopCameraScanner();
+            closeModal('modal-scanqr');
+        }
+
+        function startCameraScanner() {
+            if (typeof Html5Qrcode === 'undefined') return;
+            const readerEl = document.getElementById('wallet-reader');
+            if (!readerEl) return;
+
+            if (!html5QrScanner) {
+                html5QrScanner = new Html5Qrcode('wallet-reader');
+            }
+
+            const qrConfig = { fps: 10, qrbox: { width: 220, height: 220 } };
+            html5QrScanner.start(
+                { facingMode: 'environment' },
+                qrConfig,
+                (decodedText) => {
+                    handleQrScanResult(decodedText);
+                },
+                (errorMessage) => {
+                    // scanning continuous
+                }
+            ).catch(err => {
+                console.warn('[Camera] Scanner notice:', err);
+                readerEl.innerHTML = `
+                    <div style="color:#ffffff; padding:40px 20px; text-align:center;">
+                        <div style="font-size:2rem; margin-bottom:8px;">📷</div>
+                        <div style="font-weight:700;">Không thể mở camera thiết bị hoặc quyền bị từ chối</div>
+                        <div style="font-size:0.82rem; color:#cbd5e1; margin-top:6px;">Bạn có thể nhập trực tiếp Số điện thoại người nhận bên dưới để chuyển tiền.</div>
+                    </div>
+                `;
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrScanner) {
+                try {
+                    html5QrScanner.stop().then(() => {
+                        html5QrScanner.clear();
+                    }).catch(() => {});
+                } catch(e) {}
+            }
+        }
+
+        
+        function handleQrFileUpload(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            if (typeof Html5Qrcode === 'undefined') {
+                alert('Thư viện quét QR chưa sẵn sàng.');
+                return;
+            }
+            if (!html5QrScanner) {
+                html5QrScanner = new Html5Qrcode('wallet-reader');
+            }
+            html5QrScanner.scanFile(file, true)
+                .then(decodedText => {
+                    handleQrScanResult(decodedText);
+                })
+                .catch(err => {
+                    alert('Không tìm thấy hoặc không đọc được mã QR trong ảnh. Vui lòng thử ảnh rõ nét hơn hoặc nhập SĐT.');
+                });
+        }
+
+        function handleQrScanResult(decodedText) {
+            stopCameraScanner();
+            const parsed = window.NaviWalletEngine.parseQRPayload(decodedText);
+            if (parsed && parsed.phone) {
+                showScanTargetBox(parsed.phone, parsed.name, parsed.amount);
+            } else {
+                alert('Mã QR không đúng định dạng của Ví Navi / NaviPay.');
+            }
+        }
+
+        function handleManualTargetLookup() {
+            const rawPhone = document.getElementById('manual-target-phone').value.trim();
+            if (!rawPhone) {
+                alert('Vui lòng nhập SĐT người nhận.');
+                return;
+            }
+            const cleanPhone = (window.normalizePhone ? window.normalizePhone(rawPhone) : rawPhone.replace(/[^0-9]/g, ''));
+            const targetWallet = window.NaviWalletEngine.getWallet(cleanPhone);
+            const targetName = targetWallet ? targetWallet.fullName : 'NGUOI NHAN ' + cleanPhone;
+            showScanTargetBox(cleanPhone, targetName, 50000);
+        }
+
+        function showScanTargetBox(phone, name, amount) {
+            const cleanPhone = (window.normalizePhone ? window.normalizePhone(phone) : (phone || '').replace(/[^0-9]/g, ''));
+            scannedTargetPhone = cleanPhone;
+            scannedTargetName = name || ('NGƯỜI NHẬN ' + cleanPhone);
+
+            const box = document.getElementById('scan-target-box');
+            if (!box) return;
+            box.style.display = 'block';
+            box.dataset.phone = cleanPhone;
+            document.getElementById('scan-target-name').textContent = scannedTargetName;
+            document.getElementById('scan-target-phone').textContent = 'SĐT thụ hưởng: ' + cleanPhone;
+            if (amount && amount > 0) {
+                document.getElementById('scan-transfer-amount').value = amount;
+            }
+        }
+
+        function confirmQrTransfer() {
+            const box = document.getElementById('scan-target-box');
+            const toPhone = scannedTargetPhone || (box ? box.dataset.phone : '') || document.getElementById('scan-target-phone').textContent.replace(/[^0-9]/g, '');
+            const amount = Number(document.getElementById('scan-transfer-amount').value) || 0;
+
+            if (!toPhone) {
+                alert('Không xác định được số điện thoại người nhận.');
+                return;
+            }
+            if (amount <= 0) {
+                alert('Số tiền chuyển phải lớn hơn 0 ₫.');
+                return;
+            }
+
+            try {
+                const res = window.NaviWalletEngine.transfer(
+                    currentWallet.accountNumber,
+                    toPhone,
+                    amount,
+                    `Chuyen tien Vi NaviPay den ${toPhone}`
+                );
+                currentWallet = res.senderWallet;
+                closeScanQrModal();
+                renderWalletUI();
+                showToast(`Đã chuyển thành công ${window.formatVND(amount)} đến ${res.receiverWallet?.fullName || toPhone}!`, 'success');
+                flashBalanceAnimation();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // 9. Withdraw Modal Flow
+        function openWithdrawModal() {
+            if (!currentWallet || !currentWallet.activated) {
+                openActivationModal();
+                return;
+            }
+            const modal = document.getElementById('modal-withdraw');
+            document.getElementById('withdraw-name-input').value = currentWallet.fullName;
+            document.getElementById('withdraw-avail-hint').textContent = `Số dư khả dụng: ${window.formatVND(currentWallet.balance)}`;
+            modal?.classList.add('open');
+        }
+
+        function handleWithdrawSubmit(e) {
+            e.preventDefault();
+            const amount = Number(document.getElementById('withdraw-amount-input').value) || 0;
+            if (amount <= 0) {
+                alert('Số tiền rút không hợp lệ.');
+                return;
+            }
+
+            try {
+                const res = window.NaviWalletEngine.withdraw(currentWallet.accountNumber, amount);
+                currentWallet = res.wallet;
+                closeModal('modal-withdraw');
+                renderWalletUI();
+                showToast(`Đã rút thành công ${window.formatVND(amount)} về tài khoản ngân hàng liên kết!`, 'success');
+                flashBalanceAnimation();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // 10. REAL-TIME STORAGE SYNCHRONIZATION (REQUIREMENT 4)
+        // "khi bấm chuyển tiền ở trang ngân hàng, số dư Ví Navi bên tab/thiết bị kia tự động nhảy số dư ngay lập tức mà không cần F5 trang"
+        function setupStorageSyncListener() {
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'navigo_wallets' || e.key === 'navigo_wallet_sync_event') {
+                    handleExternalSyncUpdate();
+                }
+            });
+
+            window.addEventListener('navigo:wallet_sync', () => {
+                handleExternalSyncUpdate();
+            });
+        }
+
+        function handleExternalSyncUpdate() {
+            if (!window.NaviWalletEngine) return;
+            const activePhone = window.NaviWalletEngine.getActivePhone();
+            const updated = window.NaviWalletEngine.getWallet(activePhone);
+            if (updated) {
+                const prevBal = currentWallet ? currentWallet.balance : 0;
+                currentWallet = updated;
+
+                if (updated.balance > prevBal) {
+                    const diff = updated.balance - prevBal;
+
+                    // REQUIREMENT: Auto-close QR code modals immediately upon receiving money
+                    closeModal('modal-myqr');
+                    closeModal('modal-topup');
+                    closeModal('modal-scanqr');
+
+                    // Reset filter tab to 'all' so the new transaction is prominently visible
+                    activeFilter = 'all';
+                    document.querySelectorAll('.history-tab-btn').forEach(btn => {
+                        if (btn.getAttribute('data-filter') === 'all') {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+
+                    renderWalletUI();
+
+                    const latestTxn = (updated.transactions && updated.transactions[0]) || null;
+                    if (latestTxn && latestTxn.type === 'transfer_in') {
+                        showToast(`🎉 Nhận tiền thành công: +${window.formatVND(diff)} từ ${latestTxn.senderName || 'tài khoản khác'}!`, 'success');
+                    } else if (latestTxn && latestTxn.type === 'topup') {
+                        showToast(`🎉 Nạp tiền thành công: +${window.formatVND(diff)} từ ${latestTxn.sourceInfo || 'Ngân hàng số NaviPay'}!`, 'success');
+                    } else if (latestTxn && latestTxn.type === 'income') {
+                        showToast(`🎉 Thu nhập chuyến xe mới: +${window.formatVND(diff)}!`, 'success');
+                    } else {
+                        showToast(`🎉 Số dư Ví Navi vừa nhận: +${window.formatVND(diff)}`, 'success');
+                    }
+                    flashBalanceAnimation();
+                } else if (updated.balance < prevBal) {
+                    renderWalletUI();
+                    flashBalanceAnimation();
+                } else {
+                    renderWalletUI();
+                }
+            }
+        }
+
+        function flashBalanceAnimation() {
+            const balEl = document.getElementById('wallet-balance-display');
+            if (balEl) {
+                balEl.classList.remove('pulse');
+                void balEl.offsetWidth; // trigger reflow
+                balEl.classList.add('pulse');
+            }
+        }
+
+        // 11. Helper Functions
+        function closeModal(modalId) {
+            document.getElementById(modalId)?.classList.remove('open');
+        }
+
+        function copyWalletSTK() {
+            if (!currentWallet) return;
+            navigator.clipboard.writeText(currentWallet.accountNumber).then(() => {
+                showToast(`Đã sao chép số tài khoản ví: ${currentWallet.accountNumber}`, 'info');
+            }).catch(() => {
+                showToast(`Số tài khoản ví: ${currentWallet.accountNumber}`, 'info');
+            });
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const bg = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#00b1a9');
+            toast.style.cssText = `background:${bg}; color:#fff; padding:12px 20px; border-radius:12px; font-size:0.9rem; font-weight:700; margin-top:8px; box-shadow:0 8px 24px rgba(0,0,0,0.18); animation:liquidPop 0.2s ease; display:flex; align-items:center; gap:8px;`;
+            toast.innerHTML = `<span>${type === 'success' ? '✓' : 'ℹ'}</span> <span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(10px)';
+                toast.style.transition = 'all 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

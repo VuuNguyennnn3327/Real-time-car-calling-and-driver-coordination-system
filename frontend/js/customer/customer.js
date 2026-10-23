@@ -2291,7 +2291,7 @@ class CustomerAppController {
                             <span class="goride-vehicle-name">${v.name}</span>
                             <span class="goride-vehicle-seats">👤 ${v.seats}</span>
                         </div>
-                        <div class="goride-vehicle-eta">Đón trong ${v.etaMin}-${v.etaMax} phút &bull; <span class="goride-vehicle-desc">${v.desc}</span></div>
+                        <div class="goride-vehicle-eta">${(v.etaMin === v.etaMax) ? `Đón trong ~${v.etaMin} phút` : `Đón trong ${v.etaMin}-${v.etaMax} phút`} &bull; <span class="goride-vehicle-desc">${v.desc}</span></div>
                     </div>
                 </div>
                 <div class="goride-vehicle-right">
@@ -3102,7 +3102,7 @@ class CustomerAppController {
             btnSolicitar.innerHTML = `<span class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span> Đang gửi yêu cầu...`;
         }
         if (btnCancelRequest) {
-            btnCancelRequest.style.display = 'block';
+            btnCancelRequest.style.display = 'none';
         }
 
         const vType = this.selectedService || 'car4';
@@ -3110,6 +3110,85 @@ class CustomerAppController {
         const vConfig = this.vehicleCatalog[vType] || this.vehicleCatalog.car4;
         const estDist = this.currentRouteDistance || this.calculateDirectDistance();
         const estFare = this.selectedVehicleFare || this.calculateFare(vType, estDist);
+
+        let isWalletPaid = false;
+        const currentUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+        let custWalletPhone = currentUser?.phone || '0901234567';
+
+        // Check wallet balance if paymentMethod is wallet
+        if (this.paymentMethod === 'wallet' && window.NaviWalletEngine) {
+            const curWallet = window.NaviWalletEngine.getCurrentWallet();
+            if (!curWallet || !curWallet.activated) {
+                if (btnSolicitar) {
+                    btnSolicitar.disabled = false;
+                    btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
+                }
+                if (typeof window.showNavigoModal === 'function') {
+                    window.showNavigoModal({
+                        title: 'Kích hoạt Ví NaviPay',
+                        message: 'Bạn chưa kích hoạt Ví NaviPay. Vui lòng thiết lập ví để thanh toán tự động, hoặc đổi sang Tiền mặt.',
+                        icon: '💳',
+                        confirmText: 'Mở Ví Navi',
+                        cancelText: 'Đổi sang Tiền mặt',
+                        onConfirm: () => { window.location.href = 'wallet.html'; },
+                        onCancel: () => {
+                            this.paymentMethod = 'cash';
+                            const label = document.getElementById('current-payment-method');
+                            if (label) label.textContent = 'Tiền mặt';
+                            this.showToast('Đã đổi phương thức sang Tiền mặt', 'info');
+                        }
+                    });
+                } else {
+                    alert('Vui lòng kích hoạt Ví Navi trước khi đặt xe.');
+                }
+                return;
+            }
+            if ((curWallet.balance || 0) < estFare) {
+                if (btnSolicitar) {
+                    btnSolicitar.disabled = false;
+                    btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
+                }
+                const curBalStr = window.formatVND ? window.formatVND(curWallet.balance) : (curWallet.balance + ' ₫');
+                const fareStr = window.formatVND ? window.formatVND(estFare) : (estFare + ' ₫');
+                if (typeof window.showNavigoModal === 'function') {
+                    window.showNavigoModal({
+                        title: 'Số dư Ví NaviPay không đủ',
+                        message: `Số dư ví hiện tại là ${curBalStr}, cước chuyến đi là ${fareStr}. Bạn có muốn nạp thêm tiền qua Ngân hàng số NaviPay không?`,
+                        icon: '⚠️',
+                        confirmText: 'Nạp tiền Ví Navi',
+                        cancelText: 'Đổi sang Tiền mặt',
+                        onConfirm: () => { window.location.href = 'wallet.html'; },
+                        onCancel: () => {
+                            this.paymentMethod = 'cash';
+                            const label = document.getElementById('current-payment-method');
+                            if (label) label.textContent = 'Tiền mặt';
+                            this.showToast('Đã đổi phương thức sang Tiền mặt', 'info');
+                        }
+                    });
+                } else {
+                    alert(`Số dư ví không đủ (${curBalStr}). Cần: ${fareStr}.`);
+                }
+                return;
+            }
+
+            custWalletPhone = curWallet.accountNumber || custWalletPhone;
+            // Deduct customer wallet directly upfront
+            try {
+                const payRes = window.NaviWalletEngine.payTrip(custWalletPhone, estFare, 'RIDE_' + Date.now(), {
+                    pickupName: this.pickup?.name || this.pickup?.address,
+                    dropoffName: this.destination?.name || this.destination?.address
+                });
+                isWalletPaid = !!(payRes && payRes.success);
+            } catch (payErr) {
+                console.error('[CustomerApp] Wallet deduction error:', payErr);
+                this.showToast('Lỗi thanh toán Ví Navi: ' + (payErr.message || ''), 'error');
+                if (btnSolicitar) {
+                    btnSolicitar.disabled = false;
+                    btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
+                }
+                return;
+            }
+        }
 
         const tripPayload = {
             vehicleType: vInfo.type,
@@ -3151,6 +3230,11 @@ class CustomerAppController {
                     lat: Number(this.destination.lat),
                     lng: Number(this.destination.lng)
                 };
+                createdTrip.walletDeducted = isWalletPaid;
+                createdTrip.paidByWallet = isWalletPaid;
+                createdTrip.customerPhone = custWalletPhone;
+                createdTrip.fare = estFare;
+                createdTrip.fareAmount = estFare;
                 this.activeTrip = createdTrip;
                 this.activeTripId = createdTrip.id;
 
@@ -3229,6 +3313,7 @@ class CustomerAppController {
                     realtimeSync.createTrip(createdTrip);
                 }
 
+                // Immediately switch to tracking view (hide vehicle selection screen)
                 this.switchView('tracking');
                 this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
                 this.updateTrackingUI(createdTrip);
@@ -3246,17 +3331,17 @@ class CustomerAppController {
                         actionText: 'Theo dõi chuyến'
                     });
                 }
+                return;
             } else {
                 throw new Error(res?.data?.error || 'Không thể tạo yêu cầu chuyến đi.');
             }
         } catch (err) {
             console.error('[CustomerApp] Ride booking fallback notice:', err);
-            if (btnSolicitar) {
-                btnSolicitar.disabled = false;
-                btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
-            }
 
             if (err.status === 409) {
+                if (isWalletPaid && window.NaviWalletEngine) {
+                    try { window.NaviWalletEngine.refundTrip(custWalletPhone, estFare, 'ERR_409', 'Chuyến xe đang hoạt động'); } catch (e) {}
+                }
                 if (btnCancelRequest) btnCancelRequest.style.display = 'none';
                 this.showToast('Bạn đang có một chuyến xe đang hoạt động. Chuyển sang màn hình theo dõi...', 'info');
                 await this.checkActiveTripOnLoad();
@@ -3265,36 +3350,108 @@ class CustomerAppController {
             }
 
             if (err.status === 422) {
+                if (isWalletPaid && window.NaviWalletEngine) {
+                    try { window.NaviWalletEngine.refundTrip(custWalletPhone, estFare, 'ERR_422', 'Tọa độ ngoài phạm vi mạng lưới'); } catch (e) {}
+                }
+                if (btnSolicitar) {
+                    btnSolicitar.disabled = false;
+                    btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
+                }
                 if (btnCancelRequest) btnCancelRequest.style.display = 'none';
                 this.showToast('Tọa độ đón/trả nằm ngoài phạm vi mạng lưới OSM. Vui lòng chọn điểm khác.', 'error', 5000);
                 return;
             }
 
-            // Real unified sync for offline / web preview / cross-tab driver testing (handles server offline, local demo accounts, or network timeout)
-            if (!err.status || err.status === 401 || err.status === 404 || err.status === 500 || err.name === 'NetworkError' || (err.message && err.message.toLowerCase().includes('fetch'))) {
-                this.showToast('Đang phát tín hiệu tìm tài xế gần bạn nhất...', 'info');
-                const currentUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+            // Real unified sync for offline / web preview / cross-tab driver testing
+            this.showToast('Đang phát tín hiệu tìm tài xế gần bạn nhất...', 'info');
+            const currentUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
 
-                const offlineTrip = {
-                    id: `TRP-${Math.floor(10000 + Math.random() * 90000)}`,
+            const offlineTrip = {
+                id: `TRP-${Math.floor(10000 + Math.random() * 90000)}`,
+                status: 'REQUESTED',
+                customerName: currentUser?.name || 'Khách hàng Navigo',
+                customerPhone: currentUser?.phone || '0901234567',
+                driverName: null,
+                licensePlate: '',
+                vehicleModel: '',
+                driverRating: '5.0',
+                driverLat: null,
+                driverLon: null,
+                pickupName: this.pickup.name,
+                dropoffName: this.destination.name,
+                pickupLat: Number(this.pickup.lat),
+                pickupLon: Number(this.pickup.lng),
+                dropoffLat: Number(this.destination.lat),
+                dropoffLon: Number(this.destination.lng),
+                pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
+                destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
+                targetedDriverIds: ['*'],
+                pickup: {
+                    name: this.pickup.name,
+                    address: this.pickup.address || this.pickup.name,
+                    lat: Number(this.pickup.lat),
+                    lng: Number(this.pickup.lng)
+                },
+                destination: {
+                    name: this.destination.name,
+                    address: this.destination.address || this.destination.name,
+                    lat: Number(this.destination.lat),
+                    lng: Number(this.destination.lng)
+                },
+                fareAmount: estFare,
+                originalFare: this.selectedOriginalFare || estFare,
+                promoCode: this.appliedPromo ? this.appliedPromo.code : null,
+                discountPercent: this.appliedPromo ? this.appliedPromo.discountPercent : 0,
+                distanceMeters: estDist,
+                distance: (estDist / 1000).toFixed(1),
+                duration: Math.max(3, Math.round(estDist / 350)),
+                customerId: currentUser?.id || 'cust_01',
+                vehicleType: vInfo.type,
+                vehicleTypeName: vInfo.name,
+                vehicleIcon: vInfo.icon,
+                walletDeducted: isWalletPaid,
+                paidByWallet: isWalletPaid,
+                customerPhone: custWalletPhone,
+                fare: estFare
+            };
+
+            // Sync immediately to goride_admin_trips so Driver tab detects it instantly!
+            try {
+                const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                adminTrips.unshift({
+                    id: offlineTrip.id,
+                    customerName: offlineTrip.customerName,
+                    customerPhone: offlineTrip.customerPhone,
+                    driverName: 'Chưa gán',
+                    pickup: offlineTrip.pickupName,
+                    destination: offlineTrip.dropoffName,
+                    pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
+                    destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
+                    pickupLat: Number(this.pickup.lat),
+                    pickupLon: Number(this.pickup.lng),
+                    dropoffLat: Number(this.destination.lat),
+                    dropoffLon: Number(this.destination.lng),
+                    fare: estFare,
+                    distance: (estDist / 1000).toFixed(1),
+                    vehicleType: vInfo.type,
+                    vehicleTypeName: vInfo.name,
+                    status: 'requested',
+                    createdAt: new Date().toISOString()
+                });
+                localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
+                localStorage.setItem('goride_pending_trip_offers', JSON.stringify([offlineTrip]));
+                localStorage.setItem('goride_last_trip_event', JSON.stringify({ id: offlineTrip.id, time: Date.now() }));
+                localStorage.setItem('goride_active_trip', JSON.stringify({
+                    id: offlineTrip.id,
                     status: 'REQUESTED',
-                    customerName: currentUser?.name || 'Khách hàng Navigo',
-                    customerPhone: currentUser?.phone || '0901234567',
+                    customerName: offlineTrip.customerName,
+                    customerPhone: offlineTrip.customerPhone,
                     driverName: null,
                     licensePlate: '',
                     vehicleModel: '',
                     driverRating: '5.0',
                     driverLat: null,
                     driverLon: null,
-                    pickupName: this.pickup.name,
-                    dropoffName: this.destination.name,
-                    pickupLat: Number(this.pickup.lat),
-                    pickupLon: Number(this.pickup.lng),
-                    dropoffLat: Number(this.destination.lat),
-                    dropoffLon: Number(this.destination.lng),
-                    pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
-                    destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
-                    targetedDriverIds: ['*'],
                     pickup: {
                         name: this.pickup.name,
                         address: this.pickup.address || this.pickup.name,
@@ -3308,109 +3465,45 @@ class CustomerAppController {
                         lng: Number(this.destination.lng)
                     },
                     fareAmount: estFare,
-                    originalFare: this.selectedOriginalFare || estFare,
-                    promoCode: this.appliedPromo ? this.appliedPromo.code : null,
-                    discountPercent: this.appliedPromo ? this.appliedPromo.discountPercent : 0,
                     distanceMeters: estDist,
-                    distance: (estDist / 1000).toFixed(1),
-                    duration: Math.max(3, Math.round(estDist / 350)),
-                    customerId: currentUser?.id || 'cust_01',
                     vehicleType: vInfo.type,
                     vehicleTypeName: vInfo.name,
-                    vehicleIcon: vInfo.icon
-                };
+                    vehicleIcon: vInfo.icon,
+                    walletDeducted: isWalletPaid,
+                    paidByWallet: isWalletPaid,
+                    customerPhone: custWalletPhone,
+                    createdAt: new Date().toISOString()
+                }));
+            } catch (e) {}
 
-                // Sync immediately to goride_admin_trips so Driver tab detects it instantly!
-                try {
-                    const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
-                    adminTrips.unshift({
-                        id: offlineTrip.id,
-                        customerName: offlineTrip.customerName,
-                        customerPhone: offlineTrip.customerPhone,
-                        driverName: 'Chưa gán',
-                        pickup: offlineTrip.pickupName,
-                        destination: offlineTrip.dropoffName,
-                        pickupCoords: [Number(this.pickup.lat), Number(this.pickup.lng)],
-                        destinationCoords: [Number(this.destination.lat), Number(this.destination.lng)],
-                        pickupLat: Number(this.pickup.lat),
-                        pickupLon: Number(this.pickup.lng),
-                        dropoffLat: Number(this.destination.lat),
-                        dropoffLon: Number(this.destination.lng),
-                        fare: estFare,
-                        distance: (estDist / 1000).toFixed(1),
-                        vehicleType: vInfo.type,
-                        vehicleTypeName: vInfo.name,
-                        status: 'requested',
-                        createdAt: new Date().toISOString()
-                    });
-                    localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
-                    // Dedicated key to trigger storage event in driver tab immediately
-                    localStorage.setItem('goride_pending_trip_offers', JSON.stringify([offlineTrip]));
-                    localStorage.setItem('goride_last_trip_event', JSON.stringify({ id: offlineTrip.id, time: Date.now() }));
-                    localStorage.setItem('goride_active_trip', JSON.stringify({
-                        id: offlineTrip.id,
-                        status: 'REQUESTED',
-                        customerName: offlineTrip.customerName,
-                        customerPhone: offlineTrip.customerPhone,
-                        driverName: null,
-                        licensePlate: '',
-                        vehicleModel: '',
-                        driverRating: '5.0',
-                        driverLat: null,
-                        driverLon: null,
-                        pickup: {
-                            name: this.pickup.name,
-                            address: this.pickup.address || this.pickup.name,
-                            lat: Number(this.pickup.lat),
-                            lng: Number(this.pickup.lng)
-                        },
-                        destination: {
-                            name: this.destination.name,
-                            address: this.destination.address || this.destination.name,
-                            lat: Number(this.destination.lat),
-                            lng: Number(this.destination.lng)
-                        },
-                        fareAmount: estFare,
-                        distanceMeters: estDist,
-                        vehicleType: vInfo.type,
-                        vehicleTypeName: vInfo.name,
-                        vehicleIcon: vInfo.icon,
-                        createdAt: new Date().toISOString()
-                    }));
-                } catch (e) {}
+            this.activeTrip = offlineTrip;
+            this.activeTripId = offlineTrip.id;
 
-                this.activeTrip = offlineTrip;
-                this.activeTripId = offlineTrip.id;
-
-                // Broadcast to Firebase Realtime Cloud for instant cross-device sync
-                if (typeof realtimeSync !== 'undefined') {
-                    realtimeSync.createTrip(offlineTrip);
-                }
-
-                this.switchView('tracking');
-                this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
-                this.updateTrackingUI(offlineTrip);
-                this.startActiveTripPolling(offlineTrip.id);
-                this.initiateDriverDispatch(offlineTrip, vInfo.type, this.pickup.lat, this.pickup.lng);
-                if (typeof navigoNotifications !== 'undefined') {
-                    navigoNotifications.addNotification({
-                        id: 'trip_req_' + offlineTrip.id,
-                        category: 'trips',
-                        title: 'ĐÃ ĐẶT CHUYẾN XE #' + offlineTrip.id,
-                        body: 'Điểm đón: ' + (this.pickup.name || this.pickup.address) + ' → Điểm đến: ' + (this.destination.name || this.destination.address) + '. Giá cước dự kiến: ' + this.formatMoney(estFare) + '. Hệ thống đang điều phối xe gần bạn nhất.',
-                        icon: '🚗',
-                        actionUrl: 'customer.html',
-                        actionText: 'Theo dõi chuyến'
-                    });
-                }
-
-                // 100% Real Dispatch Architecture: Wait strictly for real online drivers to accept
-                this.simulationTimers = [];
-                return;
+            // Broadcast to Firebase Realtime Cloud for instant cross-device sync
+            if (typeof realtimeSync !== 'undefined') {
+                realtimeSync.createTrip(offlineTrip);
             }
 
-            if (btnCancelRequest) btnCancelRequest.style.display = 'none';
-            this.showToast(`Lỗi đặt chuyến: ${err.message || 'Không thể kết nối máy chủ C++'}`, 'error');
+            // Immediately switch to tracking view and show waiting screen
+            this.switchView('tracking');
+            this.showRadarAtPickup(Number(this.pickup.lat), Number(this.pickup.lng));
+            this.updateTrackingUI(offlineTrip);
+            this.startActiveTripPolling(offlineTrip.id);
+            this.initiateDriverDispatch(offlineTrip, vInfo.type, this.pickup.lat, this.pickup.lng);
+            if (typeof navigoNotifications !== 'undefined') {
+                navigoNotifications.addNotification({
+                    id: 'trip_req_' + offlineTrip.id,
+                    category: 'trips',
+                    title: 'ĐÃ ĐẶT CHUYẾN XE #' + offlineTrip.id,
+                    body: 'Điểm đón: ' + (this.pickup.name || this.pickup.address) + ' → Điểm đến: ' + (this.destination.name || this.destination.address) + '. Giá cước dự kiến: ' + this.formatMoney(estFare) + '. Hệ thống đang điều phối xe gần bạn nhất.',
+                    icon: '🚗',
+                    actionUrl: 'customer.html',
+                    actionText: 'Theo dõi chuyến'
+                });
+            }
+
+            this.simulationTimers = [];
+            return;
         }
     }
 

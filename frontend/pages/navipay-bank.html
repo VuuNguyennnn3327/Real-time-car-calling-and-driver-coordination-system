@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NaviPay Digital Bank — Cổng Ngân Hàng Số & Quét QR</title>
+    <meta name="description" content="Ngân hàng số NaviPay Digital Bank — Quét mã QR chuyển tiền và nạp số dư tức thì vào Ví điện tử Navi.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/design-system.css">
+    <style>
+        /* ==========================================================================
+           NAVIPAY DIGITAL BANK STYLES (LUXURY FINTECH THEME)
+           ========================================================================== */
+        :root {
+            --bank-bg: #070f1e;
+            --bank-card-bg: #0b192c;
+            --bank-gold: #f59e0b;
+            --bank-gold-light: #fef3c7;
+            --bank-emerald: #10b981;
+            --bank-border: #1e293b;
+            --bank-text-main: #f8fafc;
+            --bank-text-sub: #94a3b8;
+        }
+
+        body {
+            background: var(--bank-bg);
+            color: var(--bank-text-main);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Bank Navigation Header */
+        .bank-navbar {
+            background: rgba(11, 25, 44, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--bank-border);
+            padding: 16px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .bank-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #fff;
+        }
+        .bank-brand-logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+        }
+        .bank-brand-title {
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+        .bank-brand-tag {
+            font-size: 0.7rem;
+            color: var(--bank-gold);
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .bank-back-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 0.88rem;
+            font-weight: 700;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            transition: all 0.2s ease;
+        }
+        .bank-back-link:hover {
+            background: rgba(56, 189, 248, 0.2);
+            color: #7dd3fc;
+        }
+
+        /* Container Layout */
+        .bank-container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 30px 20px 80px;
+        }
+
+        /* Top Source ATM Bank Card (100M VND) */
+        .atm-card-hero {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 40%, #0b1329 100%);
+            border-radius: 28px;
+            padding: 32px 36px;
+            border: 1.5px solid rgba(245, 158, 11, 0.35);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+        .atm-card-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .atm-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .atm-chip-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .atm-emv-chip {
+            width: 52px;
+            height: 38px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%);
+            border: 1px solid #64748b;
+            position: relative;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.6);
+        }
+        .atm-emv-chip::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(0,0,0,0.3);
+        }
+        .atm-contactless {
+            font-size: 1.6rem;
+            color: var(--bank-gold);
+            opacity: 0.9;
+        }
+        .atm-badge-platinum {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3));
+            border: 1px solid var(--bank-gold);
+            color: #fef08a;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .atm-balance-block {
+            margin-bottom: 24px;
+        }
+        .atm-balance-label {
+            font-size: 0.88rem;
+            color: var(--bank-text-sub);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+        .atm-balance-num {
+            font-size: 2.7rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            text-shadow: 0 2px 14px rgba(0,0,0,0.4);
+        }
+        .atm-balance-num.pulse {
+            animation: bankFlash 1s ease;
+        }
+        @keyframes bankFlash {
+            0% { color: #ffffff; }
+            50% { color: #f87171; }
+            100% { color: #ffffff; }
+        }
+
+        .atm-bottom-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .atm-card-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            color: #e2e8f0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .atm-holder-name {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: 1.2px;
+            color: var(--bank-gold);
+            text-transform: uppercase;
+            font-family: 'Courier New', Courier, monospace;
+            margin-top: 4px;
+        }
+        .atm-reset-btn {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .atm-reset-btn:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #fff;
+        }
+
+        /* Two-Column Workstage: Scanner on Left, Receipt/Confirmation on Right */
+        .bank-grid-layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 28px;
+            margin-bottom: 32px;
+        }
+
+        /* Scanner Card */
+        .bank-card {
+            background: var(--bank-card-bg);
+            border: 1px solid var(--bank-border);
+            border-radius: 24px;
+            padding: 26px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+        .bank-card-title {
+            font-size: 1.2rem;
+            font-weight: 900;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bank-card-sub {
+            font-size: 0.85rem;
+            color: var(--bank-text-sub);
+            margin-bottom: 20px;
+        }
+
+        /* Camera Scanner Viewport */
+        .scanner-viewport-wrap {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #000000;
+            border: 2px solid rgba(245, 158, 11, 0.4);
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #bank-qr-reader {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+        }
+        #bank-qr-reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
+
+        /* Scanner Laser Overlay Animation */
+        .scanner-laser-line {
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #f59e0b, #ef4444, #f59e0b, transparent);
+            box-shadow: 0 0 12px #f59e0b;
+            border-radius: 2px;
+            animation: laserScan 2.4s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 10;
+        }
+        @keyframes laserScan {
+            0% { top: 15%; opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { top: 85%; opacity: 0.3; }
+        }
+
+        /* Corner Target Reticles */
+        .target-reticle {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--bank-gold);
+            pointer-events: none;
+            z-index: 10;
+        }
+        .reticle-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; border-top-left-radius: 8px; }
+        .reticle-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; border-top-right-radius: 8px; }
+        .reticle-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; border-bottom-left-radius: 8px; }
+        .reticle-br { bottom: 20px; right: 20px; border-left: none; border-top: none; border-bottom-right-radius: 8px; }
+
+        /* Alternative Testing Buttons */
+        .scanner-aux-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .aux-btn {
+            flex: 1;
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--bank-border);
+            color: var(--bank-text-main);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .aux-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: #64748b;
+        }
+
+        /* Transaction Confirmation Review Panel */
+        .confirmation-card {
+            background: #0f1f38;
+            border: 1.5px solid #233857;
+            border-radius: 20px;
+            padding: 24px;
+            position: relative;
+        }
+        .conf-step-badge {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.18);
+            border: 1px solid var(--bank-emerald);
+            color: #6ee7b7;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        .conf-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.9rem;
+        }
+        .conf-label {
+            color: var(--bank-text-sub);
+            font-weight: 500;
+        }
+        .conf-val {
+            font-weight: 800;
+            color: #ffffff;
+            text-align: right;
+        }
+        .conf-val.amount {
+            font-size: 1.35rem;
+            color: var(--bank-gold);
+        }
+
+        .btn-confirm-transfer {
+            width: 100%;
+            height: 52px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #ffffff;
+            border: none;
+            font-size: 1.05rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 22px;
+            box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn-confirm-transfer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
+        }
+        .btn-confirm-transfer:disabled {
+            background: #334155;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Success Receipt Modal/Box */
+        .receipt-success-card {
+            background: linear-gradient(135deg, #064e3b, #047857);
+            border: 1.5px solid #10b981;
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            color: #fff;
+            animation: receiptPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none;
+        }
+        @keyframes receiptPop {
+            0% { transform: scale(0.92); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Statement Table */
+        .statement-card {
+            background: var(--bank-card-bg);
+            border: 1px solid var(--bank-border);
+            border-radius: 24px;
+            padding: 26px;
+        }
+        .statement-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .statement-table th {
+            text-align: left;
+            padding: 12px 14px;
+            color: var(--bank-text-sub);
+            border-bottom: 1px solid var(--bank-border);
+            font-weight: 700;
+        }
+        .statement-table td {
+            padding: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Toast */
+        .bank-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bank-emerald);
+            color: #ffffff;
+            padding: 14px 22px;
+            border-radius: 14px;
+            font-weight: 800;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            z-index: 999999;
+            display: none;
+            animation: receiptPop 0.2s ease;
+        }
+
+        @media (max-width: 860px) {
+            .bank-grid-layout {
+                grid-template-columns: 1fr;
+            }
+            .atm-balance-num {
+                font-size: 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bank Navigation Header -->
+    <header class="bank-navbar">
+        <a href="navipay-bank.html" class="bank-brand">
+            <div class="bank-brand-logo">🏦</div>
+            <div>
+                <div class="bank-brand-title">NAVIPAY DIGITAL BANK</div>
+                <div class="bank-brand-tag">Online Banking 24/7 Gateway</div>
+            </div>
+        </a>
+
+        <a href="wallet.html" target="_blank" class="bank-back-link">
+            <span>← Mở Tab Ví Navi</span>
+        </a>
+    </header>
+
+    <main class="bank-container">
+        
+        <!-- 1. SOURCE BANK ACCOUNT CARD (100 TRIỆU VND CÓ SẴN) -->
+        <div class="atm-card-hero" id="atm-card-hero">
+            <div class="atm-top-row">
+                <div class="atm-chip-wrap">
+                    <div class="atm-emv-chip"></div>
+                    <div class="atm-contactless">📶</div>
+                </div>
+                <div class="atm-badge-platinum">
+                    ★ Platinum ATM Debit
+                </div>
+            </div>
+
+            <!-- 100M VND Balance Display -->
+            <div class="atm-balance-block">
+                <div class="atm-balance-label">
+                    <span>Số dư tài khoản nguồn ATM khả dụng</span>
+                    <span style="color:#10b981; font-weight:700;">● Sẵn sàng nạp ví</span>
+                </div>
+                <div class="atm-balance-num" id="bank-balance-display">
+                    100.000.000 ₫
+                </div>
+            </div>
+
+            <div class="atm-bottom-row">
+                <div>
+                    <div class="atm-card-number" id="bank-card-number">9704 8888 6666 1234</div>
+                    <div class="atm-holder-name" id="bank-holder-name">NGUYEN VAN A (STK 999988886666)</div>
+                </div>
+                <div>
+                    <button type="button" class="atm-reset-btn" onclick="resetBankBalance()" title="Khôi phục lại số dư 100 Triệu ban đầu">
+                        ↻ Khôi phục 100 Triệu
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. TWO-COLUMN WORKSTAGE: QR SCANNER ON LEFT, TRANSACTION REVIEW ON RIGHT -->
+        <div class="bank-grid-layout">
+            
+            <!-- Left: HTML5-QRCode Live Camera Scanner -->
+            <div class="bank-card">
+                <div class="bank-card-title">
+                    <span>📷</span> Quét Mã QR Nạp Tiền Ví Navi
+                </div>
+                <div class="bank-card-sub">
+                    Sử dụng camera quét mã QR tạo từ trang Ví Navi để tự động trích xuất người nhận và số tiền.
+                </div>
+
+                <!-- Camera Scanner Viewport with Laser and Corner Reticles -->
+                <div class="scanner-viewport-wrap" id="scanner-wrap">
+                    <div id="bank-qr-reader"></div>
+                    <div class="scanner-laser-line"></div>
+                    <div class="target-reticle reticle-tl"></div>
+                    <div class="target-reticle reticle-tr"></div>
+                    <div class="target-reticle reticle-bl"></div>
+                    <div class="target-reticle reticle-br"></div>
+                </div>
+
+                <!-- Camera Controls & Fast Testing Helpers -->
+                <div class="scanner-aux-row">
+                    <label class="aux-btn" style="cursor:pointer;" title="Chọn file ảnh mã QR nếu không dùng camera">
+                        <span>📁 Tải ảnh mã QR</span>
+                        <input type="file" id="qr-file-input" accept="image/*" style="display:none;" onchange="handleQrFileUpload(event)">
+                    </label>
+
+                    <button type="button" class="aux-btn" onclick="quickFetchActiveWalletQR()" title="Tự động đọc mã QR nạp tiền mới nhất từ trang Ví Navi">
+                        <span>⚡ Đọc nhanh mã QR ví</span>
+                    </button>
+                </div>
+
+                <div style="font-size:0.78rem; color:#64748b; margin-top:10px; line-height:1.4;">
+                    * Lưu ý: Hãy mở song song tab <strong>Ví Navi (wallet.html)</strong>, bấm "Nạp tiền" để tạo mã QR, sau đó hướng camera vào màn hình hoặc bấm nút "Đọc nhanh mã QR ví".
+                </div>
+            </div>
+
+            <!-- Right: Scanned Details Review & Transfer Action Confirmation -->
+            <div class="bank-card">
+                <div class="bank-card-title">
+                    <span>💳</span> Xác Nhận Giao Dịch Chuyển Tiền
+                </div>
+                <div class="bank-card-sub">
+                    Kiểm tra thông tin ví thụ hưởng trước khi trừ tiền tài khoản ngân hàng ảo.
+                </div>
+
+                <!-- Interactive Transaction Review Form -->
+                <div class="confirmation-card" id="conf-panel">
+                    <div class="conf-step-badge" id="conf-badge">
+                        Sẵn sàng nhận dữ liệu QR
+                    </div>
+
+                    <div class="conf-row">
+                        <span class="conf-label">Chủ ví thụ hưởng</span>
+                        <span class="conf-val" id="review-recipient-name">Chờ quét mã QR...</span>
+                    </div>
+
+                    <div class="conf-row">
+                        <span class="conf-label">Số tài khoản / SĐT ví</span>
+                        <span class="conf-val" id="review-recipient-phone">---</span>
+                    </div>
+
+                    <div class="conf-row">
+                        <span class="conf-label">Số tiền cần nạp</span>
+                        <span class="conf-val amount" id="review-amount">0 ₫</span>
+                    </div>
+
+                    <div class="conf-row">
+                        <span class="conf-label">Nội dung chuyển tiền</span>
+                        <span class="conf-val" id="review-note" style="font-size:0.82rem; color:#cbd5e1;">Nap tien Vi NaviPay</span>
+                    </div>
+
+                    <div class="conf-row">
+                        <span class="conf-label">Phí dịch vụ 24/7</span>
+                        <span class="conf-val" style="color:#10b981;">0 ₫ (Miễn phí)</span>
+                    </div>
+
+                    <div class="conf-row" style="border-bottom:none;">
+                        <span class="conf-label">Số dư nguồn sau chuyển</span>
+                        <span class="conf-val" id="review-bal-after" style="color:#cbd5e1;">100.000.000 ₫</span>
+                    </div>
+
+                    <!-- Confirm Action Button -->
+                    <button type="button" class="btn-confirm-transfer" id="btn-execute-transfer" disabled onclick="executeTransferFromBank()">
+                        <span>Xác Nhận Chuyển Tiền Vào Ví</span>
+                        <span>➔</span>
+                    </button>
+                </div>
+
+                <!-- Transfer Successful Receipt Box -->
+                <div class="receipt-success-card" id="receipt-card">
+                    <div style="font-size:2.8rem; margin-bottom:8px;">🎉</div>
+                    <h3 style="margin:0 0 4px; font-size:1.35rem; font-weight:900;">Chuyển Tiền Thành Công!</h3>
+                    <p style="margin:0 0 16px; font-size:0.88rem; color:#d1fae5;">Đã trừ tiền tài khoản ngân hàng và bơm tiền tức thì vào Ví Navi.</p>
+
+                    <div style="background:rgba(0,0,0,0.25); border-radius:14px; padding:16px; text-align:left; font-size:0.85rem; margin-bottom:18px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#a7f3d0;">Mã giao dịch:</span>
+                            <strong id="receipt-txn-id">BNK_123456</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#a7f3d0;">Số tiền nạp:</span>
+                            <strong style="color:#fef08a; font-size:1.1rem;" id="receipt-amount">+200.000 ₫</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                            <span style="color:#a7f3d0;">Người nhận:</span>
+                            <strong id="receipt-target">NGUYEN VAN AN</strong>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#a7f3d0;">Thời gian:</span>
+                            <span id="receipt-time">23/10/2026 15:30</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" onclick="resetToScanMode()" style="flex:1; height:44px; border-radius:12px; border:1px solid #a7f3d0; background:rgba(255,255,255,0.15); color:#fff; font-weight:700; cursor:pointer;">
+                            Quét Tiếp
+                        </button>
+                        <a href="wallet.html" target="_blank" style="flex:1.2; height:44px; border-radius:12px; background:#f59e0b; color:#fff; text-decoration:none; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.88rem;">
+                            Kiểm Tra Ví Navi ↗
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 3. DIGITAL BANK ACCOUNT STATEMENT TABLE -->
+        <div class="statement-card">
+            <div style="font-size:1.15rem; font-weight:900; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+                <span>📋</span> Lịch Sử Giao Dịch Ngân Hàng Nguồn (NaviPay Digital Bank)
+            </div>
+            
+            <div style="overflow-x:auto;">
+                <table class="statement-table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Mã GD</th>
+                            <th>Mô tả chi tiết</th>
+                            <th>Loại GD</th>
+                            <th style="text-align:right;">Số tiền</th>
+                            <th style="text-align:right;">Số dư sau GD</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bank-statement-tbody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Realtime Floating Toast -->
+    <div class="bank-toast" id="bank-toast"></div>
+
+    <!-- Scripts -->
+    <script src="../js/core/html5-qrcode.min.js"></script>
+    <script src="../js/core/wallet.js"></script>
+
+    <script>
+        // =========================================================================
+        // NAVIPAY DIGITAL BANK CONTROLLER
+        // =========================================================================
+        let bankAccount = null;
+        let bankScanner = null;
+        let scannedData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initBankState();
+            startBankCameraScanner();
+            setupCrossTabStorageSync();
+        });
+
+        // 1. Initialize State
+        function initBankState() {
+            if (!window.NaviWalletEngine) return;
+            bankAccount = window.NaviWalletEngine.getBankAccount();
+            renderBankUI();
+        }
+
+        function renderBankUI() {
+            if (!bankAccount) return;
+            
+            // Balance
+            const balEl = document.getElementById('bank-balance-display');
+            if (balEl) balEl.textContent = window.formatVND(bankAccount.balance);
+
+            // Card details
+            const cardNumEl = document.getElementById('bank-card-number');
+            if (cardNumEl) cardNumEl.textContent = bankAccount.cardNumber || '9704 8888 6666 1234';
+
+            const holderEl = document.getElementById('bank-holder-name');
+            if (holderEl) holderEl.textContent = `${bankAccount.accountName || 'NGUYEN VAN A'} (STK ${bankAccount.accountNumber})`;
+
+            // Statement History
+            renderStatementTable();
+        }
+
+        function renderStatementTable() {
+            const tbody = document.getElementById('bank-statement-tbody');
+            if (!tbody || !bankAccount) return;
+
+            const txns = bankAccount.transactions || [];
+            if (txns.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b; padding:24px;">Chưa có giao dịch nào được ghi nhận.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = txns.map(t => {
+                const isPos = t.amount > 0;
+                const amtColor = isPos ? '#10b981' : '#f87171';
+                const sign = isPos ? '+' : '';
+                const timeStr = new Date(t.timestamp).toLocaleString('vi-VN');
+
+                return `
+                    <tr>
+                        <td style="color:#94a3b8; font-size:0.8rem;">${timeStr}</td>
+                        <td style="font-family:monospace; font-weight:700;">${t.id}</td>
+                        <td style="font-weight:600;">${t.title}<div style="font-size:0.75rem; color:#64748b;">${t.description || ''}</div></td>
+                        <td><span style="font-size:0.75rem; font-weight:700; color:${isPos ? '#34d399' : '#f87171'};">${isPos ? 'TIỀN VÀO' : 'TIỀN RA'}</span></td>
+                        <td style="text-align:right; font-weight:800; color:${amtColor};">${sign}${window.formatVND(t.amount)}</td>
+                        <td style="text-align:right; color:#cbd5e1; font-weight:700;">${window.formatVND(t.balanceAfter)}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 2. Camera Scanner using html5-qrcode (Requirement 3)
+        // "Mở camera quét mã QR Nạp tiền từ trang Ví Navi (sử dụng html5-qrcode)"
+        function startBankCameraScanner() {
+            if (typeof Html5Qrcode === 'undefined') {
+                console.warn('[BankScanner] Html5Qrcode library not ready.');
+                return;
+            }
+
+            try {
+                if (!bankScanner) {
+                    bankScanner = new Html5Qrcode('bank-qr-reader');
+                }
+
+                const config = {
+                    fps: 12,
+                    qrbox: { width: 220, height: 220 }
+                };
+
+                bankScanner.start(
+                    { facingMode: 'environment' },
+                    config,
+                    (decodedText) => {
+                        processScannedQRPayload(decodedText);
+                    },
+                    (error) => {
+                        // scanning continuously
+                    }
+                ).catch(err => {
+                    console.warn('[BankScanner] Camera notice:', err);
+                    const wrap = document.getElementById('scanner-wrap');
+                    if (wrap) {
+                        wrap.innerHTML = `
+                            <div style="text-align:center; color:#fff; padding:30px;">
+                                <div style="font-size:2.4rem; margin-bottom:8px;">📷</div>
+                                <div style="font-weight:800;">Camera chưa sẵn sàng hoặc quyền bị từ chối</div>
+                                <div style="font-size:0.82rem; color:#94a3b8; margin-top:6px;">Bạn có thể tải ảnh mã QR hoặc bấm <strong>"Đọc nhanh mã QR ví"</strong> bên dưới.</div>
+                            </div>
+                        `;
+                    }
+                });
+            } catch (e) {
+                console.error('[BankScanner] Init error:', e);
+            }
+        }
+
+        // Handle file upload image scanning
+        function handleQrFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (typeof Html5Qrcode === 'undefined') return;
+            const scanner = new Html5Qrcode('bank-qr-reader');
+            scanner.scanFile(file, true).then(decodedText => {
+                processScannedQRPayload(decodedText);
+            }).catch(err => {
+                alert('Không thể đọc thấy mã QR trong bức ảnh này. Vui lòng chọn bức ảnh rõ nét hơn.');
+            });
+        }
+
+        // Quick fetch current active wallet's QR payload for instant testing
+        function quickFetchActiveWalletQR() {
+            if (!window.NaviWalletEngine) return;
+            const activePhone = window.NaviWalletEngine.getActivePhone();
+            const wallet = window.NaviWalletEngine.getWallet(activePhone);
+            if (!wallet) {
+                alert('Chưa tìm thấy ví active bên trang Ví Navi. Hãy mở wallet.html trước.');
+                return;
+            }
+
+            const payload = window.NaviWalletEngine.createTopupQRPayload(
+                wallet.accountNumber,
+                wallet.fullName,
+                200000,
+                `Nap tien Vi NaviPay ${wallet.accountNumber}`
+            );
+            processScannedQRPayload(payload);
+        }
+
+        // 3. Process Extracted QR Data (Requirement 3)
+        // "Sau khi quét: Tự động trích xuất Tên người nhận, SĐT/STK ví, Số tiền cần nạp."
+        function processScannedQRPayload(rawText) {
+            if (!window.NaviWalletEngine) return;
+            const parsed = window.NaviWalletEngine.parseQRPayload(rawText);
+            if (!parsed || !parsed.phone) {
+                showBankToast('Mã QR không đúng định dạng của Ví NaviPay.', '#ef4444');
+                return;
+            }
+
+            // Fill default amount if 0
+            if (!parsed.amount || parsed.amount <= 0) {
+                parsed.amount = 200000;
+            }
+
+            // Lookup real registered name in wallets if available
+            const existingWallet = window.NaviWalletEngine.getWallet(parsed.phone);
+            if (existingWallet && existingWallet.fullName) {
+                parsed.name = existingWallet.fullName;
+            } else if (!parsed.name) {
+                parsed.name = 'KHACH HANG ' + parsed.phone;
+            }
+
+            scannedData = parsed;
+
+            // Populate Review Card UI
+            document.getElementById('review-recipient-name').textContent = parsed.name;
+            document.getElementById('review-recipient-phone').textContent = parsed.phone;
+            document.getElementById('review-amount').textContent = window.formatVND(parsed.amount);
+            document.getElementById('review-note').textContent = parsed.note || `Nap tien Vi NaviPay ${parsed.phone}`;
+            
+            const balAfter = Math.max(0, bankAccount.balance - parsed.amount);
+            document.getElementById('review-bal-after').textContent = window.formatVND(balAfter);
+
+            const badge = document.getElementById('conf-badge');
+            badge.textContent = '✓ Đã nhận diện mã QR thành công';
+            badge.style.background = 'rgba(16, 185, 129, 0.25)';
+
+            // Enable confirmation button
+            const confirmBtn = document.getElementById('btn-execute-transfer');
+            confirmBtn.disabled = false;
+
+            showBankToast(`Đã nhận diện QR nạp ví cho ${parsed.name}!`, '#10b981');
+        }
+
+        // 4. Confirm & Execute Transfer (Requirement 3 & 4)
+        // "Bấm 'Xác nhận chuyển': Trừ tiền tài khoản ngân hàng ảo và cộng tiền tức thì vào Ví Navi."
+        function executeTransferFromBank() {
+            if (!scannedData || !scannedData.phone) {
+                alert('Chưa có thông tin mã QR thụ hưởng.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-execute-transfer');
+            btn.disabled = true;
+            btn.innerHTML = `<span class="spinner" style="display:inline-block;width:18px;height:18px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></span> Đang xử lý giao dịch...`;
+
+            setTimeout(() => {
+                try {
+                    const result = window.NaviWalletEngine.transferFromBankToWallet(
+                        scannedData.phone,
+                        scannedData.name,
+                        scannedData.amount,
+                        scannedData.note
+                    );
+
+                    // Update local bank account state
+                    bankAccount = window.NaviWalletEngine.getBankAccount();
+                    renderBankUI();
+                    pulseBankBalance();
+
+                    // Show Success Receipt Card
+                    document.getElementById('conf-panel').style.display = 'none';
+                    const receipt = document.getElementById('receipt-card');
+                    receipt.style.display = 'block';
+
+                    document.getElementById('receipt-txn-id').textContent = result.bankTransaction.id;
+                    document.getElementById('receipt-amount').textContent = `+${window.formatVND(scannedData.amount)}`;
+                    document.getElementById('receipt-target').textContent = `${scannedData.name} (${scannedData.phone})`;
+                    document.getElementById('receipt-time').textContent = new Date().toLocaleString('vi-VN');
+
+                    showBankToast(`Chuyển tiền thành công! Đã nạp ${window.formatVND(scannedData.amount)} vào Ví Navi.`, '#10b981');
+
+                } catch (err) {
+                    alert('Lỗi giao dịch: ' + err.message);
+                    btn.disabled = false;
+                    btn.innerHTML = `Xác Nhận Chuyển Tiền Vào Ví ➔`;
+                }
+            }, 600);
+        }
+
+        function resetToScanMode() {
+            document.getElementById('conf-panel').style.display = 'block';
+            document.getElementById('receipt-card').style.display = 'none';
+
+            const confirmBtn = document.getElementById('btn-execute-transfer');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = `Xác Nhận Chuyển Tiền Vào Ví ➔`;
+
+            document.getElementById('review-recipient-name').textContent = 'Chờ quét mã QR...';
+            document.getElementById('review-recipient-phone').textContent = '---';
+            document.getElementById('review-amount').textContent = '0 ₫';
+            document.getElementById('conf-badge').textContent = 'Sẵn sàng nhận dữ liệu QR';
+            scannedData = null;
+        }
+
+        function resetBankBalance() {
+            if (confirm('Bạn có chắc muốn khôi phục số dư tài khoản ngân hàng ảo về 100.000.000 ₫ ban đầu không?')) {
+                bankAccount = window.NaviWalletEngine.resetBankAccount();
+                renderBankUI();
+                pulseBankBalance();
+                showBankToast('Đã khôi phục số dư 100 Triệu VND thành công!', '#10b981');
+            }
+        }
+
+        function pulseBankBalance() {
+            const balEl = document.getElementById('bank-balance-display');
+            if (balEl) {
+                balEl.classList.remove('pulse');
+                void balEl.offsetWidth;
+                balEl.classList.add('pulse');
+            }
+        }
+
+        // 5. Cross-tab Storage Sync (Requirement 4)
+        function setupCrossTabStorageSync() {
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'navipay_bank_account' || e.key === 'navigo_wallet_sync_event') {
+                    bankAccount = window.NaviWalletEngine.getBankAccount();
+                    renderBankUI();
+                }
+            });
+        }
+
+        function showBankToast(msg, color = '#10b981') {
+            const toast = document.getElementById('bank-toast');
+            if (!toast) return;
+            toast.style.background = color;
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 4500);
+        }
+    </script>
+</body>
+</html>

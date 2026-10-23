@@ -9,8 +9,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/loading-splash.css">
     <script>
-        // If already in an active session, skip loading and go straight to Trang Chủ
-        if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+        // Check redirect trigger flags
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromAction = urlParams.get('from');
+        const force = urlParams.get('force');
+
+        // If coming from login or logout, ALWAYS force full loading screen animation
+        if (fromAction === 'login' || fromAction === 'logout' || force === '1' || force === 'true') {
+            try {
+                sessionStorage.removeItem('navigo_session_loaded');
+                sessionStorage.removeItem('navigo_loading_screen_active');
+            } catch(e) {}
+        } else if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+            // If already in an active session without explicit login/logout trigger, go straight to Trang Chủ
             window.location.replace('index.html');
         }
     </script>
@@ -61,7 +72,7 @@
                 <!-- Branding Typography -->
                 <div class="brand-headline-box">
                     <h1 class="brand-name">NAVIGO</h1>
-                    <div class="brand-greeting">Xin Chào</div>
+                    <div class="brand-greeting" id="brand-greeting">Xin Chào</div>
                 </div>
             </div>
 
@@ -71,25 +82,70 @@
                     <div class="spinner-halo-glow"></div>
                     <div class="spinner-circle-ring"></div>
                 </div>
-                <div class="status-primary-text">
+                <div class="status-primary-text" id="status-primary">
                     Đang tải dữ liệu<span class="status-dots"></span>
                 </div>
-                <div class="status-secondary-text">
+                <div class="status-secondary-text" id="status-secondary">
                     Vui lòng đợi trong giây lát...
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Script: exactly 2000ms animation, then transition to Trang Chủ -->
+    <!-- Script: loading animation, then transition to Trang Chủ (index.html) -->
     <script>
-        const LOADING_DURATION_MS = 2000;
-        const FADE_TRANSITION_MS = 380;
+        const LOADING_DURATION_MS = 1900;
+        const FADE_TRANSITION_MS = 350;
 
         window.addEventListener('DOMContentLoaded', () => {
-            if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const fromAction = urlParams.get('from');
+            const force = urlParams.get('force');
+
+            // Force loading screen if coming from login or logout
+            if (fromAction === 'login' || fromAction === 'logout' || force === '1' || force === 'true') {
+                try {
+                    sessionStorage.removeItem('navigo_session_loaded');
+                } catch(e) {}
+            } else if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
                 window.location.replace('index.html');
                 return;
+            }
+
+            // Customize header and status texts based on trigger action
+            const greetingEl = document.getElementById('brand-greeting');
+            const primaryEl = document.getElementById('status-primary');
+            const secondaryEl = document.getElementById('status-secondary');
+
+            if (fromAction === 'login') {
+                let userName = '';
+                try {
+                    const raw = localStorage.getItem('goride_user') || localStorage.getItem('navigo_user');
+                    if (raw) {
+                        const u = JSON.parse(raw);
+                        userName = u.name || u.fullName || '';
+                    }
+                } catch(e) {}
+
+                if (greetingEl) {
+                    greetingEl.textContent = userName ? `Xin Chào, ${userName}` : 'Xin Chào';
+                }
+                if (primaryEl) {
+                    primaryEl.innerHTML = 'Đăng nhập thành công!<span class="status-dots"></span>';
+                }
+                if (secondaryEl) {
+                    secondaryEl.textContent = 'Đang chuyển hướng về trang chủ...';
+                }
+            } else if (fromAction === 'logout') {
+                if (greetingEl) {
+                    greetingEl.textContent = 'Hẹn Gặp Lại';
+                }
+                if (primaryEl) {
+                    primaryEl.innerHTML = 'Đăng xuất thành công!<span class="status-dots"></span>';
+                }
+                if (secondaryEl) {
+                    secondaryEl.textContent = 'Đang chuyển hướng về trang chủ...';
+                }
             }
 
             // Strictly NO location prompts while loading
@@ -106,7 +162,8 @@
                     sessionStorage.setItem('navigo_from_loading', 'true');
                     sessionStorage.setItem('navigo_session_loaded', 'true');
 
-                    window.location.replace('index.html?prompt_location=true');
+                    // Always redirect to Home Page (Trang chủ)
+                    window.location.replace('index.html');
                 }, FADE_TRANSITION_MS);
             }, LOADING_DURATION_MS);
         });
