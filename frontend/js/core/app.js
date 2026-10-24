@@ -901,11 +901,12 @@ class App {
         if (typeof document === 'undefined') return;
 
         const path = (window.location.pathname || '').toLowerCase();
-        const isLogin = path.includes('login.html');
-        const isRegister = path.includes('register.html');
+        const isLogin = path.includes('login');
+        const isRegister = path.includes('register');
         if (isLogin || isRegister) {
             document.querySelectorAll('.gsm-floating-bottom-nav, #mobile-bottom-nav, .bottom-nav').forEach(el => {
                 el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch(e) {}
             });
             return;
         }

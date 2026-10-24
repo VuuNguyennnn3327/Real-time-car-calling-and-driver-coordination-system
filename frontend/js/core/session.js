@@ -661,7 +661,8 @@ if (typeof document !== 'undefined') {
         const isNotificationsPage = curPath.includes('notifications.html');
         const isWalletPage = curPath.includes('wallet.html');
         const isActivityPage = curPath.includes('activity.html');
-        const isLoginPage = curPath.includes('login.html');
+        const isLoginPage = curPath.includes('login');
+        const isRegisterPage = curPath.includes('register');
 
         // If logged-in user is a driver, prevent customer booking page access and redirect directly to driver portal
         if (isCustomerPage && isDriver) {
@@ -767,12 +768,13 @@ if (typeof document !== 'undefined') {
         });
 
         // 5. Dynamic Floating Bottom Navigation Bar (.gsm-floating-bottom-nav)
-        const isRegisterPage = curPath.includes('register.html');
-
         if (isLoginPage || isRegisterPage) {
             document.querySelectorAll('.gsm-floating-bottom-nav, #mobile-bottom-nav, .bottom-nav').forEach(el => {
                 el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch(e) {}
             });
+            return;
+        }
         } else {
             // Find existing bottom nav or dynamically construct canonical floating bar
             let navContainers = document.querySelectorAll('.gsm-floating-bottom-nav');
