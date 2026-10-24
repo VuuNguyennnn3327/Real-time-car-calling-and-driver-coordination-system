@@ -1437,10 +1437,6 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   fill: #ffffff !important;
 }
 
-.gsm-nav-btn.active .gsm-nav-svg circle {
-  fill: #ffffff !important;
-}
-
 .gsm-nav-btn.active .gsm-nav-svg path[stroke] {
   stroke: #00b1a9 !important;
 }

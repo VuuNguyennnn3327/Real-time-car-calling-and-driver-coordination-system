@@ -1310,6 +1310,25 @@ class CustomerAppController {
         const btnConfirmPickup = document.getElementById('btn-confirm-pickup-cta');
         if (btnConfirmPickup) {
             btnConfirmPickup.addEventListener('click', () => {
+                const isAuthed = (typeof sessionManager !== 'undefined' && sessionManager && typeof sessionManager.isAuthenticated === 'function') ? sessionManager.isAuthenticated() : false;
+                const curUser = (typeof sessionManager !== 'undefined' && sessionManager) ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+                if (!isAuthed || !curUser || !curUser.id) {
+                    if (typeof window.showNavigoModal === 'function') {
+                        window.showNavigoModal({
+                            title: 'Yêu cầu đăng nhập',
+                            message: 'Vui lòng đăng nhập hoặc đăng ký tài khoản để tiếp tục đặt chuyến xe Navigo.',
+                            icon: '👤',
+                            confirmText: 'Đăng nhập ngay',
+                            cancelText: 'Hủy',
+                            onConfirm: () => {
+                                window.location.href = 'login.html?redirect=customer.html';
+                            }
+                        });
+                    } else {
+                        window.location.href = 'login.html?redirect=customer.html';
+                    }
+                    return;
+                }
                 // If destination already chosen, proceed to vehicle selection; else go back to search
                 if (this.destination) {
                     this.switchView('vehicle-select');
@@ -3040,7 +3059,10 @@ class CustomerAppController {
      * Request Ride Booking
      */
     async requestRideBooking() {
-        if (typeof sessionManager !== 'undefined' && !sessionManager.isAuthenticated()) {
+        const isAuthed = (typeof sessionManager !== 'undefined' && sessionManager && typeof sessionManager.isAuthenticated === 'function') ? sessionManager.isAuthenticated() : false;
+        const curUser = (typeof sessionManager !== 'undefined' && sessionManager) ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+
+        if (!isAuthed || !curUser || !curUser.id) {
             if (typeof window.showNavigoModal === 'function') {
                 window.showNavigoModal({
                     title: 'Yêu cầu đăng nhập',
@@ -3248,6 +3270,13 @@ class CustomerAppController {
                 try {
                     const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
                     const currentUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+            if (!currentUser || !currentUser.id) {
+                if (btnSolicitar) {
+                    btnSolicitar.disabled = false;
+                    btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
+                }
+                return;
+            }
                     createdTrip.vehicleType = vInfo.type;
                     createdTrip.customerName = currentUser?.name || 'Khách hàng Navigo';
                     createdTrip.customerPhone = currentUser?.phone || '0901234567';
@@ -3371,6 +3400,13 @@ class CustomerAppController {
             // Real unified sync for offline / web preview / cross-tab driver testing
             this.showToast('Đang phát tín hiệu tìm tài xế gần bạn nhất...', 'info');
             const currentUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+            if (!currentUser || !currentUser.id) {
+                if (btnSolicitar) {
+                    btnSolicitar.disabled = false;
+                    btnSolicitar.innerHTML = `Xác nhận đặt ${vConfig.name} &bull; ${this.formatMoney(estFare)}`;
+                }
+                return;
+            }
 
             const offlineTrip = {
                 id: `TRP-${Math.floor(10000 + Math.random() * 90000)}`,

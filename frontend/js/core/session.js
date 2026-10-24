@@ -558,7 +558,7 @@ class SessionManager {
 }
 
 // Singleton instance
-const sessionManager = new SessionManager();
+var sessionManager = (typeof window !== 'undefined' && window.sessionManager) ? window.sessionManager : new SessionManager();
 
 // Expose to window for multi-page scripts
 if (typeof window !== 'undefined') {
@@ -774,7 +774,6 @@ if (typeof document !== 'undefined') {
                 try { el.remove(); } catch(e) {}
             });
             return;
-        }
         } else {
             // Find existing bottom nav or dynamically construct canonical floating bar
             let navContainers = document.querySelectorAll('.gsm-floating-bottom-nav');

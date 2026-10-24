@@ -770,6 +770,26 @@ class DriverController {
   }
 
   async setOnlineStatus(isOnline, showNotification = true) {
+    const isAuthed = (typeof sessionManager !== 'undefined' && sessionManager && sessionManager.isAuthenticated());
+    const user = isAuthed ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+    if (!isAuthed || !user || user.role !== 'driver') {
+      if (typeof window.showNavigoModal === 'function') {
+        window.showNavigoModal({
+          title: 'Yêu cầu đăng nhập Tài xế',
+          message: 'Vui lòng đăng nhập với tài khoản Tài xế Navigo để bật nhận cuốc.',
+          icon: '🚗',
+          confirmText: 'Đăng nhập ngay',
+          cancelText: 'Hủy',
+          onConfirm: () => {
+            window.location.href = 'login.html?redirect=driver.html&role=driver';
+          }
+        });
+      } else {
+        window.location.href = 'login.html?redirect=driver.html&role=driver';
+      }
+      return;
+    }
+
     this.isOnline = !!isOnline;
     localStorage.setItem('goride_driver_online_state', this.isOnline ? '1' : '0');
 

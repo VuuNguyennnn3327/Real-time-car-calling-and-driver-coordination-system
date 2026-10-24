@@ -399,8 +399,24 @@
                         throw new Error('Không thể xác thực thông tin tài khoản. Vui lòng thử lại.');
                     }
 
-                    // Save session
-                    sessionManager.login(result.user, result.token);
+                    // Save session safely
+                    const sm = (typeof sessionManager !== 'undefined') ? sessionManager : (typeof window !== 'undefined' && window.sessionManager ? window.sessionManager : null);
+                    if (sm && typeof sm.login === 'function') {
+                        sm.login(result.user, result.token);
+                    } else {
+                        try {
+                            const uStr = JSON.stringify(result.user);
+                            localStorage.setItem('goride_user', uStr);
+                            localStorage.setItem('navigo_user', uStr);
+                            sessionStorage.setItem('ride_rtree_user', uStr);
+                            if (result.token) {
+                                localStorage.setItem('navigo_token', result.token);
+                                sessionStorage.setItem('ride_rtree_token', result.token);
+                            }
+                        } catch (e) {
+                            console.error('Session write fallback error:', e);
+                        }
+                    }
 
                     // Per user requirement: khi người ta đăng nhập lại chuyển về trang loading và về trang chủ
                     try {

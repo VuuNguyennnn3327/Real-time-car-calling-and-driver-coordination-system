@@ -201,6 +201,9 @@
         },
 
         getActivePhone() {
+            const user = this.getCurrentUser();
+            if (!user) return null;
+
             if (typeof window !== 'undefined' && window.location && window.location.search) {
                 try {
                     const params = new URLSearchParams(window.location.search);
@@ -209,25 +212,11 @@
                         const cleanP = normalizePhone(p);
                         if (cleanP) return cleanP;
                     }
-                    const r = (params.get('role') || '').toLowerCase();
-                    if (r === 'driver') return '0918765432';
-                    if (r === 'customer') return '0901234567';
                 } catch(e) {}
             }
-            const user = this.getCurrentUser();
-            if (user) {
-                const uPhone = normalizePhone(user.phone);
-                if (uPhone) return uPhone;
-                return user.role === 'driver' ? '0918765432' : '0901234567';
-            }
-            if (typeof window !== 'undefined') {
-                const path = (window.location.pathname || '').toLowerCase();
-                const referrer = (document.referrer || '').toLowerCase();
-                if (path.includes('driver') || referrer.includes('driver')) {
-                    return '0918765432';
-                }
-            }
-            return '0901234567'; // Default customer phone
+            const uPhone = normalizePhone(user.phone);
+            if (uPhone) return uPhone;
+            return user.role === 'driver' ? '0918765432' : '0901234567';
         },
 
         setActivePhone(phone) {
@@ -253,7 +242,9 @@
 
         getCurrentWallet() {
             const user = this.getCurrentUser();
+            if (!user) return null;
             const phone = this.getActivePhone();
+            if (!phone) return null;
             let wallet = this.getWallet(phone);
 
             // If user exists but wallet not initialized in storage, create initialized wallet
