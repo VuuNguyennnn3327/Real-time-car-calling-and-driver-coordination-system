@@ -27,6 +27,9 @@
             max-width: 1080px;
             margin: 0 auto;
             padding: 24px 20px 80px;
+            animation: gsmTabFadeSlide 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+            will-change: opacity, transform;
+            transform: translateZ(0);
         }
 
         /* Top Virtual Card (Holographic Gloss) */
@@ -740,7 +743,7 @@
         <div class="gsm-pc-nav-links">
             <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
             <a href="customer.html" class="gsm-pc-nav-link">Đặt xe Navigo</a>
-            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            
             <a href="wallet.html" class="gsm-pc-nav-link active">Ví Navi</a>
             <a href="notifications.html" class="gsm-pc-nav-link" style="position:relative;">
                 🔔 Thông báo
@@ -1161,7 +1164,7 @@
 
     <!-- Scripts: QR Core, Scanner, Engine, Session -->
     <script src="../js/core/qrcode.min.js"></script>
-    <script src="../js/core/html5-qrcode.min.js"></script>
+    <script src="../js/core/html5-qrcode.min.js" defer></script>
     <script src="../js/core/session.js"></script>
     <script src="../js/core/wallet.js"></script>
     <script src="../js/core/notifications.js"></script>

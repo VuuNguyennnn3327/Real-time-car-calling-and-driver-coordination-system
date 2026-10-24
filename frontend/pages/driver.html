@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../css/design-system.css">
     <link rel="stylesheet" href="../css/layout.css">
     <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/gsm-app.css?v=3.1">
     <link rel="stylesheet" href="../css/responsive.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <style>
@@ -497,7 +498,6 @@
                 </a>
                 <span class="badge badge-info" style="margin-left:var(--space-2); font-weight:700;">Tài xế</span>
             </div>
-            
             <!-- Desktop Navigation -->
             <nav class="header-nav desktop-only-flex">
                 <a href="../index.html" class="nav-link">🏠 Trang chủ</a>
@@ -642,86 +642,7 @@
                 </div>
             </div>
 
-            <!-- TAB 3: BÁO CÁO THU NHẬP (WALLET, METRICS & SETTLEMENTS) -->
-            <div id="driver-tab-earnings" class="driver-tab-pane" style="display:none; padding:24px 20px; max-width:920px; margin:0 auto; width:100%;">
-                <div class="page-header" style="margin-bottom:20px;">
-                    <div>
-                        <h2 style="margin:0; font-size:1.4rem;">Báo cáo thu nhập đối tác</h2>
-                        <p style="margin:4px 0 0 0; color:#64748b; font-size:0.875rem;">Quản lý doanh thu minh bạch, số dư ví tài xế và lịch sử thanh toán.</p>
-                    </div>
-                    <button class="btn btn-sm btn-ghost" onclick="driverController.renderEarningsReport()" title="Làm mới">🔄 Cập nhật</button>
-                </div>
-
-                <!-- Wallet Hero Card -->
-                <div class="earnings-wallet-card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
-                        <div>
-                            <span style="font-size:0.85rem; opacity:0.9; text-transform:uppercase; letter-spacing:0.05em; font-weight:600;">Số dư ví tài xế khả dụng</span>
-                            <div style="font-size:2.4rem; font-weight:800; margin:4px 0 2px 0;" id="wallet-balance-amount">0 ₫</div>
-                            <span style="font-size:0.8rem; opacity:0.85;">Tài khoản nhận tiền: Đã liên kết tài khoản ngân hàng</span>
-                        </div>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn btn-sm" style="background:#ffffff; color:#0288d1; font-weight:700; border-radius:9999px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:all 0.22s cubic-bezier(0.16,1,0.3,1);" onclick="driverController.showWithdrawDialog()">
-                                💳 Rút tiền
-                            </button>
-                            <button class="btn btn-sm" style="background:rgba(255,255,255,0.22); color:#ffffff; font-weight:700; border-radius:9999px; border:1.5px solid rgba(255,255,255,0.45); backdrop-filter:blur(8px); transition:all 0.22s cubic-bezier(0.16,1,0.3,1);" onclick="driverController.showDepositDialog()">
-                                ➕ Nạp ví ký quỹ
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4 KPI Cards Grid -->
-                <div class="earnings-grid">
-                    <div class="earnings-kpi-card">
-                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Doanh thu hôm nay</div>
-                        <div style="font-size:1.35rem; font-weight:800; color:#10b981; margin:6px 0 2px 0;" id="kpi-earn-today">0 ₫</div>
-                        <span style="font-size:0.78rem; color:#64748b;" id="kpi-trips-today">0 chuyến hoàn thành</span>
-                    </div>
-                    <div class="earnings-kpi-card">
-                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Doanh thu tuần này</div>
-                        <div style="font-size:1.35rem; font-weight:800; color:#0288d1; margin:6px 0 2px 0;" id="kpi-earn-week">0 ₫</div>
-                        <span style="font-size:0.78rem; color:#64748b;">Tổng kết 7 ngày qua</span>
-                    </div>
-                    <div class="earnings-kpi-card">
-                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Doanh thu tháng này</div>
-                        <div style="font-size:1.35rem; font-weight:800; color:#8b5cf6; margin:6px 0 2px 0;" id="kpi-earn-month">0 ₫</div>
-                        <span style="font-size:0.78rem; color:#64748b;">Tháng 10/2026</span>
-                    </div>
-                    <div class="earnings-kpi-card">
-                        <div style="font-size:0.75rem; color:#64748b; font-weight:700; text-transform:uppercase;">Tỷ lệ nhận chuyến</div>
-                        <div style="font-size:1.35rem; font-weight:800; color:#f59e0b; margin:6px 0 2px 0;" id="kpi-accept-rate">100%</div>
-                        <span style="font-size:0.78rem; color:#10b981;">Hiệu suất xuất sắc ★</span>
-                    </div>
-                </div>
-
-                <!-- Transaction / Settlement Breakdown -->
-                <div class="dashboard-section" style="background:#ffffff; border:1px solid var(--color-gray-200); border-radius:14px; overflow:hidden;">
-                    <div style="padding:16px 20px; border-bottom:1px solid var(--color-gray-200); display:flex; justify-content:space-between; align-items:center;">
-                        <h4 style="margin:0; font-size:1rem; color:#1e293b;">Bảng kê các khoản thu nhập gần đây</h4>
-                        <span style="font-size:0.8rem; color:#64748b;">Tỷ lệ chia sẻ doanh thu: 100% đối tác</span>
-                    </div>
-                    <div class="data-table-responsive">
-                        <table class="data-table admin-table" style="margin:0;">
-                            <thead>
-                                <tr>
-                                    <th>MÃ CHUYẾN</th>
-                                    <th>THỜI GIAN</th>
-                                    <th>KHÁCH HÀNG</th>
-                                    <th>PHƯƠNG THỨC</th>
-                                    <th>CƯỚC PHÍ</th>
-                                    <th style="text-align:right;">THỰC NHẬN</th>
-                                </tr>
-                            </thead>
-                            <tbody id="earnings-history-body">
-                                <tr><td colspan="6" class="text-center" style="padding:24px; color:#64748b;">Chưa có giao dịch thu nhập nào được ghi nhận.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 4: THÔNG TIN TÀI KHOẢN (FOR MOBILE) -->
+            <!-- TAB 3: THÔNG TIN TÀI KHOẢN (FOR MOBILE) -->
             <div id="driver-tab-account" class="driver-tab-pane" style="display:none; padding:24px 20px; max-width:600px; margin:0 auto; width:100%;">
                 <div class="card" style="padding:24px; border-radius:16px; background:#fff; border:1px solid var(--color-gray-200);">
                     <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
@@ -761,33 +682,43 @@
 
         </main>
 
-        <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
-        <nav class="bottom-nav mobile-only-flex" id="mobile-bottom-nav">
-            <a href="../index.html" class="bottom-nav-item" id="bnav-driver-landing" title="Về trang chủ">
-                <span class="bottom-nav-icon">🏠</span>
-                <span class="bottom-nav-label">Trang chủ</span>
-            </a>
-            <a href="#home" class="bottom-nav-item active" data-tab="home" id="bnav-driver-home">
-                <span class="bottom-nav-icon">🚗</span>
-                <span class="bottom-nav-label">Nhận chuyến</span>
-            </a>
-            <a href="#trips" class="bottom-nav-item" data-tab="trips" id="bnav-driver-trips">
-                <span class="bottom-nav-icon">📋</span>
-                <span class="bottom-nav-label">Lịch sử</span>
-            </a>
-            <a href="wallet.html?role=driver" class="bottom-nav-item" id="bnav-driver-wallet" title="Ví Navi">
-                <span class="bottom-nav-icon">💳</span>
-                <span class="bottom-nav-label">Ví Navi</span>
-            </a>
-            <a href="notifications.html" class="bottom-nav-item" id="bnav-driver-notifications" title="Thông báo" style="position:relative;">
-                <span class="bottom-nav-icon">🔔</span>
-                <span class="bottom-nav-label">Thông báo</span>
-                <span class="gsm-nav-badge-dot" style="position:absolute; top:6px; right:18px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span>
-            </a>
-            <a href="profile.html" class="bottom-nav-item" id="bnav-driver-account">
-                <span class="bottom-nav-icon">👤</span>
-                <span class="bottom-nav-label">Hồ sơ</span>
-            </a>
+        <!-- Unified Floating Bottom Navigation Bar (Authentic Navigo Mobile Experience) -->
+        <nav class="gsm-floating-bottom-nav" id="gsm-floating-bottom-nav" data-rendered-role="driver">
+            <div class="gsm-bottom-nav-pill">
+                <a href="../index.html" class="gsm-nav-btn" id="bnav-driver-landing" title="Về trang chủ">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                    </svg>
+                </a>
+                <a href="#home" class="gsm-nav-btn" data-tab="home" id="bnav-driver-home" title="Nhận chuyến">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/>
+                    </svg>
+                </a>
+                <a href="#trips" class="gsm-nav-btn" data-tab="trips" id="bnav-driver-trips" title="Lịch sử chuyến đi">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                    </svg>
+                </a>
+                <a href="wallet.html?role=driver" class="gsm-nav-btn" id="bnav-driver-wallet" title="Ví điện tử Navi">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 18v1a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V5a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                    </svg>
+                </a>
+                <a href="notifications.html" class="gsm-nav-btn" id="bnav-driver-notifications" title="Thông báo">
+                    <div class="gsm-nav-bell-wrapper">
+                        <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                        </svg>
+                        <span class="gsm-nav-badge-dot" style="display:none;"></span>
+                    </div>
+                </a>
+                <a href="profile.html" class="gsm-nav-btn" id="bnav-driver-account" title="Hồ sơ tài xế">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </a>
+            </div>
         </nav>
 
         <div class="toast-container" id="toast-container"></div>

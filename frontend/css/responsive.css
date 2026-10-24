@@ -54,12 +54,52 @@ html, body {
     border-right: 1px solid var(--color-border-subtle);
   }
 
-  /* Bottom navigation is strictly hidden on desktop */
+  /* Universal Floating Glass Bottom Navigation across Desktop (>= 768px) */
+  .gsm-floating-bottom-nav,
+  #gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+  }
+  .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    pointer-events: auto !important;
+  }
+
+  /* Legacy bottom navbars hidden on desktop */
   .bottom-nav,
-  .bottom-nav.mobile-only,
-  .bottom-nav.mobile-only-flex,
   #mobile-bottom-nav {
     display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Admin portal strictly hides floating bottom nav */
+  body.admin-body .gsm-floating-bottom-nav,
+  body.gsm-role-admin .app-sidebar ~ .gsm-floating-bottom-nav,
+  body.gsm-role-admin .app .gsm-floating-bottom-nav,
+  .app:has(.app-sidebar) ~ .gsm-floating-bottom-nav,
+  .app:has(.app-sidebar) .gsm-floating-bottom-nav,
+  body:has(.app-sidebar) .gsm-floating-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Map Panel behaves as side panel */
@@ -113,10 +153,10 @@ html, body {
 }
 
 /* ==========================================================================
-   3. TABLET BREAKPOINT (min-width: 641px and max-width: 1024px)
+   3. TABLET BREAKPOINT (min-width: 768px and max-width: 1024px)
    ========================================================================== */
 
-@media (min-width: 641px) and (max-width: 1024px) {
+@media (min-width: 768px) and (max-width: 1024px) {
   /* Visibility toggles */
   .desktop-only,
   .desktop-only-flex {
@@ -136,15 +176,36 @@ html, body {
     display: none !important;
   }
 
-  /* Bottom nav enabled on handheld / mobile viewports (< 1025px) */
+  /* Navigation Separation: Tablet & iPad (768px - 1024px) uses Top Nav ONLY; strictly hide floating bottom nav */
+  .gsm-floating-bottom-nav,
+  #gsm-floating-bottom-nav,
   .bottom-nav,
-  .bottom-nav.mobile-only,
-  .bottom-nav.mobile-only-flex,
   #mobile-bottom-nav {
-    display: flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: space-around !important;
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Admin portal desktop & tablet layout uses permanent sidebar & header; strictly hide floating bottom nav */
+  body.admin-body .gsm-floating-bottom-nav,
+  body.gsm-role-admin .app-sidebar ~ .gsm-floating-bottom-nav,
+  body.gsm-role-admin .app .gsm-floating-bottom-nav,
+  .app:has(.app-sidebar) ~ .gsm-floating-bottom-nav,
+  .app:has(.app-sidebar) .gsm-floating-bottom-nav,
+  body:has(.app-sidebar) .gsm-floating-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
   .goride-mobile-nav-bar {
     display: none !important;
@@ -208,10 +269,10 @@ html, body {
 }
 
 /* ==========================================================================
-   4. MOBILE BREAKPOINT (max-width: 640px)
+   4. MOBILE BREAKPOINT (max-width: 767px)
    ========================================================================== */
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   /* Visibility controls */
   .desktop-only,
   .desktop-only-flex,
@@ -228,25 +289,59 @@ html, body {
     display: flex !important;
   }
 
-  /* Bottom nav MUST always be flex row on mobile, NEVER block (Except on customer portal where it is hidden) */
-  .bottom-nav,
-  .bottom-nav.mobile-only,
-  .bottom-nav.mobile-only-flex,
-  #mobile-bottom-nav {
-    display: flex !important;
-    flex-direction: row !important;
+  /* Unified Floating Glass Bottom Navigation System across mobile portals (Image 1 Match) */
+  .gsm-floating-bottom-nav {
+    display: inline-flex !important;
     align-items: center !important;
-    justify-content: space-around !important;
+    justify-content: center !important;
+    position: fixed !important;
+    bottom: 14px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+    pointer-events: none !important;
+    gap: 8px !important;
+    width: auto !important;
+    max-width: calc(100vw - 16px) !important;
   }
 
-  /* Ensure bottom nav is always visible, interactive, and aligned across all portals */
-  .bottom-nav,
-  .bottom-nav.mobile-only,
-  .bottom-nav.mobile-only-flex,
-  #mobile-bottom-nav {
-    display: flex !important;
-    visibility: visible !important;
+  .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
     pointer-events: auto !important;
+  }
+
+  .gsm-bottom-nav-pill {
+    height: 52px !important;
+    padding: 4px 6px !important;
+    gap: 4px !important;
+    background: rgba(255, 255, 255, 0.82) !important;
+    backdrop-filter: blur(28px) saturate(190%) !important;
+    -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.9) !important;
+    border-radius: 9999px !important;
+    box-shadow: 0 10px 30px rgba(15, 45, 60, 0.16) !important;
+  }
+
+  .gsm-nav-btn {
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 10px !important;
+    border-radius: 9999px !important;
+  }
+
+  .gsm-nav-btn.active {
+    min-width: 66px !important;
+    padding: 0 16px !important;
+  }
+
+  .gsm-nav-btn .gsm-nav-svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .gsm-bottom-nav-trophy {
+    width: 52px !important;
+    height: 52px !important;
   }
 
   /* --- App Shell & Layout Adjustments --- */

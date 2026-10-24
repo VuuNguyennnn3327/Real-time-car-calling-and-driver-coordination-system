@@ -1,4 +1,4 @@
-﻿/**
+/**
  * GoRide Ride-Hailing Platform - Driver Page Controller
  * 100% Real-Data Architecture
  * Handles driver online/offline toggle, dispatch offers, active trip lifecycle,
@@ -90,9 +90,26 @@ class DriverController {
       purgeAllMockTrips();
     }
 
+    // 1. Check URL hash immediately on init before any async operation or GPS wait
+    const initialHash = (window.location.hash || '').replace('#', '').toLowerCase();
+    if (initialHash === 'earnings') {
+      window.location.replace('wallet.html?role=driver');
+      return;
+    }
+    const targetTab = ['home', 'trips', 'account'].includes(initialHash) ? initialHash : 'home';
+
     this.setupTabNavigation();
     this.setupUserMenu();
-    this.initMap();
+    this.switchTab(targetTab);
+
+    // 2. Map and GPS initialization: ONLY initialize full map if targetTab === 'home' or defer
+    if (targetTab === 'home') {
+      this.initMap();
+    } else {
+      setTimeout(() => {
+        if (!this.mapController) this.initMap();
+      }, 350);
+    }
     this.bindEvents();
     await this.loadDriverProfileAndStats();
 
@@ -106,12 +123,6 @@ class DriverController {
 
     // Recover any active trip on page load / reload
     this.checkActiveTripOnLoad();
-
-    // Check URL hash for direct tab navigation
-    const hash = window.location.hash.replace('#', '');
-    if (hash && ['home', 'trips', 'earnings', 'account'].includes(hash)) {
-      this.switchTab(hash);
-    }
 
     // Real-time synchronization for driver wallet balance & stats across tabs & pages
     window.addEventListener('storage', (e) => {
@@ -130,6 +141,139 @@ class DriverController {
   }
 
   /* ==========================================================================
+     HELPERS (ESCAPE HTML, LOCATION FORMATTERS)
+     ========================================================================== */
+
+  escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  formatLocation(loc, fallback = '--') {
+    if (!loc) return fallback;
+    if (typeof loc === 'string') {
+      let s = loc.trim();
+      if (s === '' || s === '[object Object]' || s === 'undefined' || s === 'null') {
+        return fallback;
+      }
+      if ((s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'))) {
+        try {
+          const parsed = JSON.parse(s);
+          return this.formatLocation(parsed, fallback);
+        } catch (e) {}
+      }
+      if (s.includes('[object Object]')) {
+        s = s.replace(/\[object Object\]/g, '').trim();
+        if (!s) return fallback;
+      }
+      return s;
+    }
+    if (typeof loc === 'object') {
+      if (Array.isArray(loc)) {
+        if (loc.length >= 2 && typeof loc[0] === 'number') {
+          return `Tọa độ (${loc[0].toFixed(4)}, ${loc[1].toFixed(4)})`;
+        }
+        if (loc.length > 0) return this.formatLocation(loc[0], fallback);
+      }
+      const candidates = [
+        loc.name, loc.address, loc.title, loc.place, loc.full_address,
+        loc.display_name, loc.formatted_address, loc.pickupName, loc.dropoffName,
+        loc.pickup_name, loc.dropoff_name, loc.pickupAddress, loc.dropoffAddress,
+        loc.pickup, loc.destination, loc.dropoff
+      ];
+      for (const c of candidates) {
+        if (c && typeof c === 'string') {
+          const clean = c.trim();
+          if (clean && clean !== '[object Object]' && clean !== 'undefined' && clean !== 'null') {
+            return clean;
+          }
+        } else if (c && typeof c === 'object') {
+          const nested = this.formatLocation(c, '');
+          if (nested && nested !== fallback) return nested;
+        }
+      }
+      if (loc.lat !== undefined && (loc.lng !== undefined || loc.lon !== undefined)) {
+        const lat = Number(loc.lat);
+        const lng = Number(loc.lng !== undefined ? loc.lng : loc.lon);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          if (Math.abs(lat - 10.8190) < 0.005 && Math.abs(lng - 106.6560) < 0.005) return 'Ga T3 - Sân Bay Tân Sơn Nhất';
+          if (Math.abs(lat - 10.8165) < 0.005 && Math.abs(lng - 106.6575) < 0.005) return 'Ga T1 - Sân Bay Tân Sơn Nhất';
+          if (Math.abs(lat - 10.8175) < 0.005 && Math.abs(lng - 106.6590) < 0.005) return 'Ga T2 - Sân Bay Tân Sơn Nhất';
+          if (Math.abs(lat - 10.7725) < 0.005 && Math.abs(lng - 106.6980) < 0.005) return 'Chợ Bến Thành, Quận 1';
+          if (Math.abs(lat - 10.7781) < 0.005 && Math.abs(lng - 106.7023) < 0.005) return 'Vincom Center Đồng Khởi';
+          if (Math.abs(lat - 10.7951) < 0.005 && Math.abs(lng - 106.7219) < 0.005) return 'Landmark 81, Bình Thạnh';
+          if (Math.abs(lat - 10.7798) < 0.005 && Math.abs(lng - 106.6990) < 0.005) return 'Nhà Thờ Đức Bà, Quận 1';
+          return `Tọa độ (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        }
+      }
+      return fallback;
+    }
+    return String(loc);
+  }
+
+  getTripPickup(t) {
+    if (!t) return '--';
+    const fromPickup = this.formatLocation(t.pickup, '');
+    if (fromPickup) return fromPickup;
+    const candidates = [
+      t.pickupName, t.pickup_name, t.pickupAddress, t.pickup_address,
+      t.pickup_location, t.origin, t.start_location, t.start_point
+    ];
+    for (const c of candidates) {
+      const res = this.formatLocation(c, '');
+      if (res) return res;
+    }
+    const lat = t.pickupLat !== undefined ? Number(t.pickupLat) : (t.pickupCoords && t.pickupCoords[0]);
+    const lng = (t.pickupLng !== undefined || t.pickupLon !== undefined) ? Number(t.pickupLng !== undefined ? t.pickupLng : t.pickupLon) : (t.pickupCoords && t.pickupCoords[1]);
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+      if (Math.abs(lat - 10.8190) < 0.005 && Math.abs(lng - 106.6560) < 0.005) return 'Ga T3 - Sân Bay Tân Sơn Nhất';
+      if (Math.abs(lat - 10.8165) < 0.005 && Math.abs(lng - 106.6575) < 0.005) return 'Ga T1 - Sân Bay Tân Sơn Nhất';
+      if (Math.abs(lat - 10.8175) < 0.005 && Math.abs(lng - 106.6590) < 0.005) return 'Ga T2 - Sân Bay Tân Sơn Nhất';
+      if (Math.abs(lat - 10.7725) < 0.005 && Math.abs(lng - 106.6980) < 0.005) return 'Chợ Bến Thành, Quận 1';
+      if (Math.abs(lat - 10.7781) < 0.005 && Math.abs(lng - 106.7023) < 0.005) return 'Vincom Center Đồng Khởi';
+      if (Math.abs(lat - 10.7951) < 0.005 && Math.abs(lng - 106.7219) < 0.005) return 'Landmark 81, Bình Thạnh';
+      if (Math.abs(lat - 10.7798) < 0.005 && Math.abs(lng - 106.6990) < 0.005) return 'Nhà Thờ Đức Bà, Quận 1';
+      return `Tọa độ đón (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    }
+    return 'Điểm đón khách';
+  }
+
+  getTripDestination(t) {
+    if (!t) return '--';
+    const fromDest = this.formatLocation(t.destination, '');
+    if (fromDest) return fromDest;
+    const fromDropoff = this.formatLocation(t.dropoff, '');
+    if (fromDropoff) return fromDropoff;
+    const candidates = [
+      t.dropoffName, t.dropoff_name, t.destinationName, t.destination_name,
+      t.dropoffAddress, t.dropoff_address, t.destinationAddress, t.destination_address,
+      t.destination_location, t.end_location, t.end_point
+    ];
+    for (const c of candidates) {
+      const res = this.formatLocation(c, '');
+      if (res) return res;
+    }
+    const lat = t.dropoffLat !== undefined ? Number(t.dropoffLat) : (t.destinationCoords && t.destinationCoords[0]);
+    const lng = (t.dropoffLng !== undefined || t.dropoffLon !== undefined) ? Number(t.dropoffLng !== undefined ? t.dropoffLng : t.dropoffLon) : (t.destinationCoords && t.destinationCoords[1]);
+    if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+      if (Math.abs(lat - 10.8190) < 0.005 && Math.abs(lng - 106.6560) < 0.005) return 'Ga T3 - Sân Bay Tân Sơn Nhất';
+      if (Math.abs(lat - 10.8165) < 0.005 && Math.abs(lng - 106.6575) < 0.005) return 'Ga T1 - Sân Bay Tân Sơn Nhất';
+      if (Math.abs(lat - 10.8175) < 0.005 && Math.abs(lng - 106.6590) < 0.005) return 'Ga T2 - Sân Bay Tân Sơn Nhất';
+      if (Math.abs(lat - 10.7725) < 0.005 && Math.abs(lng - 106.6980) < 0.005) return 'Chợ Bến Thành, Quận 1';
+      if (Math.abs(lat - 10.7781) < 0.005 && Math.abs(lng - 106.7023) < 0.005) return 'Vincom Center Đồng Khởi';
+      if (Math.abs(lat - 10.7951) < 0.005 && Math.abs(lng - 106.7219) < 0.005) return 'Landmark 81, Bình Thạnh';
+      if (Math.abs(lat - 10.7798) < 0.005 && Math.abs(lng - 106.6990) < 0.005) return 'Nhà Thờ Đức Bà, Quận 1';
+      return `Tọa độ đến (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+    }
+    return 'Điểm đến';
+  }
+
+  /* ==========================================================================
      TAB SWITCHING & NAVIGATION (HOME, TRIPS, EARNINGS, ACCOUNT)
      ========================================================================== */
 
@@ -143,43 +287,82 @@ class DriverController {
     });
 
     window.addEventListener('hashchange', () => {
-      const hash = window.location.hash.replace('#', '');
-      if (hash && ['home', 'trips', 'earnings', 'account'].includes(hash)) {
+      const hash = (window.location.hash || '').replace('#', '').toLowerCase();
+      if (hash === 'earnings') {
+        window.location.href = 'wallet.html?role=driver';
+        return;
+      }
+      if (hash && ['home', 'trips', 'account'].includes(hash)) {
         this.switchTab(hash);
       }
     });
   }
 
   switchTab(tabName) {
-    if (!['home', 'trips', 'earnings', 'account'].includes(tabName)) {
+    if (tabName === 'earnings') {
+      window.location.href = 'wallet.html?role=driver';
+      return;
+    }
+    if (!['home', 'trips', 'account'].includes(tabName)) {
       tabName = 'home';
     }
     this.currentTab = tabName;
-    window.location.hash = tabName;
+    document.documentElement.setAttribute('data-driver-tab', tabName);
 
-    // Update active class on desktop & mobile navigation links
+    // Instant CSS rule update to prevent any flash
+    let tabCss = document.getElementById('driver-active-tab-css');
+    if (!tabCss) {
+      tabCss = document.createElement('style');
+      tabCss.id = 'driver-active-tab-css';
+      document.head.appendChild(tabCss);
+    }
+    tabCss.textContent = `
+      .driver-tab-pane { display: none !important; }
+      #driver-tab-${tabName} { display: ${tabName === 'home' ? 'flex' : 'block'} !important; }
+    `;
+
+    // Only update hash if changed, avoid redundant hashchange triggers
+    if (window.location.hash !== '#' + tabName) {
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', '#' + tabName);
+      } else {
+        window.location.hash = tabName;
+      }
+    }
+
+    // Update active class on desktop top navigation links & mobile bottom nav buttons
     document.querySelectorAll('[data-tab]').forEach(el => {
       const match = el.getAttribute('data-tab') === tabName;
       el.classList.toggle('active', match);
     });
 
+    // Also update bottom nav active states specifically (ensure strictly 1 active button)
+    document.querySelectorAll('.gsm-floating-bottom-nav .gsm-nav-btn').forEach(btn => {
+      const bTab = btn.getAttribute('data-tab');
+      if (bTab) {
+        btn.classList.toggle('active', bTab === tabName);
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
     // Show / hide tab containers
-    ['home', 'trips', 'earnings', 'account'].forEach(t => {
+    ['home', 'trips', 'account'].forEach(t => {
       const pane = document.getElementById('driver-tab-' + t);
       if (pane) {
-        pane.style.display = (t === tabName) ? (t === 'home' ? 'flex' : 'block') : 'none';
+        pane.style.setProperty('display', (t === tabName) ? (t === 'home' ? 'flex' : 'block') : 'none', 'important');
       }
     });
 
     // Handle tab-specific actions
     if (tabName === 'home') {
-      if (this.mapController && this.mapController.map) {
-        setTimeout(() => this.mapController.invalidateSize(), 200);
+      if (!this.mapController) {
+        this.initMap();
+      } else if (this.mapController && this.mapController.map) {
+        setTimeout(() => this.mapController.invalidateSize(), 150);
       }
     } else if (tabName === 'trips') {
       this.renderTripHistory(this.currentHistoryFilter);
-    } else if (tabName === 'earnings') {
-      this.renderEarningsReport();
     } else if (tabName === 'account') {
       this.renderAccountTab();
     }
@@ -697,7 +880,6 @@ class DriverController {
       } catch {
         onlineDrivers = {};
       }
-
       if (this.isOnline) {
         onlineDrivers[driverId] = {
           id: driverId,
@@ -2294,6 +2476,7 @@ class DriverController {
   }
 
   renderTripHistory(filter = 'all') {
+    this.currentHistoryFilter = filter;
     const container = document.getElementById('driver-trips-list');
     if (!container) return;
 
@@ -2311,6 +2494,27 @@ class DriverController {
       }
       const checkMock = (typeof isMockTrip === 'function') ? isMockTrip : (t => ['trip_vn_101', 'trip_vn_102', 'trip_vn_103', 'trip_vn_104'].includes(t?.id));
       trips = trips.filter(t => !checkMock(t));
+
+      // Sanitize trip names if accidentally missing
+      let changed = false;
+      trips = trips.map(t => {
+        const cleanPickup = this.getTripPickup(t);
+        const cleanDest = this.getTripDestination(t);
+        if (t.pickup !== cleanPickup || t.destination !== cleanDest) {
+          changed = true;
+          return {
+            ...t,
+            pickup: cleanPickup,
+            destination: cleanDest,
+            pickupName: cleanPickup,
+            dropoffName: cleanDest
+          };
+        }
+        return t;
+      });
+      if (changed) {
+        try { localStorage.setItem('goride_driver_trips', JSON.stringify(trips)); } catch(e) {}
+      }
     } catch {
       trips = [];
     }
@@ -2340,6 +2544,8 @@ class DriverController {
     container.innerHTML = trips.map(t => {
       const fareFormatted = Number(t.fare || 0).toLocaleString('vi-VN') + ' ₫';
       const timeStr = t.completedAt ? new Date(t.completedAt).toLocaleString('vi-VN') : 'Gần đây';
+      const pickupClean = this.escapeHtml ? this.escapeHtml(this.getTripPickup(t)) : this.getTripPickup(t);
+      const destClean = this.escapeHtml ? this.escapeHtml(this.getTripDestination(t)) : this.getTripDestination(t);
       return `
         <div class="driver-trip-card">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">
@@ -2351,17 +2557,17 @@ class DriverController {
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-            <div style="font-size:0.9rem; color:#1e293b; line-height:1.5;">
-              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                <span style="color:#10b981;">🟢</span>
-                <span>${t.pickup || '--'}</span>
+            <div style="font-size:0.9rem; color:#1e293b; line-height:1.5; flex:1; min-width:0; padding-right:12px;">
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${pickupClean}">
+                <span style="color:#10b981; flex-shrink:0;">🟢</span>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${pickupClean}</span>
               </div>
-              <div style="display:flex; align-items:center; gap:6px;">
-                <span style="color:#ef4444;">🔴</span>
-                <span>${t.destination || '--'}</span>
+              <div style="display:flex; align-items:center; gap:6px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${destClean}">
+                <span style="color:#ef4444; flex-shrink:0;">🔴</span>
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${destClean}</span>
               </div>
             </div>
-            <div style="text-align:right;">
+            <div style="text-align:right; flex-shrink:0;">
               <div style="font-size:1.25rem; font-weight:800; color:#0f766e;">${fareFormatted}</div>
               <span style="font-size:0.75rem; color:#64748b;">Khách: <strong>${t.customerName || 'Khách hàng'}</strong></span>
             </div>

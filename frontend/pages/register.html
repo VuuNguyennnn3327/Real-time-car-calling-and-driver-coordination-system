@@ -316,7 +316,7 @@
                             throw new Error('Số điện thoại này đã được đăng ký trên hệ thống. Vui lòng dùng số khác.');
                         }
                     } catch (fbErr) {
-                        if (fbErr.message && fbErr.message.includes('đăng ký111')) throw fbErr;
+                        if (fbErr.message && fbErr.message.includes('đăng ký')) throw fbErr;
                         console.warn('[Register] Firebase duplicate check warning:', fbErr.message);
                     }
                 }

@@ -1,41 +1,116 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 140" width="100%" height="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140" width="100%" height="100%">
   <defs>
-    <linearGradient id="scooterTeal" x1="0%" y1="0%" x2="100%" y2="100%">
+    <!-- Modern Teal Gradient for EV Body matching car_vf5.svg -->
+    <linearGradient id="scooterBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#4de3db"/>
-      <stop offset="60%" stop-color="#00b1a9"/>
+      <stop offset="45%" stop-color="#00b1a9"/>
       <stop offset="100%" stop-color="#006b66"/>
+    </linearGradient>
+    <linearGradient id="wheelRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="seatGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#0f172a"/>
     </linearGradient>
     <filter id="bikeShadow" x="-10%" y="-10%" width="130%" height="140%">
       <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#0f2d3c" flood-opacity="0.22"/>
     </filter>
+    <filter id="headlightGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="2" dy="0" stdDeviation="3" flood-color="#38bdf8" flood-opacity="0.9"/>
+    </filter>
   </defs>
+
   <g filter="url(#bikeShadow)">
-    <!-- Shadow -->
-    <ellipse cx="105" cy="120" rx="70" ry="10" fill="#0f2d3c" opacity="0.2"/>
+    <!-- 1. Ground Contact Shadows -->
+    <ellipse cx="120" cy="118" rx="80" ry="10" fill="#0f2d3c" opacity="0.18"/>
+    <ellipse cx="62" cy="116" rx="22" ry="4.5" fill="#0f2d3c" opacity="0.32"/>
+    <ellipse cx="178" cy="116" rx="22" ry="4.5" fill="#0f2d3c" opacity="0.32"/>
+
+    <!-- 2. Rear Wheel -->
+    <circle cx="62" cy="96" r="20" fill="#1e293b"/>
+    <circle cx="62" cy="96" r="13" fill="url(#wheelRimGrad)"/>
+    <circle cx="62" cy="96" r="10" fill="#1e293b"/>
+    <circle cx="62" cy="96" r="6" fill="#00b1a9"/>
+    <circle cx="62" cy="96" r="2.5" fill="#ffffff"/>
+
+    <!-- 3. Rear Swingarm & Belt Drive -->
+    <path d="M62 96 L98 94 L102 99 L64 100 Z" fill="#334155"/>
+    <rect x="82" y="88" width="18" height="12" rx="3" fill="#1e293b"/>
+
+    <!-- 4. Front Wheel -->
+    <circle cx="178" cy="96" r="20" fill="#1e293b"/>
+    <circle cx="178" cy="96" r="13" fill="url(#wheelRimGrad)"/>
+    <circle cx="178" cy="96" r="10" fill="#1e293b"/>
+    <circle cx="178" cy="96" r="6" fill="#00b1a9"/>
+    <circle cx="178" cy="96" r="2.5" fill="#ffffff"/>
+
+    <!-- 5. Front Telescopic Suspension Fork -->
+    <path d="M178 96 L167 66 L171 65 L182 95 Z" fill="#64748b"/>
+    <path d="M167 66 L163 56 L166 55 L170 65 Z" fill="#cbd5e1"/>
+
+    <!-- 6. Front Fender / Mudguard -->
+    <path d="M162 82 Q176 74 195 86 L192 90 Q176 78 164 86 Z" fill="url(#scooterBodyGrad)"/>
+
+    <!-- 7. Lower Chassis / Battery Floorboard -->
+    <path d="M96 98 L142 98 Q148 98 152 92 L148 88 L104 88 Q98 92 96 98 Z" fill="#0f172a"/>
+    <path d="M102 88 L144 88 L146 92 L100 92 Z" fill="#334155"/>
+
+    <!-- 8. Rear Bodywork & Side Panels -->
+    <path d="M42 66 Q38 72 45 84 Q52 94 76 96 L118 96 Q125 96 126 88 L122 72 Q115 64 85 64 L48 64 Q43 64 42 66 Z" fill="url(#scooterBodyGrad)"/>
+    <!-- Dynamic Body Highlight Line -->
+    <path d="M50 78 Q80 82 116 80" stroke="#ffffff" stroke-width="1.8" stroke-opacity="0.65" stroke-linecap="round" fill="none"/>
+    <!-- Navigo V-Wing Brand Emblem -->
+    <path d="M68 76 L73 80 L78 76" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <!-- Red LED Tail Light -->
+    <path d="M38 68 Q40 65 44 65 L46 69 Q41 71 38 68 Z" fill="#ef4444"/>
+
+    <!-- 9. Rear Grab Rail -->
+    <path d="M36 62 Q42 58 56 60 L54 63 Q44 61 38 65 Z" fill="#94a3b8"/>
+
+    <!-- 10. Sporty 2-Tier Contoured Seat -->
+    <path d="M48 64 Q50 56 68 56 Q84 56 94 59 Q106 59 122 66 L118 70 Q104 64 92 64 Q80 62 62 62 Q52 62 48 64 Z" fill="url(#seatGrad)"/>
+    <path d="M54 62 Q78 60 114 67" stroke="#475569" stroke-width="0.8" fill="none"/>
+
+    <!-- 11. Front Apron & Leg Shield -->
+    <path d="M124 88 L146 88 Q152 86 156 74 L168 48 Q170 42 165 40 L154 40 Q148 42 144 52 L128 78 Q122 86 124 88 Z" fill="url(#scooterBodyGrad)"/>
+    <!-- Front apron inner recess -->
+    <path d="M136 78 L148 54 Q152 46 156 44 L152 43 Q146 46 142 56 L130 78 Z" fill="#0f2d3c" opacity="0.35"/>
+    <!-- Signature Front LED DRL Wing -->
+    <path d="M158 56 Q163 60 167 55" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" fill="none" filter="drop-shadow(0 0 3px #4de3db)"/>
+
+    <!-- 12. STEERING HEAD, COWL & HANDLEBAR ASSEMBLY -->
+    <!-- Headstock stem -->
+    <path d="M156 42 L162 34 L166 35 L160 43 Z" fill="#1e293b"/>
+
+    <!-- Aerodynamic Head Cowl (Mặt nạ đầu đèn) -->
+    <path d="M154 36 Q156 28 165 27 Q174 27 178 33 Q180 37 177 42 Q172 45 163 43 L155 39 Q153 38 154 36 Z" fill="url(#scooterBodyGrad)"/>
     
-    <!-- Rear Wheel -->
-    <ellipse cx="50" cy="100" rx="20" ry="20" fill="#1e293b"/>
-    <ellipse cx="50" cy="100" rx="10" ry="10" fill="#cbd5e1" stroke="#00b1a9" stroke-width="2"/>
-    
-    <!-- Front Wheel -->
-    <ellipse cx="155" cy="100" rx="20" ry="20" fill="#1e293b"/>
-    <ellipse cx="155" cy="100" rx="10" ry="10" fill="#cbd5e1" stroke="#00b1a9" stroke-width="2"/>
-    
-    <!-- Scooter Main Body (Floorboard, Seat, Rear Cover) -->
-    <path d="M50 85 Q45 65 70 65 L110 65 Q115 75 110 95 L80 98 Q60 98 50 85 Z" fill="url(#scooterTeal)"/>
-    <!-- Ergonomic Seat -->
-    <path d="M58 64 Q85 62 112 64 Q110 58 85 58 Q60 58 58 64 Z" fill="#1e293b"/>
-    
-    <!-- Front Stem & Apron -->
-    <path d="M105 92 L140 50 Q145 42 140 35 L132 35 L125 45 L98 90 Z" fill="url(#scooterTeal)"/>
-    
-    <!-- Handlebar & Headlight -->
-    <path d="M128 35 L144 33 Q148 35 145 40 Z" fill="#1e293b"/>
-    <ellipse cx="145" cy="38" rx="4" ry="4" fill="#ffffff" filter="drop-shadow(0 0 3px #4de3db)"/>
-    <circle cx="132" cy="28" r="3" fill="#64748b"/>
-    <path d="M132 28 L140 33" stroke="#64748b" stroke-width="2"/>
-    
-    <!-- Front Mudguard -->
-    <path d="M142 85 Q155 75 168 88 L160 92 Q152 82 142 88 Z" fill="url(#scooterTeal)"/>
+    <!-- Instrument Visor / Screen -->
+    <path d="M157 28 Q163 24 168 25 L166 28 Q162 27 158 29 Z" fill="#0f2d3c"/>
+
+    <!-- High-Luminance LED Projector Headlight -->
+    <path d="M174 33 Q181 35 180 39 Q177 42 173 40 Q176 36 174 33 Z" fill="#ffffff" filter="url(#headlightGlow)"/>
+    <ellipse cx="176" cy="37" rx="2" ry="3" fill="#e0f7f6"/>
+
+    <!-- Left Handlebar Grip & Brake Lever -->
+    <path d="M154 34 L146 35 Q144 35 144 37 Q144 39 146 39 L154 37 Z" fill="#0f172a"/>
+    <path d="M148 37 L142 39" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round"/>
+
+    <!-- Right Handlebar Grip & Brake Lever -->
+    <path d="M165 33 L172 32 Q174 32 174 34 Q174 36 172 36 L165 35 Z" fill="#0f172a"/>
+    <path d="M171 35 L176 36" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round"/>
+
+    <!-- 13. Sleek Rearview Mirrors -->
+    <!-- Left Mirror -->
+    <path d="M152 34 Q148 24 146 20" stroke="#475569" stroke-width="2" stroke-linecap="round" fill="none"/>
+    <ellipse cx="145" cy="19" rx="5" ry="3.5" transform="rotate(-20 145 19)" fill="#1e293b" stroke="#00b1a9" stroke-width="1"/>
+    <ellipse cx="145" cy="19" rx="3.5" ry="2" transform="rotate(-20 145 19)" fill="#94a3b8"/>
+
+    <!-- Right Mirror -->
+    <path d="M164 32 Q166 22 168 18" stroke="#475569" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <ellipse cx="169" cy="17" rx="4.5" ry="3" transform="rotate(15 169 17)" fill="#1e293b" stroke="#00b1a9" stroke-width="1"/>
+    <ellipse cx="169" cy="17" rx="3" ry="1.8" transform="rotate(15 169 17)" fill="#94a3b8"/>
   </g>
 </svg>

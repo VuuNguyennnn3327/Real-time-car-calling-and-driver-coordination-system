@@ -164,7 +164,7 @@ class Router {
     getDefaultDashboardForRole(role) {
         switch (role) {
             case 'driver':
-                return this.resolvePath('driver');
+                return this.resolvePath('home');
             case 'admin':
                 return this.resolvePath('admin');
             case 'customer':

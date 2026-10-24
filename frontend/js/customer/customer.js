@@ -1682,6 +1682,10 @@ class CustomerAppController {
         // Universal logout handler for customer portal
         const handleCustLogout = (e) => {
             if (e) e.preventDefault();
+            if (typeof sessionManager !== 'undefined' && typeof sessionManager.confirmLogout === 'function') {
+                sessionManager.confirmLogout();
+                return;
+            }
             if (typeof sessionManager !== 'undefined' && typeof sessionManager.logoutWithConfirmation === 'function') {
                 sessionManager.logoutWithConfirmation();
                 return;
@@ -1696,13 +1700,15 @@ class CustomerAppController {
                     danger: true,
                     onConfirm: () => {
                         if (typeof sessionManager !== 'undefined') sessionManager.logout();
-                        window.location.href = 'login.html?logout=true';
+                        sessionStorage.setItem('navigo_from_logout', 'true');
+                        window.location.href = 'loading.html?from=logout';
                     }
                 });
                 return;
             }
             if (typeof sessionManager !== 'undefined') sessionManager.logout();
-            window.location.href = 'login.html?logout=true';
+            sessionStorage.setItem('navigo_from_logout', 'true');
+            window.location.href = 'loading.html?from=logout';
         };
 
         const btnCustLogout = document.getElementById('btn-customer-logout');

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -28,7 +28,8 @@
             height: 100%;
         }
         #suggestions-container {
-            max-height: 380px;
+            flex: 1 1 auto;
+            max-height: none;
             overflow-y: auto;
             padding: 4px 6px;
             display: flex;
@@ -92,13 +93,31 @@
             gap: 14px;
         }
 
-        /* Strictly hide bottom navigation on customer booking portal */
+        /* Floating Glass Bottom Navigation on customer booking portal */
         .gsm-floating-bottom-nav,
         body.gsm-booking-page .gsm-floating-bottom-nav,
         body.customer-body .gsm-floating-bottom-nav,
         [data-page="customer"] .gsm-floating-bottom-nav,
         body.gsm-booking-page .bottom-nav,
         body.gsm-booking-page #mobile-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: none !important;
+        }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            pointer-events: auto !important;
+        }
+        .gsm-search-bottom-actions {
+            display: none !important;
+        }
+        .gsm-legacy-hidden-nav {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -168,7 +187,7 @@
 
             /* Reset Top Floating Header to natural flow */
             .gsm-desktop-sidebar .gsm-map-floating-header {
-                position: static !important;
+
                 inset: auto !important;
                 width: 100% !important;
                 padding: 0 !important;
@@ -178,7 +197,7 @@
 
             /* Reset Floating Route Capsule (Screen 4) to natural flow */
             .gsm-desktop-sidebar .gsm-floating-route-box {
-                position: static !important;
+
                 inset: auto !important;
                 width: 100% !important;
                 margin: 0 0 10px 0 !important;
@@ -196,7 +215,9 @@
             /* Vehicle Selection Sheet in Desktop Sidebar (Screen 4):
                Compact vehicle list, pushing booking button UP and fully visible on PC */
             .gsm-desktop-sidebar .gsm-vehicle-sheet {
-                position: static !important;
+                margin-top: auto !important;
+                position: relative !important;
+
                 inset: auto !important;
                 width: 100% !important;
                 max-height: none !important;
@@ -212,7 +233,7 @@
             }
 
             .gsm-desktop-sidebar #vehicle-options-container {
-                max-height: 220px !important;
+                max-height: 280px !important;
                 overflow-y: auto !important;
                 padding-right: 4px !important;
                 margin-bottom: 8px !important;
@@ -240,8 +261,8 @@
 
             /* Elevated CTA Action Row on PC: prominently pushed UP with plenty of breathing space */
             .gsm-desktop-sidebar .gsm-cta-action-row {
-                margin-top: 6px !important;
-                margin-bottom: 24px !important;
+                margin-top: 8px !important;
+                margin-bottom: 12px !important;
                 padding-bottom: 6px !important;
                 flex-shrink: 0 !important;
                 position: relative !important;
@@ -268,7 +289,7 @@
 
             /* Searching Radar Panel in Desktop Sidebar (Screen 5) */
             .gsm-desktop-sidebar #tracking-searching-panel {
-                position: static !important;
+
                 inset: auto !important;
                 width: 100% !important;
                 margin: 0 0 14px 0 !important;
@@ -278,7 +299,9 @@
             /* Driver Card in Desktop Sidebar (Screen 5 - Image 1):
                Eliminates blank space by sitting directly below header */
             .gsm-desktop-sidebar #tracking-driver-sheet {
-                position: static !important;
+                margin-top: auto !important;
+                position: relative !important;
+
                 inset: auto !important;
                 width: 100% !important;
                 max-height: none !important;
@@ -294,7 +317,9 @@
 
             /* Pickup Confirm Sheet in Desktop Sidebar (Screen 3) */
             .gsm-desktop-sidebar .gsm-pickup-bottom-sheet {
-                position: static !important;
+                margin-top: auto !important;
+                position: relative !important;
+
                 inset: auto !important;
                 width: 100% !important;
                 max-height: none !important;
@@ -318,7 +343,7 @@
                 max-height: min(78vh, 560px) !important;
                 display: flex !important;
                 flex-direction: column !important;
-                padding: 12px 18px max(24px, env(safe-area-inset-bottom, 24px)) !important;
+                padding: 12px 18px calc(76px + env(safe-area-inset-bottom, 0px)) !important;
                 box-sizing: border-box !important;
                 border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
                 box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
@@ -363,7 +388,7 @@
                 max-height: none !important;
                 display: flex !important;
                 flex-direction: column !important;
-                padding: 14px 18px max(24px, env(safe-area-inset-bottom, 24px)) !important;
+                padding: 14px 18px calc(76px + env(safe-area-inset-bottom, 0px)) !important;
                 box-sizing: border-box !important;
                 border-radius: var(--gsm-radius-sheet) var(--gsm-radius-sheet) 0 0 !important;
                 box-shadow: 0 -8px 30px rgba(15, 45, 60, 0.16) !important;
@@ -439,7 +464,7 @@
         <div class="gsm-pc-nav-links">
             <a href="../index.html" class="gsm-pc-nav-link">Trang chủ</a>
             <a href="customer.html" class="gsm-pc-nav-link active">Đặt xe Navigo</a>
-            <a href="customer.html?service=delivery" class="gsm-pc-nav-link">Giao hàng</a>
+            
             <a href="wallet.html" class="gsm-pc-nav-link">Ví Navi</a>
             <a href="notifications.html" class="gsm-pc-nav-link " style="position:relative;">
                 🔔 Thông báo
@@ -554,7 +579,7 @@
                         </div>
 
                         <!-- Bottom Shortcut Action Pills -->
-                        <div class="gsm-search-bottom-actions">
+                        <div class="gsm-search-bottom-actions" style="display:none !important;">
                             <div class="gsm-search-action-pill" id="btn-saved-places">
                                 <span style="color:#ef4444;">❤️</span> Địa chỉ đã lưu
                             </div>
