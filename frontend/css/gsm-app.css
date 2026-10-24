@@ -1583,13 +1583,35 @@ body.gsm-home-page .gsm-desktop-sidebar,
   }
 }
 
-/* Bottom clearance helper across pages */
-body.gsm-theme,
+/* Bottom clearance helper across pages (excluding customer booking, activity, and notifications pages) */
+body.gsm-theme:not(.gsm-booking-page):not(.customer-body):not(.gsm-activity-page):not(.gsm-notifications-page):not([data-page="customer"]):not([data-page="activity"]):not([data-page="notifications"]):not(:has(#customer-map-container)):not(:has(.gsm-activity-screen)):not(:has(.gsm-notif-screen)),
 .driver-app-main,
 .gsm-profile-page-wrapper,
 .gsm-screen-wrapper,
 .admin-content {
   padding-bottom: 96px !important;
+}
+
+/* Strictly eliminate bottom white rectangular clearance gap on customer booking, activity & notifications pages */
+body.gsm-booking-page,
+body.customer-body,
+body.gsm-activity-page,
+body.gsm-notifications-page,
+body[data-page="customer"],
+body[data-page="activity"],
+body[data-page="notifications"],
+body:has(#customer-map-container),
+body:has(.gsm-activity-screen),
+body:has(.gsm-notif-screen) {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+body.gsm-booking-page .gsm-desktop-sidebar .gsm-screen-wrapper,
+body.customer-body .gsm-desktop-sidebar .gsm-screen-wrapper,
+body.gsm-activity-page .gsm-desktop-sidebar .gsm-screen-wrapper,
+body.gsm-notifications-page .gsm-desktop-sidebar .gsm-screen-wrapper {
+  padding-bottom: 24px !important;
 }
 
 .gsm-nav-trophy-svg {

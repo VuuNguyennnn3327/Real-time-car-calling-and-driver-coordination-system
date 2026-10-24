@@ -136,6 +136,34 @@
             color: #ffffff;
         }
 
+        /* Completely eliminate the bottom white rectangular bar/gap on customer activity page */
+        html:has(body.gsm-activity-page),
+        body.gsm-theme.gsm-activity-page,
+        body.gsm-theme:has(.gsm-activity-screen),
+        body[data-page="activity"] {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.gsm-activity-page .gsm-desktop-container,
+        body:has(.gsm-activity-screen) .gsm-desktop-container {
+            height: calc(100vh - 64px) !important;
+            min-height: calc(100vh - 64px) !important;
+            max-height: calc(100vh - 64px) !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.gsm-activity-page .gsm-desktop-sidebar,
+        body.gsm-activity-page .gsm-desktop-wide-canvas,
+        body:has(.gsm-activity-screen) .gsm-desktop-sidebar,
+        body:has(.gsm-activity-screen) .gsm-desktop-wide-canvas {
+            height: 100% !important;
+            bottom: 0 !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
         /* Floating Navigation Bar: prominently float on top across all pages */
         .gsm-floating-bottom-nav {
             position: fixed !important;
@@ -163,11 +191,11 @@
         }
     </style>
 </head>
-<body class="gsm-theme">
+<body class="gsm-theme gsm-activity-page" data-page="activity">
     <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
     <nav class="gsm-pc-navbar">
         <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
-            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <img src="../assets/gsm/navigo-logo.svg" alt="Navigo" style="width:36px; height:36px; border-radius:10px; flex-shrink:0; display:block; box-shadow:0 3px 10px rgba(0,177,169,0.25);">
             <div>
                 <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
                 <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>

@@ -254,11 +254,25 @@
     <!-- NAVIGO WELCOME LOADING SCREEN (SPLASH OVERLAY) -->
     <div id="navigo-welcome-splash" class="navigo-welcome-splash">
         <div class="loading-app-container">
-            <!-- 1. Authentic Blueprint Street Map Texture -->
+            <!-- 1. Ambient Holographic Aurora Mesh Background -->
+            <div class="bg-aurora-mesh">
+                <div class="aurora-orb orb-1"></div>
+                <div class="aurora-orb orb-2"></div>
+                <div class="aurora-orb orb-3"></div>
+            </div>
+
+            <!-- 2. Authentic Blueprint Street Map Texture -->
             <div class="bg-map-texture"></div>
 
             <!-- 2. Flowing Dashed GPS Track SVG -->
             <svg class="bg-gps-svg" viewBox="0 0 500 400" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="gpsGradTeal" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#00b1a9"/>
+                        <stop offset="50%" stop-color="#10b981"/>
+                        <stop offset="100%" stop-color="#38ef7d"/>
+                    </linearGradient>
+                </defs>
                 <path class="gps-flow-path" d="M -50,150 C 120,80 180,260 340,190 C 420,160 480,240 550,210" />
                 <path class="gps-flow-path-subtle" d="M -20,240 C 90,180 200,320 360,250 C 440,210 500,290 560,260" />
             </svg>
@@ -273,6 +287,11 @@
 
             <!-- 4. Center Hero Section with High-Fidelity Layered Animation -->
             <div class="hero-center-stage">
+                <!-- Top Mini Floating Brand Pill -->
+                <div class="loading-brand-pill">
+                    <img src="assets/gsm/navigo-logo.svg" alt="Navigo" class="loading-pill-logo">
+                    <span class="loading-pill-text">Navigo EV <span class="loading-pill-dot"></span></span>
+                </div>
                 <div class="illustration-box">
                     <!-- Dynamic Wind Streaks -->
                     <div class="wind-motion-wrapper">
@@ -281,6 +300,9 @@
                         <div class="wind-streak w3"></div>
                         <div class="wind-streak w4"></div>
                     </div>
+
+                    <!-- Underglow Neon Light -->
+                    <div class="car-underglow-neon"></div>
 
                     <!-- Base Electric Car + Map with Suspension Floating -->
                     <img src="assets/gsm/loading_hero_car_map.png" alt="Navigo EV Car" class="hero-base-img">
@@ -297,21 +319,31 @@
                 <!-- Branding Typography -->
                 <div class="brand-headline-box">
                     <h1 class="brand-name">NAVIGO</h1>
-                    <div class="brand-greeting">Xin Chào</div>
+                    <div class="brand-greeting">Di Chuyển Xanh Thuần Điện</div>
                 </div>
             </div>
 
-            <!-- 5. Bottom Circular Loading Spinner & Status -->
+            <!-- 6. Digital EV Battery Charging Progress Dashboard -->
             <div class="loading-footer-status">
-                <div class="spinner-halo-wrap">
-                    <div class="spinner-halo-glow"></div>
-                    <div class="spinner-circle-ring"></div>
+                <div class="ev-progress-meta-row">
+                    <div class="ev-energy-tag">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#00b1a9">
+                            <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
+                        </svg>
+                        <span>Hệ Thống 800V Sẵn Sàng</span>
+                    </div>
+                    <div class="ev-percent-num" id="welcome-percentage">0%</div>
                 </div>
-                <div class="status-primary-text">
-                    Đang tải dữ liệu<span class="status-dots"></span>
+
+                <div class="ev-progress-track">
+                    <div class="ev-progress-bar-fill" id="welcome-progress-bar"></div>
                 </div>
-                <div class="status-secondary-text">
-                    Vui lòng đợi trong giây lát...
+
+                <div class="status-primary-text" id="welcome-status-primary">
+                    ⚡ Khởi động động cơ điện &amp; định vị GPS...
+                </div>
+                <div class="status-secondary-text" id="welcome-status-secondary">
+                    Dẫn lối chuẩn xác • Đón rước tận nơi • 0 Phát thải
                 </div>
             </div>
         </div>
@@ -319,7 +351,7 @@
     <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
     <nav class="gsm-pc-navbar">
         <a href="index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
-            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <img src="assets/gsm/navigo-logo.svg" alt="Navigo" style="width:36px; height:36px; border-radius:10px; flex-shrink:0; display:block; box-shadow:0 3px 10px rgba(0,177,169,0.25);">
             <div>
                 <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
                 <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
@@ -687,28 +719,64 @@
             }
 
             // CASE 3: Direct initial visit to index.html (first time in session):
-            // Show loading splash for exactly 2 seconds (2000ms) with full animations
-            // Ensure NO location modal is shown during this loading duration
+            // Show loading splash with 60/120 FPS requestAnimationFrame progress & dynamic status text
             sessionStorage.setItem('navigo_loading_screen_active', 'true');
-            const LOADING_DURATION_MS = 2000;
-            const FADE_TRANSITION_MS = 420;
+            const LOADING_DURATION_MS = 2100;
+            const FADE_TRANSITION_MS = 450;
 
-            setTimeout(() => {
-                sessionStorage.removeItem('navigo_loading_screen_active');
-                sessionStorage.setItem('navigo_session_loaded', 'true');
-                if (splash) {
-                    splash.classList.add('hidden-splash');
+            const percentEl = document.getElementById('welcome-percentage');
+            const barEl = document.getElementById('welcome-progress-bar');
+            const primaryEl = document.getElementById('welcome-status-primary');
+
+            const startTime = performance.now();
+            function frame(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / LOADING_DURATION_MS, 1);
+                // Natural deceleration curve (smooth easing)
+                const eased = 1 - Math.pow(1 - progress, 2.4);
+                const percent = Math.min(100, Math.floor(eased * 100));
+
+                if (percentEl) percentEl.textContent = `${percent}%`;
+                if (barEl) barEl.style.width = `${percent}%`;
+
+                if (primaryEl) {
+                    if (percent < 30) {
+                        primaryEl.innerHTML = '⚡ Khởi động động cơ điện &amp; định vị GPS...';
+                    } else if (percent < 68) {
+                        primaryEl.innerHTML = '📡 Kết nối bản đồ không gian &amp; trạm sạc...';
+                    } else if (percent < 95) {
+                        primaryEl.innerHTML = '🌿 Tối ưu tuyến đường xanh 0 phát thải...';
+                    } else {
+                        primaryEl.innerHTML = '✨ Sẵn sàng trải nghiệm cùng Navigo!';
+                    }
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    if (percentEl) percentEl.textContent = '100%';
+                    if (barEl) barEl.style.width = '100%';
+
                     setTimeout(() => {
-                        splash.style.display = 'none';
-                    }, FADE_TRANSITION_MS);
-                }
+                        sessionStorage.removeItem('navigo_loading_screen_active');
+                        sessionStorage.setItem('navigo_session_loaded', 'true');
+                        if (splash) {
+                            splash.classList.add('hidden-splash');
+                            setTimeout(() => {
+                                splash.style.display = 'none';
+                            }, FADE_TRANSITION_MS);
+                        }
 
-                // Loading finished and user is now on Trang Chủ!
-                // Now prompt user for location access strictly ONCE
-                if (!isLocationPrompted) {
-                    promptForUserLocation();
+                        // Loading finished and user is now on Trang Chủ!
+                        // Now prompt user for location access strictly ONCE
+                        if (!isLocationPrompted) {
+                            promptForUserLocation();
+                        }
+                    }, 220);
                 }
-            }, LOADING_DURATION_MS);
+            }
+
+            requestAnimationFrame(frame);
         })();
     </script>
 </body>

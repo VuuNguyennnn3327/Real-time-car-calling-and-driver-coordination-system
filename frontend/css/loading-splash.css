@@ -1,9 +1,9 @@
 /* ==========================================================================
-   NAVIGO EV PLATFORM — RESPONSIVE SPLASH & LOADING SCREEN (MOBILE, TABLET & PC)
-   Full-screen responsive adaptive loading with authentic GSM animations
+   NAVIGO EV PLATFORM — NEXT-GEN CINEMATIC EV LOADING SCREEN
+   Buttery-Smooth 60/120 FPS GPU Accelerated Animations & Holographic EV Aesthetics
    ========================================================================== */
 
-/* Fullscreen Immersive Loading Backdrop (100% Viewport across Mobile, Tablet & PC) */
+/* 1. Fullscreen Immersive Backdrop with Dynamic Ambient Glow */
 .navigo-loading-backdrop,
 .navigo-welcome-splash {
     position: fixed;
@@ -11,23 +11,27 @@
     width: 100vw;
     height: 100vh;
     z-index: 2147483647;
-    background: linear-gradient(180deg, #dffcf7 0%, #c6f8ed 30%, #a1e9dd 60%, #7edacd 80%, #5dd3c5 100%);
+    background: radial-gradient(circle at 50% 20%, #f4fdfb 0%, #e2faf5 25%, #c5f4ea 55%, #9ee8dc 80%, #68d9cb 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: opacity, transform, filter;
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                filter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .navigo-loading-backdrop.fade-out,
 .navigo-welcome-splash.hidden-splash {
     opacity: 0 !important;
-    transform: scale(1.025) !important;
+    transform: scale(1.04) !important;
+    filter: blur(6px) !important;
     pointer-events: none !important;
     visibility: hidden !important;
 }
 
-/* Adaptive App Viewport Container (Seamlessly expands to full screen on all devices) */
+/* 2. Adaptive Viewport Shell */
 .loading-app-container {
     width: 100% !important;
     max-width: 100% !important;
@@ -39,55 +43,114 @@
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: clamp(24px, 5vh, 50px) 20px clamp(20px, 4vh, 40px);
+    padding: clamp(20px, 4vh, 44px) 20px clamp(16px, 3vh, 32px);
     overflow: hidden;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+    box-sizing: border-box;
 }
 
-/* 1. Authentic Street Map Blueprint Texture (Clean transparent PNG, no text, no sharp edges) */
+/* 3. High-Tech Holographic Energy Grid & Ambient Aurora */
+.bg-aurora-mesh {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+.aurora-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(55px);
+    opacity: 0.55;
+    will-change: transform, opacity;
+    animation: auroraOrbFloat 8s ease-in-out infinite alternate;
+}
+
+.aurora-orb.orb-1 {
+    top: -10%;
+    left: 20%;
+    width: clamp(260px, 40vw, 500px);
+    height: clamp(260px, 40vw, 500px);
+    background: radial-gradient(circle, rgba(0, 177, 169, 0.45) 0%, rgba(52, 211, 153, 0) 70%);
+    animation-delay: 0s;
+}
+
+.aurora-orb.orb-2 {
+    bottom: -15%;
+    right: 15%;
+    width: clamp(280px, 45vw, 550px);
+    height: clamp(280px, 45vw, 550px);
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(45, 212, 191, 0) 70%);
+    animation-delay: -3s;
+}
+
+.aurora-orb.orb-3 {
+    top: 45%;
+    left: -10%;
+    width: clamp(200px, 30vw, 380px);
+    height: clamp(200px, 30vw, 380px);
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, rgba(0, 177, 169, 0) 70%);
+    animation-delay: -5s;
+}
+
+@keyframes auroraOrbFloat {
+    0% {
+        transform: translate3d(0, 0, 0) scale(0.95);
+        opacity: 0.4;
+    }
+    50% {
+        transform: translate3d(30px, -20px, 0) scale(1.1);
+        opacity: 0.65;
+    }
+    100% {
+        transform: translate3d(-20px, 25px, 0) scale(1);
+        opacity: 0.5;
+    }
+}
+
+/* 4. Blueprint Street Map Texture with Cinematic Fade */
 .bg-map-texture {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: clamp(280px, 50vh, 550px);
+    height: clamp(280px, 52vh, 600px);
     background: url('../assets/gsm/loading_map_clean.png') no-repeat center bottom;
     background-size: cover;
-    opacity: 0.35;
+    opacity: 0.32;
     pointer-events: none;
-    z-index: 1;
-    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 100%);
-    mask-image: linear-gradient(to top, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 100%);
+    z-index: 2;
+    -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
+    mask-image: linear-gradient(to top, rgba(0,0,0,1) 30%, rgba(0,0,0,0) 100%);
 }
 
-/* 2. Flowing Animated Dashed GPS Road Curves */
+/* 5. Smooth Flowing Neon GPS Vector Paths */
 .bg-gps-svg {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: clamp(240px, 42vh, 480px);
+    height: clamp(240px, 44vh, 520px);
     pointer-events: none;
-    z-index: 2;
+    z-index: 3;
     overflow: visible;
 }
 
 .gps-flow-path {
-    stroke: rgba(0, 177, 169, 0.42);
-    stroke-width: 2.5;
-    stroke-dasharray: 6 9;
+    stroke: url(#gpsGradTeal);
+    stroke-width: 3;
+    stroke-dasharray: 8 12;
     fill: none;
-    animation: gpsFlowing 18s linear infinite;
+    filter: drop-shadow(0 0 6px rgba(0, 177, 169, 0.45));
+    animation: gpsFlowing 14s linear infinite;
 }
 
 .gps-flow-path-subtle {
-    stroke: rgba(45, 212, 191, 0.25);
+    stroke: rgba(16, 185, 129, 0.3);
     stroke-width: 2;
-    stroke-dasharray: 4 7;
+    stroke-dasharray: 5 9;
     fill: none;
-    animation: gpsFlowingReverse 22s linear infinite;
+    animation: gpsFlowingReverse 18s linear infinite;
 }
 
 @keyframes gpsFlowing {
@@ -100,40 +163,42 @@
     to { stroke-dashoffset: 1000; }
 }
 
-/* 3. Ambient Floating Electric Energy Glows */
+/* 6. Ambient Electric Sparkles & Rising Energy Photons */
 .ambient-energy-layer {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
     overflow: hidden;
 }
 
 .energy-particle {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(0, 177, 169, 0.65) 0%, rgba(45, 212, 191, 0) 70%);
-    animation: energyFloat linear infinite;
+    background: radial-gradient(circle, #ffffff 0%, rgba(52, 211, 153, 0.9) 35%, rgba(0, 177, 169, 0) 70%);
+    box-shadow: 0 0 10px rgba(0, 177, 169, 0.6);
+    will-change: transform, opacity;
+    animation: energyPhotonFloat linear infinite;
 }
 
-@keyframes energyFloat {
+@keyframes energyPhotonFloat {
     0% {
-        transform: translateY(105vh) scale(0.6);
+        transform: translate3d(0, 105vh, 0) scale(0.4);
         opacity: 0;
     }
-    25% {
-        opacity: 0.75;
+    15% {
+        opacity: 0.9;
     }
-    75% {
-        opacity: 0.75;
+    85% {
+        opacity: 0.9;
     }
     100% {
-        transform: translateY(-40px) scale(1.15);
+        transform: translate3d(20px, -40px, 0) scale(1.2);
         opacity: 0;
     }
 }
 
-/* 4. Center Hero Section */
+/* 7. Center Hero Section */
 .hero-center-stage {
     position: relative;
     z-index: 10;
@@ -144,105 +209,196 @@
     width: 100%;
     margin: auto 0;
     padding: 0 16px;
+    box-sizing: border-box;
 }
 
-/* Illustration Container (Maintains exact 410:214 aspect ratio of graphic, fully responsive) */
+/* 8. Top Floating Mini Brand Crest (Crowned above Hero) */
+.loading-brand-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(255, 255, 255, 0.85);
+    padding: 6px 16px 6px 10px;
+    border-radius: 9999px;
+    box-shadow: 0 4px 20px rgba(0, 177, 169, 0.15), 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: clamp(12px, 2.2vh, 22px);
+    animation: brandPillDrop 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes brandPillDrop {
+    from {
+        opacity: 0;
+        transform: translate3d(0, -16px, 0) scale(0.92);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+.loading-pill-logo {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0, 177, 169, 0.3);
+}
+
+.loading-pill-text {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #0f2d3c;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.loading-pill-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: livePulseDot 1.4s infinite alternate;
+}
+
+@keyframes livePulseDot {
+    from { transform: scale(0.85); opacity: 0.7; }
+    to { transform: scale(1.25); opacity: 1; }
+}
+
+/* 9. Interactive Illustration Box with Magnetic Hover Physics */
 .illustration-box {
     position: relative;
-    width: clamp(280px, 32vw, 420px);
+    width: clamp(290px, 34vw, 440px);
     aspect-ratio: 410 / 214;
     height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 14px auto;
+    margin: 0 auto clamp(8px, 1.8vh, 18px) auto;
 }
 
-/* Base Car + Map Illustration with Suspension Floating */
+/* Base Car + Floating Suspension Movement */
 .hero-base-img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 14px 28px rgba(15, 45, 60, 0.12));
-    animation: carRidePhysics 3.2s ease-in-out infinite;
-    transform-origin: 45% 75%;
+    filter: drop-shadow(0 18px 30px rgba(15, 45, 60, 0.16)) drop-shadow(0 4px 10px rgba(0, 177, 169, 0.22));
+    animation: carMaglevHover 3.4s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+    transform-origin: 50% 80%;
+    will-change: transform;
 }
 
-@keyframes carRidePhysics {
+@keyframes carMaglevHover {
     0%, 100% {
-        transform: translateY(0px) rotate(0deg);
+        transform: translate3d(0, 0px, 0) rotate(0deg);
     }
     25% {
-        transform: translateY(-4px) rotate(-0.5deg);
+        transform: translate3d(0, -6px, 0) rotate(-0.6deg);
     }
     50% {
-        transform: translateY(-1px) rotate(0.4deg);
+        transform: translate3d(0, -2px, 0) rotate(0.4deg);
     }
     75% {
-        transform: translateY(-4.5px) rotate(-0.3deg);
+        transform: translate3d(0, -7px, 0) rotate(-0.3deg);
     }
 }
 
-/* Dynamic Speed Wind Streaks (Electric Motion Trails) */
+/* Cyan Neon Road Glow Under the EV */
+.car-underglow-neon {
+    position: absolute;
+    bottom: 8%;
+    left: 20%;
+    width: 60%;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(0, 201, 167, 0.55) 0%, rgba(45, 212, 191, 0.25) 45%, rgba(0, 177, 169, 0) 75%);
+    filter: blur(8px);
+    pointer-events: none;
+    z-index: 4;
+    animation: underglowBreathe 3.4s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes underglowBreathe {
+    0%, 100% {
+        transform: scale(0.92);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.95;
+    }
+}
+
+/* Dynamic Wind Streaks */
 .wind-motion-wrapper {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 5;
+    z-index: 6;
 }
 
 .wind-streak {
     position: absolute;
     height: 3px;
     border-radius: 9999px;
-    background: linear-gradient(90deg, rgba(0, 177, 169, 0) 0%, rgba(0, 177, 169, 0.75) 50%, rgba(45, 212, 191, 0) 100%);
-    animation: windStreakRush 1.6s ease-in-out infinite;
+    background: linear-gradient(90deg, rgba(0, 177, 169, 0) 0%, rgba(0, 201, 167, 0.85) 50%, rgba(255, 255, 255, 0.9) 75%, rgba(45, 212, 191, 0) 100%);
+    box-shadow: 0 0 8px rgba(0, 177, 169, 0.5);
+    animation: windStreakRush 1.5s cubic-bezier(0.2, 0.8, 0.3, 1) infinite;
+    will-change: transform, opacity;
 }
 
 .wind-streak.w1 {
-    top: 26%;
-    left: 8%;
-    width: 25%;
+    top: 24%;
+    left: 6%;
+    width: 28%;
     animation-delay: 0.1s;
 }
 .wind-streak.w2 {
-    top: 48%;
-    left: 4%;
-    width: 32%;
-    animation-delay: 0.5s;
+    top: 46%;
+    left: 2%;
+    width: 36%;
+    animation-delay: 0.45s;
 }
 .wind-streak.w3 {
-    top: 68%;
-    left: 10%;
-    width: 26%;
-    animation-delay: 0.9s;
+    top: 66%;
+    left: 8%;
+    width: 30%;
+    animation-delay: 0.85s;
 }
 .wind-streak.w4 {
-    top: 80%;
-    left: 15%;
-    width: 28%;
-    animation-delay: 0.3s;
+    top: 82%;
+    left: 14%;
+    width: 32%;
+    animation-delay: 0.25s;
 }
 
 @keyframes windStreakRush {
     0% {
-        transform: translateX(35px) scaleX(0.7);
+        transform: translate3d(40px, 0, 0) scaleX(0.6);
         opacity: 0;
     }
-    40% {
-        opacity: 0.9;
+    35% {
+        opacity: 1;
     }
-    80% {
-        transform: translateX(-25px) scaleX(1.3);
-        opacity: 0.65;
+    75% {
+        transform: translate3d(-35px, 0, 0) scaleX(1.4);
+        opacity: 0.8;
     }
     100% {
-        transform: translateX(-55px) scaleX(0.8);
+        transform: translate3d(-70px, 0, 0) scaleX(0.7);
         opacity: 0;
     }
 }
 
-/* Radar Beacon Glow Pulse on Map Location Pin */
+/* Radar Beacon Ripple on Destination Pin */
 .pin-radar-beacon {
     position: absolute;
     top: 27%;
@@ -250,149 +406,165 @@
     width: clamp(16px, 2vw, 22px);
     height: clamp(16px, 2vw, 22px);
     border-radius: 50%;
-    background: rgba(0, 177, 169, 0.45);
+    background: rgba(0, 177, 169, 0.55);
     pointer-events: none;
     transform: translate(-50%, -50%);
-    animation: radarPulse 2s cubic-bezier(0.2, 0.8, 0.3, 1) infinite;
+    animation: radarPulse 1.9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.pin-radar-beacon::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 177, 169, 0.6);
+    animation: radarRing 1.9s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
 @keyframes radarPulse {
     0% {
-        transform: translate(-50%, -50%) scale(0.6);
-        opacity: 0.95;
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
     }
-    65% {
-        transform: translate(-50%, -50%) scale(2.8);
+    70% {
+        transform: translate(-50%, -50%) scale(3);
         opacity: 0;
     }
     100% {
-        transform: translate(-50%, -50%) scale(0.6);
+        transform: translate(-50%, -50%) scale(0.5);
         opacity: 0;
     }
 }
 
-/* 3 Service Badges Micro-Floating & Hovering */
+@keyframes radarRing {
+    0% {
+        transform: scale(0.6);
+        opacity: 1;
+    }
+    85% {
+        transform: scale(3.5);
+        opacity: 0;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+/* Service Badges with Micro-Floating */
 .service-bubble {
     position: absolute;
     z-index: 12;
     pointer-events: none;
-    filter: drop-shadow(0 6px 12px rgba(15, 45, 60, 0.16));
+    filter: drop-shadow(0 8px 16px rgba(15, 45, 60, 0.18));
+    will-change: transform;
 }
 
 .service-bubble.b-food {
-    top: 3%;
+    top: 2%;
     left: 56%;
     width: 14%;
-    height: auto;
     aspect-ratio: 1 / 1;
-    animation: floatBubbleFood 2.8s ease-in-out infinite;
+    animation: floatBubbleFood 3s ease-in-out infinite;
 }
 
 .service-bubble.b-package {
-    top: 1%;
+    top: 0%;
     left: 79%;
     width: 14.5%;
-    height: auto;
     aspect-ratio: 1 / 1;
-    animation: floatBubblePackage 3.2s ease-in-out infinite 0.4s;
+    animation: floatBubblePackage 3.4s ease-in-out infinite 0.4s;
 }
 
 .service-bubble.b-bus {
-    top: 38%;
+    top: 37%;
     left: 81%;
     width: 13.5%;
-    height: auto;
     aspect-ratio: 46 / 42;
-    animation: floatBubbleBus 2.6s ease-in-out infinite 0.8s;
+    animation: floatBubbleBus 2.8s ease-in-out infinite 0.8s;
 }
 
 @keyframes floatBubbleFood {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-        transform: translateY(-7px) rotate(-3deg);
-    }
+    0%, 100% { transform: translate3d(0, 0px, 0) rotate(0deg); }
+    50% { transform: translate3d(0, -9px, 0) rotate(-3.5deg); }
 }
 
 @keyframes floatBubblePackage {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-        transform: translateY(-8px) rotate(3deg);
-    }
+    0%, 100% { transform: translate3d(0, 0px, 0) rotate(0deg); }
+    50% { transform: translate3d(0, -10px, 0) rotate(3.5deg); }
 }
 
 @keyframes floatBubbleBus {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-        transform: translateY(-5px) rotate(-2deg);
-    }
+    0%, 100% { transform: translate3d(0, 0px, 0) rotate(0deg); }
+    50% { transform: translate3d(0, -7px, 0) rotate(-2.5deg); }
 }
 
-/* Typography Styling (Fully Stacked, Zero Overlap) */
+/* 10. Branding Typography with Metallic Liquid Cyan Sweep */
 .brand-headline-box {
     text-align: center;
     animation: brandEnter 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
     position: relative;
     z-index: 10;
-    margin-top: 6px;
+    margin-top: 4px;
 }
 
 .brand-name {
-    font-size: clamp(2.2rem, 3.8vw, 3.5rem);
+    font-size: clamp(2.3rem, 4.2vw, 3.8rem);
     font-weight: 900;
     color: #0f2d3c;
-    letter-spacing: clamp(1.5px, 0.25vw, 3px);
+    letter-spacing: clamp(2px, 0.3vw, 4px);
     margin: 0;
-    line-height: 1.15;
-    text-shadow: 0 2px 10px rgba(15, 45, 60, 0.08);
+    line-height: 1.1;
     position: relative;
-    display: block;
+    display: inline-block;
+    background: linear-gradient(135deg, #0f2d3c 20%, #007d77 60%, #00b1a9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 16px rgba(0, 177, 169, 0.15);
 }
 
-/* Electric Shimmer across NAVIGO */
+/* Liquid Electric Sheen Sweep */
 .brand-name::after {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
-    width: 65%;
+    left: -120%;
+    width: 70%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 177, 169, 0.35), transparent);
-    animation: brandShimmerEffect 3s ease-in-out infinite;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+    animation: brandShimmerEffect 2.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    pointer-events: none;
 }
 
 @keyframes brandShimmerEffect {
-    0% { left: -100%; }
-    45%, 100% { left: 190%; }
+    0% { left: -120%; }
+    40%, 100% { left: 220%; }
 }
 
 .brand-greeting {
-    font-size: clamp(1.7rem, 2.7vw, 2.4rem);
+    font-size: clamp(1.1rem, 1.8vw, 1.5rem);
     font-weight: 700;
-    color: #133e4d;
+    color: #007d77;
     margin: 6px 0 0 0;
-    line-height: 1.15;
-    letter-spacing: -0.3px;
-    display: block;
+    line-height: 1.25;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
 }
 
 @keyframes brandEnter {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translate3d(0, 18px, 0);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
     }
 }
 
-/* 5. Bottom Circular Loading Spinner & Status */
+/* 11. Futuristic Digital EV Battery Charging Progress Dashboard */
 .loading-footer-status {
     position: relative;
     z-index: 10;
@@ -400,88 +572,138 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    margin-bottom: clamp(14px, 2.5vh, 28px);
+    width: 100%;
+    max-width: 440px;
+    margin-bottom: clamp(10px, 2vh, 24px);
+    padding: 0 16px;
+    box-sizing: border-box;
 }
 
-/* Spinner Wrapper with Soft Glow */
-.spinner-halo-wrap {
+/* Top Progress Stats Row: Live % Counter & EV Energy Badge */
+.ev-progress-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: clamp(280px, 36vw, 380px);
+    margin-bottom: 8px;
+    padding: 0 4px;
+    box-sizing: border-box;
+}
+
+.ev-energy-tag {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #007d77;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.ev-energy-tag svg {
+    filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
+}
+
+.ev-percent-num {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #0f2d3c;
+    letter-spacing: -0.5px;
+    min-width: 48px;
+    text-align: right;
+}
+
+/* Futuristic Capsule Progress Bar Track */
+.ev-progress-track {
     position: relative;
-    width: clamp(48px, 5vw, 58px);
-    height: clamp(48px, 5vw, 58px);
-    margin-bottom: 14px;
+    width: 100%;
+    max-width: clamp(280px, 36vw, 380px);
+    height: 10px;
+    border-radius: 9999px;
+    background: rgba(15, 45, 60, 0.08);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 177, 169, 0.12);
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+/* Glowing Electric Gradient Progress Fill */
+.ev-progress-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #00b1a9 0%, #10b981 60%, #34d399 100%);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.65);
+    transition: width 0.12s linear;
+    will-change: width;
+}
+
+/* Electric Surge Pulse Head at the leading edge */
+.ev-progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 24px;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95));
+    box-shadow: 0 0 10px #ffffff;
+    animation: progressSparkLead 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes progressSparkLead {
+    from { opacity: 0.6; transform: scaleX(0.8); }
+    to { opacity: 1; transform: scaleX(1.3); }
+}
+
+/* Dynamic State Messages with Smooth Typography */
+.status-primary-text {
+    font-size: clamp(0.92rem, 1.25vw, 1.12rem);
+    font-weight: 800;
+    color: #0f2d3c;
+    margin-bottom: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.spinner-halo-glow {
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(0, 177, 169, 0.38) 0%, rgba(45, 212, 191, 0) 70%);
-    animation: spinnerAura 2s ease-in-out infinite;
-}
-
-@keyframes spinnerAura {
-    0%, 100% {
-        transform: scale(0.9);
-        opacity: 0.55;
-    }
-    50% {
-        transform: scale(1.22);
-        opacity: 0.95;
-    }
-}
-
-.spinner-circle-ring {
-    width: clamp(44px, 4.5vw, 52px);
-    height: clamp(44px, 4.5vw, 52px);
-    border-radius: 50%;
-    border: 4.5px solid rgba(0, 177, 169, 0.2);
-    border-top-color: #00b1a9;
-    border-right-color: #2dd4bf;
-    box-shadow: 0 0 16px rgba(0, 177, 169, 0.28);
-    animation: spinRingSmooth 0.92s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
-}
-
-@keyframes spinRingSmooth {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* Status Text */
-.status-primary-text {
-    font-size: clamp(0.95rem, 1.2vw, 1.15rem);
-    font-weight: 700;
-    color: #0f3544;
-    margin-bottom: 5px;
-    display: flex;
-    align-items: center;
+    gap: 6px;
     letter-spacing: 0.2px;
-}
-
-.status-dots::after {
-    content: '';
-    display: inline-block;
-    width: 18px;
-    text-align: left;
-    animation: dotsCycleAnimation 1.6s steps(4, end) infinite;
-}
-
-@keyframes dotsCycleAnimation {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
+    text-align: center;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .status-secondary-text {
-    font-size: clamp(0.85rem, 1vw, 1rem);
+    font-size: clamp(0.82rem, 1vw, 0.94rem);
     color: #476f82;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.1px;
+    text-align: center;
+    opacity: 0.9;
+}
+
+/* Responsive Optimizations */
+@media (max-width: 480px) {
+    .loading-app-container {
+        padding: 24px 16px 20px 16px;
+    }
+    .illustration-box {
+        width: 90vw;
+        max-width: 330px;
+    }
+    .brand-name {
+        font-size: 2.2rem;
+    }
+    .brand-greeting {
+        font-size: 1.05rem;
+    }
+    .ev-progress-track {
+        height: 9px;
+    }
 }

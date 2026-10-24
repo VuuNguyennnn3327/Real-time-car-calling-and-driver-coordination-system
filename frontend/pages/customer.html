@@ -93,6 +93,35 @@
             gap: 14px;
         }
 
+        /* Completely eliminate the bottom white rectangular bar/gap on customer booking portal across all roles (guest, customer, admin) */
+        html:has(body.customer-body),
+        body.gsm-theme.customer-body,
+        body.gsm-booking-page,
+        body[data-page="customer"],
+        body.gsm-role-guest.customer-body,
+        body.gsm-role-customer.customer-body,
+        body.gsm-role-admin.customer-body {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.customer-body .gsm-desktop-container {
+            height: calc(100vh - 64px) !important;
+            min-height: calc(100vh - 64px) !important;
+            max-height: calc(100vh - 64px) !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.customer-body .gsm-desktop-sidebar,
+        body.customer-body .gsm-desktop-wide-canvas,
+        body.customer-body #customer-map-container {
+            height: 100% !important;
+            bottom: 0 !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
         /* Floating Glass Bottom Navigation on customer booking portal */
         .gsm-floating-bottom-nav,
         body.gsm-booking-page .gsm-floating-bottom-nav,
@@ -454,7 +483,7 @@
     <!-- Desktop Top Navigation Bar (>= 1025px) -->
     <nav class="gsm-pc-navbar">
         <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
-            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <img src="../assets/gsm/navigo-logo.svg" alt="Navigo" style="width:36px; height:36px; border-radius:10px; flex-shrink:0; display:block; box-shadow:0 3px 10px rgba(0,177,169,0.25);">
             <div>
                 <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
                 <div style="font-size:0.7rem; font-weight:700; color:#00b1a9; line-height:1;">PURE EV MOBILITY</div>

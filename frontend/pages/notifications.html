@@ -44,6 +44,34 @@
             border-radius: 2px;
         }
 
+        /* Completely eliminate the bottom white rectangular bar/gap on customer notifications page */
+        html:has(body.gsm-notifications-page),
+        body.gsm-theme.gsm-notifications-page,
+        body.gsm-theme:has(.gsm-notif-screen),
+        body[data-page="notifications"] {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.gsm-notifications-page .gsm-desktop-container,
+        body:has(.gsm-notif-screen) .gsm-desktop-container {
+            height: calc(100vh - 64px) !important;
+            min-height: calc(100vh - 64px) !important;
+            max-height: calc(100vh - 64px) !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        body.gsm-notifications-page .gsm-desktop-sidebar,
+        body.gsm-notifications-page .gsm-desktop-wide-canvas,
+        body:has(.gsm-notif-screen) .gsm-desktop-sidebar,
+        body:has(.gsm-notif-screen) .gsm-desktop-wide-canvas {
+            height: 100% !important;
+            bottom: 0 !important;
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+        }
+
         /* Floating Navigation Bar: prominently float on top across all pages */
         .gsm-floating-bottom-nav {
             position: fixed !important;
@@ -71,11 +99,11 @@
         }
     </style>
 </head>
-<body class="gsm-theme">
+<body class="gsm-theme gsm-notifications-page" data-page="notifications">
     <!-- Desktop Web Top Navigation Bar (>= 1025px) -->
     <nav class="gsm-pc-navbar">
         <a href="../index.html" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
-            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #00b1a9, #0f2d3c); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem;">⚡</div>
+            <img src="../assets/gsm/navigo-logo.svg" alt="Navigo" style="width:36px; height:36px; border-radius:10px; flex-shrink:0; display:block; box-shadow:0 3px 10px rgba(0,177,169,0.25);">
             <div>
                 <div style="font-weight:900; font-size:1.25rem; color:#0f2d3c; letter-spacing:-0.5px;">NAVIGO</div>
                 <div style="font-size:0.65rem; color:#00b1a9; font-weight:800; letter-spacing:1px; margin-top:-3px;">DI CHUYỂN XANH</div>
@@ -167,10 +195,10 @@
                 </div>
 
                 <!-- Featured Solar Calendar Banner -->
-                <div style="background:linear-gradient(135deg, #00b1a9 0%, #0f2d3c 100%); border-radius:20px; padding:24px; color:#ffffff; margin-bottom:24px; position:relative; overflow:hidden; box-shadow:0 10px 25px rgba(0,177,169,0.25);">
+                <div style="background:linear-gradient(135deg, #00b1a9 0%, #0f2d3c 100%); border-radius:20px; padding:24px; color:#ffffff; margin-bottom:24px; position:relative; overflow:hidden; box-shadow:0 10px 25px rgba(0,177,169,0.25); flex-shrink:0; min-height:fit-content; box-sizing:border-box;">
                     <div style="position:relative; z-index:2; max-width:560px;">
-                        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.2); backdrop-filter:blur(8px); padding:4px 12px; border-radius:9999px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px; margin-bottom:10px;">
-                            <span>🇻🇳</span> DI CHUYỂN XANH THUẦN ĐIỆN VIỆT NAM
+                        <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.22); backdrop-filter:blur(8px); padding:5px 14px; border-radius:9999px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px; margin-bottom:12px; max-width:100%; box-sizing:border-box; border:1px solid rgba(255,255,255,0.25);">
+                            <span style="line-height:1; display:inline-flex; align-items:center;">🇻🇳</span> DI CHUYỂN XANH THUẦN ĐIỆN VIỆT NAM
                         </div>
                         <h3 style="font-size:1.35rem; font-weight:900; margin:0 0 8px; line-height:1.25;">Đồng Hành Cùng Các Ngày Lễ Dương Lịch Việt Nam</h3>
                         <p style="font-size:0.88rem; opacity:0.9; margin:0 0 16px; line-height:1.45;">Cùng gia đình đón các dịp lễ lớn trong năm với xe thuần điện êm ái, bảo vệ môi trường và nhận ưu đãi giảm giá lên đến 50% cước phí chuyến đi!</p>
@@ -181,8 +209,8 @@
                             <span style="font-size:0.8rem; opacity:0.85;">100% Không mùi khói xăng • 0 Phát thải</span>
                         </div>
                     </div>
-                    <div style="position:absolute; right:-20px; bottom:-20px; font-size:9rem; opacity:0.12; pointer-events:none;">
-                        ⚡
+                    <div style="position:absolute; right:-20px; bottom:-20px; opacity:0.12; pointer-events:none;">
+                        <img src="../assets/gsm/navigo-logo.svg" alt="" style="width:160px; height:160px; filter:grayscale(1) brightness(1.6);">
                     </div>
                 </div>
 
@@ -199,7 +227,7 @@
                 <!-- Green Mobility Service Highlights -->
                 <div>
                     <h3 style="font-size:1.05rem; font-weight:800; color:#0f2d3c; margin:0 0 14px; display:flex; align-items:center; gap:8px;">
-                        <span>⚡</span> Đội Xe Thuần Điện Navigo
+                        <img src="../assets/gsm/navigo-logo.svg" alt="" style="width:20px; height:20px; border-radius:5px; vertical-align:middle; display:inline-block;"> Đội Xe Thuần Điện Navigo
                     </h3>
                     <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;">
                         <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:16px; text-align:center;">
