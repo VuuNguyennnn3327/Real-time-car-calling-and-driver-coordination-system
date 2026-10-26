@@ -2984,7 +2984,7 @@ class CustomerAppController {
     async fetchOsrmRoute(fromLat, fromLon, toLat, toLon) {
         const url = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
+        const timeout = setTimeout(() => controller.abort(), 7500);
         try {
             const res = await fetch(url, { signal: controller.signal });
             clearTimeout(timeout);
@@ -3378,6 +3378,7 @@ class CustomerAppController {
                     lat: Number(this.destination.lat),
                     lng: Number(this.destination.lng)
                 };
+                createdTrip.routeGeometry = (Array.isArray(this.currentRouteGeometry) && this.currentRouteGeometry.length > 1) ? this.currentRouteGeometry : (typeof this.getStreetFollowingPath === 'function' ? this.getStreetFollowingPath(this.pickup, this.destination) : null);
                 createdTrip.walletDeducted = isWalletPaid;
                 createdTrip.paidByWallet = isWalletPaid;
                 createdTrip.customerPhone = custWalletPhone;
@@ -3412,6 +3413,7 @@ class CustomerAppController {
                         customerName: currentUser?.name || 'Khách hàng Navigo',
                         customerPhone: currentUser?.phone || '0901234567',
                         customerId: currentUser?.id || 'cust_01',
+                        routeGeometry: createdTrip.routeGeometry,
                         driverName: createdTrip.driverName || 'Chưa gán',
                         pickup: this.pickup?.name || this.pickup?.address || 'Điểm đón',
                         pickupName: this.pickup?.name || this.pickup?.address || 'Điểm đón',
@@ -3425,7 +3427,8 @@ class CustomerAppController {
                         pickupLon: Number(this.pickup.lng),
                         dropoffLat: Number(this.destination.lat),
                         dropoffLon: Number(this.destination.lng),
-                        fare: estFare,
+                        routeGeometry: (Array.isArray(this.currentRouteGeometry) && this.currentRouteGeometry.length > 1) ? this.currentRouteGeometry : (typeof this.getStreetFollowingPath === 'function' ? this.getStreetFollowingPath(this.pickup, this.destination) : null),
+                fare: estFare,
                         distance: (estDist / 1000).toFixed(1),
                         duration: Math.max(3, Math.round(estDist / 350)),
                         vehicleType: vInfo.type,
@@ -3459,6 +3462,7 @@ class CustomerAppController {
                         fareAmount: estFare,
                         distanceMeters: estDist,
                         vehicleType: vType,
+                        routeGeometry: createdTrip.routeGeometry,
                         createdAt: new Date().toISOString()
                     }));
                 } catch (e) {}
@@ -3574,6 +3578,7 @@ class CustomerAppController {
                 walletDeducted: isWalletPaid,
                 paidByWallet: isWalletPaid,
                 customerPhone: custWalletPhone,
+                routeGeometry: (Array.isArray(this.currentRouteGeometry) && this.currentRouteGeometry.length > 1) ? this.currentRouteGeometry : (typeof this.getStreetFollowingPath === 'function' ? this.getStreetFollowingPath(this.pickup, this.destination) : null),
                 fare: estFare
             };
 
@@ -3584,6 +3589,7 @@ class CustomerAppController {
                     id: offlineTrip.id,
                     customerName: offlineTrip.customerName,
                     customerPhone: offlineTrip.customerPhone,
+                    routeGeometry: offlineTrip.routeGeometry,
                     driverName: 'Chưa gán',
                     pickup: offlineTrip.pickupName,
                     destination: offlineTrip.dropoffName,
@@ -3593,7 +3599,8 @@ class CustomerAppController {
                     pickupLon: Number(this.pickup.lng),
                     dropoffLat: Number(this.destination.lat),
                     dropoffLon: Number(this.destination.lng),
-                    fare: estFare,
+                    routeGeometry: (Array.isArray(this.currentRouteGeometry) && this.currentRouteGeometry.length > 1) ? this.currentRouteGeometry : (typeof this.getStreetFollowingPath === 'function' ? this.getStreetFollowingPath(this.pickup, this.destination) : null),
+                fare: estFare,
                     distance: (estDist / 1000).toFixed(1),
                     vehicleType: vInfo.type,
                     vehicleTypeName: vInfo.name,
@@ -3608,6 +3615,7 @@ class CustomerAppController {
                     status: 'REQUESTED',
                     customerName: offlineTrip.customerName,
                     customerPhone: offlineTrip.customerPhone,
+                    routeGeometry: offlineTrip.routeGeometry,
                     driverName: null,
                     licensePlate: '',
                     vehicleModel: '',
@@ -4394,6 +4402,7 @@ class CustomerAppController {
                         name: trip.driverName || 'Tài xế',
                         vehicle: `${vDetails.label}${trip.licensePlate ? ' - ' + trip.licensePlate : ''}`,
                         vehicleType: vType,
+                        routeGeometry: createdTrip.routeGeometry,
                         isActive: true
                     });
                 } else {

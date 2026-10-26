@@ -393,6 +393,16 @@
         return this;
       }
 
+      // Safeguard against Leaflet "Map container is already initialized" error if DOM container has stale _leaflet_id
+      if (this.container && this.container._leaflet_id) {
+        try {
+          if (this.container._leaflet_map && typeof this.container._leaflet_map.remove === 'function') {
+            this.container._leaflet_map.remove();
+          }
+        } catch (e) {}
+        this.container._leaflet_id = null;
+      }
+
       // Initialize Leaflet map
       this.map = L.map(this.container, {
         center: this.options.center,
@@ -402,6 +412,10 @@
         zoomControl: this.options.zoomControl,
         attributionControl: this.options.attributionControl
       });
+
+      if (this.container) {
+        this.container._leaflet_map = this.map;
+      }
 
       // Add Google Maps Vietnam base tile layer with subdomains and buffer optimization
       this.tileLayer = L.tileLayer(this.options.tileUrl, {
