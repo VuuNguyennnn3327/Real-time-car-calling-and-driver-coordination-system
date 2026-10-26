@@ -436,12 +436,16 @@ class DriverController {
       } else if (this.mapController && this.mapController.map) {
         setTimeout(() => {
           this.mapController.invalidateSize();
-          if (this.currentPosition && this.currentPosition.lat) {
-            if (typeof this.mapController.setUserLocation === 'function') {
-              this.mapController.setUserLocation(this.currentPosition.lat, this.currentPosition.lng);
-            }
-            if (typeof this.mapController.setView === 'function') {
-              this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 15);
+          if (this.activeTrip) {
+            this.renderStageMapRoute(this.activeTrip.stage === 'trip_in_progress' ? 2 : 1);
+          } else {
+            if (this.currentPosition && this.currentPosition.lat) {
+              if (typeof this.mapController.setUserLocation === 'function') {
+                this.mapController.setUserLocation(this.currentPosition.lat, this.currentPosition.lng);
+              }
+              if (typeof this.mapController.setView === 'function') {
+                this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 15);
+              }
             }
           }
           if (this.isOnline) {
@@ -1216,10 +1220,10 @@ class DriverController {
             this.broadcastDriverLocation();
             this.updateDriverMapMarker();
 
-            // Real-time dynamic rerouting to pickup if driver moved > 40 meters
+            // Real-time dynamic rerouting to pickup if driver moved > 60 meters
             if (this.activeTrip && this.activeTrip.stage === 'heading_to_pickup') {
               const last = this._lastRouteDriverPos;
-              const moved = !last || (Math.abs(pos.coords.latitude - last.lat) > 0.0004 || Math.abs(pos.coords.longitude - last.lng) > 0.0004);
+              const moved = last && (Math.abs(pos.coords.latitude - last.lat) > 0.0006 || Math.abs(pos.coords.longitude - last.lng) > 0.0006);
               if (moved) {
                 this._lastRouteDriverPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                 this.renderStageMapRoute(1);
@@ -1801,6 +1805,14 @@ class DriverController {
         activeObj.driverRating = driverRating;
         activeObj.driverLat = this.currentPosition.lat;
         activeObj.driverLon = this.currentPosition.lng;
+        activeObj.pickup = this.activeTrip.pickup;
+        activeObj.pickupCoords = this.activeTrip.pickupCoords;
+        activeObj.destination = this.activeTrip.destination;
+        activeObj.destinationCoords = this.activeTrip.destinationCoords;
+        activeObj.customerName = this.activeTrip.customerName;
+        activeObj.customerPhone = this.activeTrip.phone;
+        activeObj.distance = this.activeTrip.distance;
+        activeObj.fare = this.activeTrip.fare;
         localStorage.setItem('goride_active_trip', JSON.stringify(activeObj));
 
         // 3. Clear pending offers
@@ -1821,6 +1833,8 @@ class DriverController {
           lng: this.currentPosition.lng
         });
       }
+
+      this._lastRouteDriverPos = { lat: Number(this.currentPosition.lat), lng: Number(this.currentPosition.lng) };
 
       // Render Stage 1 Active Trip UI and Map
       this.renderActiveTripUI();
@@ -1975,7 +1989,12 @@ class DriverController {
         try {
           activeObj = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
         } catch (e) {}
+        activeObj.id = this.activeTrip.id;
         activeObj.status = 'IN_PROGRESS';
+        activeObj.pickup = this.activeTrip.pickup;
+        activeObj.pickupCoords = this.activeTrip.pickupCoords;
+        activeObj.destination = this.activeTrip.destination;
+        activeObj.destinationCoords = this.activeTrip.destinationCoords;
         localStorage.setItem('goride_active_trip', JSON.stringify(activeObj));
       } catch (e) {}
 
@@ -2002,67 +2021,134 @@ class DriverController {
   async renderStageMapRoute(stage = 1) {
     if (!this.mapController || !this.activeTrip) return;
 
-    try {
-      const pCoords = this.activeTrip.pickupCoords || [10.7725, 106.6980];
-      const dCoords = this.activeTrip.destinationCoords || [10.7951, 106.7219];
-      const driverCoords = [Number(this.currentPosition.lat), Number(this.currentPosition.lng)];
+    // Mutex / sequence token to prevent race conditions when watchPosition or async events fire concurrently
+    const routeToken = ++this._routeRenderSeq || (this._routeRenderSeq = 1);
 
-      if (typeof this.mapController.clearRoute === 'function') {
-        this.mapController.clearRoute();
+    try {
+      // 1. Force map size update so viewport dimensions are accurate
+      if (this.mapController.map && typeof this.mapController.map.invalidateSize === 'function') {
+        this.mapController.map.invalidateSize({ animate: false });
       }
-      if (typeof this.mapController.clearMarkers === 'function') {
-        this.mapController.clearMarkers('pickup');
-        this.mapController.clearMarkers('destination');
-      }
+
+      // 2. Safely resolve coordinates
+      const coords = this.getTripCoordinates(this.activeTrip);
+      const rawPickup = coords?.pickup || this.activeTrip.pickupCoords || [10.7725, 106.6980];
+      const rawDest = coords?.destination || this.activeTrip.destinationCoords || [10.7951, 106.7219];
+
+      const pCoords = [
+        Number(Array.isArray(rawPickup) ? rawPickup[0] : (rawPickup.lat || rawPickup.latitude || 10.7725)),
+        Number(Array.isArray(rawPickup) ? rawPickup[1] : (rawPickup.lng || rawPickup.lon || rawPickup.longitude || 106.6980))
+      ];
+      const dCoords = [
+        Number(Array.isArray(rawDest) ? rawDest[0] : (rawDest.lat || rawDest.latitude || 10.7951)),
+        Number(Array.isArray(rawDest) ? rawDest[1] : (rawDest.lng || rawDest.lon || rawDest.longitude || 106.7219))
+      ];
+
+      const driverLat = Number(this.currentPosition?.lat);
+      const driverLng = Number(this.currentPosition?.lng);
+      const driverCoords = (!isNaN(driverLat) && !isNaN(driverLng) && driverLat !== 0)
+        ? [driverLat, driverLng]
+        : [pCoords[0] - 0.005, pCoords[1] - 0.005];
+
+      // Update activeTrip coordinates to ensure cached values are pristine numbers
+      this.activeTrip.pickupCoords = pCoords;
+      this.activeTrip.destinationCoords = dCoords;
 
       const pickupLabel = (this.activeTrip.pickup && typeof this.activeTrip.pickup === 'object')
-        ? (this.activeTrip.pickup.name || 'Điểm đón khách')
-        : (this.activeTrip.pickup || 'Điểm đón khách');
+        ? (this.activeTrip.pickup.name || this.activeTrip.pickup.address || 'Điểm đón khách')
+        : (this.activeTrip.pickupName || this.activeTrip.pickup || 'Điểm đón khách');
 
       const destLabel = (this.activeTrip.destination && typeof this.activeTrip.destination === 'object')
-        ? (this.activeTrip.destination.name || 'Điểm đến của khách')
-        : (this.activeTrip.destination || 'Điểm đến của khách');
+        ? (this.activeTrip.destination.name || this.activeTrip.destination.address || 'Điểm đến của khách')
+        : (this.activeTrip.dropoffName || this.activeTrip.destination || 'Điểm đến của khách');
 
       if (stage === 1) {
-        // Stage 1: Driver -> Customer Pickup Location
+        // =========================================================================
+        // STAGE 1: Driver -> Customer Pickup Location
+        // =========================================================================
+        if (typeof this.mapController.clearMarkers === 'function') {
+          this.mapController.clearMarkers('destination');
+        }
         if (typeof this.mapController.setPickupMarker === 'function') {
           this.mapController.setPickupMarker(pCoords[0], pCoords[1], pickupLabel);
         }
+        this.updateDriverMapMarker();
 
-        // Draw REAL road navigation route from Driver GPS to Customer Pickup Point
-        const path = await this.calculateNavigationRoute(driverCoords, pCoords);
-        if (path && typeof this.mapController.drawRoute === 'function') {
-          this.mapController.drawRoute(path, {
-            color: '#0288d1',
-            weight: 5,
+        const routeOrigin = driverCoords;
+        const routeTarget = pCoords;
+        const routeColor = '#0288d1';
+
+        // Instant rendering: Draw initial smooth path so map is NEVER blank
+        const instantPath = this.generateSmoothFallbackPath(routeOrigin, routeTarget);
+        if (typeof this.mapController.drawRoute === 'function') {
+          this.mapController.drawRoute(instantPath, {
+            color: routeColor,
+            weight: 6,
             opacity: 0.95
           });
         }
         if (typeof this.mapController.fitBounds === 'function') {
-          this.mapController.fitBounds([driverCoords, pCoords], { padding: [60, 60] });
+          this.mapController.fitBounds([routeOrigin, routeTarget], { padding: [70, 70] });
+        }
+
+        // Asynchronously calculate realistic turn-by-turn road route via C++ Dijkstra / OSRM
+        const detailedPath = await this.calculateNavigationRoute(routeOrigin, routeTarget);
+        if (this._routeRenderSeq === routeToken && detailedPath && detailedPath.length > 1) {
+          if (typeof this.mapController.drawRoute === 'function') {
+            this.mapController.drawRoute(detailedPath, {
+              color: routeColor,
+              weight: 6,
+              opacity: 0.95
+            });
+          }
+          if (typeof this.mapController.fitBounds === 'function') {
+            this.mapController.fitBounds(detailedPath, { padding: [70, 70] });
+          }
         }
       } else {
-        // Stage 2: Customer Pickup Location -> Destination
+        // =========================================================================
+        // STAGE 2: Customer Pickup Location -> Customer Destination
+        // =========================================================================
+        // Display both pickup pin and destination pin so the entire journey is clear
+        if (typeof this.mapController.setPickupMarker === 'function') {
+          this.mapController.setPickupMarker(pCoords[0], pCoords[1], pickupLabel);
+        }
         if (typeof this.mapController.setDestinationMarker === 'function') {
           this.mapController.setDestinationMarker(dCoords[0], dCoords[1], destLabel);
         }
 
-        // Move driver marker to pickup location as vehicle starts carrying customer
-        this.currentPosition.lat = pCoords[0];
-        this.currentPosition.lng = pCoords[1];
         this.updateDriverMapMarker();
 
-        // Draw REAL road navigation route from Pickup to Destination
-        const path = await this.calculateNavigationRoute(pCoords, dCoords);
-        if (path && typeof this.mapController.drawRoute === 'function') {
-          this.mapController.drawRoute(path, {
-            color: '#10b981',
-            weight: 5,
+        const routeOrigin = pCoords;
+        const routeTarget = dCoords;
+        const routeColor = '#10b981';
+
+        // Instant rendering: Draw initial smooth path so map is NEVER blank
+        const instantPath = this.generateSmoothFallbackPath(routeOrigin, routeTarget);
+        if (typeof this.mapController.drawRoute === 'function') {
+          this.mapController.drawRoute(instantPath, {
+            color: routeColor,
+            weight: 6,
             opacity: 0.95
           });
         }
         if (typeof this.mapController.fitBounds === 'function') {
-          this.mapController.fitBounds([pCoords, dCoords], { padding: [60, 60] });
+          this.mapController.fitBounds([routeOrigin, routeTarget], { padding: [70, 70] });
+        }
+
+        // Asynchronously calculate realistic turn-by-turn road route via C++ Dijkstra / OSRM
+        const detailedPath = await this.calculateNavigationRoute(routeOrigin, routeTarget);
+        if (this._routeRenderSeq === routeToken && detailedPath && detailedPath.length > 1) {
+          if (typeof this.mapController.drawRoute === 'function') {
+            this.mapController.drawRoute(detailedPath, {
+              color: routeColor,
+              weight: 6,
+              opacity: 0.95
+            });
+          }
+          if (typeof this.mapController.fitBounds === 'function') {
+            this.mapController.fitBounds(detailedPath, { padding: [70, 70] });
+          }
         }
       }
     } catch (err) {
@@ -2103,7 +2189,7 @@ class DriverController {
     try {
       const url = `https://router.project-osrm.org/route/v1/driving/${fLng},${fLat};${tLng},${tLat}?overview=full&geometries=geojson`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {

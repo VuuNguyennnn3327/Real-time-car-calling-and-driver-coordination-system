@@ -909,13 +909,17 @@
     addPickupMarker(lat, lng, popupContent = 'Điểm đón') {
       if (!this.map) return null;
 
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      if (isNaN(numLat) || isNaN(numLng)) return null;
+
       if (this.markers.pickup) {
         this.map.removeLayer(this.markers.pickup);
         this.markers.pickup = null;
       }
 
       const icon = this._createPickupIcon();
-      const marker = L.marker([lat, lng], {
+      const marker = L.marker([numLat, numLng], {
         icon,
         title: 'Điểm đón (Kéo ghim để đổi vị trí)',
         riseOnHover: true,
@@ -935,7 +939,7 @@
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
           ${labelText}
         </div>
-        <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
+        <div class="rtree-popup-sub">Vĩ độ: ${numLat.toFixed(5)}, Kinh độ: ${numLng.toFixed(5)}</div>
       `;
 
       marker.bindPopup(popupHtml, { className: 'rtree-popup', closeButton: true });
@@ -955,13 +959,17 @@
     addDestinationMarker(lat, lng, popupContent = 'Điểm đến') {
       if (!this.map) return null;
 
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      if (isNaN(numLat) || isNaN(numLng)) return null;
+
       if (this.markers.destination) {
         this.map.removeLayer(this.markers.destination);
         this.markers.destination = null;
       }
 
       const icon = this._createDestinationIcon();
-      const marker = L.marker([lat, lng], {
+      const marker = L.marker([numLat, numLng], {
         icon,
         title: 'Điểm đến (Kéo ghim để đổi vị trí)',
         riseOnHover: true,
@@ -982,7 +990,7 @@
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;"></span>
           ${destLabelText}
         </div>
-        <div class="rtree-popup-sub">Vĩ độ: ${lat.toFixed(5)}, Kinh độ: ${lng.toFixed(5)}</div>
+        <div class="rtree-popup-sub">Vĩ độ: ${numLat.toFixed(5)}, Kinh độ: ${numLng.toFixed(5)}</div>
       `;
 
       marker.bindPopup(popupHtml, { className: 'rtree-popup', closeButton: true });
@@ -1037,13 +1045,18 @@
       const driverVehicle = metadata.vehicle || `${vEmoji} ${vDetails}`;
       const statusText = metadata.status ? `<div style="font-size:11px;color:#38bdf8;margin-top:2px;">Trạng thái: ${metadata.status}</div>` : '';
 
+      const numLat = Number(lat);
+      const numLng = Number(lng);
+      const latText = !isNaN(numLat) ? numLat.toFixed(5) : lat;
+      const lngText = !isNaN(numLng) ? numLng.toFixed(5) : lng;
+
       const popupHtml = `
         <div class="rtree-popup-title" style="color: #10b981;">
           <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#10b981;"></span>
           ${driverName}
         </div>
         <div class="rtree-popup-sub">${driverVehicle}</div>
-        <div class="rtree-popup-sub">Tọa độ: ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
+        <div class="rtree-popup-sub">Tọa độ: ${latText}, ${lngText}</div>
         <div class="rtree-popup-sub">Góc hướng: ${Math.round(heading || 0)}°</div>
         ${statusText}
       `;
@@ -1301,15 +1314,19 @@
       this.clearRoute();
 
       // Normalize coordinates to [lat, lng]
-      const latLngs = targetCoords.map((coord) => {
-        if (Array.isArray(coord)) {
-          return [Number(coord[0]), Number(coord[1])];
-        }
-        if (coord && typeof coord === 'object') {
-          return [Number(coord.lat || coord.latitude), Number(coord.lng || coord.lon || coord.longitude)];
-        }
-        return coord;
-      });
+      const latLngs = targetCoords
+        .map((coord) => {
+          if (Array.isArray(coord)) {
+            return [Number(coord[0]), Number(coord[1])];
+          }
+          if (coord && typeof coord === 'object') {
+            return [Number(coord.lat || coord.latitude), Number(coord.lng || coord.lon || coord.longitude)];
+          }
+          return coord;
+        })
+        .filter((coord) => Array.isArray(coord) && !isNaN(coord[0]) && !isNaN(coord[1]) && coord[0] !== 0 && coord[1] !== 0);
+
+      if (latLngs.length < 2) return null;
 
       const polylineOptions = Object.assign(
         {
@@ -1324,6 +1341,9 @@
       );
 
       this.routePolyline = L.polyline(latLngs, polylineOptions).addTo(this.map);
+      if (typeof this.routePolyline.bringToFront === 'function') {
+        this.routePolyline.bringToFront();
+      }
       return this.routePolyline;
     }
 
@@ -1486,11 +1506,11 @@
       if (Array.isArray(points) && points.length > 0) {
         const validCoords = points
           .map((p) => {
-            if (Array.isArray(p)) return [p[0], p[1]];
-            if (p && typeof p === 'object') return [p.lat || p.latitude, p.lng || p.lon || p.longitude];
+            if (Array.isArray(p)) return [Number(p[0]), Number(p[1])];
+            if (p && typeof p === 'object') return [Number(p.lat || p.latitude), Number(p.lng || p.lon || p.longitude)];
             return null;
           })
-          .filter((p) => p && typeof p[0] === 'number' && typeof p[1] === 'number');
+          .filter((p) => p && !isNaN(p[0]) && !isNaN(p[1]) && p[0] !== 0 && p[1] !== 0);
 
         if (validCoords.length > 0) {
           const bounds = L.latLngBounds(validCoords);
