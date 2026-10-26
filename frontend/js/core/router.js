@@ -55,6 +55,24 @@ const ROUTES = {
         file: 'profile.html',
         title: 'Hồ sơ cá nhân & Đối tác | Navigo',
         requiresAuth: true
+    },
+    activity: {
+        name: 'activity',
+        file: 'activity.html',
+        title: 'Hoạt động chuyến đi | Navigo',
+        requiresAuth: false
+    },
+    notifications: {
+        name: 'notifications',
+        file: 'notifications.html',
+        title: 'Thông báo | Navigo',
+        requiresAuth: false
+    },
+    wallet: {
+        name: 'wallet',
+        file: 'wallet.html',
+        title: 'Ví điện tử NaviPay | Navigo',
+        requiresAuth: false
     }
 };
 

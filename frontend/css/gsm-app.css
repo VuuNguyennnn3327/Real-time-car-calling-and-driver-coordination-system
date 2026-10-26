@@ -571,18 +571,6 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   }
 
   /* Universal Floating Glass Bottom Navigation on Desktop & Mobile */
-  body:not(.gsm-role-admin).gsm-activity-page .gsm-floating-bottom-nav,
-  body:not(.gsm-role-admin).gsm-activity-page #gsm-floating-bottom-nav,
-  body:not(.gsm-role-admin).admin-body .gsm-floating-bottom-nav,
-  body:not(.gsm-role-admin):not(.gsm-role-driver):not(.gsm-booking-page):not(.customer-body):has(.gsm-desktop-wide-canvas) .gsm-floating-bottom-nav {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
-  }
   .gsm-floating-bottom-nav {
     display: inline-flex !important;
     visibility: visible !important;
@@ -644,12 +632,24 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   body.gsm-role-admin #gsm-floating-bottom-nav,
   body.gsm-role-driver .gsm-floating-bottom-nav,
   body.gsm-role-driver #gsm-floating-bottom-nav,
+  body.gsm-role-customer .gsm-floating-bottom-nav,
+  body.gsm-role-customer #gsm-floating-bottom-nav,
   body.customer-body .gsm-floating-bottom-nav,
   body.customer-body #gsm-floating-bottom-nav,
   body.gsm-booking-page .gsm-floating-bottom-nav,
   body.gsm-booking-page #gsm-floating-bottom-nav,
+  body.gsm-activity-page .gsm-floating-bottom-nav,
+  body.gsm-activity-page #gsm-floating-bottom-nav,
+  body.gsm-notifications-page .gsm-floating-bottom-nav,
+  body.gsm-notifications-page #gsm-floating-bottom-nav,
   [data-page="customer"] .gsm-floating-bottom-nav,
-  [data-page="customer"] #gsm-floating-bottom-nav {
+  [data-page="customer"] #gsm-floating-bottom-nav,
+  [data-page="activity"] .gsm-floating-bottom-nav,
+  [data-page="activity"] #gsm-floating-bottom-nav,
+  [data-page="notifications"] .gsm-floating-bottom-nav,
+  [data-page="notifications"] #gsm-floating-bottom-nav,
+  .gsm-floating-bottom-nav,
+  #gsm-floating-bottom-nav {
     display: inline-flex !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -1461,12 +1461,17 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.12)) !important;
 }
 
-.gsm-nav-btn.active .gsm-nav-svg path {
+.gsm-nav-btn.active .gsm-nav-svg path,
+.gsm-nav-btn.active .gsm-nav-svg circle,
+.gsm-nav-btn.active .gsm-nav-svg rect,
+.gsm-nav-btn.active .gsm-nav-svg polygon {
   fill: #ffffff !important;
 }
 
-.gsm-nav-btn.active .gsm-nav-svg path[stroke] {
-  stroke: #00b1a9 !important;
+.gsm-nav-btn.active .gsm-nav-svg path[stroke],
+.gsm-nav-btn.active .gsm-nav-svg line[stroke],
+.gsm-nav-btn.active .gsm-nav-svg circle[stroke] {
+  stroke: #ffffff !important;
 }
 
 /* 4. Bell with Red Notification Dot Badge */

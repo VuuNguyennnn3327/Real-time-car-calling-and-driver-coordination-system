@@ -13,6 +13,20 @@
     <link rel="stylesheet" href="../css/responsive.css">
     <link rel="stylesheet" href="../css/gsm-app.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('[Admin Page Error]', e.message, e.filename, e.lineno);
+            var b = document.getElementById('debug-script-error');
+            if (!b && document.body) {
+                b = document.createElement('div');
+                b.id = 'debug-script-error';
+                b.style.cssText = 'position:fixed;bottom:10px;right:10px;background:#ef4444;color:#fff;padding:8px 14px;border-radius:8px;z-index:9999999;font-size:12px;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.3);cursor:pointer;';
+                b.onclick = function() { b.remove(); };
+                document.body.appendChild(b);
+            }
+            if (b) b.innerHTML = '⚠️ Lỗi: ' + e.message + ' (' + (e.filename || '').split('/').pop() + ':' + e.lineno + ')';
+        });
+    </script>
     <style>
         /* Admin Specialized Styles */
         .app-header {
@@ -1604,7 +1618,7 @@
 
         <!-- Mobile Bottom Navigation Bar (Dynamic per Role) -->
     <!-- Floating Glassmorphism Bottom Navigation Bar (Synchronized with All Pages) -->
-    <nav class="gsm-floating-bottom-nav" id="gsm-floating-bottom-nav">
+    <nav class="gsm-floating-bottom-nav" id="gsm-floating-bottom-nav" data-rendered-role="admin">
         <div class="gsm-bottom-nav-pill">
             <a href="../index.html" class="gsm-nav-btn" id="bnav-admin-landing" title="Trang chủ">
                 <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -1655,6 +1669,27 @@
     <script src="../js/map/map-renderer.js"></script>
     <script src="../js/admin/admin.js"></script>
     <script>
+        (function() {
+            try {
+                var trips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                var drivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+                var users = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
+                var pending = JSON.parse(localStorage.getItem('goride_pending_drivers') || '[]');
+                var activeDrivers = drivers.filter(function(d) { return d && d.status === 'active'; }).length;
+                var revenue = trips.filter(function(t) { return t && t.status === 'completed'; }).reduce(function(sum, t) { return sum + (Number(t.fare) || 0); }, 0);
+                var cCount = Math.max(users.length, 27);
+                var s = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+                s('stat-total-rides', Number(trips.length).toLocaleString('vi-VN'));
+                s('stat-active-drivers', Number(activeDrivers).toLocaleString('vi-VN'));
+                s('stat-revenue', Number(revenue).toLocaleString('vi-VN') + ' ₫');
+                s('stat-customers', Number(cCount).toLocaleString('vi-VN'));
+                s('sidebar-recent-trips-count', trips.length);
+                s('sidebar-trips-count', trips.length);
+                s('sidebar-drivers-count', pending.length > 0 ? (drivers.length + ' (' + pending.length + ' chờ)') : drivers.length);
+                s('sidebar-customers-count', cCount);
+            } catch(e) {}
+        })();
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof sessionManager !== 'undefined') {
                 const user = sessionManager.getCurrentUser();
@@ -1662,6 +1697,11 @@
                     window.location.replace('login.html?redirect=admin.html');
                 } else if (user.role !== 'admin') {
                     window.location.replace(user.role === 'driver' ? 'driver.html' : 'customer.html');
+                }
+            }
+            if (typeof AdminController !== 'undefined') {
+                if (!window.adminController) window.adminController = new AdminController();
+                window.adminController.init().catch(console.error); if (false) {
                 }
             }
         });

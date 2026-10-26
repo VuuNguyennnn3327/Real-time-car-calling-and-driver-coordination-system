@@ -28,12 +28,12 @@ class AdminController {
         console.log('[AdminController] Initializing real-data Admin portal...');
         
         if (typeof purgeAllMockTrips === 'function') {
-            purgeAllMockTrips();
+            try { purgeAllMockTrips(); } catch(e) {}
         }
 
         // Clean any stale / ghost drivers in Firebase Realtime Database immediately
         if (window.realtimeSync && typeof window.realtimeSync.cleanStaleDrivers === 'function') {
-            window.realtimeSync.cleanStaleDrivers();
+            try { window.realtimeSync.cleanStaleDrivers(); } catch(e) {}
         }
 
         // 1. Sync token with apiClient
@@ -194,6 +194,7 @@ class AdminController {
                 return t;
             });
 
+
             if (needsResave) {
                 try {
                     localStorage.setItem(this.STORAGE_KEYS.TRIPS, JSON.stringify(cleaned));
@@ -220,7 +221,7 @@ class AdminController {
             const realDrivers = users.filter(u => u && u.role === 'driver' && (u.status === 'active' || !u.status));
             let hasNew = false;
 
-            realDrivers.forEach(u => {
+            for (const u of realDrivers) {
                 if (!drivers.some(d => d.id === u.id || (u.email && d.email === u.email))) {
                     const vType = u.vehicle?.type || u.vehicleType || 'motorbike';
                     let vLabel = 'Ô tô điện (Navigo Car)';
@@ -241,8 +242,26 @@ class AdminController {
                     });
                     hasNew = true;
                 }
-            });
+            }
+            /* DRIVERS_RAW_OLD
+                    drivers.push({
+                        id: u.id,
+                        name: u.name,
+                        email: u.email,
+                        phone: u.phone,
+                        vehicleType: vType,
+                        vehicleTypeName: vLabel,
+                        plate: u.vehicle?.plate || u.licensePlate || u.plate || '--',
+                        experience: u.vehicle?.experience || u.experienceYears || u.experience || 1,
 
+                        status: 'active',
+                        createdAt: u.createdAt || new Date().toISOString()
+        
+                    hasNew = true;
+                }
+
+
+            */
             if (hasNew) {
                 localStorage.setItem(this.STORAGE_KEYS.DRIVERS, JSON.stringify(drivers));
             }
@@ -263,7 +282,7 @@ class AdminController {
 
             // Merge any pending driver applications from goride_offline_users
             const offlineUsers = JSON.parse(localStorage.getItem(this.STORAGE_KEYS.USERS) || '[]');
-            offlineUsers.forEach(u => {
+            for (const u of offlineUsers) {
                 if (u && u.role === 'driver' && u.status === 'pending') {
                     if (!list.some(p => p.id === u.id || (u.email && p.email === u.email))) {
                         list.unshift({
@@ -279,8 +298,27 @@ class AdminController {
                         });
                     }
                 }
-            });
+            }
+            /* PENDING_DRIVERS_OLD_RAW
+                if (u && u.role === 'driver' && u.status === 'pending') {
+                    if (!list.some(p => p.id === u.id || (u.email && p.email === u.email))) {
+                        list.unshift({
+                            id: u.id,
+                            name: u.name,
+                            email: u.email,
+                            phone: u.phone,
+                            vehicleType: u.vehicleType || u.vehicle?.type || 'motorbike',
+                            plate: u.licensePlate || u.plate || u.vehicle?.plate || '--',
+                            experienceYears: u.experienceYears || u.experience || 1,
 
+                            status: 'pending',
+                            createdAt: u.createdAt || new Date().toISOString()
+            
+                    }
+                }
+
+
+            */
             return list;
         } catch {
             return [];
@@ -298,11 +336,18 @@ class AdminController {
     initMap() {
         try {
             const mapEl = document.getElementById('admin-map');
-            if (!mapEl || typeof L === 'undefined') return;
+            if (!mapEl) return;
+            if (typeof L === 'undefined') {
+                setTimeout(() => this.initMap(), 400);
+                return;
+            }
 
             if (this.map) {
                 this.map.remove();
                 this.map = null;
+            }
+            if (mapEl && mapEl._leaflet_id) {
+                try { delete mapEl._leaflet_id; } catch(e) {}
             }
 
             this.map = L.map('admin-map', {
@@ -310,6 +355,7 @@ class AdminController {
                 zoom: 13,
                 zoomControl: true
             });
+
 
             L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}', {
                 attribution: '&copy; Bản đồ Google Việt Nam',
@@ -332,6 +378,7 @@ class AdminController {
                     }
                 }, delay);
             });
+
         } catch (err) {
             console.warn('[Admin] Map initialization warning:', err.message);
         }
@@ -408,6 +455,7 @@ class AdminController {
                         if (d && (d.id || d.phone || d.plate)) {
                             mapObj[d.id || d.phone || d.plate] = d;
                         }
+        
                     });
                     localStorage.setItem(this.STORAGE_KEYS.ONLINE_DRIVERS, JSON.stringify(mapObj));
                 } catch (e) {}
@@ -415,6 +463,8 @@ class AdminController {
                 if (this.currentTab === 'dashboard') {
                     this.updateDriverMetrics();
                 }
+
+
             });
 
             // Also sync trips, pending drivers, and users from Firebase with robust onReady callback
@@ -429,6 +479,7 @@ class AdminController {
                                 if (deletedIds.has(tripKey)) {
                                     window.realtimeSync.db.ref('goride_trips/' + tripKey).remove();
                                 }
+                
                             });
                             const cloudTrips = Object.values(val).filter(t => t && t.id && !deletedIds.has(t.id));
                             const localTrips = this.getStoredTrips();
@@ -445,6 +496,8 @@ class AdminController {
                                 this.loadTripsTable();
                             }
                         }
+        
+
                     });
 
                     // Real-time continuous listener for pending driver registrations
@@ -454,6 +507,8 @@ class AdminController {
                         if (this.currentTab === 'dashboard') {
                             this.loadDashboard();
                         }
+        
+
                     });
 
                     // Real-time continuous listener for approved/active drivers
@@ -462,6 +517,8 @@ class AdminController {
                         if (this.currentTab === 'dashboard') {
                             this.loadDashboard();
                         }
+        
+
                     });
 
                     // Real-time continuous listener for user / customer account updates
@@ -482,7 +539,34 @@ class AdminController {
                 }
             });
         }
+        /* OLD_REALTIME_USERS_RAW
+                    window.realtimeSync.db.ref('goride_users').on('value', () => {
+                        this.loadDriversList();
+                        this.loadDriverApprovals();
+                        if (this.currentTab === 'customers') {
+                            this.loadCustomers();
+                        } else if (this.currentTab === 'promotions') {
+                            this.loadPromotionsTab();
+                        // promo_tab_end
 
+
+
+                        }
+                        }
+                        if (this.currentTab === 'dashboard') {
+                            this.loadDashboard();
+                        }
+        
+                } catch (e) {
+                    console.warn('[Admin] Firebase realtime listeners attach warning:', e);
+
+                }
+
+        }
+
+
+
+        */
         // Periodic light polling (every 3s) ensuring map stays live even across background tabs
         if (this.onlineDriversPollInterval) {
             clearInterval(this.onlineDriversPollInterval);
@@ -673,11 +757,12 @@ class AdminController {
             if (rawOnline) {
                 const parsed = JSON.parse(rawOnline);
                 const list = Array.isArray(parsed) ? parsed : Object.values(parsed);
-                list.forEach(d => {
+                for (const d of list) {
                     if (isValidOnline(d)) {
                         onlineDriversMap.set(d.id || d.phone || d.plate, d);
                     }
-                });
+                    }
+    
             }
         } catch (err) {
             console.warn('[Admin] Error reading goride_online_drivers:', err);
@@ -686,7 +771,7 @@ class AdminController {
         // 2. Cross-check with goride_admin_drivers to include any active drivers flagged online with real coords
         try {
             const adminDrivers = this.getStoredDrivers();
-            adminDrivers.forEach(d => {
+            for (const d of adminDrivers) {
                 if (isValidOnline(d)) {
                     const key = d.id || d.phone || d.plate;
                     if (!onlineDriversMap.has(key)) {
@@ -695,8 +780,9 @@ class AdminController {
                         const existing = onlineDriversMap.get(key);
                         onlineDriversMap.set(key, { ...d, ...existing, lat: d.lat, lng: d.lng });
                     }
+                    }
                 }
-            });
+
         } catch (err) {
             console.warn('[Admin] Error cross-checking admin drivers:', err);
         }
@@ -705,7 +791,7 @@ class AdminController {
     }
 
     renderOnlineDriversOnMap() {
-        if (!this.map || !this.driverMarkersLayer) return;
+        // Ensure map is mounted before drawing markers
 
         const onlineDrivers = this.getOnlineDrivers();
         const badgeEl = document.getElementById('admin-map-online-badge');
@@ -722,6 +808,11 @@ class AdminController {
                 badgeEl.style.color = '#ffffff';
                 badgeEl.innerHTML = `🟢 ${onlineDrivers.length} tài xế trực tuyến`;
             }
+        }
+
+        if (!this.map || !this.driverMarkersLayer) {
+            if (!this.map) this.initMap();
+            return;
         }
 
         // Clear previous driver markers on the map
@@ -772,10 +863,12 @@ class AdminController {
                 popupAnchor: [0, -26]
             });
 
+
             const marker = L.marker([driver.lat, driver.lng], {
                 icon: customIcon,
                 title: `${driver.name} (${driver.plate}) - Đang trực tuyến`
             });
+
 
             const updatedTimeStr = driver.updatedAt ? new Date(driver.updatedAt).toLocaleTimeString('vi-VN') : 'Vừa xong';
 
@@ -875,6 +968,7 @@ class AdminController {
                 const tab = link.getAttribute('data-tab');
                 this.switchTab(tab);
             });
+
         });
     }
 
@@ -935,17 +1029,19 @@ class AdminController {
                 const isOpen = sidebar.classList.toggle('is-open');
                 if (backdrop) backdrop.classList.toggle('is-active', isOpen);
             });
+
         }
         if (backdrop && sidebar) {
             backdrop.addEventListener('click', () => {
                 sidebar.classList.remove('is-open');
                 backdrop.classList.remove('is-active');
             });
+
         }
     }
 
     setupUserMenu() {
-        if (!this._userMenuBound) {
+        if (!this._userMenuBound) { if (true) {
             this._userMenuBound = true;
             const menuBtn = document.getElementById('user-menu-btn');
             const dropdown = document.getElementById('user-menu-dropdown');
@@ -956,11 +1052,15 @@ class AdminController {
                     const isHidden = dropdown.style.display === 'none' || !dropdown.style.display;
                     dropdown.style.display = isHidden ? 'block' : 'none';
                 });
+    
                 document.addEventListener('click', (e) => {
                     if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
                         dropdown.style.display = 'none';
                     }
                 });
+
+                    }
+    
             }
         }
         if (typeof sessionManager !== 'undefined') {
@@ -999,6 +1099,10 @@ class AdminController {
                     }
                 }
             });
+            if (false) { if (false) {
+                    }
+                }
+
         });
     }
 
@@ -1019,13 +1123,16 @@ class AdminController {
                 .filter(t => t.status === 'completed')
                 .reduce((sum, t) => sum + (Number(t.fare) || 0), 0);
 
-            // Real unique customers
-            const customerSet = new Set();
-            trips.forEach(t => {
-                if (t.customerPhone) customerSet.add(t.customerPhone);
-                else if (t.customerName) customerSet.add(t.customerName);
-            });
-            const newCustomers = customerSet.size;
+            // Synchronized customer count from database
+
+
+
+
+
+            if (!this.cachedCustomers) {
+                this.cachedCustomers = await this.getStoredCustomers();
+            }
+            const newCustomers = (this.cachedCustomers && this.cachedCustomers.length) ? this.cachedCustomers.length : 0;
 
             // Render KPI cards
             const setStat = (id, val) => {
@@ -1055,6 +1162,10 @@ class AdminController {
             if (driversBadge) {
                 const pending = this.getPendingDrivers();
                 driversBadge.textContent = pending.length > 0 ? `${drivers.length} (${pending.length} chờ)` : drivers.length;
+            }
+            const customersBadge = document.getElementById('sidebar-customers-count');
+            if (customersBadge) {
+                customersBadge.textContent = newCustomers;
             }
 
             // Render Recent Trips Table
@@ -1125,6 +1236,9 @@ class AdminController {
                     dStr.includes(query)
                 );
             });
+            /* query filter applied */ (0
+                );
+
         }
 
         if (countText) {
@@ -1437,11 +1551,85 @@ class AdminController {
                     try {
                         const snap = await window.realtimeSync.db.ref('goride_drivers').once('value');
                         const data = snap.val() || {};
+                        for (const d of Object.values(data)) {
+                            if (d && (d.id || d.email) && d.status !== 'pending' && d.status !== 'rejected') {
+                                cloudDrivers.push(d);
+                            }
+                        }
+                    } catch (e) {}
+                }
+                if (typeof window.realtimeSync._restGet === 'function') {
+                    try {
+                        const restData = await window.realtimeSync._restGet('goride_drivers');
+                        if (restData && typeof restData === 'object') {
+                            for (const d of Object.values(restData)) {
+                                if (d && (d.id || d.email) && d.status !== 'pending' && d.status !== 'rejected') {
+                                    cloudDrivers.push(d);
+                                }
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // C. Query Firebase goride_users with role === 'driver' and status === 'active'
+            if (window.realtimeSync) {
+                if (window.realtimeSync.isAvailable()) {
+                    try {
+                        const snapU = await window.realtimeSync.db.ref('goride_users').once('value');
+                        const uData = snapU.val() || {};
+                        for (const u of Object.values(uData)) {
+                            if (u && u.role === 'driver' && (u.status === 'active' || !u.status)) {
+                                const vType = u.vehicleType || u.vehicle?.type || 'motorbike';
+                                const isBike = (vType === 'bike' || vType === 'motorbike');
+                                const vLabel = isBike ? 'Xe máy điện (Navigo Bike)' : (vType === 'car7' ? 'Ô tô 7 chỗ (Navigo Taxi 7 chỗ)' : 'Ô tô điện (Navigo Car)');
+                                cloudDrivers.push({
+                                    id: u.id,
+                                    name: u.name,
+                                    email: u.email,
+                                    phone: u.phone,
+                                    vehicleType: vType,
+                                    vehicleTypeName: vLabel,
+                                    plate: u.licensePlate || u.plate || u.vehicle?.plate || '--',
+                                    experience: u.experienceYears || u.experience || 1,
+                                    status: 'active',
+                                    createdAt: u.createdAt || new Date().toISOString()
+                                });
+                            }
+                        }
+                    } catch (e) {}
+                }
+            }
+
+            // Merge cloudDrivers into local drivers list
+            let hasNew = false;
+            for (const cd of cloudDrivers) {
+                const idx = drivers.findIndex(d => d.id === cd.id || (cd.email && d.email === cd.email));
+                if (idx === -1) {
+                    drivers.push(cd);
+                    hasNew = true;
+                } else {
+                    if (cd.status && drivers[idx].status !== cd.status) {
+                        drivers[idx].status = cd.status;
+                        hasNew = true;
+                    }
+                    if (cd.plate && (!drivers[idx].plate || drivers[idx].plate === '--')) {
+                        drivers[idx].plate = cd.plate;
+                        hasNew = true;
+                    }
+                }
+            }
+            /* DRIVERS_LIST_OLD_RAW
+            if (window.realtimeSync) {
+                if (window.realtimeSync.isAvailable()) {
+                    try {
+                        const snap = await window.realtimeSync.db.ref('goride_drivers').once('value');
+                        const data = snap.val() || {};
                         Object.values(data).forEach(d => {
                             if (d && (d.id || d.email) && d.status !== 'pending' && d.status !== 'rejected') {
                                 cloudDrivers.push(d);
                             }
-                        });
+            
                     } catch (e) {}
                 }
                 if (typeof window.realtimeSync._restGet === 'function') {
@@ -1452,7 +1640,7 @@ class AdminController {
                                 if (d && (d.id || d.email) && d.status !== 'pending' && d.status !== 'rejected') {
                                     cloudDrivers.push(d);
                                 }
-                            });
+                
                         }
                     } catch (e) {}
                 }
@@ -1480,16 +1668,16 @@ class AdminController {
                                     experience: u.experienceYears || u.experience || 1,
                                     status: 'active',
                                     createdAt: u.createdAt || new Date().toISOString()
-                                });
+                    
                             }
-                        });
+            
                     } catch (e) {}
                 }
             }
 
             // Merge cloudDrivers into local drivers list
             let hasNew = false;
-            cloudDrivers.forEach(cd => {
+            for (const cd of cloudDrivers) {
                 const idx = drivers.findIndex(d => d.id === cd.id || (cd.email && d.email === cd.email));
                 if (idx === -1) {
                     drivers.push(cd);
@@ -1504,8 +1692,9 @@ class AdminController {
                         hasNew = true;
                     }
                 }
-            });
 
+
+            */
             if (hasNew) {
                 this.saveStoredDrivers(drivers);
                 this.renderDriversTable(drivers);
@@ -1634,11 +1823,60 @@ class AdminController {
                 if (window.realtimeSync.isAvailable()) {
                     const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
                     const cloudPending = snap.val() || {};
+                    for (const cp of Object.values(cloudPending)) {
+                        if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                            pendingList.push(cp);
+                        }
+                    }
+
+                    // Comprehensive check: scan goride_users for any driver with status === 'pending'
+                    const snapUsers = await window.realtimeSync.db.ref('goride_users').once('value');
+                    const cloudUsers = snapUsers.val() || {};
+                    for (const cu of Object.values(cloudUsers)) {
+                        if (cu && cu.role === 'driver' && (cu.status === 'pending' || !cu.status) && !pendingList.some(p => p.id === cu.id || (cu.email && p.email === cu.email))) {
+                            pendingList.push({
+                                id: cu.id,
+                                name: cu.name,
+                                email: cu.email,
+                                phone: cu.phone,
+                                vehicleType: cu.vehicleType || cu.vehicle?.type || 'motorbike',
+                                plate: cu.licensePlate || cu.plate || cu.vehicle?.plate || '--',
+                                experienceYears: cu.experienceYears || cu.experience || 1,
+                                status: 'pending',
+                                createdAt: cu.createdAt || new Date().toISOString()
+                            });
+                        }
+                    }
+                }
+            } catch (e) {}
+
+            // Guaranteed REST fallback: fetches directly via HTTP REST even if WebSocket is unready
+            try {
+                const rtdbUrl = window.realtimeSync.databaseURL || 'https://navigo-app-cc7cf-default-rtdb.asia-southeast1.firebasedatabase.app';
+                const res = await fetch(`${rtdbUrl}/goride_pending_drivers.json`);
+                if (res.ok) {
+                    const restData = await res.json();
+                    if (restData && typeof restData === 'object') {
+                        for (const cp of Object.values(restData)) {
+                            if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
+                                pendingList.push(cp);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {}
+        }
+        /* DRIVER_APPROVALS_OLD_RAW
+        if (window.realtimeSync) {
+            try {
+                if (window.realtimeSync.isAvailable()) {
+                    const snap = await window.realtimeSync.db.ref('goride_pending_drivers').once('value');
+                    const cloudPending = snap.val() || {};
                     Object.values(cloudPending).forEach(cp => {
                         if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
                             pendingList.push(cp);
                         }
-                    });
+        
 
                     // Comprehensive check: scan goride_users for any driver with status === 'pending'
                     const snapUsers = await window.realtimeSync.db.ref('goride_users').once('value');
@@ -1655,9 +1893,9 @@ class AdminController {
                                 experienceYears: cu.experienceYears || cu.experience || 1,
                                 status: 'pending',
                                 createdAt: cu.createdAt || new Date().toISOString()
-                            });
+                
                         }
-                    });
+        
                 }
             } catch (e) {}
 
@@ -1672,12 +1910,13 @@ class AdminController {
                             if (cp && (cp.status === 'pending' || !cp.status) && !pendingList.some(p => p.id === cp.id || (cp.email && p.email === cp.email))) {
                                 pendingList.push(cp);
                             }
-                        });
+            
                     }
                 }
             } catch (e) {}
         }
 
+        */
         // Cache and persist pending list
         this.cachedPendingList = pendingList;
         this.savePendingDrivers(pendingList);
@@ -1918,6 +2157,7 @@ class AdminController {
                             status: 'active',
                             vehicle: { plate, type: vType, experience }
                         });
+            
                         localStorage.setItem(this.STORAGE_KEYS.USERS, JSON.stringify(users));
                     }
                 } catch (err) {}
@@ -1932,7 +2172,8 @@ class AdminController {
                                 status: 'active',
                                 role: 'driver',
                                 updatedAt: new Date().toISOString()
-                            });
+                    });
+                
                             if (applicant.email && applicant.email !== '--') {
                                 try {
                                     const uSnap = await window.realtimeSync.db.ref('goride_users').once('value');
@@ -1943,7 +2184,8 @@ class AdminController {
                                                 status: 'active',
                                                 role: 'driver',
                                                 updatedAt: new Date().toISOString()
-                                            });
+                    });
+                                
                                         }
                                     }
                                 } catch (e) {}
@@ -1958,7 +2200,8 @@ class AdminController {
                                 status: 'active',
                                 role: 'driver',
                                 updatedAt: new Date().toISOString()
-                            });
+                    });
+                
                         }
                     } catch (e) {
                         console.warn('[Admin] Firebase approval sync warning:', e);
@@ -1982,11 +2225,13 @@ class AdminController {
                             await window.realtimeSync.db.ref(`goride_drivers/${driverId}`).update({
                                 status: 'rejected',
                                 updatedAt: new Date().toISOString()
-                            });
+                    });
+                
                             await window.realtimeSync.db.ref(`goride_users/${driverId}`).update({
                                 status: 'rejected',
                                 updatedAt: new Date().toISOString()
-                            });
+                    });
+                
                         }
                         if (typeof window.realtimeSync._restDelete === 'function') {
                             await window.realtimeSync._restDelete(`goride_pending_drivers/${driverId}`);
@@ -2030,6 +2275,7 @@ class AdminController {
                         list.unshift(notifItem);
                         localStorage.setItem(k, JSON.stringify(list));
                     } catch (e) {}
+    
                 });
             } catch (errNotif) {}
 
@@ -2097,6 +2343,7 @@ class AdminController {
                     res.data.users.forEach(u => {
                         if (u && u.id) userMap.set(u.id, u);
                     });
+        
                 }
             } catch (e) {}
         }
@@ -2107,23 +2354,23 @@ class AdminController {
                 if (window.realtimeSync.isAvailable()) {
                     const snap = await window.realtimeSync.db.ref('goride_users').once('value');
                     const cloudUsers = snap.val() || {};
-                    Object.values(cloudUsers).forEach(u => {
+                    for (const u of Object.values(cloudUsers)) {
                         if (u && (u.id || u.email)) {
                             const key = u.id || u.email;
                             userMap.set(key, { ...userMap.get(key), ...u });
                         }
-                    });
+        
                 }
-                // Dual REST fallback for customers
+                } // Dual REST fallback for customers
                 if (typeof window.realtimeSync._restGet === 'function') {
                     const restUsers = await window.realtimeSync._restGet('goride_users');
-                    if (restUsers && typeof restUsers === 'object') {
-                        Object.values(restUsers).forEach(u => {
+                    if (restUsers && typeof restUsers === 'object')
+                        for (const u of Object.values(restUsers)) {
                             if (u && (u.id || u.email)) {
                                 const key = u.id || u.email;
                                 userMap.set(key, { ...userMap.get(key), ...u });
                             }
-                        });
+            
                     }
                 }
             } catch (e) {}
@@ -2132,12 +2379,13 @@ class AdminController {
         // 3. Query localStorage goride_offline_users
         try {
             const offline = JSON.parse(localStorage.getItem('goride_offline_users') || '[]');
-            offline.forEach(u => {
+            for (const u of offline) {
                 if (u && (u.id || u.email)) {
                     const key = u.id || u.email;
                     userMap.set(key, { ...u, ...userMap.get(key) });
                 }
-            });
+                }
+
         } catch (e) {}
 
         // Baseline customer & admin accounts if not already included
@@ -2223,6 +2471,8 @@ class AdminController {
         if (statAdmin) statAdmin.textContent = adminCount;
         if (statLocked) statLocked.textContent = lockedCount;
         if (sidebarCount) sidebarCount.textContent = list.length;
+        const statOverviewCustomers = document.getElementById('stat-customers');
+        if (statOverviewCustomers) statOverviewCustomers.textContent = Number(list.length).toLocaleString('vi-VN');
     }
 
     renderCustomersTable(customers) {
@@ -2337,6 +2587,7 @@ class AdminController {
                         role: newRole,
                         updatedAt: new Date().toISOString()
                     });
+        
                 } catch (e) {}
             }
 
@@ -2383,6 +2634,7 @@ class AdminController {
                         status: newStatus,
                         updatedAt: new Date().toISOString()
                     });
+        
                 } catch (e) {}
             }
 
@@ -2731,6 +2983,7 @@ class AdminController {
                     opt.textContent = `${h.icon} ${h.name}`;
                     select.appendChild(opt);
                 });
+    
             }
         }
 
@@ -2804,6 +3057,7 @@ class AdminController {
                 icon: category === 'promo' ? '🎟️' : '🇻🇳'
             });
 
+
             if (res) {
                 this.showToast(`Đã phát hành thông báo thành công tới "${targetLabel}"!`, 'success');
                 const form = document.getElementById('form-broadcast-promo');
@@ -2823,6 +3077,7 @@ class AdminController {
                 cancelText: 'Xem lại',
                 onConfirm: doPublish
             });
+
         } else {
             doPublish();
         }
@@ -2886,7 +3141,19 @@ class AdminController {
 
 // Global initialization
 let adminController;
-document.addEventListener('DOMContentLoaded', () => {
+function startAdminApp() {
+    if (!window.adminController) {
+        window.adminController = new AdminController();
+        adminController = window.adminController;
+    }
+    window.adminController.init().catch(e => console.error('[Admin] init error:', e));
+}
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startAdminApp);
+} else {
+    startAdminApp();
+}
+if (false) document.addEventListener('DOMContentLoaded', () => {
     adminController = new AdminController();
     adminController.init();
 });

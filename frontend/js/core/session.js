@@ -668,20 +668,71 @@ if (typeof document !== 'undefined') {
         const walletUrl = `${prefix}wallet.html`;
         const activityUrl = `${prefix}activity.html`;
         const loginUrl = `${prefix}login.html`;
-        const curPath = window.location.pathname.toLowerCase();
+
+        const curPath = (window.location.pathname || '').toLowerCase();
         const curHash = (window.location.hash || '').toLowerCase();
         const curSearch = window.location.search || '';
 
-        const isHome = curPath.endsWith('index.html') || (!isPagesDir && (!curPath.includes('.') || curPath.endsWith('/')));
-        const isCustomerPage = curPath.includes('customer.html');
-        const isDriverPage = curPath.includes('driver.html');
-        const isAdminPage = curPath.includes('admin.html');
-        const isProfilePage = curPath.includes('profile.html');
-        const isNotificationsPage = curPath.includes('notifications.html');
-        const isWalletPage = curPath.includes('wallet.html');
-        const isActivityPage = curPath.includes('activity.html');
-        const isLoginPage = curPath.includes('login');
-        const isRegisterPage = curPath.includes('register');
+        // Extract normalized path and file segment
+        const normalizedPath = curPath.replace(/\\/g, '/');
+        const pathSegments = normalizedPath.split('/').filter(Boolean);
+        const lastSegment = pathSegments.length > 0 ? pathSegments[pathSegments.length - 1].split('?')[0].split('#')[0] : '';
+        const cleanSegment = lastSegment.replace('.html', '');
+
+        // High-precision mutually exclusive page resolution (Prevents cross-contamination)
+        let activePage = 'home';
+
+        if (cleanSegment === 'admin' || lastSegment === 'admin.html' || normalizedPath.endsWith('/admin')) {
+            activePage = 'admin';
+        } else if (cleanSegment === 'driver' || lastSegment === 'driver.html' || normalizedPath.endsWith('/driver')) {
+            activePage = 'driver';
+        } else if (cleanSegment === 'customer' || lastSegment === 'customer.html' || normalizedPath.endsWith('/customer')) {
+            activePage = 'customer';
+        } else if (cleanSegment === 'wallet' || lastSegment === 'wallet.html' || normalizedPath.endsWith('/wallet')) {
+            activePage = 'wallet';
+        } else if (cleanSegment === 'activity' || lastSegment === 'activity.html' || normalizedPath.endsWith('/activity')) {
+            activePage = 'activity';
+        } else if (cleanSegment === 'notifications' || cleanSegment === 'notification' || lastSegment === 'notifications.html' || normalizedPath.endsWith('/notifications')) {
+            activePage = 'notifications';
+        } else if (cleanSegment === 'profile' || lastSegment === 'profile.html' || normalizedPath.endsWith('/profile')) {
+            activePage = 'profile';
+        } else if (cleanSegment === 'login' || lastSegment === 'login.html') {
+            activePage = 'login';
+        } else if (cleanSegment === 'register' || lastSegment === 'register.html') {
+            activePage = 'register';
+        } else if (cleanSegment === 'index' || lastSegment === 'index.html' || cleanSegment === '' || normalizedPath.endsWith('/')) {
+            activePage = 'home';
+        } else {
+            // Secondary DOM Landmark Fallback if URL is non-standard
+            if (document.querySelector('#sidebar-toggle, .admin-header-actions, #stat-total-trips')) {
+                activePage = 'admin';
+            } else if (document.querySelector('#driver-map, .driver-app-main')) {
+                activePage = 'driver';
+            } else if (document.body.classList.contains('gsm-booking-page') || document.querySelector('#booking-map, #customer-map-container, .gsm-booking-screen')) {
+                activePage = 'customer';
+            } else if (document.querySelector('.wallet-card-hero, #wallet-balance-display')) {
+                activePage = 'wallet';
+            } else if (document.querySelector('#activity-trips-container, .gsm-activity-screen')) {
+                activePage = 'activity';
+            } else if (document.querySelector('.gsm-notif-screen, #notif-list-container')) {
+                activePage = 'notifications';
+            } else if (document.querySelector('.gsm-profile-page-wrapper, #profile-form')) {
+                activePage = 'profile';
+            } else if (document.body.classList.contains('gsm-home-page') || document.querySelector('#navigo-welcome-splash, .gsm-services-grid')) {
+                activePage = 'home';
+            }
+        }
+
+        const isAdminPage = activePage === 'admin';
+        const isDriverPage = activePage === 'driver';
+        const isCustomerPage = activePage === 'customer';
+        const isActivityPage = activePage === 'activity';
+        const isNotificationsPage = activePage === 'notifications';
+        const isProfilePage = activePage === 'profile';
+        const isWalletPage = activePage === 'wallet';
+        const isLoginPage = activePage === 'login';
+        const isRegisterPage = activePage === 'register';
+        const isHome = activePage === 'home';
 
         // If logged-in user is a driver, prevent customer booking page access and redirect directly to driver portal
         if (isCustomerPage && isDriver) {
@@ -753,14 +804,46 @@ if (typeof document !== 'undefined') {
                     <a href="${profileUrl}" class="gsm-pc-nav-link ${isProfilePage ? 'active' : ''}">👤 Hồ sơ</a>
                 `;
             } else {
-                // Guest mode: Trang chủ, Đặt xe Navigo, Ví Navi, Cổng Tài xế
+                // Guest mode: Trang chủ, Đặt xe Navigo, Ví Navi, Hoạt động, Thông báo, Cổng Tài xế
                 container.innerHTML = `
                     <a href="${homeUrl}" class="gsm-pc-nav-link ${isHome ? 'active' : ''}">Trang chủ</a>
                     <a href="${customerUrl}" class="gsm-pc-nav-link ${isCustomerPage ? 'active' : ''}">Đặt xe Navigo</a>
                     <a href="${walletUrl}" class="gsm-pc-nav-link ${isWalletPage ? 'active' : ''}">💳 Ví Navi</a>
+                    <a href="${activityUrl}" class="gsm-pc-nav-link ${isActivityPage ? 'active' : ''}">📋 Hoạt động</a>
+                    <a href="${notificationsUrl}" class="gsm-pc-nav-link ${isNotificationsPage ? 'active' : ''}" style="position:relative;">
+                        🔔 Thông báo
+                        <span class="gsm-nav-badge-dot" style="position:absolute; top:7px; right:5px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span>
+                    </a>
                     <a href="${driverUrl}" class="gsm-pc-nav-link ${isDriverPage ? 'active' : ''}">Cổng Tài xế</a>
                 `;
             }
+
+            // Strictly enforce mutually exclusive active class on desktop top nav links
+            container.querySelectorAll('.gsm-pc-nav-link').forEach(link => {
+                const href = (link.getAttribute('href') || '').toLowerCase();
+                const txt = (link.textContent || '').toLowerCase().trim();
+
+                let active = false;
+                if (href.endsWith('index.html') || href === 'index.html' || href === '../index.html' || href === '/' || txt === 'trang chủ') {
+                    active = isHome;
+                } else if (href.includes('customer') || txt.includes('đặt xe')) {
+                    active = isCustomerPage;
+                } else if (href.includes('wallet') || txt.includes('ví navi')) {
+                    active = isWalletPage;
+                } else if (href.includes('activity') || txt.includes('hoạt động')) {
+                    active = isActivityPage;
+                } else if (href.includes('notifications') || txt.includes('thông báo')) {
+                    active = isNotificationsPage;
+                } else if (href.includes('profile') || txt.includes('hồ sơ')) {
+                    active = isProfilePage;
+                } else if (href.includes('admin') || txt.includes('quản trị')) {
+                    active = isAdminPage;
+                } else if (href.includes('driver') || txt.includes('tài xế')) {
+                    active = isDriverPage;
+                }
+
+                link.classList.toggle('active', active);
+            });
 
             // Wire in-page tab switching on desktop top nav links
             container.querySelectorAll('.gsm-pc-nav-link').forEach(link => {
@@ -814,26 +897,10 @@ if (typeof document !== 'undefined') {
 
             navContainers.forEach(nav => {
                 nav.className = 'gsm-floating-bottom-nav';
-                if (isAdmin && (isAdminPage || isActivityPage || isNotificationsPage)) {
-                    nav.style.setProperty('display', 'inline-flex', 'important');
-                    nav.style.setProperty('visibility', 'visible', 'important');
-                    nav.style.setProperty('opacity', '1', 'important');
-                    nav.style.setProperty('pointer-events', 'none', 'important');
-                } else if (isDriver && (isDriverPage || isNotificationsPage)) {
-                    nav.style.setProperty('display', 'inline-flex', 'important');
-                    nav.style.setProperty('visibility', 'visible', 'important');
-                    nav.style.setProperty('opacity', '1', 'important');
-                    nav.style.setProperty('pointer-events', 'none', 'important');
-                } else if ((isActivityPage || isAdminPage || (isDriverPage && !isMobile)) && window.innerWidth >= 768) {
-                    nav.style.setProperty('display', 'none', 'important');
-                } else if (isCustomerPage) {
-                    nav.style.setProperty('display', 'inline-flex', 'important');
-                    nav.style.setProperty('visibility', 'visible', 'important');
-                    nav.style.setProperty('opacity', '1', 'important');
-                    nav.style.setProperty('pointer-events', 'none', 'important');
-                } else {
-                    nav.style.removeProperty('display');
-                }
+                nav.style.setProperty('display', 'inline-flex', 'important');
+                nav.style.setProperty('visibility', 'visible', 'important');
+                nav.style.setProperty('opacity', '1', 'important');
+                nav.style.setProperty('pointer-events', 'none', 'important');
 
                 const renderedRole = nav.getAttribute('data-rendered-role');
                 const targetRole = isDriver ? 'driver' : (isAdmin ? 'admin' : (isCustomer ? 'customer' : 'guest'));
@@ -858,48 +925,74 @@ if (typeof document !== 'undefined') {
                     });
                 }
 
+                // Bulletproof helper to update active class on any nav element using multi-factor attributes
+                function updateBottomNavActiveState(navElement) {
+                    if (!navElement) return;
+                    const isTabTrips = isDriverPage && curHash === '#trips';
+                    const isTabHome = isDriverPage && (!curHash || curHash === '#home');
+
+                    navElement.querySelectorAll('.gsm-nav-btn, .bottom-nav-item').forEach(btn => {
+                        const id = (btn.id || '').toLowerCase();
+                        const href = (btn.getAttribute('href') || '').toLowerCase();
+                        const dataTab = (btn.getAttribute('data-tab') || '').toLowerCase();
+                        const title = (btn.getAttribute('title') || '').toLowerCase();
+
+                        let active = false;
+
+                        // 1. Home button (Trang chủ)
+                        if (id === 'bnav-cust-home' || id === 'bnav-guest-home' || id === 'bnav-admin-landing' || id === 'bnav-driver-landing' || 
+                            href.endsWith('index.html') || href === 'index.html' || href === '../index.html' || href === '/' || 
+                            title === 'trang chủ' || title === 'về trang chủ') {
+                            active = isHome;
+                        }
+                        // 2. Admin dashboard button (Quản trị)
+                        else if (id === 'bnav-admin-dashboard' || id === 'bnav-admin' || 
+                                 href.endsWith('admin.html') || href === 'admin.html' || href === 'pages/admin.html' || 
+                                 title.includes('quản trị')) {
+                            active = isAdminPage;
+                        }
+                        // 3. Driver Trips tab (Lịch sử chuyến đi)
+                        else if (dataTab === 'trips' || id === 'bnav-driver-trips' || href.includes('#trips') || title.includes('lịch sử chuyến')) {
+                            active = isTabTrips;
+                        }
+                        // 4. Driver Home (Nhận chuyến) tab
+                        else if (dataTab === 'home' || id === 'bnav-driver-home' || href.includes('#home') || title.includes('nhận chuyến')) {
+                            active = isTabHome;
+                        }
+                        // 5. Customer Booking button (Đặt xe Navigo)
+                        else if (id === 'bnav-cust-booking' || id === 'bnav-guest-booking' || 
+                                 href.endsWith('customer.html') || href === 'customer.html' || href === 'pages/customer.html' || 
+                                 title === 'đặt xe' || title === 'đặt xe navigo') {
+                            active = isCustomerPage;
+                        }
+                        // 6. Wallet button (Ví Navi)
+                        else if (id === 'bnav-cust-wallet' || id === 'bnav-guest-wallet' || id === 'bnav-driver-wallet' || 
+                                 href.includes('wallet') || title.includes('ví')) {
+                            active = isWalletPage;
+                        }
+                        // 7. Activity / History button (Hoạt động / Lịch sử)
+                        else if (id === 'bnav-cust-activity' || id === 'bnav-cust-history' || id === 'bnav-guest-activity' || id === 'bnav-admin-activity' || 
+                                 href.includes('activity') || title.includes('hoạt động') || title === 'lịch sử') {
+                            active = isActivityPage;
+                        }
+                        // 8. Notifications button (Thông báo)
+                        else if (id === 'bnav-cust-notifications' || id === 'bnav-guest-notifications' || id === 'bnav-admin-notifications' || id === 'bnav-driver-notifications' || 
+                                 href.includes('notification') || title.includes('thông báo')) {
+                            active = isNotificationsPage;
+                        }
+                        // 9. Profile / Account button (Hồ sơ)
+                        else if (id === 'bnav-cust-account' || id === 'bnav-guest-account' || id === 'bnav-admin-account' || id === 'bnav-driver-account' || 
+                                 href.includes('profile') || title.includes('hồ sơ') || title.includes('tài khoản')) {
+                            active = isProfilePage;
+                        }
+
+                        btn.classList.toggle('active', active);
+                    });
+                }
+
                 if (renderedRole === targetRole) {
                     // Update active classes without full HTML DOM rebuild
-                    if (isDriver) {
-                        const isTabHome = isDriverPage && (!curHash || curHash === '#home');
-                        const isTabTrips = isDriverPage && curHash === '#trips';
-        
-                        nav.querySelectorAll('.gsm-nav-btn').forEach(btn => {
-                            if (btn.id === 'bnav-driver-landing') btn.classList.toggle('active', isHome);
-                            else if (btn.id === 'bnav-driver-home') btn.classList.toggle('active', isTabHome);
-                            else if (btn.id === 'bnav-driver-trips') btn.classList.toggle('active', isTabTrips);
-                            else if (btn.id === 'bnav-driver-earnings') btn.classList.toggle('active', isTabEarnings);
-                            else if (btn.id === 'bnav-driver-wallet') btn.classList.toggle('active', isWalletPage);
-                            else if (btn.id === 'bnav-driver-notifications') btn.classList.toggle('active', isNotificationsPage);
-                            else if (btn.id === 'bnav-driver-account') btn.classList.toggle('active', isProfilePage);
-                        });
-                    } else if (isAdmin) {
-                        nav.querySelectorAll('.gsm-nav-btn').forEach(btn => {
-                            if (btn.id === 'bnav-admin-landing') btn.classList.toggle('active', isHome);
-                            else if (btn.id === 'bnav-admin-dashboard') btn.classList.toggle('active', isAdminPage);
-                            else if (btn.id === 'bnav-admin-activity') btn.classList.toggle('active', isActivityPage);
-                            else if (btn.id === 'bnav-admin-notifications') btn.classList.toggle('active', isNotificationsPage);
-                            else if (btn.id === 'bnav-admin-account') btn.classList.toggle('active', isProfilePage);
-                        });
-                    } else if (isCustomer) {
-                        nav.querySelectorAll('.gsm-nav-btn').forEach(btn => {
-                            if (btn.id === 'bnav-cust-home') btn.classList.toggle('active', isHome);
-                            else if (btn.id === 'bnav-cust-booking') btn.classList.toggle('active', isCustomerPage);
-                            else if (btn.id === 'bnav-cust-wallet') btn.classList.toggle('active', isWalletPage);
-                            else if (btn.id === 'bnav-cust-activity') btn.classList.toggle('active', isActivityPage);
-                            else if (btn.id === 'bnav-cust-notifications') btn.classList.toggle('active', isNotificationsPage);
-                            else if (btn.id === 'bnav-cust-account') btn.classList.toggle('active', isProfilePage);
-                        });
-                    } else {
-                        nav.querySelectorAll('.gsm-nav-btn').forEach(btn => {
-                            if (btn.id === 'bnav-guest-home') btn.classList.toggle('active', isHome);
-                            else if (btn.id === 'bnav-guest-booking') btn.classList.toggle('active', isCustomerPage);
-                            else if (btn.id === 'bnav-guest-wallet') btn.classList.toggle('active', isWalletPage);
-                            else if (btn.id === 'bnav-guest-activity') btn.classList.toggle('active', isActivityPage);
-                            else if (btn.id === 'bnav-guest-notifications') btn.classList.toggle('active', isNotificationsPage);
-                            else if (btn.id === 'bnav-guest-account') btn.classList.toggle('active', isProfilePage || isLoginPage);
-                        });
-                    }
+                    updateBottomNavActiveState(nav);
                     return;
                 }
 
@@ -1119,6 +1212,7 @@ if (typeof document !== 'undefined') {
                         </a>
                     `;
                 }
+                updateBottomNavActiveState(nav);
             });
         }
 
@@ -1232,6 +1326,7 @@ if (typeof document !== 'undefined') {
                     </a>
                 `;
             }
+            updateBottomNavActiveState(bnav);
         });
 
         // Sync navigation unread badge dots immediately
@@ -1363,6 +1458,39 @@ if (typeof document !== 'undefined') {
 
             if (targetUrl.origin !== window.location.origin) return;
 
+            // Auth Guard: Guest users clicking Activity or Notifications require login
+            const isAuthed = (typeof sessionManager !== 'undefined' && sessionManager && sessionManager.isAuthenticated());
+            if (!isAuthed) {
+                const targetClean = targetUrl.pathname.toLowerCase();
+                const isActivityLink = targetClean.includes('activity.html') || (a.id && a.id.includes('activity'));
+                const isNotifLink = targetClean.includes('notifications.html') || (a.id && a.id.includes('notification'));
+
+                if (isActivityLink || isNotifLink) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const pageName = isActivityLink ? 'Lịch sử Hoạt động' : 'Thông báo';
+                    const redirectTarget = isActivityLink ? 'activity.html' : 'notifications.html';
+                    const isPages = window.location.pathname.toLowerCase().includes('/pages/');
+                    const loginTarget = isPages ? `login.html?redirect=${redirectTarget}` : `pages/login.html?redirect=${redirectTarget}`;
+
+                    if (typeof window.showNavigoModal === 'function') {
+                        window.showNavigoModal({
+                            title: 'Yêu Cầu Đăng Nhập',
+                            message: `Bạn cần đăng nhập tài khoản Navigo để xem ${pageName}. Vui lòng đăng nhập để tiếp tục!`,
+                            icon: '🔒',
+                            confirmText: 'Đăng nhập ngay',
+                            cancelText: 'Để sau',
+                            onConfirm: () => {
+                                window.location.href = loginTarget;
+                            }
+                        });
+                    } else {
+                        window.location.href = loginTarget;
+                    }
+                    return;
+                }
+            }
+
             const curPath = window.location.pathname.toLowerCase();
             const targetPath = targetUrl.pathname.toLowerCase();
             const isSamePage = (curPath === targetPath);
@@ -1447,3 +1575,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// Comprehensive Global Capture-Phase Auth Guard for Activity and Notifications
+document.addEventListener('click', (e) => {
+    const a = e.target.closest('a[href], [data-href]');
+    if (!a) return;
+
+    const href = (a.getAttribute('href') || a.getAttribute('data-href') || '').toLowerCase();
+    const id = (a.id || '').toLowerCase();
+    const isActivityLink = href.includes('activity.html') || id === 'bnav-guest-activity' || id === 'btn-desktop-history';
+    const isNotifLink = href.includes('notifications.html') || id === 'bnav-guest-notifications';
+
+    if (!isActivityLink && !isNotifLink) return;
+
+    const isAuthed = (typeof sessionManager !== 'undefined' && sessionManager && sessionManager.isAuthenticated());
+    if (isAuthed) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const pageName = isActivityLink ? 'Lịch sử Hoạt động' : 'Thông báo';
+    const redirectTarget = isActivityLink ? 'activity.html' : 'notifications.html';
+    const isPages = window.location.pathname.toLowerCase().includes('/pages/');
+    const loginTarget = isPages ? `login.html?redirect=${redirectTarget}` : `pages/login.html?redirect=${redirectTarget}`;
+
+    if (typeof window.showNavigoModal === 'function') {
+        window.showNavigoModal({
+            title: 'Yêu Cầu Đăng Nhập',
+            message: `Bạn cần đăng nhập tài khoản Navigo để xem ${pageName}. Vui lòng đăng nhập để tiếp tục!`,
+            icon: '🔒',
+            confirmText: 'Đăng nhập ngay',
+            cancelText: 'Để sau',
+            onConfirm: () => {
+                window.location.href = loginTarget;
+            }
+        });
+    } else {
+        window.location.href = loginTarget;
+    }
+}, true);

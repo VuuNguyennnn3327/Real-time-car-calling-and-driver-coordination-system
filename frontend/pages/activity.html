@@ -174,7 +174,11 @@
         }
 
         /* Floating Navigation Bar: prominently float on top across all pages */
-        .gsm-floating-bottom-nav {
+        .gsm-floating-bottom-nav,
+        body.gsm-role-customer .gsm-floating-bottom-nav,
+        body.gsm-role-customer #gsm-floating-bottom-nav,
+        body.gsm-role-admin .gsm-floating-bottom-nav,
+        body.gsm-role-driver .gsm-floating-bottom-nav {
             position: fixed !important;
             bottom: 20px !important;
             left: 50% !important;
@@ -188,11 +192,17 @@
         .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
         .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
             pointer-events: auto !important;
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         .gsm-floating-bottom-nav .gsm-bottom-nav-pill *,
         .gsm-floating-bottom-nav .gsm-bottom-nav-trophy *,
         .gsm-nav-btn {
             pointer-events: auto !important;
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             cursor: pointer !important;
         }
         .gsm-nav-btn svg, .gsm-nav-btn path, .gsm-nav-btn circle {
@@ -429,24 +439,14 @@
             }
         }
 
-        /* Strict Desktop Layout (>= 768px): Hide floating bottom nav so it never blocks desktop map canvas */
+        /* Unified Desktop Layout (>= 768px): Prominently show floating bottom navigation bar */
         @media (min-width: 768px) {
-            body:not(.gsm-role-admin).gsm-activity-page .gsm-floating-bottom-nav,
-            body:not(.gsm-role-admin).gsm-activity-page #gsm-floating-bottom-nav,
-            body:not(.gsm-role-admin):has(.gsm-desktop-container) .gsm-floating-bottom-nav,
-            body:not(.gsm-role-admin):has(.gsm-desktop-wide-canvas) .gsm-floating-bottom-nav,
-            body:not(.gsm-role-admin) .gsm-desktop-container ~ .gsm-floating-bottom-nav,
-            body:not(.gsm-role-admin) .gsm-floating-bottom-nav {
-                display: none !important;
-                visibility: hidden !important;
-                opacity: 0 !important;
-                pointer-events: none !important;
-                height: 0 !important;
-                width: 0 !important;
-                overflow: hidden !important;
-            }
-            body.gsm-role-admin .gsm-floating-bottom-nav,
-            body.gsm-role-admin #gsm-floating-bottom-nav {
+            .gsm-floating-bottom-nav,
+            #gsm-floating-bottom-nav,
+            body.gsm-activity-page .gsm-floating-bottom-nav,
+            body.gsm-activity-page #gsm-floating-bottom-nav,
+            body:has(.gsm-desktop-container) .gsm-floating-bottom-nav,
+            body:has(.gsm-desktop-wide-canvas) .gsm-floating-bottom-nav {
                 position: fixed !important;
                 bottom: 20px !important;
                 left: 50% !important;
@@ -461,16 +461,14 @@
                 min-height: 58px !important;
                 overflow: visible !important;
             }
-            body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
-            body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn {
+            .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            .gsm-floating-bottom-nav .gsm-nav-btn,
+            .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
                 display: inline-flex !important;
                 visibility: visible !important;
                 opacity: 1 !important;
                 pointer-events: auto !important;
                 cursor: pointer !important;
-            }
-            body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
-                display: none !important;
             }
             .gsm-activity-screen {
                 padding: 20px 20px 30px !important;
@@ -528,6 +526,7 @@
             <a href="customer.html" class="gsm-pc-nav-link ">Đặt xe Navigo</a>
             
             <a href="wallet.html" class="gsm-pc-nav-link">Ví Navi</a>
+            <a href="activity.html" class="gsm-pc-nav-link active">📋 Hoạt động</a>
             <a href="notifications.html" class="gsm-pc-nav-link " style="position:relative;">
                 🔔 Thông báo
                 <span class="gsm-nav-badge-dot" style="position:absolute; top:7px; right:5px; width:7px; height:7px; border-radius:50%; background:#ef4444; border:1px solid #fff; display:none;"></span>
@@ -659,7 +658,7 @@
     </div>
 
     <!-- Floating Glassmorphism Bottom Navigation Bar (Authentic Screenshot Match) -->
-    <nav class="gsm-floating-bottom-nav">
+    <nav class="gsm-floating-bottom-nav" id="gsm-floating-bottom-nav">
         <div class="gsm-bottom-nav-pill">
             <a href="../index.html" class="gsm-nav-btn " title="Trang chủ">
                 <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -1715,19 +1714,13 @@
                     newBookingBtn.title = 'Đặt chuyến xe thuần điện mới';
                 }
             }
-            // Strict desktop enforcement: hide mobile bottom nav on desktop screens
+            // Ensure mobile bottom nav is displayed consistently across desktop & mobile
             const floatNav = document.querySelector('.gsm-floating-bottom-nav') || document.getElementById('gsm-floating-bottom-nav');
             if (floatNav) {
-                if (curUser && curUser.role === 'admin') {
-                    floatNav.style.setProperty('display', 'inline-flex', 'important');
-                    floatNav.style.setProperty('visibility', 'visible', 'important');
-                    floatNav.style.setProperty('opacity', '1', 'important');
-                    floatNav.style.setProperty('pointer-events', 'none', 'important');
-                } else if (window.innerWidth >= 768) {
-                    floatNav.style.setProperty('display', 'none', 'important');
-                } else {
-                    floatNav.style.removeProperty('display');
-                }
+                floatNav.style.setProperty('display', 'inline-flex', 'important');
+                floatNav.style.setProperty('visibility', 'visible', 'important');
+                floatNav.style.setProperty('opacity', '1', 'important');
+                floatNav.style.setProperty('pointer-events', 'none', 'important');
             }
         }
         window.addEventListener('resize', () => {
