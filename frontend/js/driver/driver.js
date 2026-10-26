@@ -36,12 +36,13 @@ class DriverController {
       walletBalance: 0
     };
 
-    // Driver location (Central HCMC)
+    // Driver location (Central HCMC default fallback)
     this.currentPosition = {
       lat: 10.776889,
       lng: 106.700806,
       address: 'Quận 1, TP. Hồ Chí Minh'
     };
+    this.restoreSavedDriverLocation();
 
     // Trip progression phases
     this.PHASES = [
@@ -100,6 +101,7 @@ class DriverController {
 
     this.setupTabNavigation();
     this.setupUserMenu();
+    this.restoreSavedDriverLocation();
     this.switchTab(targetTab);
 
     // 2. Map and GPS initialization: ONLY initialize full map if targetTab === 'home' or defer
@@ -138,6 +140,79 @@ class DriverController {
     });
 
     console.log('[DriverController] Driver portal ready.');
+  }
+
+  /**
+   * Pre-hydrates driver coordinates from persistent storage before map rendering
+   */
+  restoreSavedDriverLocation() {
+    try {
+      // 1. Check goride_driver_last_location
+      const savedLoc = localStorage.getItem('goride_driver_last_location');
+      if (savedLoc) {
+        const parsed = JSON.parse(savedLoc);
+        if (parsed && typeof parsed.lat === 'number' && typeof parsed.lng === 'number' && !isNaN(parsed.lat) && !isNaN(parsed.lng)) {
+          this.currentPosition.lat = parsed.lat;
+          this.currentPosition.lng = parsed.lng;
+          if (parsed.address) this.currentPosition.address = parsed.address;
+          return true;
+        }
+      }
+
+      // 2. Check navigo_user_location
+      const navigoLoc = localStorage.getItem('navigo_user_location');
+      if (navigoLoc) {
+        const parsed = JSON.parse(navigoLoc);
+        const pLat = Number(parsed?.lat);
+        const pLng = Number(parsed?.lng);
+        if (!isNaN(pLat) && !isNaN(pLng) && pLat > 0 && pLng > 0) {
+          this.currentPosition.lat = pLat;
+          this.currentPosition.lng = pLng;
+          if (parsed.address) this.currentPosition.address = parsed.address;
+          return true;
+        }
+      }
+
+      // 3. Check goride_online_drivers
+      let curUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+      if (!curUser) {
+        try { curUser = JSON.parse(localStorage.getItem('goride_user') || 'null'); } catch(e) {}
+      }
+      const myId = curUser?.id || (curUser?.phone ? ('drv_' + curUser.phone) : null);
+      if (myId) {
+        const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+        const driverObj = Array.isArray(onlineDrivers) ? onlineDrivers.find(d => d && (d.id === myId || (curUser?.phone && d.phone === curUser.phone))) : onlineDrivers[myId];
+        if (driverObj && !isNaN(Number(driverObj.lat)) && !isNaN(Number(driverObj.lng))) {
+          this.currentPosition.lat = Number(driverObj.lat);
+          this.currentPosition.lng = Number(driverObj.lng);
+          if (driverObj.address) this.currentPosition.address = driverObj.address;
+          return true;
+        }
+      }
+
+      // 4. Check goride_admin_drivers
+      const adminDrivers = JSON.parse(localStorage.getItem('goride_admin_drivers') || '[]');
+      if (Array.isArray(adminDrivers)) {
+        const dMatch = adminDrivers.find(d => d && (d.id === myId || (curUser?.phone && d.phone === curUser.phone) || (curUser?.email && d.email === curUser.email)));
+        if (dMatch && !isNaN(Number(dMatch.lat)) && !isNaN(Number(dMatch.lng))) {
+          this.currentPosition.lat = Number(dMatch.lat);
+          this.currentPosition.lng = Number(dMatch.lng);
+          if (dMatch.address) this.currentPosition.address = dMatch.address;
+          return true;
+        }
+      }
+
+      // 5. Check user profile location
+      if (curUser && !isNaN(Number(curUser.lat)) && !isNaN(Number(curUser.lng))) {
+        this.currentPosition.lat = Number(curUser.lat);
+        this.currentPosition.lng = Number(curUser.lng);
+        if (curUser.address) this.currentPosition.address = curUser.address;
+        return true;
+      }
+    } catch (e) {
+      console.warn('[Driver] restoreSavedDriverLocation notice:', e);
+    }
+    return false;
   }
 
   /* ==========================================================================
@@ -359,7 +434,20 @@ class DriverController {
       if (!this.mapController) {
         this.initMap();
       } else if (this.mapController && this.mapController.map) {
-        setTimeout(() => this.mapController.invalidateSize(), 150);
+        setTimeout(() => {
+          this.mapController.invalidateSize();
+          if (this.currentPosition && this.currentPosition.lat) {
+            if (typeof this.mapController.setUserLocation === 'function') {
+              this.mapController.setUserLocation(this.currentPosition.lat, this.currentPosition.lng);
+            }
+            if (typeof this.mapController.setView === 'function') {
+              this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 15);
+            }
+          }
+          if (this.isOnline) {
+            this.updateDriverMapMarker();
+          }
+        }, 150);
       }
     } else if (tabName === 'trips') {
       this.renderTripHistory(this.currentHistoryFilter);
@@ -416,9 +504,12 @@ class DriverController {
       const mapContainer = document.getElementById('driver-map');
       if (!mapContainer || typeof MapController === 'undefined') return;
 
+      // Ensure restored position is loaded before MapController instantiation
+      this.restoreSavedDriverLocation();
+
       this.mapController = new MapController('driver-map', {
         center: [this.currentPosition.lat, this.currentPosition.lng],
-        zoom: 14,
+        zoom: 15,
         zoomControl: true
       });
 
@@ -426,57 +517,112 @@ class DriverController {
         this.mapController.init();
       }
 
-      // Show initial Google Maps style pulsing blue dot at driver's coordinate
+      // Show Google Maps style pulsing blue dot at driver's coordinate
       if (this.mapController && typeof this.mapController.setUserLocation === 'function') {
         this.mapController.setUserLocation(this.currentPosition.lat, this.currentPosition.lng);
       }
+
+      // Update vehicle marker on map if online
+      if (this.isOnline) {
+        this.updateDriverMapMarker();
+      }
+
+      // Update address chip immediately with saved address if present
+      const addrEl = document.getElementById('driver-current-address');
+      if (addrEl && this.currentPosition.address) {
+        const cleanAddr = this.currentPosition.address.replace(/\s*•\s*Chạm để.*$/, '').trim();
+        addrEl.textContent = cleanAddr + (this.isOnline ? ' • Chạm để đổi' : ' • Chạm để bật');
+      }
+
+      const applyGpsPosition = (pos, shouldCenter = true) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const accuracy = pos.coords.accuracy;
+
+        this.currentPosition.lat = lat;
+        this.currentPosition.lng = lng;
+        if (pos.coords.heading) {
+          this.currentPosition.heading = pos.coords.heading;
+        }
+
+        if (this.mapController) {
+          if (typeof this.mapController.setUserLocation === 'function') {
+            this.mapController.setUserLocation(lat, lng, accuracy);
+          }
+          if (shouldCenter && typeof this.mapController.setView === 'function') {
+            this.mapController.setView(lat, lng, 15);
+          }
+        }
+
+        if (this.isOnline) {
+          this.updateDriverMapMarker();
+          this.broadcastDriverLocation();
+        }
+
+        localStorage.setItem('goride_driver_last_location', JSON.stringify({
+          lat: lat,
+          lng: lng,
+          address: this.currentPosition.address || 'TP. Hồ Chí Minh'
+        }));
+
+        // Reverse geocode to real street address if network permits
+        try {
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`, {
+            headers: { 'Accept-Language': 'vi' }
+          }).then(r => r.json()).then(data => {
+            if (data && data.display_name) {
+              const parts = data.display_name.split(',');
+              const shortAddr = parts.slice(0, 3).join(',').trim();
+              this.currentPosition.address = shortAddr || data.display_name;
+              const curAddrEl = document.getElementById('driver-current-address');
+              if (curAddrEl) {
+                curAddrEl.textContent = this.currentPosition.address + (this.isOnline ? ' • Chạm để đổi' : ' • Chạm để bật');
+              }
+              localStorage.setItem('goride_driver_last_location', JSON.stringify({
+                lat: lat,
+                lng: lng,
+                address: this.currentPosition.address
+              }));
+              localStorage.setItem('navigo_user_location', JSON.stringify({
+                lat: lat,
+                lng: lng,
+                address: this.currentPosition.address,
+                name: 'Vị trí tài xế'
+              }));
+              if (this.isOnline) {
+                this.broadcastDriverLocation();
+              }
+            }
+          }).catch(() => {});
+        } catch (e) {}
+      };
 
       // Try browser geolocation to place driver at real GPS position
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
-            this.currentPosition.lat = pos.coords.latitude;
-            this.currentPosition.lng = pos.coords.longitude;
-            this.currentPosition.address = `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
-            const addrEl = document.getElementById('driver-current-address');
-            if (addrEl) addrEl.textContent = this.currentPosition.address;
-
-            // Update pulsing blue dot on map
-            if (this.mapController && typeof this.mapController.setUserLocation === 'function') {
-              this.mapController.setUserLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-            }
-
-            // Reverse geocode to real street address if network permits
-            try {
-              fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18&addressdetails=1`, {
-                headers: { 'Accept-Language': 'vi' }
-              }).then(r => r.json()).then(data => {
-                if (data && data.display_name) {
-                  const parts = data.display_name.split(',');
-                  const shortAddr = parts.slice(0, 3).join(',').trim();
-                  this.currentPosition.address = shortAddr || data.display_name;
-                  if (addrEl) addrEl.textContent = this.currentPosition.address;
-                  if (this.isOnline) {
-                    this.broadcastDriverLocation();
-                  }
-                }
-              }).catch(() => {});
-            } catch (e) {}
-
-            if (this.mapController && typeof this.mapController.setView === 'function') {
-              this.mapController.setView(pos.coords.latitude, pos.coords.longitude, 15);
-            }
-            if (this.isOnline) {
-              this.updateDriverMapMarker();
-              this.broadcastDriverLocation();
-            }
+            applyGpsPosition(pos, true);
           },
           (err) => {
-            console.warn('[Driver] Geolocation notice:', err.message);
-            const addrEl = document.getElementById('driver-current-address');
-            if (addrEl) addrEl.textContent = 'Trung tâm TP. Hồ Chí Minh';
+            console.warn('[Driver] High-accuracy geolocation notice:', err.message);
+            // Fallback to low-accuracy network geolocation
+            navigator.geolocation.getCurrentPosition(
+              (pos2) => {
+                applyGpsPosition(pos2, true);
+              },
+              (err2) => {
+                console.warn('[Driver] Low-accuracy geolocation notice:', err2.message);
+                if (this.mapController && typeof this.mapController.setView === 'function') {
+                  this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 15);
+                }
+                if (this.isOnline) {
+                  this.updateDriverMapMarker();
+                }
+              },
+              { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+            );
           },
-          { enableHighAccuracy: true, timeout: 8000 }
+          { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
         );
 
         // Continuous watch to keep Google Maps pulsing blue dot updated as driver travels
@@ -486,18 +632,7 @@ class DriverController {
           }
           this._driverGpsWatchId = navigator.geolocation.watchPosition(
             (pos) => {
-              this.currentPosition.lat = pos.coords.latitude;
-              this.currentPosition.lng = pos.coords.longitude;
-              if (pos.coords.heading) {
-                this.currentPosition.heading = pos.coords.heading;
-              }
-              if (this.mapController && typeof this.mapController.setUserLocation === 'function') {
-                this.mapController.setUserLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-              }
-              if (this.isOnline) {
-                this.updateDriverMapMarker();
-                this.broadcastDriverLocation();
-              }
+              applyGpsPosition(pos, false);
             },
             (err) => {
               console.debug('[Driver] GPS watch update notice:', err.message);
@@ -662,41 +797,106 @@ class DriverController {
     if (btnDriverGps) {
       btnDriverGps.addEventListener('click', (e) => {
         e.preventDefault();
+        this.showToast('Đang định vị GPS vị trí của bạn...', 'info', 2500);
+
+        const handleSuccessPos = (pos, modeName = 'GPS') => {
+          this.currentPosition.lat = pos.coords.latitude;
+          this.currentPosition.lng = pos.coords.longitude;
+          if (pos.coords.heading) {
+            this.currentPosition.heading = pos.coords.heading;
+          }
+
+          if (this.mapController) {
+            if (typeof this.mapController.setUserLocation === 'function') {
+              this.mapController.setUserLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+            }
+            if (typeof this.mapController.setView === 'function') {
+              this.mapController.setView(pos.coords.latitude, pos.coords.longitude, 16);
+            }
+          }
+
+          if (this.isOnline) {
+            this.updateDriverMapMarker();
+            this.broadcastDriverLocation();
+          }
+
+          localStorage.setItem('goride_driver_last_location', JSON.stringify({
+            lat: this.currentPosition.lat,
+            lng: this.currentPosition.lng,
+            address: this.currentPosition.address || 'TP. Hồ Chí Minh'
+          }));
+
+          // Reverse geocode to real street address
+          try {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&zoom=18&addressdetails=1`, {
+              headers: { 'Accept-Language': 'vi' }
+            }).then(r => r.json()).then(data => {
+              if (data && data.display_name) {
+                const parts = data.display_name.split(',');
+                const shortAddr = parts.slice(0, 3).join(',').trim();
+                this.currentPosition.address = shortAddr || data.display_name;
+                const addrEl = document.getElementById('driver-current-address');
+                if (addrEl) {
+                  addrEl.textContent = this.currentPosition.address + (this.isOnline ? ' • Chạm để đổi' : ' • Chạm để bật');
+                }
+                localStorage.setItem('goride_driver_last_location', JSON.stringify({
+                  lat: this.currentPosition.lat,
+                  lng: this.currentPosition.lng,
+                  address: this.currentPosition.address
+                }));
+                localStorage.setItem('navigo_user_location', JSON.stringify({
+                  lat: this.currentPosition.lat,
+                  lng: this.currentPosition.lng,
+                  address: this.currentPosition.address,
+                  name: 'Vị trí tài xế'
+                }));
+                if (this.isOnline) {
+                  this.broadcastDriverLocation();
+                }
+              }
+            }).catch(() => {});
+          } catch (e) {}
+
+          this.showToast(`Đã định vị thành công vị trí của bạn (${modeName})!`, 'success', 2500);
+        };
+
         if (navigator.geolocation) {
-          this.showToast('Đang định vị GPS vị trí của bạn...', 'info', 2500);
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              this.currentPosition.lat = pos.coords.latitude;
-              this.currentPosition.lng = pos.coords.longitude;
-              this.currentPosition.address = `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
-
-              if (this.mapController) {
-                if (typeof this.mapController.setUserLocation === 'function') {
-                  this.mapController.setUserLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
-                }
-                if (typeof this.mapController.setView === 'function') {
-                  this.mapController.setView(pos.coords.latitude, pos.coords.longitude, 16);
-                }
-              }
-
-              if (this.isOnline) {
-                this.updateDriverMapMarker();
-                this.broadcastDriverLocation();
-              }
-
-              this.showToast('Đã định vị thành công vị trí của bạn!', 'success', 2500);
-            },
+            (pos) => handleSuccessPos(pos, 'GPS'),
             (err) => {
-              console.warn('[Driver] Recenter GPS error:', err.message);
-              if (this.mapController && typeof this.mapController.setView === 'function') {
-                this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 16);
-              }
-              this.showToast('Không lấy được GPS mới, chuyển đến vị trí hiện tại.', 'warning', 2500);
+              console.warn('[Driver] Recenter high-accuracy error:', err.message);
+              // Fallback to low-accuracy network geolocation
+              navigator.geolocation.getCurrentPosition(
+                (pos2) => handleSuccessPos(pos2, 'Mạng/Wi-Fi'),
+                (err2) => {
+                  console.warn('[Driver] Recenter low-accuracy error:', err2.message);
+                  this.restoreSavedDriverLocation();
+                  if (this.mapController) {
+                    if (typeof this.mapController.setUserLocation === 'function') {
+                      this.mapController.setUserLocation(this.currentPosition.lat, this.currentPosition.lng);
+                    }
+                    if (typeof this.mapController.setView === 'function') {
+                      this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 16);
+                    }
+                  }
+                  if (this.isOnline) {
+                    this.updateDriverMapMarker();
+                  }
+                  this.showToast('Không lấy được GPS mới, chuyển đến vị trí đã lưu.', 'warning', 2500);
+                },
+                { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+              );
             },
-            { enableHighAccuracy: true, timeout: 6000 }
+            { enableHighAccuracy: true, timeout: 8000 }
           );
-        } else if (this.mapController && typeof this.mapController.setView === 'function') {
-          this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 16);
+        } else {
+          this.restoreSavedDriverLocation();
+          if (this.mapController && typeof this.mapController.setView === 'function') {
+            this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 16);
+          }
+          if (this.isOnline) {
+            this.updateDriverMapMarker();
+          }
         }
       });
     }
@@ -801,9 +1001,22 @@ class DriverController {
             (pos) => {
               this.currentPosition.lat = pos.coords.latitude;
               this.currentPosition.lng = pos.coords.longitude;
-              this.currentPosition.address = `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+              if (pos.coords.heading) {
+                this.currentPosition.heading = pos.coords.heading;
+              }
+              if (!this.currentPosition.address || this.currentPosition.address.includes('Quận 1') || this.currentPosition.address.includes('TP. Hồ Chí Minh')) {
+                this.currentPosition.address = `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
+              }
               const addrEl = document.getElementById('driver-current-address');
-              if (addrEl) addrEl.textContent = this.currentPosition.address;
+              if (addrEl) {
+                const cleanAddr = this.currentPosition.address.replace(/\s*•\s*Chạm để.*$/, '').trim();
+                addrEl.textContent = cleanAddr + (this.isOnline ? ' • Chạm để đổi' : ' • Chạm để bật');
+              }
+              localStorage.setItem('goride_driver_last_location', JSON.stringify({
+                lat: this.currentPosition.lat,
+                lng: this.currentPosition.lng,
+                address: this.currentPosition.address
+              }));
               resolve();
             },
             () => resolve(),
@@ -831,6 +1044,16 @@ class DriverController {
 
       this.renderOnlineStatusUI();
       this.updateDriverMapMarker();
+
+      // Ensure map is centered and blue dot is placed at driver's location
+      if (this.mapController) {
+        if (typeof this.mapController.setUserLocation === 'function') {
+          this.mapController.setUserLocation(this.currentPosition.lat, this.currentPosition.lng);
+        }
+        if (typeof this.mapController.setView === 'function') {
+          this.mapController.setView(this.currentPosition.lat, this.currentPosition.lng, 15);
+        }
+      }
 
       // Broadcast driver presence to Firebase Realtime Cloud
       if (typeof realtimeSync !== 'undefined') {
@@ -983,9 +1206,12 @@ class DriverController {
         (pos) => {
           this.currentPosition.lat = pos.coords.latitude;
           this.currentPosition.lng = pos.coords.longitude;
-          this.currentPosition.address = `GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`;
-          const addrEl = document.getElementById('driver-current-address');
-          if (addrEl) addrEl.textContent = this.currentPosition.address;
+          if (pos.coords.heading) {
+            this.currentPosition.heading = pos.coords.heading;
+          }
+          if (this.mapController && typeof this.mapController.setUserLocation === 'function') {
+            this.mapController.setUserLocation(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
+          }
           if (this.isOnline) {
             this.broadcastDriverLocation();
             this.updateDriverMapMarker();
@@ -1041,7 +1267,8 @@ class DriverController {
       statusText.textContent = this.isOnline ? 'Đang trực tuyến (Sẵn sàng nhận chuyến)' : 'Ngoại tuyến (Vào Profile để bật)';
     }
     if (currentAddr && this.currentPosition.address) {
-      currentAddr.textContent = this.currentPosition.address + (this.isOnline ? ' • Chạm để đổi' : ' • Chạm để bật');
+      const cleanAddr = this.currentPosition.address.replace(/\s*•\s*Chạm để.*$/, '').trim();
+      currentAddr.textContent = cleanAddr + (this.isOnline ? ' • Chạm để đổi' : ' • Chạm để bật');
     }
 
     // Also support legacy elements if present in DOM

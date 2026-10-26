@@ -331,11 +331,19 @@ class CustomerAppController {
                         this.pickup = {
                             lat: loc.lat,
                             lng: loc.lng,
-                            name: loc.name || 'Vị trí của tôi',
+                            name: (() => {
+                                const raw = (loc.name || '').trim();
+                                if (raw && raw.length > 2 && !/^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(raw)) return raw;
+                                if (loc.address && loc.address.trim().length > 2) {
+                                    const parts = loc.address.split(',').map(s => s.trim()).filter(s => s.length > 2);
+                                    return parts.slice(0, 2).join(', ') || loc.address.trim();
+                                }
+                                return 'Vị trí của tôi';
+                            })(),
                             address: loc.address || 'Vị trí hiện tại của bạn'
                         };
                         const pickupInput = document.getElementById('input-pickup');
-                        if (pickupInput && (!pickupInput.value || pickupInput.value.includes('789/12'))) {
+                        if (pickupInput && (!pickupInput.value || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(pickupInput.value.trim()) || pickupInput.value.includes('789/12'))) {
                             pickupInput.value = this.pickup.name || this.pickup.address;
                         }
                         const pickupConfirmedTitle = document.getElementById('pickup-confirmed-title');
@@ -469,7 +477,7 @@ class CustomerAppController {
                     let placeAddr = '';
                     if (typeof geocoderService !== 'undefined') {
                         try {
-                            const rev = await geocoderService.reverse(lat, lng);
+                            rev = await geocoderService.reverse(lat, lng);
                             if (rev && rev.name) {
                                 placeName = rev.name;
                                 placeAddr = rev.address || rev.name;
@@ -705,8 +713,8 @@ class CustomerAppController {
             }, 100);
         }
         // Update active state of mobile bottom nav items
-        const bNavBooking = document.getElementById('bnav-cust-booking');
-        const bNavHistory = document.getElementById('bnav-cust-history');
+        const bNavBooking = document.getElementById('bnav-cust-booking') || document.getElementById('bnav-guest-booking');
+        const bNavHistory = document.getElementById('bnav-cust-history') || document.getElementById('bnav-guest-activity');
         if (bNavBooking && bNavHistory) {
             if (viewName === 'history') {
                 bNavHistory.classList.add('active');
@@ -1262,8 +1270,18 @@ class CustomerAppController {
                             try {
                                 const rev = await geocoderService.reverse(location.lat, location.lng);
                                 if (rev && rev.name) {
-                                    placeName = rev.name;
-                                    placeAddr = rev.address || rev.name;
+                                    const raw = (rev.name || '').trim();
+                                    const isTrivial = !raw || raw.length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(raw);
+                                    if (!isTrivial) {
+                                        placeName = raw;
+                                    } else if (rev.address && rev.address.trim().length > 2) {
+                                        const parts = rev.address.split(',').map(s => s.trim()).filter(s => s.length > 2);
+                                        placeName = parts.slice(0, 2).join(', ') || rev.address.trim();
+                                    }
+                                    if (rev.district && !rev.district.toLowerCase().includes('chi minh') && !placeName.toLowerCase().includes(rev.district.toLowerCase())) {
+                                        placeName = `${placeName}, ${rev.district}`;
+                                    }
+                                    placeAddr = rev.address || placeName;
                                 }
                             } catch (err) {}
                         }
@@ -1753,6 +1771,10 @@ class CustomerAppController {
      * and present Liquid Glass Modal with Confirm / Cancel options.
      */
     async recenterMapOnGps(confirmSelection = true) {
+        const initialPickupInput = document.getElementById('input-pickup');
+        if (initialPickupInput && (!initialPickupInput.value || this.searchTarget === 'pickup' || this.currentView === 'search')) {
+            initialPickupInput.value = 'Đang xác định vị trí GPS...';
+        }
         const doCenter = async (lat, lng, accuracy = 30) => {
             this.userGpsPosition = { lat, lng };
 
@@ -1771,11 +1793,21 @@ class CustomerAppController {
             // 2. Reverse geocode to resolve street address
             let locName = 'Tọa độ GPS (' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ')';
             let locAddr = 'Khu vực TP. Hồ Chí Minh';
+            let rev = null;
             if (typeof geocoderService !== 'undefined') {
                 try {
-                    const rev = await geocoderService.reverse(lat, lng);
+                    rev = await geocoderService.reverse(lat, lng);
                     if (rev && rev.name) {
-                        locName = rev.name;
+                        const raw = (rev.name || '').trim();
+                        const isTrivial = !raw || raw.length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(raw);
+                        if (!isTrivial) {
+                            locName = raw;
+                        } else if (rev.address && rev.address.trim().length > 2) {
+                            const parts = rev.address.split(',').map(s => s.trim()).filter(s => s.length > 2);
+                            locName = parts.slice(0, 2).join(', ') || rev.address.trim();
+                        } else {
+                            locName = `Vị trí GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                        }
                         locAddr = rev.address || locName;
                     }
                 } catch (e) {
@@ -1783,7 +1815,78 @@ class CustomerAppController {
                 }
             }
 
-            // 3. Floating Liquid Glass Modal Notification with context-aware Title, Cancel & Confirm
+            if (rev && rev.district && !rev.district.toLowerCase().includes('chi minh')) {
+                if (!locName.toLowerCase().includes(rev.district.toLowerCase())) {
+                    locName = `${locName}, ${rev.district}`;
+                }
+            }
+            if (!locName || locName.trim().length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(locName.trim())) {
+                if (locAddr && locAddr.trim().length > 2 && !locAddr.includes('Khu vực TP')) {
+                    const parts = locAddr.split(',').map(s => s.trim()).filter(s => s.length > 1 && !s.toLowerCase().includes('chi minh'));
+                    locName = parts.slice(0, 2).join(', ') || locAddr.split(',')[0].trim();
+                } else {
+                    locName = `Vị trí GPS (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                }
+            }
+
+            // 3. Tự động điền điểm đón trên thanh tìm kiếm và cập nhật dữ liệu cuốc xe
+            this.pickup = {
+                id: `loc_gps_${Date.now()}`,
+                name: locName,
+                address: locAddr,
+                lat: Number(lat),
+                lng: Number(lng)
+            };
+
+            const pickupInputEl = document.getElementById('input-pickup');
+            if (pickupInputEl) {
+                pickupInputEl.value = locName;
+            }
+
+            const clearPickupBtn = document.getElementById('btn-clear-pickup');
+            if (clearPickupBtn) {
+                clearPickupBtn.style.display = 'flex';
+            }
+
+            const pSum = document.getElementById('route-sum-pickup');
+            if (pSum) {
+                pSum.textContent = locName;
+                pSum.title = locAddr || locName;
+            }
+
+            const pickupConfirmedTitle = document.getElementById('pickup-confirmed-title');
+            if (pickupConfirmedTitle) pickupConfirmedTitle.textContent = locName;
+
+            const pickupConfirmedDesc = document.getElementById('pickup-confirmed-desc');
+            if (pickupConfirmedDesc) pickupConfirmedDesc.textContent = locAddr;
+
+            if (this.mapController && typeof this.mapController.addPickupMarker === 'function') {
+                this.mapController.addPickupMarker(lat, lng, locName);
+            }
+
+            // Reset calculated route state
+            this.currentRouteDistance = null;
+            this.currentRouteDuration = null;
+            this.currentRouteGeometry = null;
+
+            this.showToast(`🟢 Đã lấy vị trí GPS làm điểm đón: ${locName}`, 'success', 2500);
+
+            if (this.destination) {
+                if (typeof this.renderRouteOnMap === 'function') {
+                    this.renderRouteOnMap();
+                }
+                setTimeout(() => {
+                    if (this.destination && this.pickup && this.currentView === 'search') {
+                        this.switchView('vehicle-select');
+                    }
+                }, 500);
+            } else {
+                const destInput = document.getElementById('input-destination');
+                if (destInput) destInput.focus();
+                this.searchTarget = 'destination';
+                this.renderSuggestions(this.locationsPool);
+            }
+            return;
             if (typeof window.showNavigoModal === 'function') {
                 window.showNavigoModal({
                     title: 'Định vị GPS của bạn',
@@ -1824,15 +1927,15 @@ class CustomerAppController {
                 },
                 (err) => {
                     console.warn('[GPS] Browser Geolocation fallback:', err.message);
-                    const fallbackLat = 10.8643;
-                    const fallbackLng = 106.7570;
+                    const fallbackLat = this.userGpsPosition?.lat || 10.8643;
+                    const fallbackLng = this.userGpsPosition?.lng || 106.7570;
                     doCenter(fallbackLat, fallbackLng, 40);
                 },
                 { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
             );
         } else {
-            const fallbackLat = 10.8643;
-            const fallbackLng = 106.7570;
+            const fallbackLat = this.userGpsPosition?.lat || 10.8643;
+            const fallbackLng = this.userGpsPosition?.lng || 106.7570;
             doCenter(fallbackLat, fallbackLng, 40);
         }
     }
@@ -2088,9 +2191,13 @@ class CustomerAppController {
                     <div class="goride-sugg-address" style="color:#0d9488; font-size:0.75rem;">Chạm để tự động xác định vị trí đón chính xác</div>
                 </div>
             `;
-            gpsItem.addEventListener('click', () => {
-                const btnGps = document.getElementById('btn-gps-recenter');
-                if (btnGps) btnGps.click();
+            gpsItem.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.recenterMapOnGps(true);
+
+
+
             });
             container.appendChild(gpsItem);
         }
@@ -2230,15 +2337,28 @@ class CustomerAppController {
             if (typeof geocoderService !== 'undefined') {
                 const place = await geocoderService.reverse(lat, lng);
                 if (place) {
-                    addressEl.textContent = place.name;
+                    let placeName = (place.name || '').trim();
+                    const isTrivial = !placeName || placeName.length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(placeName);
+                    if (isTrivial) {
+                        if (place.address && place.address.trim().length > 2) {
+                            const parts = place.address.split(',').map(s => s.trim()).filter(s => s.length > 1 && !s.toLowerCase().includes('chi minh'));
+                            placeName = parts.slice(0, 2).join(', ') || place.address.trim();
+                        } else {
+                            placeName = `Vị trí: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        }
+                    }
+                    if (place.district && !place.district.toLowerCase().includes('chi minh') && !placeName.toLowerCase().includes(place.district.toLowerCase())) {
+                        placeName = `${placeName}, ${place.district}`;
+                    }
+                    addressEl.textContent = placeName;
                     this.pickup = {
-                        name: place.name,
+                        name: placeName,
                         address: place.address,
                         lat: lat,
                         lng: lng
                     };
                     const pInput = document.getElementById('input-pickup');
-                    if (pInput) pInput.value = place.name;
+                    if (pInput) pInput.value = placeName;
                     return;
                 }
             }
@@ -3822,6 +3942,19 @@ class CustomerAppController {
                     localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
                 }
                 localStorage.removeItem('goride_pending_trip_offers');
+                // Refund fare to customer wallet if trip was paid by NaviPay wallet
+                if (window.NaviWalletEngine && this.activeTrip && (this.activeTrip.walletDeducted || this.activeTrip.paidByWallet)) {
+                    const curUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+                    const refundPhone = this.activeTrip.customerPhone || curUser?.phone || '0901234567';
+                    const refundFare = Number(this.activeTrip.fareAmount || this.activeTrip.fare || this.selectedVehicleFare || 0);
+                    if (refundFare > 0) {
+                        try {
+                            window.NaviWalletEngine.refundTrip(refundPhone, refundFare, tripId, 'Khách hàng hủy chuyến xe');
+                        } catch (refErr) {
+                            console.warn('[CustomerApp] Wallet refund notice:', refErr);
+                        }
+                    }
+                }
             } catch (e) {}
 
             if (typeof navigoNotifications !== 'undefined' && tripId) {

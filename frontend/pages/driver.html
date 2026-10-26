@@ -78,6 +78,37 @@
             top: 74px !important;
             left: 14px !important;
         }
+        .driver-map-fab-stack {
+            position: absolute !important;
+            right: 16px !important;
+            bottom: 90px !important;
+            z-index: 500 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+        }
+        .driver-map-fab-stack .goride-map-fab {
+            width: 44px !important;
+            height: 44px !important;
+            border-radius: 50% !important;
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0 !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.25rem !important;
+            cursor: pointer !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .driver-map-fab-stack .goride-map-fab:hover {
+            transform: scale(1.08) !important;
+            border-color: #0288d1 !important;
+            box-shadow: 0 6px 18px rgba(2, 136, 209, 0.25) !important;
+        }
+        .driver-map-fab-stack .goride-map-fab:active {
+            transform: scale(0.94) !important;
+        }
         .driver-status-chip {
             pointer-events: auto;
             background: rgba(255, 255, 255, 0.96);
@@ -380,6 +411,36 @@
 
         /* Responsive Navigation Guarantee (Desktop, Tablet, Split-Screen, Mobile) */
         @media (min-width: 768px) {
+            .gsm-floating-bottom-nav,
+            #gsm-floating-bottom-nav,
+            body.gsm-role-driver .gsm-floating-bottom-nav {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: none !important;
+                position: fixed !important;
+                bottom: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 2147483640 !important;
+                height: auto !important;
+                width: auto !important;
+                min-height: 58px !important;
+                overflow: visible !important;
+            }
+            .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            .gsm-floating-bottom-nav .gsm-nav-btn {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                cursor: pointer !important;
+            }
+            .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+                display: none !important;
+            }
+        }
+        @media (min-width: 768px) {
             .app-header .header-nav {
                 display: flex !important;
                 align-items: center;
@@ -487,7 +548,7 @@
     </style>
     <!-- Allow testing and driver portal access across all roles -->
 </head>
-<body>
+<body class="gsm-role-driver">
     <div class="app">
         <!-- Header -->
         <header class="app-header">

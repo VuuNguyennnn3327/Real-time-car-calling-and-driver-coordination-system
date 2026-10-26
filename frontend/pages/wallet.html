@@ -810,7 +810,7 @@
                     </button>
                 </div>
                 <div class="card-balance-num" id="wallet-balance-display">
-                    500.000 ₫
+                    0 ₫
                 </div>
             </div>
 
@@ -1420,7 +1420,7 @@
             }
 
             try {
-                currentWallet = window.NaviWalletEngine.activateWallet(phone, name, 500000);
+                currentWallet = window.NaviWalletEngine.activateWallet(phone, name, 0);
                 closeModal('modal-activation');
                 renderWalletUI();
                 showToast(`Chúc mừng ${currentWallet.fullName}! Ví NaviPay đã được kích hoạt thành công.`, 'success');

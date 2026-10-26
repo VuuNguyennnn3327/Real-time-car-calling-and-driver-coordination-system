@@ -373,6 +373,33 @@
            Admin Sidebar Fixed Desktop Layout & Modern Footer Buttons
            ========================================================================== */
         @media (min-width: 1025px) {
+            .gsm-floating-bottom-nav,
+            #gsm-floating-bottom-nav {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: none !important;
+                position: fixed !important;
+                bottom: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 2147483640 !important;
+                height: auto !important;
+                width: auto !important;
+                min-height: 58px !important;
+                overflow: visible !important;
+            }
+            .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            .gsm-floating-bottom-nav .gsm-nav-btn {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                cursor: pointer !important;
+            }
+            .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+                display: none !important;
+            }
             .app {
                 overflow-x: visible !important;
             }
@@ -687,7 +714,7 @@
                 font-size: 0.68rem !important;
             }
             .stat-card-trend {
-                display: none !important;
+                display: inline-flex !important;
             }
             .admin-spatial-map-title {
                 font-size: 0.96rem !important;
@@ -719,7 +746,7 @@
         }
     </style>
 </head>
-<body>
+<body class="gsm-role-admin admin-body">
     <div class="app">
         <!-- Top App Header -->
         <header class="app-header">

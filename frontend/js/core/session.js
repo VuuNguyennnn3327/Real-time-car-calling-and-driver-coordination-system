@@ -149,7 +149,18 @@ window.navigoEnsureLocationPermission = function(callback, forcePrompt = false) 
     const cached = localStorage.getItem('navigo_user_location');
     let cachedLoc = null;
     try {
-        if (cached) cachedLoc = JSON.parse(cached);
+        if (cached) {
+            cachedLoc = JSON.parse(cached);
+            if (cachedLoc && (!cachedLoc.name || cachedLoc.name.trim().length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(cachedLoc.name.trim()))) {
+                if (cachedLoc.address && cachedLoc.address.trim().length > 2) {
+                    const parts = cachedLoc.address.split(',').map(s => s.trim()).filter(s => s.length > 1 && !s.toLowerCase().includes('chi minh'));
+                    cachedLoc.name = parts.slice(0, 2).join(', ') || 'Vị trí của tôi';
+                } else {
+                    cachedLoc.name = 'Vị trí của tôi';
+                }
+                localStorage.setItem('navigo_user_location', JSON.stringify(cachedLoc));
+            }
+        }
     } catch (e) {}
 
     const obtainPosition = (onSuccess) => {
@@ -188,6 +199,14 @@ window.navigoEnsureLocationPermission = function(callback, forcePrompt = false) 
                     }
                 } catch (e) {}
 
+                if (!name || name.trim().length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(name.trim())) {
+                    if (address && address.trim().length > 2 && address !== 'Vị trí hiện tại của bạn') {
+                        const parts = address.split(',').map(s => s.trim()).filter(s => s.length > 1 && !s.toLowerCase().includes('chi minh'));
+                        name = parts.slice(0, 2).join(', ') || 'Vị trí của tôi';
+                    } else {
+                        name = 'Vị trí của tôi';
+                    }
+                }
                 const locData = { lat, lng, address, name };
                 localStorage.setItem('navigo_location_permission_granted', 'true');
                 localStorage.setItem('navigo_user_location', JSON.stringify(locData));
@@ -776,7 +795,7 @@ if (typeof document !== 'undefined') {
             return;
         } else {
             // Find existing bottom nav or dynamically construct canonical floating bar
-            let navContainers = document.querySelectorAll('.gsm-floating-bottom-nav');
+            let navContainers = Array.from(document.querySelectorAll('.gsm-floating-bottom-nav'));
             if (!navContainers.length) {
                 let nav = document.getElementById('mobile-bottom-nav') || document.querySelector('.bottom-nav');
                 if (!nav) {
@@ -786,11 +805,35 @@ if (typeof document !== 'undefined') {
                 }
                 nav.className = 'gsm-floating-bottom-nav';
                 navContainers = [nav];
+            } else if (navContainers.length > 1) {
+                for (let i = 1; i < navContainers.length; i++) {
+                    try { navContainers[i].remove(); } catch(e) {}
+                }
+                navContainers = [navContainers[0]];
             }
 
             navContainers.forEach(nav => {
                 nav.className = 'gsm-floating-bottom-nav';
-                nav.style.removeProperty('display');
+                if (isAdmin && (isAdminPage || isActivityPage || isNotificationsPage)) {
+                    nav.style.setProperty('display', 'inline-flex', 'important');
+                    nav.style.setProperty('visibility', 'visible', 'important');
+                    nav.style.setProperty('opacity', '1', 'important');
+                    nav.style.setProperty('pointer-events', 'none', 'important');
+                } else if (isDriver && (isDriverPage || isNotificationsPage)) {
+                    nav.style.setProperty('display', 'inline-flex', 'important');
+                    nav.style.setProperty('visibility', 'visible', 'important');
+                    nav.style.setProperty('opacity', '1', 'important');
+                    nav.style.setProperty('pointer-events', 'none', 'important');
+                } else if ((isActivityPage || isAdminPage || (isDriverPage && !isMobile)) && window.innerWidth >= 768) {
+                    nav.style.setProperty('display', 'none', 'important');
+                } else if (isCustomerPage) {
+                    nav.style.setProperty('display', 'inline-flex', 'important');
+                    nav.style.setProperty('visibility', 'visible', 'important');
+                    nav.style.setProperty('opacity', '1', 'important');
+                    nav.style.setProperty('pointer-events', 'none', 'important');
+                } else {
+                    nav.style.removeProperty('display');
+                }
 
                 const renderedRole = nav.getAttribute('data-rendered-role');
                 const targetRole = isDriver ? 'driver' : (isAdmin ? 'admin' : (isCustomer ? 'customer' : 'guest'));
@@ -1388,6 +1431,7 @@ if (typeof document !== 'undefined') {
     window.addEventListener('session:logout', syncNavigoAuthUI);
     window.addEventListener('storage', syncNavigoAuthUI);
     window.addEventListener('hashchange', syncNavigoAuthUI);
+    window.addEventListener('resize', syncNavigoAuthUI);
 }
 
 // Instant nav tap feedback

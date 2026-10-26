@@ -571,11 +571,27 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
   }
 
   /* Universal Floating Glass Bottom Navigation on Desktop & Mobile */
+  body:not(.gsm-role-admin).gsm-activity-page .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin).gsm-activity-page #gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin).admin-body .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):not(.gsm-role-driver):not(.gsm-booking-page):not(.customer-body):has(.gsm-desktop-wide-canvas) .gsm-floating-bottom-nav {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
   .gsm-floating-bottom-nav {
     display: inline-flex !important;
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: none !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
   }
   .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
   .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
@@ -615,11 +631,19 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
     opacity: 1 !important;
     pointer-events: none !important;
   }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
+  }
   .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
   .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
     pointer-events: auto !important;
   }
 
+  body.gsm-role-admin .gsm-floating-bottom-nav,
+  body.gsm-role-admin #gsm-floating-bottom-nav,
+  body.gsm-role-driver .gsm-floating-bottom-nav,
+  body.gsm-role-driver #gsm-floating-bottom-nav,
   body.customer-body .gsm-floating-bottom-nav,
   body.customer-body #gsm-floating-bottom-nav,
   body.gsm-booking-page .gsm-floating-bottom-nav,
@@ -630,6 +654,10 @@ html, body, .gsm-screen-wrapper, .gsm-desktop-sidebar, .gsm-desktop-wide-canvas,
     visibility: visible !important;
     opacity: 1 !important;
     pointer-events: none !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
   }
   .gsm-disabled-legacy-nav {
     display: none !important;
@@ -1983,6 +2011,21 @@ body.gsm-notifications-page .gsm-desktop-sidebar .gsm-screen-wrapper {
   box-shadow: 0 6px 18px rgba(0, 177, 169, 0.45);
 }
 
+/* Inline CTA Button within Desktop Headers / Canvas (Anti-Squish Flexbox Layout) */
+.gsm-activity-details-header .gsm-btn-primary-cta,
+.gsm-desktop-wide-canvas .gsm-btn-primary-cta,
+.gsm-activity-new-booking-btn {
+  width: auto !important;
+  max-width: max-content !important;
+  height: 42px !important;
+  padding: 0 20px !important;
+  flex: 0 0 auto !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  white-space: nowrap !important;
+}
+
 /* --------------------------------------------------------------------------
    SCREEN 4: VEHICLE & FARE SELECTION (Chọn loại xe & Lộ trình)
    -------------------------------------------------------------------------- */
@@ -2273,12 +2316,20 @@ body.gsm-notifications-page .gsm-desktop-sidebar .gsm-screen-wrapper {
     z-index: 10 !important;
     pointer-events: none !important;
   }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
+  }
   body.gsm-booking-page .gsm-desktop-sidebar .gsm-screen-wrapper {
     background: transparent !important;
     box-shadow: none !important;
     border: none !important;
     height: 100vh !important;
     pointer-events: none !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
   }
   body.gsm-booking-page #view-search,
   body.gsm-booking-page #view-history {
@@ -2306,6 +2357,10 @@ body.gsm-notifications-page .gsm-desktop-sidebar .gsm-screen-wrapper {
   body.gsm-booking-page #view-vehicle-select > *,
   body.gsm-booking-page #view-tracking > * {
     pointer-events: none !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
   }
   /* Explicitly enable pointer events on all interactive customer cards & controls */
   body.gsm-booking-page .gsm-map-floating-header,

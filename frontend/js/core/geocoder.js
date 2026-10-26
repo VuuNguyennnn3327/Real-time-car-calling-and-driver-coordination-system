@@ -290,7 +290,34 @@
                         if (data && data.display_name) {
                             result = {
                                 id: `nom_${data.osm_id || Date.now()}`,
-                                name: data.name || (data.address && (data.address.road || data.address.suburb)) || 'Vị trí đã chọn',
+                                name: (() => {
+                                    const raw = data.name ? String(data.name).trim() : '';
+
+                                    const addr = data.address || {};
+                                    let cleanRoad = '';
+                                    if (addr.road) {
+                                        const r = String(addr.road).trim();
+                                        cleanRoad = /^[a-zA-Z]$/.test(r) ? `Đường ${r.toUpperCase()}` : (/^\d+$/.test(r) ? `Đường Số ${r}` : r);
+                                    }
+                                    const cleanHouse = addr.house_number ? String(addr.house_number).trim() : '';
+                                    let roadPart = (cleanHouse && cleanRoad) ? `${cleanHouse} ${cleanRoad}` : (cleanRoad || (cleanHouse ? `Số ${cleanHouse}` : ''));
+                                    const areaPart = addr.suburb || addr.quarter || addr.neighbourhood || addr.city_district || (addr.city && !addr.city.toLowerCase().includes('chi minh') ? addr.city : '');
+                                    const isTrivial = !raw || raw.length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(raw);
+                                    const mainPart = (!isTrivial && raw !== cleanRoad) ? raw : (roadPart || raw || '');
+                                    if (mainPart && areaPart) {
+                                        return mainPart.toLowerCase().includes(areaPart.toLowerCase()) ? mainPart : `${mainPart}, ${areaPart}`;
+                                    }
+                                    if (mainPart) return mainPart;
+                                    if (areaPart) return areaPart;
+
+
+
+                                    if (data.display_name) {
+                                        const parts = data.display_name.split(',').map(s => s.trim()).filter(s => s.length > 2);
+                                        return parts.slice(0, 2).join(', ') || 'Vị trí đã chọn';
+                                    }
+                                    return 'Vị trí đã chọn';
+                                })(),
                                 address: data.display_name,
                                 lat: numLat,
                                 lng: numLon,
@@ -378,13 +405,37 @@
             const [lon, lat] = f.geometry.coordinates;
             const p = f.properties || {};
 
-            const name = p.name || p.street || p.district || 'Địa điểm tại TP.HCM';
+            const rawPhotonName = p.name ? String(p.name).trim() : '';
+            const isPhotonNameTrivial = !rawPhotonName || rawPhotonName.length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(rawPhotonName);
+            let cleanStreet = '';
+            if (p.street) {
+                const s = String(p.street).trim();
+                cleanStreet = /^[a-zA-Z]$/.test(s) ? `Đường ${s.toUpperCase()}` : (/^\d+$/.test(s) ? `Đường Số ${s}` : s);
+            }
+            const cleanHouse = p.housenumber ? String(p.housenumber).trim() : '';
+            let photonStreet = (cleanHouse && cleanStreet) ? `${cleanHouse} ${cleanStreet}` : (cleanStreet || (cleanHouse ? `Số ${cleanHouse}` : ''));
+            let areaPart = p.district || p.suburb || p.quarter || p.locality || '';
+            if (!areaPart && p.city && !p.city.toLowerCase().includes('chi minh')) {
+                areaPart = p.city;
+            }
+            let name = '';
+            if (!isPhotonNameTrivial) {
+                name = (areaPart && !rawPhotonName.toLowerCase().includes(areaPart.toLowerCase())) ? `${rawPhotonName}, ${areaPart}` : rawPhotonName;
+            } else if (photonStreet) {
+                name = (areaPart && !photonStreet.toLowerCase().includes(areaPart.toLowerCase())) ? `${photonStreet}, ${areaPart}` : photonStreet;
+            } else if (p.district) {
+                name = p.district;
+            } else if (p.city) {
+                name = p.city;
+            } else {
+                name = 'Địa điểm tại TP.HCM';
+            }
             const parts = [];
             if (p.housenumber) parts.push(p.housenumber);
-            if (p.street) parts.push(p.street);
-            if (p.district) parts.push(p.district);
-            if (p.city) parts.push(p.city);
-            if (parts.length === 0 && p.name) parts.push(p.name);
+            if (cleanStreet) parts.push(cleanStreet);
+            if (areaPart && !parts.includes(areaPart)) parts.push(areaPart);
+            if (p.city && !p.city.toLowerCase().includes('chi minh') && !parts.includes(p.city)) parts.push(p.city);
+            if (parts.length === 0 && rawPhotonName && !isPhotonNameTrivial) parts.push(rawPhotonName);
             parts.push('TP. Hồ Chí Minh');
 
             const fullAddress = parts.join(', ');
@@ -396,7 +447,7 @@
                 lat: Number(lat),
                 lng: Number(lon),
                 type: p.osm_value || 'place',
-                district: p.district || p.city || 'TP. Hồ Chí Minh',
+                district: areaPart || p.district || p.city || 'TP. Hồ Chí Minh',
                 source: 'photon'
             };
         }
@@ -422,7 +473,27 @@
 
             return data.map(item => {
                 const addr = item.address || {};
-                const name = item.name || addr.road || addr.suburb || addr.quarter || 'Địa điểm';
+                const rawNomItemName = item.name ? String(item.name).trim() : '';
+                const isNomItemTrivial = !rawNomItemName || rawNomItemName.length <= 2 || /^(\d+[\s\/-]*[a-zA-Z]?|[a-zA-Z0-9\s-]{1,2})$/i.test(rawNomItemName);
+                let cleanRoad = '';
+                if (addr.road) {
+                    const r = String(addr.road).trim();
+                    cleanRoad = /^[a-zA-Z]$/.test(r) ? `Đường ${r.toUpperCase()}` : (/^\d+$/.test(r) ? `Đường Số ${r}` : r);
+                }
+                const cleanHouse = addr.house_number ? String(addr.house_number).trim() : '';
+                const itemStreet = (cleanHouse && cleanRoad) ? `${cleanHouse} ${cleanRoad}` : (cleanRoad || (cleanHouse ? `Số ${cleanHouse}` : ''));
+                const areaPart = addr.suburb || addr.quarter || addr.neighbourhood || addr.city_district || (addr.city && !addr.city.toLowerCase().includes('chi minh') ? addr.city : '');
+                const main = (!isNomItemTrivial && rawNomItemName !== cleanRoad) ? rawNomItemName : (itemStreet || rawNomItemName);
+                let name = '';
+                if (main && areaPart) {
+                    name = main.toLowerCase().includes(areaPart.toLowerCase()) ? main : `${main}, ${areaPart}`;
+                } else if (main) {
+                    name = main;
+                } else if (areaPart) {
+                    name = areaPart;
+                } else {
+                    name = 'Địa điểm tại TP.HCM';
+                }
                 return {
                     id: `nom_${item.osm_id || Date.now()}`,
                     name: name,
@@ -430,7 +501,7 @@
                     lat: Number(item.lat),
                     lng: Number(item.lon),
                     type: item.type || 'place',
-                    district: addr.city_district || addr.suburb || addr.quarter || 'TP. Hồ Chí Minh',
+                    district: areaPart || addr.city_district || addr.suburb || addr.quarter || 'TP. Hồ Chí Minh',
                     source: 'nominatim'
                 };
             }).filter(item => this.isInHcmc(item.lat, item.lng));

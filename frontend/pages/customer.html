@@ -122,7 +122,17 @@
             margin-bottom: 0 !important;
         }
 
-        /* Floating Glass Bottom Navigation on customer booking portal */
+        /* Floating Glass Bottom Navigation on customer booking portal - strictly visible across all roles (guest, customer) and all screen sizes */
+        .gsm-floating-bottom-nav,
+        #gsm-floating-bottom-nav,
+        body.gsm-role-guest.customer-body .gsm-floating-bottom-nav,
+        body.gsm-role-guest.gsm-booking-page .gsm-floating-bottom-nav,
+        body.gsm-role-guest .gsm-floating-bottom-nav,
+        body.gsm-role-customer .gsm-floating-bottom-nav,
+        body:has(.gsm-desktop-wide-canvas).customer-body .gsm-floating-bottom-nav,
+        body:has(.gsm-desktop-container).customer-body .gsm-floating-bottom-nav,
+        body:has(.gsm-desktop-wide-canvas).gsm-role-guest .gsm-floating-bottom-nav,
+        body:has(.gsm-desktop-container).gsm-role-guest .gsm-floating-bottom-nav,
         .gsm-floating-bottom-nav,
         body.gsm-booking-page .gsm-floating-bottom-nav,
         body.customer-body .gsm-floating-bottom-nav,
@@ -139,10 +149,26 @@
             opacity: 1 !important;
             pointer-events: none !important;
         }
-        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
-        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
-            pointer-events: auto !important;
+        .gsm-floating-bottom-nav,
+        #gsm-floating-bottom-nav {
+            height: auto !important;
+            width: auto !important;
+            min-height: 58px !important;
+            max-width: calc(100vw - 24px) !important;
+            overflow: visible !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
         }
+        .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+        .gsm-floating-bottom-nav .gsm-nav-btn {
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+
         .gsm-search-bottom-actions {
             display: none !important;
         }
@@ -871,6 +897,65 @@
 
 
 
+    <!-- Floating Glassmorphism Bottom Navigation Bar -->
+    <nav class="gsm-floating-bottom-nav" id="gsm-floating-bottom-nav">
+        <div class="gsm-bottom-nav-pill">
+            <a href="../index.html" class="gsm-nav-btn" id="bnav-cust-home" title="Trang chủ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3L2 12h3v8a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5h2v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-8h3L12 3z"/>
+                </svg>
+            </a>
+            <a href="customer.html" class="gsm-nav-btn active" id="bnav-cust-booking" title="Đặt xe">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.04 3H5.81l1.04-3zM19 17H5v-4.66l.12-.34h13.77l.11.34V17zM7.5 15.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5zm9 0c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5z"/>
+                </svg>
+            </a>
+            <a href="wallet.html" class="gsm-nav-btn" id="bnav-cust-wallet" title="Ví Navi">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+                </svg>
+            </a>
+            <a href="activity.html" class="gsm-nav-btn" id="bnav-cust-history" title="Lịch sử">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                </svg>
+            </a>
+            <a href="notifications.html" class="gsm-nav-btn" id="bnav-cust-notifications" title="Thông báo">
+                <div class="gsm-nav-bell-wrapper">
+                    <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+                    </svg>
+                    <span class="gsm-nav-badge-dot" style="display:none;"></span>
+                </div>
+            </a>
+            <a href="profile.html" class="gsm-nav-btn" id="bnav-cust-account" title="Hồ sơ">
+                <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+            </a>
+        </div>
+        <a href="profile.html#rewards" class="gsm-bottom-nav-trophy" title="Navigo Race / Ưu đãi">
+            <svg class="gsm-nav-trophy-svg" width="34" height="34" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="11" y="38" width="26" height="6" rx="2.5" fill="#38bdf8"/>
+                <rect x="15" y="34" width="18" height="4" rx="1" fill="#7dd3fc"/>
+                <path d="M21 28h6v6h-6z" fill="#f59e0b"/>
+                <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
+                <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
+                <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGoldCustPageMain)"/>
+                <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
+                <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
+                <defs>
+                    <linearGradient id="navigoTrophyGoldCustPageMain" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stop-color="#fde047"/>
+                        <stop offset="50%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+        </a>
+    </nav>
+
     <div class="toast-container" id="toast-container"></div>
 
     <!-- Scripts -->
@@ -890,8 +975,8 @@
     <script src="../js/map/map-renderer.js"></script>
     <script src="../js/customer/customer.js"></script>
 
-    <!-- Floating Glassmorphism Bottom Navigation Bar (Customer: Trang chủ - Đặt xe - Ví - Lịch sử - Thông báo - Hồ sơ) -->
-    <nav class="gsm-floating-bottom-nav">
+    <div style="display:none !important;" id="old-unused-nav-markup">
+    <!-- removed duplicate nav -->
         <div class="gsm-bottom-nav-pill">
             <a href="../index.html" class="gsm-nav-btn" title="Trang chủ">
                 <svg class="gsm-nav-svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -936,11 +1021,11 @@
                 <path d="M20 33h8v1.5h-8z" fill="#d97706"/>
                 <path d="M14 13c-4.5 0-7 3.5-7 7.5s2.5 7.5 7 7.5h2v-3h-2c-2.8 0-4-2-4-4.5s1.2-4.5 4-4.5h2v-3h-2z" fill="#f59e0b"/>
                 <path d="M34 13c4.5 0 7 3.5 7 7.5s-2.5 7.5-7 7.5h-2v-3h2c2.8 0 4-2 4-4.5s-1.2-4.5-4-4.5h-2v-3h2z" fill="#f59e0b"/>
-                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGoldCustPage)"/>
+                <path d="M13 8h22v11c0 6.075-4.925 11-11 11s-11-4.925-11-11V8z" fill="url(#navigoTrophyGoldCustPageMain)"/>
                 <rect x="12" y="6" width="24" height="3.5" rx="1.75" fill="#fde047"/>
                 <path d="M24 13.5l1.55 3.15 3.45.5-2.5 2.45.6 3.45-3.1-1.65-3.1 1.65.6-3.45-2.5-2.45 3.45-.5L24 13.5z" fill="#ffffff"/>
                 <defs>
-                    <linearGradient id="navigoTrophyGoldCustPage" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
+                    <linearGradient id="navigoTrophyGoldCustPageMain" x1="13" y1="8" x2="35" y2="30" gradientUnits="userSpaceOnUse">
                         <stop offset="0%" stop-color="#fde047"/>
                         <stop offset="50%" stop-color="#f59e0b"/>
                         <stop offset="100%" stop-color="#d97706"/>
@@ -950,5 +1035,6 @@
         </a>
     </nav>
 
+    </div>
 </body>
 </html>

@@ -59,58 +59,26 @@
         return phone.replace(/[^0-9]/g, '');
     }
 
-    // 4. Default Seed Wallets (Customer & Driver)
+    // 4. Default Seed Wallets (Customer & Driver) - Khởi tạo ban đầu với số dư 0 ₫ theo thực tế
     function getDefaultWallets() {
         return {
             '0901234567': {
                 accountNumber: '0901234567',
                 fullName: 'NGUYEN VAN AN',
-                balance: 500000,
+                balance: 0,
                 activated: true,
                 role: 'customer',
                 createdAt: new Date().toISOString(),
-                transactions: [
-                    {
-                        id: 'TXN_INIT_CUST',
-                        type: 'topup',
-                        title: 'Nạp tiền kích hoạt ví',
-                        amount: 500000,
-                        balanceAfter: 500000,
-                        description: 'Số dư chào mừng thành viên Navigo Pay',
-                        timestamp: new Date(Date.now() - 86400000 * 2).toISOString(),
-                        status: 'success'
-                    }
-                ]
+                transactions: []
             },
             '0918765432': {
                 accountNumber: '0918765432',
                 fullName: 'TRAN VAN BINH',
-                balance: 1250000,
+                balance: 0,
                 activated: true,
                 role: 'driver',
                 createdAt: new Date().toISOString(),
-                transactions: [
-                    {
-                        id: 'TXN_INIT_DRV_1',
-                        type: 'income',
-                        title: 'Thu nhập chuyến xe #TRP-8821',
-                        amount: 85000,
-                        balanceAfter: 85000,
-                        description: 'Hoàn thành cuốc xe Navigo Car từ Sân bay Tân Sơn Nhất',
-                        timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-                        status: 'success'
-                    },
-                    {
-                        id: 'TXN_INIT_DRV_2',
-                        type: 'topup',
-                        title: 'Nạp ký quỹ tài xế',
-                        amount: 1165000,
-                        balanceAfter: 1250000,
-                        description: 'Nạp tiền ví tài xế qua NaviPay Digital Bank',
-                        timestamp: new Date(Date.now() - 86400000).toISOString(),
-                        status: 'success'
-                    }
-                ]
+                transactions: []
             }
         };
     }
@@ -145,18 +113,69 @@
     const NaviWalletEngine = {
         // --- Persistence helpers ---
         getAllWallets() {
+            let wallets = null;
             try {
                 const raw = localStorage.getItem(WALLET_STORAGE_KEYS.WALLETS);
                 if (raw) {
                     const parsed = JSON.parse(raw);
-                    if (parsed && typeof parsed === 'object') return parsed;
+                    if (parsed && typeof parsed === 'object') wallets = parsed;
                 }
             } catch (e) {
                 console.error('[NaviWalletEngine] Error parsing wallets:', e);
             }
-            const defaults = getDefaultWallets();
-            this._saveAllWallets(defaults, false);
-            return defaults;
+
+            if (!wallets) {
+                wallets = getDefaultWallets();
+                this._saveAllWallets(wallets, false);
+                return wallets;
+            }
+
+            // Sanitize existing cached wallets that were previously seeded with fake 500k/1.25M
+            let modified = false;
+            const fakeTxnIds = ['TXN_INIT_CUST', 'TXN_INIT_DRV_1', 'TXN_INIT_DRV_2'];
+            for (const phoneKey of Object.keys(wallets)) {
+                const w = wallets[phoneKey];
+                if (!w || typeof w !== 'object') continue;
+
+                let hadFake = false;
+                if (Array.isArray(w.transactions)) {
+                    const prevCount = w.transactions.length;
+                    w.transactions = w.transactions.filter(t => {
+                        if (!t) return false;
+                        if (fakeTxnIds.includes(t.id)) return false;
+                        if (t.type === 'activation' && (t.amount === 500000 || t.amount === 1250000) && t.id && String(t.id).startsWith('TXN_INIT_')) {
+                            return false;
+                        }
+                        return true;
+                    });
+                    if (w.transactions.length !== prevCount) {
+                        hadFake = true;
+                        modified = true;
+                    }
+                } else {
+                    w.transactions = [];
+                }
+
+                if (hadFake) {
+                    let running = 0;
+                    const chron = [...w.transactions].reverse();
+                    for (const t of chron) {
+                        running += (Number(t.amount) || 0);
+                        t.balanceAfter = Math.max(0, running);
+                    }
+                    w.balance = Math.max(0, running);
+                    modified = true;
+                } else if ((w.balance === 500000 || w.balance === 1250000) && (!w.transactions || w.transactions.length === 0)) {
+                    w.balance = 0;
+                    modified = true;
+                }
+            }
+
+            if (modified) {
+                this._saveAllWallets(wallets, false);
+            }
+
+            return wallets;
         },
 
         _saveAllWallets(wallets, broadcast = true) {
@@ -247,13 +266,20 @@
             if (!phone) return null;
             let wallet = this.getWallet(phone);
 
-            // If user exists but wallet not initialized in storage, create initialized wallet
+            // If user exists but wallet not initialized in storage, create initialized wallet starting with 0 VND
             if (!wallet) {
                 const rawName = user ? (user.name || user.fullName || '') : '';
                 const role = user ? (user.role || (phone === '0918765432' ? 'driver' : 'customer')) : (phone === '0918765432' ? 'driver' : 'customer');
                 const defaultName = role === 'driver' ? 'TRAN VAN BINH' : 'NGUYEN VAN AN';
                 const cleanName = removeVietnameseTones(rawName) || defaultName;
-                const seedBal = role === 'driver' ? 1250000 : 500000;
+                
+                // Real starting balance: default starts at 0 ₫ (ignore stale mock 500000 or 1250000)
+                let seedBal = 0;
+                if (user && typeof user.walletBalance === 'number' && user.walletBalance > 0 && 
+                    user.walletBalance !== 500000 && user.walletBalance !== 1250000 && 
+                    user.walletBalance !== 350000 && user.walletBalance !== 1450000) {
+                    seedBal = user.walletBalance;
+                }
 
                 wallet = {
                     accountNumber: phone,
@@ -262,7 +288,7 @@
                     activated: true,
                     role: role,
                     createdAt: new Date().toISOString(),
-                    transactions: [
+                    transactions: seedBal > 0 ? [
                         {
                             id: 'TXN_INIT_' + phone,
                             type: 'activation',
@@ -273,12 +299,25 @@
                             timestamp: new Date().toISOString(),
                             status: 'success'
                         }
-                    ]
+                    ] : []
                 };
                 const wallets = this.getAllWallets();
                 wallets[phone] = wallet;
                 this._saveAllWallets(wallets, false);
             }
+
+            // Sync user session walletBalance with current wallet balance
+            if (user && user.walletBalance !== wallet.balance) {
+                user.walletBalance = wallet.balance;
+                try {
+                    localStorage.setItem('goride_user', JSON.stringify(user));
+                    localStorage.setItem('navigo_user', JSON.stringify(user));
+                    if (typeof window.sessionManager !== 'undefined' && window.sessionManager.currentUser) {
+                        window.sessionManager.currentUser.walletBalance = wallet.balance;
+                    }
+                } catch(e) {}
+            }
+
             return wallet;
         },
 
@@ -325,6 +364,20 @@
             wallets[cleanPhone] = wallet;
             this._saveAllWallets(wallets, true);
             this.setActivePhone(cleanPhone);
+
+            // Sync user session
+            try {
+                const curUser = this.getCurrentUser();
+                if (curUser) {
+                    curUser.walletBalance = wallet.balance;
+                    localStorage.setItem('goride_user', JSON.stringify(curUser));
+                    localStorage.setItem('navigo_user', JSON.stringify(curUser));
+                    if (typeof window.sessionManager !== 'undefined' && window.sessionManager.currentUser) {
+                        window.sessionManager.currentUser.walletBalance = wallet.balance;
+                    }
+                }
+            } catch(e) {}
+
             return wallet;
         },
 

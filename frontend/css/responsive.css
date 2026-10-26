@@ -85,13 +85,53 @@ html, body {
     padding: 0 !important;
   }
 
-  /* Admin portal strictly hides floating bottom nav */
-  body.admin-body .gsm-floating-bottom-nav,
-  body.gsm-role-admin .app-sidebar ~ .gsm-floating-bottom-nav,
-  body.gsm-role-admin .app .gsm-floating-bottom-nav,
-  .app:has(.app-sidebar) ~ .gsm-floating-bottom-nav,
-  .app:has(.app-sidebar) .gsm-floating-bottom-nav,
-  body:has(.app-sidebar) .gsm-floating-bottom-nav {
+  /* Admin role floating bottom nav guarantee across Desktop */
+  body.gsm-role-admin .gsm-floating-bottom-nav,
+  body.gsm-role-admin #gsm-floating-bottom-nav,
+  body.gsm-role-driver .gsm-floating-bottom-nav,
+  body.gsm-role-driver #gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+    height: auto !important;
+    width: auto !important;
+    min-height: 58px !important;
+    overflow: visible !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-nav-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
+  }
+
+  /* Admin & Activity portal strictly hides floating bottom nav */
+  body:not(.gsm-role-admin).gsm-activity-page .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin).gsm-activity-page #gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):not(.gsm-role-driver):not(.gsm-booking-page):not(.customer-body):has(.gsm-desktop-wide-canvas) .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):not(.gsm-role-driver):not(.gsm-booking-page):not(.customer-body):has(.gsm-desktop-container) .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin).admin-body .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app-sidebar ~ .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app:has(.app-sidebar) ~ .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app:has(.app-sidebar) .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):has(.app-sidebar) .gsm-floating-bottom-nav {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
@@ -100,6 +140,42 @@ html, body {
     width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Admin role floating bottom nav guarantee across Desktop */
+  body.gsm-role-admin .gsm-floating-bottom-nav,
+  body.gsm-role-admin #gsm-floating-bottom-nav,
+  body.gsm-role-driver .gsm-floating-bottom-nav,
+  body.gsm-role-driver #gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+    height: auto !important;
+    width: auto !important;
+    min-height: 58px !important;
+    overflow: visible !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-nav-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
   }
 
   /* Map Panel behaves as side panel */
@@ -177,8 +253,8 @@ html, body {
   }
 
   /* Navigation Separation: Tablet & iPad (768px - 1024px) uses Top Nav ONLY; strictly hide floating bottom nav */
-  .gsm-floating-bottom-nav,
-  #gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):not(.gsm-role-driver):not(.gsm-booking-page):not(.customer-body) .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):not(.gsm-role-driver):not(.gsm-booking-page):not(.customer-body) #gsm-floating-bottom-nav,
   .bottom-nav,
   #mobile-bottom-nav {
     display: none !important;
@@ -191,13 +267,49 @@ html, body {
     padding: 0 !important;
   }
 
+  /* Admin role floating bottom nav guarantee across Desktop */
+  body.gsm-role-admin .gsm-floating-bottom-nav,
+  body.gsm-role-admin #gsm-floating-bottom-nav,
+  body.gsm-role-driver .gsm-floating-bottom-nav,
+  body.gsm-role-driver #gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+    height: auto !important;
+    width: auto !important;
+    min-height: 58px !important;
+    overflow: visible !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-nav-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
+  }
+
   /* Admin portal desktop & tablet layout uses permanent sidebar & header; strictly hide floating bottom nav */
-  body.admin-body .gsm-floating-bottom-nav,
-  body.gsm-role-admin .app-sidebar ~ .gsm-floating-bottom-nav,
-  body.gsm-role-admin .app .gsm-floating-bottom-nav,
-  .app:has(.app-sidebar) ~ .gsm-floating-bottom-nav,
-  .app:has(.app-sidebar) .gsm-floating-bottom-nav,
-  body:has(.app-sidebar) .gsm-floating-bottom-nav {
+  body:not(.gsm-role-admin).admin-body .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app-sidebar ~ .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app:has(.app-sidebar) ~ .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin) .app:has(.app-sidebar) .gsm-floating-bottom-nav,
+  body:not(.gsm-role-admin):has(.app-sidebar) .gsm-floating-bottom-nav {
     display: none !important;
     visibility: hidden !important;
     pointer-events: none !important;
@@ -206,6 +318,42 @@ html, body {
     width: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Admin role floating bottom nav guarantee across Desktop */
+  body.gsm-role-admin .gsm-floating-bottom-nav,
+  body.gsm-role-admin #gsm-floating-bottom-nav,
+  body.gsm-role-driver .gsm-floating-bottom-nav,
+  body.gsm-role-driver #gsm-floating-bottom-nav {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    position: fixed !important;
+    bottom: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 2147483640 !important;
+    height: auto !important;
+    width: auto !important;
+    min-height: 58px !important;
+    overflow: visible !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-nav-btn {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
+  body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+  body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+    display: none !important;
   }
   .goride-mobile-nav-bar {
     display: none !important;

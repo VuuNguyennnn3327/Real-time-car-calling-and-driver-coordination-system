@@ -17,10 +17,11 @@
             border-radius: 16px;
             border: 2px solid #e2e8f0;
             padding: 16px;
-            margin-bottom: 14px;
+            margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             cursor: pointer;
+
             position: relative;
         }
         .gsm-trip-card:hover {
@@ -31,6 +32,7 @@
         .gsm-trip-card.is-selected-trip {
             border-color: #00b1a9 !important;
             background: #f0fdfa !important;
+            margin-top: 14px !important;
             box-shadow: 0 6px 20px rgba(0, 177, 169, 0.22) !important;
         }
         .gsm-trip-card.is-selected-trip::before {
@@ -46,6 +48,8 @@
             border-radius: 9999px;
             letter-spacing: 0.5px;
             box-shadow: 0 2px 6px rgba(0, 177, 169, 0.4);
+            z-index: 5;
+            pointer-events: none;
         }
         .gsm-trip-badge.badge-completed {
             background: #ecfdf5 !important;
@@ -61,6 +65,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
             margin-bottom: 12px;
             padding-bottom: 10px;
             border-bottom: 1px dashed #e2e8f0;
@@ -113,6 +118,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
             padding-top: 8px;
         }
         .gsm-trip-fare {
@@ -127,8 +133,11 @@
             padding: 6px 14px;
             border-radius: 8px;
             font-size: 0.82rem;
+            white-space: nowrap;
+            flex-shrink: 0;
             font-weight: 700;
             cursor: pointer;
+
             transition: all 0.2s;
         }
         .gsm-trip-rebook-btn:hover {
@@ -188,6 +197,318 @@
         }
         .gsm-nav-btn svg, .gsm-nav-btn path, .gsm-nav-btn circle {
             pointer-events: none !important;
+        }
+
+        /* Responsive Layout & Filter Pills Refinements: prevents button clipping and overlap */
+        .gsm-filter-pills-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 8px 4px 14px !important;
+            margin-bottom: 14px !important;
+            scrollbar-width: none;
+            width: 100%;
+            flex-wrap: nowrap;
+        }
+        .gsm-filter-pill {
+            white-space: nowrap !important;
+            flex: 0 0 auto !important;
+            user-select: none;
+        }
+        .gsm-trip-card:first-child.is-selected-trip {
+            margin-top: 10px !important;
+        }
+
+        /* Desktop Dual-Pane Right Column (Interactive Map & Impact Dashboard) */
+        .gsm-desktop-wide-canvas {
+            flex: 1 1 auto;
+            height: 100%;
+            background: #f8fafc;
+            padding: 20px 24px;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .gsm-activity-details-card {
+            background: #ffffff;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            padding: 22px 24px;
+            box-shadow: 0 4px 20px rgba(15, 45, 60, 0.05);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        /* Anti-Squish Header: Title Group + Action Button */
+        .gsm-activity-details-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 18px;
+            flex-shrink: 0;
+            width: 100%;
+            min-height: 48px;
+        }
+
+        .gsm-activity-title-group,
+        .gsm-activity-details-header > div:first-child {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding-right: 12px;
+        }
+
+        #map-trip-title {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f2d3c;
+            margin: 0 0 4px 0;
+            line-height: 1.35;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        #map-trip-subtitle {
+            font-size: 0.88rem;
+            color: #64748b;
+            margin: 0;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .gsm-activity-new-booking-btn {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            max-width: max-content !important;
+            height: 42px !important;
+            padding: 0 20px !important;
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #00b1a9 !important;
+            color: #ffffff !important;
+            border-radius: 12px !important;
+            font-weight: 700 !important;
+            font-size: 0.9rem !important;
+            text-decoration: none !important;
+            box-shadow: 0 4px 14px rgba(0, 177, 169, 0.3) !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            cursor: pointer !important;
+        }
+
+        .gsm-activity-new-booking-btn:hover {
+            background: #009690 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(0, 177, 169, 0.4) !important;
+        }
+
+        /* 4 Stat Cards Grid */
+        .gsm-activity-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .gsm-activity-stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+
+        .gsm-activity-stat-card.card-teal {
+            background: #e6f7f6;
+            border-color: #bbf2ee;
+        }
+
+        .gsm-activity-stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+
+        .gsm-activity-stat-label.label-teal {
+            color: #007d77;
+        }
+
+        .gsm-activity-stat-val {
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #0f2d3c;
+            line-height: 1.2;
+        }
+
+        .gsm-activity-stat-val.val-teal {
+            color: #007d77;
+        }
+
+        .gsm-activity-stat-val.text-fare {
+            color: #0f766e;
+        }
+
+        .gsm-activity-stat-unit {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #64748b;
+        }
+
+        .gsm-activity-stat-unit.unit-teal {
+            color: #007d77;
+        }
+
+        .gsm-activity-stat-unit.text-fare {
+            color: #0f766e;
+        }
+
+        .gsm-activity-stat-sub {
+            font-size: 0.74rem;
+            font-weight: 600;
+            margin-top: 4px;
+            color: #64748b;
+        }
+
+        .gsm-activity-stat-sub.text-teal {
+            color: #00b1a9;
+            font-weight: 700;
+        }
+
+        .gsm-activity-stat-sub.sub-teal {
+            color: #007d77;
+        }
+
+        .gsm-activity-stat-sub.text-green {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        /* Map Container */
+        .gsm-activity-map-wrapper {
+            flex: 1 1 0%;
+            min-height: 380px;
+            height: 100%;
+            width: 100%;
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e2e8f0;
+            background: #f1f5f9;
+        }
+
+        #desktop-activity-map {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 380px !important;
+        }
+
+        /* Adaptive wrapping for stat cards on narrower laptop / split view */
+        @media (max-width: 1200px) {
+            .gsm-activity-stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            .gsm-activity-stat-val {
+                font-size: 1.25rem;
+            }
+        }
+
+        /* Strict Desktop Layout (>= 768px): Hide floating bottom nav so it never blocks desktop map canvas */
+        @media (min-width: 768px) {
+            body:not(.gsm-role-admin).gsm-activity-page .gsm-floating-bottom-nav,
+            body:not(.gsm-role-admin).gsm-activity-page #gsm-floating-bottom-nav,
+            body:not(.gsm-role-admin):has(.gsm-desktop-container) .gsm-floating-bottom-nav,
+            body:not(.gsm-role-admin):has(.gsm-desktop-wide-canvas) .gsm-floating-bottom-nav,
+            body:not(.gsm-role-admin) .gsm-desktop-container ~ .gsm-floating-bottom-nav,
+            body:not(.gsm-role-admin) .gsm-floating-bottom-nav {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                height: 0 !important;
+                width: 0 !important;
+                overflow: hidden !important;
+            }
+            body.gsm-role-admin .gsm-floating-bottom-nav,
+            body.gsm-role-admin #gsm-floating-bottom-nav {
+                position: fixed !important;
+                bottom: 20px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                z-index: 2147483640 !important;
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: none !important;
+                height: auto !important;
+                width: auto !important;
+                min-height: 58px !important;
+                overflow: visible !important;
+            }
+            body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+            body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                cursor: pointer !important;
+            }
+            body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+                display: none !important;
+            }
+            .gsm-activity-screen {
+                padding: 20px 20px 30px !important;
+                min-height: auto !important;
+            }
+        }
+
+        /* Mobile Layout (< 1025px): Sidebar fills screen and hide desktop canvas */
+        @media (max-width: 1024px) {
+            .gsm-desktop-wide-canvas {
+                display: none !important;
+            }
+        }
+
+        /* Mobile Phone Layout (< 768px): Ensure bottom clearance for mobile floating bar */
+        @media (max-width: 767px) {
+            body:not(.gsm-role-admin) .gsm-floating-bottom-nav {
+                display: inline-flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+            .gsm-activity-screen {
+                padding-bottom: 120px !important;
+            }
+        }
+
+        /* Custom Leaflet Tooltip for Pickup and Destination Points */
+        .gsm-map-badge-tooltip {
+            background: #ffffff !important;
+            border: 1.5px solid #e2e8f0 !important;
+            border-radius: 10px !important;
+            padding: 5px 12px !important;
+            box-shadow: 0 4px 16px rgba(15, 45, 60, 0.15) !important;
+            font-size: 0.82rem !important;
+            pointer-events: none !important;
+        }
+        .gsm-map-badge-tooltip::before {
+            border-top-color: #ffffff !important;
         }
     </style>
 </head>
@@ -293,35 +614,36 @@
 
         <!-- Desktop Wide Canvas (Interactive Map & Impact Dashboard) -->
         <div class="gsm-desktop-wide-canvas">
-            <div style="background:#ffffff; border-radius:24px; padding:28px; box-shadow:0 8px 30px rgba(0,0,0,0.06); height:100%; display:flex; flex-direction:column; overflow-y:auto;">
-                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+            <div class="gsm-activity-details-card">
+                <!-- Header: Trip route & Actions -->
+                <div class="gsm-activity-details-header">
                     <div>
-                        <h2 style="font-size:1.4rem; font-weight:900; color:#0f2d3c; margin:0 0 4px 0;" id="map-trip-title">Hành Trình Di Chuyển Thuần Điện</h2>
-                        <p style="font-size:0.88rem; color:#64748b; margin:0;" id="map-trip-subtitle">Chọn một chuyến đi ở danh sách bên trái để xem lộ trình chi tiết trên bản đồ</p>
+                        <h2 id="map-trip-title">Hành Trình Di Chuyển Thuần Điện</h2>
+                        <p id="map-trip-subtitle">Chọn một chuyến đi ở danh sách bên trái để xem lộ trình chi tiết trên bản đồ</p>
                     </div>
-                    <a href="customer.html" class="gsm-btn-primary-cta" style="padding:10px 22px; text-decoration:none; font-size:0.9rem; border-radius:12px;">
+                    <a href="customer.html" class="gsm-activity-new-booking-btn" id="btn-activity-new-booking">
                         + Đặt Chuyến Xe Mới
                     </a>
                 </div>
 
                 <!-- Stat Cards -->
-                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; margin-bottom:20px;">
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                <div class="gsm-activity-stat-grid">
+                    <div class="gsm-activity-stat-card">
                         <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">QUÃNG ĐƯỜNG</div>
                         <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;" id="stat-card-distance">15,6 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">km</span></div>
                         <div style="font-size:0.75rem; color:#00b1a9; font-weight:700; margin-top:4px;" id="stat-card-distance-sub">100% thuần điện</div>
                     </div>
-                    <div style="background:#e6f7f6; border:1px solid #bbf2ee; border-radius:16px; padding:16px;">
+                    <div class="gsm-activity-stat-card card-teal">
                         <div style="font-size:0.8rem; color:#007d77; font-weight:700; margin-bottom:6px;">CO₂ CẮT GIẢM</div>
                         <div style="font-size:1.6rem; font-weight:900; color:#007d77;" id="stat-card-co2">2,5 <span style="font-size:0.9rem; font-weight:700;">kg CO₂</span></div>
                         <div style="font-size:0.75rem; color:#007d77; font-weight:700; margin-top:4px;">So với xe xăng truyền thống</div>
                     </div>
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                    <div class="gsm-activity-stat-card">
                         <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CÂY XANH ĐÓNG GÓP</div>
                         <div style="font-size:1.6rem; font-weight:900; color:#0f2d3c;" id="stat-card-trees">12 <span style="font-size:0.9rem; font-weight:700; color:#64748b;">cây</span></div>
                         <div style="font-size:0.75rem; color:#10b981; font-weight:700; margin-top:4px;">🌱 Quỹ Vì Tương Lai Xanh</div>
                     </div>
-                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:16px;">
+                    <div class="gsm-activity-stat-card">
                         <div style="font-size:0.8rem; color:#64748b; font-weight:700; margin-bottom:6px;">CƯỚC PHÍ CHUYẾN</div>
                         <div style="font-size:1.6rem; font-weight:900; color:#0f766e;" id="stat-card-fare">253.000 <span style="font-size:0.9rem; font-weight:700; color:#0f766e;">₫</span></div>
                         <div style="font-size:0.75rem; color:#059669; font-weight:700; margin-top:4px;" id="stat-card-status">Đã hoàn thành chuyến</div>
@@ -329,7 +651,7 @@
                 </div>
 
                 <!-- Leaflet Map Container for Trip History Overview -->
-                <div style="flex:1; border-radius:16px; overflow:hidden; position:relative; border:1px solid #e2e8f0;">
+                <div class="gsm-activity-map-wrapper">
                     <div id="desktop-activity-map" style="width:100%; height:100%;"></div>
                 </div>
             </div>
@@ -404,6 +726,7 @@
     <script src="../js/core/firebase-config.js"></script>
     <script src="../js/core/api.js"></script>
     <script src="../js/core/session.js"></script>
+    <script src="../js/core/geocoder.js"></script>
     <script src="../js/core/wallet.js"></script>
     <script src="../js/core/realtime.js"></script>
     <script src="../js/core/notifications.js"></script>
@@ -427,7 +750,7 @@
             { keys: ['ga quoc te', 'ga t2', 'quoc te tan son nhat'], lat: 10.8185, lng: 106.6588, name: 'Ga Quốc Tế (T2) — Sân bay Tân Sơn Nhất' },
             { keys: ['ga quoc noi', 'ga t1', 'ga t3', 'quoc noi tan son nhat', 'tan son nhat', 'san bay'], lat: 10.8160, lng: 106.6620, name: 'Ga Quốc Nội (T1) — Sân bay Tân Sơn Nhất' },
             { keys: ['vincom plaza thu duc', 'vincom thu duc'], lat: 10.8528, lng: 106.7661, name: 'Vincom Plaza Thủ Đức' },
-            { keys: ['ben thanh', 'cho ben thanh'], lat: 10.7725, lng: 106.6980, name: 'Chợ Bến Thành' },
+            { keys: ['ben thanh', 'cho ben thanh', 'marche de ben thanh', 'marche ben thanh'], lat: 10.7725, lng: 106.6980, name: 'Chợ Bến Thành' },
             { keys: ['landmark 81', 'vinhomes central park'], lat: 10.7951, lng: 106.7219, name: 'Landmark 81, Vinhomes Central Park' },
             { keys: ['ben xe mien dong'], lat: 10.8142, lng: 106.7115, name: 'Bến Xe Miền Đông Cũ' },
             { keys: ['van lang', 'dai hoc van lang'], lat: 10.8282, lng: 106.6967, name: 'Trường Đại Học Văn Lang (Cơ sở 3)' },
@@ -441,11 +764,224 @@
             { keys: ['ho con rua'], lat: 10.7827, lng: 106.6958, name: 'Hồ Con Rùa' },
             { keys: ['cho lon', 'binh tay'], lat: 10.7502, lng: 106.6517, name: 'Chợ Lớn (Chợ Bình Tây)' },
             { keys: ['mien tay', 'ben xe mien tay'], lat: 10.7418, lng: 106.6172, name: 'Bến xe Miền Tây' },
-            { keys: ['tinh lo 43', 'tam phu'], lat: 10.8643, lng: 106.7570, name: '789/12 Tỉnh lộ 43, Tam Phú, TP. Thủ Đức' }
+            { keys: ['tinh lo 43', 'tam phu'], lat: 10.8643, lng: 106.7570, name: '789/12 Tỉnh lộ 43, Tam Phú, TP. Thủ Đức' },
+            { keys: ['duong so 20', 'hem 20/4', 'hiep binh chanh', 'hiep binh'], lat: 10.8354, lng: 106.7289, name: 'Hẻm 20/4 Đường Số 20, Hiệp Bình Chánh, TP. Thủ Đức' },
+            { keys: ['gigamall', 'giga mall', 'pham van dong'], lat: 10.8276, lng: 106.7215, name: 'TTMS Gigamall Phạm Văn Đồng' },
+            { keys: ['emart', 'phan van tri'], lat: 10.8275, lng: 106.6888, name: 'Emart Phan Văn Trị, Gò Vấp' },
+            { keys: ['aeon mall tan phu', 'celadon'], lat: 10.8009, lng: 106.6177, name: 'AEON Mall Tân Phú Celadon' },
+            { keys: ['aeon mall binh tan'], lat: 10.7437, lng: 106.6125, name: 'AEON Mall Bình Tân' },
+            { keys: ['suoi tien', 'khu du lich suoi tien'], lat: 10.8665, lng: 106.8028, name: 'Khu du lịch Suối Tiên' },
+            { keys: ['dai hoc quoc gia', 'dh quoc gia', 'ktx khu a', 'ktx khu b'], lat: 10.8752, lng: 106.8007, name: 'Khu đô thị Đại học Quốc gia TP.HCM' },
+            { keys: ['bitexco', 'saigon centre', 'takashimaya'], lat: 10.7716, lng: 106.7044, name: 'Tòa nhà Bitexco / Takashimaya' },
+            { keys: ['thao dien', 'quan 2', 'an phu'], lat: 10.8025, lng: 106.7380, name: 'Thảo Điền, TP. Thủ Đức (Quận 2)' },
+            { keys: ['go vap', 'quang trung'], lat: 10.8388, lng: 106.6653, name: 'Quận Gò Vấp, TP.HCM' },
+            { keys: ['binh thanh', 'hang xanh'], lat: 10.8031, lng: 106.7001, name: 'Ngã tư Hàng Xanh, Bình Thạnh' },
+            { keys: ['quan 7', 'phu my hung'], lat: 10.7335, lng: 106.7214, name: 'Phú Mỹ Hưng, Quận 7' },
+            { keys: ['tan binh', 'cong hoa'], lat: 10.8015, lng: 106.6558, name: 'Cộng Hòa, Tân Bình' }
         ];
 
         // Resolves latitude & longitude array [lat, lng] from coordinate objects, arrays or string names
         function resolveCoords(loc) {
+            if (!loc) return [10.7769, 106.7009];
+            if (Array.isArray(loc) && loc.length >= 2 && !isNaN(loc[0]) && !isNaN(loc[1])) {
+                const lat = Number(loc[0]);
+                const lng = Number(loc[1]);
+                if (lat > 50 && lng < 20) return [lng, lat];
+                return [lat, lng];
+            }
+            if (typeof loc === 'object' && loc !== null) {
+                const lat = loc.lat ?? loc.latitude;
+                const lng = loc.lng ?? loc.lon ?? loc.longitude;
+                if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng) && Number(lat) !== 0 && Number(lng) !== 0) {
+                    const nLat = Number(lat);
+                    const nLng = Number(lng);
+                    if (nLat > 50 && nLng < 20) return [nLng, nLat];
+                    return [nLat, nLng];
+                }
+                if (loc.coords) return resolveCoords(loc.coords);
+                if (loc.coordinates) return resolveCoords(loc.coordinates);
+                if (loc.pickupCoords) return resolveCoords(loc.pickupCoords);
+                if (loc.destinationCoords) return resolveCoords(loc.destinationCoords);
+                if (loc.location) return resolveCoords(loc.location);
+                loc = loc.name || loc.address || loc.title || '';
+            }
+
+            const cleanStr = stripVietnameseDiacritics(String(loc));
+            if (!cleanStr) return [10.7769, 106.7009];
+
+            if (typeof geocoderService !== 'undefined' && typeof geocoderService._queryLocalLandmarks === 'function') {
+                const localMatch = geocoderService._queryLocalLandmarks(cleanStr, 1);
+                if (localMatch && localMatch.length > 0 && localMatch[0].lat && localMatch[0].lng) {
+                    return [Number(localMatch[0].lat), Number(localMatch[0].lng)];
+                }
+            }
+
+            for (const item of KNOWN_LOCATIONS) {
+                if (item.keys.some(k => cleanStr.includes(k))) {
+                    return [item.lat, item.lng];
+                }
+            }
+
+            if (cleanStr.includes('thu duc') || cleanStr.includes('hiep binh')) return [10.8354, 106.7289];
+            if (cleanStr.includes('go vap') || cleanStr.includes('quang trung')) return [10.8388, 106.6653];
+            if (cleanStr.includes('binh thanh')) return [10.8031, 106.7001];
+            if (cleanStr.includes('tan binh') || cleanStr.includes('cong hoa')) return [10.8015, 106.6558];
+            if (cleanStr.includes('quan 7') || cleanStr.includes('phu my hung')) return [10.7335, 106.7214];
+            if (cleanStr.includes('quan 1') || cleanStr.includes('ben nghe')) return [10.7769, 106.7009];
+
+            let hash = 0;
+            for (let i = 0; i < cleanStr.length; i++) hash = (hash << 5) - hash + cleanStr.charCodeAt(i);
+            const deltaLat = ((Math.abs(hash) % 800) - 400) / 10000;
+            const deltaLon = ((Math.abs(hash >> 3) % 800) - 400) / 10000;
+            return [10.7769 + deltaLat, 106.7009 + deltaLon];
+        }
+
+        // Precise Pickup Coordinates Extractor: prioritizes exact numeric coordinates over string names
+        function extractPickupCoords(t, adminData = {}) {
+            if (!t) return [10.7769, 106.7009];
+            // 1. Array [lat, lng] on t.pickupCoords
+            if (Array.isArray(t.pickupCoords) && t.pickupCoords.length >= 2 && !isNaN(t.pickupCoords[0]) && !isNaN(t.pickupCoords[1])) {
+                const lat = Number(t.pickupCoords[0]), lng = Number(t.pickupCoords[1]);
+                if (lat !== 0 && lng !== 0) return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+            }
+            // 2. Direct numeric pickupLat & (pickupLon || pickupLng)
+            if (t.pickupLat !== undefined && t.pickupLat !== null && !isNaN(t.pickupLat) && Number(t.pickupLat) !== 0) {
+                const pLon = t.pickupLon ?? t.pickupLng;
+                if (pLon !== undefined && pLon !== null && !isNaN(pLon) && Number(pLon) !== 0) {
+                    const lat = Number(t.pickupLat), lng = Number(pLon);
+                    return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+                }
+            }
+            // 3. Object pickup: { lat, lng }
+            if (typeof t.pickup === 'object' && t.pickup !== null) {
+                const pLat = t.pickup.lat ?? t.pickup.latitude;
+                const pLng = t.pickup.lng ?? t.pickup.lon ?? t.pickup.longitude;
+                if (pLat !== undefined && pLng !== undefined && !isNaN(pLat) && !isNaN(pLng) && Number(pLat) !== 0 && Number(pLng) !== 0) {
+                    const lat = Number(pLat), lng = Number(pLng);
+                    return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+                }
+                if (t.pickup.coords) return resolveCoords(t.pickup.coords);
+                if (t.pickup.pickupCoords) return resolveCoords(t.pickup.pickupCoords);
+            }
+            // 4. Admin data array
+            if (Array.isArray(adminData.pickupCoords) && adminData.pickupCoords.length >= 2 && !isNaN(adminData.pickupCoords[0])) {
+                const lat = Number(adminData.pickupCoords[0]), lng = Number(adminData.pickupCoords[1]);
+                if (lat !== 0 && lng !== 0) return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+            }
+            // 5. Admin data numeric
+            if (adminData.pickupLat !== undefined && adminData.pickupLat !== null && !isNaN(adminData.pickupLat)) {
+                const pLon = adminData.pickupLon ?? adminData.pickupLng;
+                if (pLon !== undefined && !isNaN(pLon) && Number(pLon) !== 0) {
+                    const lat = Number(adminData.pickupLat), lng = Number(pLon);
+                    return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+                }
+            }
+            // 6. Admin data object
+            if (typeof adminData.pickup === 'object' && adminData.pickup !== null) {
+                const pLat = adminData.pickup.lat ?? adminData.pickup.latitude;
+                const pLng = adminData.pickup.lng ?? adminData.pickup.lon;
+                if (pLat && pLng && !isNaN(pLat) && !isNaN(pLng)) {
+                    return [Number(pLat), Number(pLng)];
+                }
+            }
+            // 7. Fallback to name resolution
+            const pName = t.pickupName || (typeof t.pickup === 'string' ? t.pickup : t.pickup?.name || t.pickup?.address) || adminData.pickupName || (typeof adminData.pickup === 'string' ? adminData.pickup : adminData.pickup?.name) || '';
+            return resolveCoords(pName);
+        }
+
+        // Precise Destination Coordinates Extractor: prioritizes exact numeric coordinates over string names
+        function extractDestinationCoords(t, adminData = {}) {
+            if (!t) return [10.7769, 106.7009];
+            // 1. Array [lat, lng] on t.destinationCoords
+            if (Array.isArray(t.destinationCoords) && t.destinationCoords.length >= 2 && !isNaN(t.destinationCoords[0]) && !isNaN(t.destinationCoords[1])) {
+                const lat = Number(t.destinationCoords[0]), lng = Number(t.destinationCoords[1]);
+                if (lat !== 0 && lng !== 0) return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+            }
+            // 2. Direct numeric dropoffLat / destinationLat
+            const dLat = t.dropoffLat ?? t.destinationLat;
+            const dLon = t.dropoffLon ?? t.dropoffLng ?? t.destinationLon ?? t.destinationLng;
+            if (dLat !== undefined && dLat !== null && !isNaN(dLat) && Number(dLat) !== 0 && dLon !== undefined && dLon !== null && !isNaN(dLon) && Number(dLon) !== 0) {
+                const lat = Number(dLat), lng = Number(dLon);
+                return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+            }
+            // 3. Object destination / dropoff: { lat, lng }
+            const destObj = (typeof t.destination === 'object' && t.destination !== null) ? t.destination : ((typeof t.dropoff === 'object' && t.dropoff !== null) ? t.dropoff : null);
+            if (destObj) {
+                const lat = destObj.lat ?? destObj.latitude;
+                const lng = destObj.lng ?? destObj.lon ?? destObj.longitude;
+                if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng) && Number(lat) !== 0 && Number(lng) !== 0) {
+                    const nLat = Number(lat), nLng = Number(lng);
+                    return (nLat > 50 && nLng < 20) ? [nLng, nLat] : [nLat, nLng];
+                }
+                if (destObj.coords) return resolveCoords(destObj.coords);
+                if (destObj.destinationCoords) return resolveCoords(destObj.destinationCoords);
+            }
+            // 4. Admin data array
+            if (Array.isArray(adminData.destinationCoords) && adminData.destinationCoords.length >= 2 && !isNaN(adminData.destinationCoords[0])) {
+                const lat = Number(adminData.destinationCoords[0]), lng = Number(adminData.destinationCoords[1]);
+                if (lat !== 0 && lng !== 0) return (lat > 50 && lng < 20) ? [lng, lat] : [lat, lng];
+            }
+            // 5. Admin data numeric
+            const adLat = adminData.dropoffLat ?? adminData.destinationLat;
+            const adLon = adminData.dropoffLon ?? adminData.dropoffLng ?? adminData.destinationLon ?? adminData.destinationLng;
+            if (adLat !== undefined && adLat !== null && !isNaN(adLat) && adLon !== undefined && adLon !== null && !isNaN(adLon)) {
+                return [Number(adLat), Number(adLon)];
+            }
+            // 6. Admin data object
+            const adDestObj = (typeof adminData.destination === 'object' && adminData.destination !== null) ? adminData.destination : ((typeof adminData.dropoff === 'object' && adminData.dropoff !== null) ? adminData.dropoff : null);
+            if (adDestObj) {
+                const lat = adDestObj.lat ?? adDestObj.latitude;
+                const lng = adDestObj.lng ?? adDestObj.lon;
+                if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                    return [Number(lat), Number(lng)];
+                }
+            }
+            // 7. Fallback to name resolution
+            const dName = t.dropoffName || (typeof t.destination === 'string' ? t.destination : t.destination?.name || t.destination?.address) || (typeof t.dropoff === 'string' ? t.dropoff : t.dropoff?.name || t.dropoff?.address) || adminData.dropoffName || (typeof adminData.destination === 'string' ? adminData.destination : adminData.destination?.name) || '';
+            return resolveCoords(dName);
+        }
+
+        // Safe coordinate extractor helper
+        function extractCoords(target, fallbackName) {
+            if (!target) return resolveCoords(fallbackName);
+            return resolveCoords(target);
+        }
+
+        // Chronological timestamp parser for strict time-based sorting
+        function getTripTimestamp(t) {
+            if (!t) return 0;
+            const raw = t.createdAt || t.completedAt || t.timestamp;
+            if (raw) {
+                if (typeof raw === 'number' && !isNaN(raw) && raw > 0) return raw;
+                const parsed = Date.parse(raw);
+                if (!isNaN(parsed) && parsed > 0) return parsed;
+            }
+            if (t.time && typeof t.time === 'string') {
+                const m = t.time.match(/(\d{1,2}):(\d{2})\s+(\d{1,2})[-/](\d{1,2})(?:[-/](\d{2,4}))?/);
+                if (m) {
+                    const hour = parseInt(m[1], 10);
+                    const minute = parseInt(m[2], 10);
+                    const day = parseInt(m[3], 10);
+                    const month = parseInt(m[4], 10) - 1;
+                    const curYear = new Date().getFullYear();
+                    const year = m[5] ? (m[5].length === 2 ? 2000 + parseInt(m[5], 10) : parseInt(m[5], 10)) : curYear;
+                    const d = new Date(year, month, day, hour, minute);
+                    if (!isNaN(d.getTime())) return d.getTime();
+                }
+                const direct = Date.parse(t.time);
+                if (!isNaN(direct) && direct > 0) return direct;
+            }
+            if (t.id && typeof t.id === 'string') {
+                const digits = t.id.replace(/\D/g, '');
+                if (digits.length >= 10) {
+                    const num = parseInt(digits.slice(0, 13), 10);
+                    if (!isNaN(num) && num > 1600000000000 && num < 2200000000000) return num;
+                }
+            }
+            return 0;
+        }
+
+        function _legacyResolveCoords(loc) {
             if (!loc) return [10.7769, 106.7009];
             if (Array.isArray(loc) && loc.length >= 2 && !isNaN(loc[0]) && !isNaN(loc[1])) {
                 return [Number(loc[0]), Number(loc[1])];
@@ -498,6 +1034,7 @@
                 type: 'car',
                 title: 'Green Car - 4 khách',
                 time: '02:46 22-10',
+                createdAt: '2026-10-22T02:46:00.000Z',
                 pickup: 'Đại học Giao thông Vận tải',
                 dropoff: 'Chợ Đồng An',
                 pickupCoords: [10.8456, 106.7946],
@@ -513,6 +1050,7 @@
                 type: 'car',
                 title: 'Green Premium - 4 khách',
                 time: '02:18 22-10',
+                createdAt: '2026-10-22T02:18:00.000Z',
                 pickup: 'Chợ Đồng An',
                 dropoff: 'Vincom Center Đồng Khởi',
                 pickupCoords: [10.8845, 106.7020],
@@ -528,6 +1066,7 @@
                 type: 'car',
                 title: 'Green Luxury - 5 khách',
                 time: '01:34 22-10',
+                createdAt: '2026-10-22T01:34:00.000Z',
                 pickup: 'Chợ Đồng An',
                 dropoff: 'Ga Quốc Tế (Ga T2) - Sân Bay Quốc Tế Tân Sơn Nhất',
                 pickupCoords: [10.8845, 106.7020],
@@ -641,8 +1180,8 @@
                         let modified = false;
                         list.forEach(t => {
                             if (!t) return;
-                            const pC = resolveCoords(t.pickupCoords || t.pickup);
-                            const dC = resolveCoords(t.destinationCoords || t.destination || t.dropoff);
+                            const pC = extractPickupCoords(t);
+                            const dC = extractDestinationCoords(t);
                             if (t.routeGeometry && !isRouteGeometryValid(t.routeGeometry, pC, dC)) {
                                 delete t.routeGeometry;
                                 modified = true;
@@ -663,10 +1202,48 @@
         // Draw dynamic route from pickup to destination on the right map
         async function displayTripOnMap(trip) {
             initDesktopMap();
+            updateRoleSpecificUI();
             if (!actMap || !trip) return;
 
-            const pCoords = resolveCoords(trip.pickupCoords || trip.pickup);
-            const dCoords = resolveCoords(trip.destinationCoords || trip.dropoff);
+            let pCoords = (Array.isArray(trip.pickupCoords) && trip.pickupCoords.length >= 2 && !isNaN(trip.pickupCoords[0]))
+                ? [Number(trip.pickupCoords[0]), Number(trip.pickupCoords[1])]
+                : extractPickupCoords(trip);
+            let dCoords = (Array.isArray(trip.destinationCoords) && trip.destinationCoords.length >= 2 && !isNaN(trip.destinationCoords[0]))
+                ? [Number(trip.destinationCoords[0]), Number(trip.destinationCoords[1])]
+                : extractDestinationCoords(trip);
+
+            if (pCoords[0] > 50 && pCoords[1] < 20) pCoords = [pCoords[1], pCoords[0]];
+            if (dCoords[0] > 50 && dCoords[1] < 20) dCoords = [dCoords[1], dCoords[0]];
+
+            // Ensure Leaflet map canvas bounds are up to date
+            try { actMap.invalidateSize(); } catch(e) {}
+
+            // Geocode fallback if locations fell back to generic District 1 center or are identical
+            const isPDefault = (Math.abs(pCoords[0] - 10.7769) < 0.001 && Math.abs(pCoords[1] - 106.7009) < 0.001);
+            const isDDefault = (Math.abs(dCoords[0] - 10.7769) < 0.001 && Math.abs(dCoords[1] - 106.7009) < 0.001);
+            const isSamePoint = (Math.abs(pCoords[0] - dCoords[0]) < 0.0001 && Math.abs(pCoords[1] - dCoords[1]) < 0.0001);
+
+            if ((isPDefault || isDDefault || isSamePoint) && typeof geocoderService !== 'undefined' && typeof geocoderService.search === 'function') {
+                if ((isPDefault || isSamePoint) && trip.pickup && trip.pickup !== 'Điểm đón') {
+                    try {
+                        const pRes = await geocoderService.search(trip.pickup, 1);
+                        if (pRes && pRes.length > 0 && pRes[0].lat && pRes[0].lng) {
+                            pCoords = [Number(pRes[0].lat), Number(pRes[0].lng)];
+                            trip.pickupCoords = pCoords;
+                        }
+                    } catch (e) {}
+                }
+                if ((isDDefault || isSamePoint) && (trip.dropoff || trip.destination) && (trip.dropoff || trip.destination) !== 'Điểm đến') {
+                    try {
+                        const dRes = await geocoderService.search(trip.dropoff || trip.destination, 1);
+                        if (dRes && dRes.length > 0 && dRes[0].lat && dRes[0].lng) {
+                            dCoords = [Number(dRes[0].lat), Number(dRes[0].lng)];
+                            trip.destinationCoords = dCoords;
+                        }
+                    } catch (e) {}
+                }
+            }
+
 
             // 1. Wipe clean all existing layers, lines, and markers on the map
             if (activeRouteLayer) {
@@ -703,6 +1280,12 @@
                 </div>
             `);
             activeMarkersGroup.addLayer(pickupMarker);
+            pickupMarker.bindTooltip(`
+                <div style="font-family:system-ui,-apple-system,sans-serif; font-size:0.8rem; font-weight:700; color:#065f46; display:flex; align-items:center; gap:5px; white-space:nowrap;">
+                    <span>🟢 Điểm đón:</span>
+                    <strong style="color:#0f2d3c;">${trip.pickup}</strong>
+                </div>
+            `, { permanent: true, direction: 'top', offset: [0, -18], className: 'gsm-map-badge-tooltip' });
 
             // 3. Destination Pin Marker (🔴 Red Pin)
             const destMarker = L.marker([dCoords[0], dCoords[1]], {
@@ -723,6 +1306,12 @@
                 </div>
             `);
             activeMarkersGroup.addLayer(destMarker);
+            destMarker.bindTooltip(`
+                <div style="font-family:system-ui,-apple-system,sans-serif; font-size:0.8rem; font-weight:700; color:#991b1b; display:flex; align-items:center; gap:5px; white-space:nowrap;">
+                    <span>🔴 Điểm đến:</span>
+                    <strong style="color:#0f2d3c;">${trip.dropoff}</strong>
+                </div>
+            `, { permanent: true, direction: 'top', offset: [0, -18], className: 'gsm-map-badge-tooltip' });
 
             // 4. Fetch Real Street Turn-By-Turn Geometry strictly between pickup and destination
             let lineCoordinates = null;
@@ -785,6 +1374,7 @@
 
             pickupMarker.openPopup();
             updateWideCanvasHeader(trip);
+            setTimeout(() => { if (actMap) actMap.invalidateSize(); }, 150);
         }
 
         // Update dashboard title & impact stat cards to reflect the selected trip
@@ -857,16 +1447,63 @@
             const rawUserList = JSON.parse(localStorage.getItem(userStorageKey) || '[]');
             const rawAdminList = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
             const rawBookings = JSON.parse(localStorage.getItem('navigo_bookings') || '[]');
+            const rawDriverTrips = JSON.parse(localStorage.getItem('goride_driver_trips') || '[]');
 
             // Map admin trips for rapid coordinate and status lookup
             const adminMap = new Map();
             rawAdminList.forEach(t => { if (t && t.id) adminMap.set(String(t.id), t); });
 
             let combined = [...rawUserList];
+            try {
+                const candidateKeys = new Set();
+                if (user) {
+                    ['id', 'phone', 'email', 'name', 'username'].forEach(prop => {
+                        if (user[prop]) {
+                            const val = String(user[prop]).trim().toLowerCase();
+                            candidateKeys.add('goride_trips_' + val);
+                            candidateKeys.add('goride_trips_' + val.replace(/[^a-z0-9_]/g, '_'));
+                            candidateKeys.add('goride_trips_' + val.replace(/[^a-z0-9_@.-]/gi, '_'));
+                        }
+                    });
+                }
+                candidateKeys.forEach(k => {
+                    try {
+                        const list = JSON.parse(localStorage.getItem(k) || '[]');
+                        if (Array.isArray(list)) {
+                            list.forEach(item => {
+                                if (item && item.id && !combined.some(u => String(u.id) === String(item.id))) {
+                                    combined.push(item);
+                                }
+                            });
+                        }
+                    } catch (e) {}
+                });
+                Object.keys(localStorage).forEach(k => {
+                    if (k.startsWith('goride_trips_')) {
+                        try {
+                            const list = JSON.parse(localStorage.getItem(k) || '[]');
+                            if (Array.isArray(list)) {
+                                list.forEach(item => {
+                                    if (!item || !item.id) return;
+                                    const matchUser = user && (
+                                        (user.id && (String(item.userId) === String(user.id) || String(item.customerId) === String(user.id))) ||
+                                        (user.phone && (item.customerPhone === user.phone || item.phone === user.phone)) ||
+                                        (user.email && (item.customerEmail === user.email || item.email === user.email)) ||
+                                        (user.name && (item.customerName === user.name || item.name === user.name))
+                                    );
+                                    if (matchUser && !combined.some(u => String(u.id) === String(item.id))) {
+                                        combined.push(item);
+                                    }
+                                });
+                            }
+                        } catch (e) {}
+                    }
+                });
+            } catch (e) {}
 
             rawAdminList.forEach(at => {
                 if (!combined.some(u => String(u.id) === String(at.id))) {
-                    if (user && (at.customerId === user.id || at.customerPhone === user.phone || at.customerName === user.name)) {
+                    if (user && (user.role === 'admin' || at.customerId === user.id || at.userId === user.id || at.customerPhone === user.phone || at.customerEmail === user.email || at.customerName === user.name || (user.role === 'driver' && (at.driverId === user.id || at.driverPhone === user.phone || at.driverName === user.name)))) {
                         combined.push(at);
                     }
                 }
@@ -875,21 +1512,40 @@
             rawBookings.forEach(b => {
                 if (!combined.some(u => String(u.id) === String(b.id))) combined.push(b);
             });
+            if (user && user.role === 'driver') {
+                rawDriverTrips.forEach(dt => {
+                    if (!combined.some(u => String(u.id) === String(dt.id))) combined.push(dt);
+                });
+            }
+            /*
+            });
+            if (user && user.role === 'driver') {
+                rawDriverTrips.forEach(dt => {
+                    if (!combined.some(u => String(u.id) === String(dt.id))) combined.push(dt);
+                });
+            });
 
+            */
             // If user has no saved history or demo mode is on, fallback to authentic demo trips
             if (combined.length === 0 || showTripsMode) {
                 combined = [...combined, ...demoTrips];
             }
 
+            // Strictly sort all trips by time descending (newest trips first)
+            combined.sort((a, b) => getTripTimestamp(b) - getTripTimestamp(a));
+
             return combined.map(t => {
                 const tId = String(t.id || '');
                 const adminData = adminMap.get(tId) || {};
 
-                const pName = t.pickupName || (typeof t.pickup === 'object' ? (t.pickup?.name || t.pickup?.address) : t.pickup) || adminData.pickupName || adminData.pickup || 'Điểm đón';
-                const dName = t.dropoffName || (typeof t.destination === 'object' ? (t.destination?.name || t.destination?.address) : t.destination) || adminData.dropoffName || adminData.destination || 'Điểm đến';
+                const pName = t.pickupName || (typeof t.pickup === 'object' ? (t.pickup?.name || t.pickup?.address) : t.pickup) || adminData.pickupName || (typeof adminData.pickup === 'object' ? (adminData.pickup?.name || adminData.pickup?.address) : adminData.pickup) || 'Điểm đón';
+                const dName = t.dropoffName || (typeof t.destination === 'object' ? (t.destination?.name || t.destination?.address) : t.destination) || (typeof t.dropoff === 'object' ? (t.dropoff?.name || t.dropoff?.address) : t.dropoff) || adminData.dropoffName || (typeof adminData.destination === 'object' ? (adminData.destination?.name || adminData.destination?.address) : adminData.destination) || (typeof adminData.dropoff === 'object' ? (adminData.dropoff?.name || adminData.dropoff?.address) : adminData.dropoff) || 'Điểm đến';
 
-                const pCoords = t.pickupCoords || adminData.pickupCoords || (t.pickupLat ? [Number(t.pickupLat), Number(t.pickupLon)] : null) || (adminData.pickupLat ? [Number(adminData.pickupLat), Number(adminData.pickupLon)] : null) || resolveCoords(pName);
-                const dCoords = t.destinationCoords || adminData.destinationCoords || (t.dropoffLat ? [Number(t.dropoffLat), Number(t.dropoffLon)] : null) || (adminData.dropoffLat ? [Number(adminData.dropoffLat), Number(adminData.dropoffLon)] : null) || resolveCoords(dName);
+                const pCoords = extractPickupCoords(t, adminData);
+
+                const dCoords = extractDestinationCoords(t, adminData);
+
+
 
                 const fareNum = Number(t.fareAmount || t.fare || adminData.fare || 0);
                 const isCompleted = (t.status === 'completed' || t.status === 'COMPLETED' || adminData.status === 'completed');
@@ -906,7 +1562,18 @@
                     id: t.id || 'NAV-' + Math.floor(10000 + Math.random() * 90000),
                     type: (t.vehicleType === 'bike') ? 'bike' : 'car',
                     title: t.vehicleName || t.vehicleTypeName || adminData.vehicleTypeName || 'Green Car - 4 khách',
-                    time: t.createdAt ? new Date(t.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : (t.time || 'Vừa xong'),
+                    time: (() => {
+                        const ts = getTripTimestamp(t);
+                        if (ts > 0) {
+                            const d = new Date(ts);
+                            const hh = String(d.getHours()).padStart(2, '0');
+                            const mm = String(d.getMinutes()).padStart(2, '0');
+                            const dd = String(d.getDate()).padStart(2, '0');
+                            const mo = String(d.getMonth() + 1).padStart(2, '0');
+                            return `${hh}:${mm} ${dd}-${mo}`;
+                        }
+                        return t.time || 'Vừa xong';
+                    })(),
                     pickup: pName,
                     dropoff: dName,
                     pickupCoords: pCoords,
@@ -1003,7 +1670,7 @@
                 // If no trip is selected, automatically select the completed trip or the first trip
                 const hasCurrentSelected = filtered.some(t => String(t.id) === String(selectedTripId));
                 if (!hasCurrentSelected) {
-                    const defaultTrip = filtered.find(t => t.isCompleted) || filtered[0];
+                    const defaultTrip = filtered[0];
                     if (defaultTrip) {
                         selectTrip(defaultTrip.id);
                     }
@@ -1029,9 +1696,50 @@
             renderTrips();
         });
 
+        // Role-Aware UI synchronization
+        function updateRoleSpecificUI() {
+            const curUser = (typeof sessionManager !== 'undefined') ? (sessionManager.getUser?.() || sessionManager.getCurrentUser?.()) : null;
+            const newBookingBtn = document.getElementById('btn-activity-new-booking');
+            if (newBookingBtn) {
+                if (curUser && curUser.role === 'admin') {
+                    newBookingBtn.href = 'admin.html#trips';
+                    newBookingBtn.textContent = '🛡️ Quản Lý Chuyến Đi';
+                    newBookingBtn.title = 'Chuyển đến bảng quản trị chuyến đi';
+                } else if (curUser && curUser.role === 'driver') {
+                    newBookingBtn.href = 'driver.html#home';
+                    newBookingBtn.textContent = '🚗 Về Nhận Chuyến';
+                    newBookingBtn.title = 'Chuyển đến màn hình nhận chuyến tài xế';
+                } else {
+                    newBookingBtn.href = 'customer.html';
+                    newBookingBtn.textContent = '+ Đặt Chuyến Xe Mới';
+                    newBookingBtn.title = 'Đặt chuyến xe thuần điện mới';
+                }
+            }
+            // Strict desktop enforcement: hide mobile bottom nav on desktop screens
+            const floatNav = document.querySelector('.gsm-floating-bottom-nav') || document.getElementById('gsm-floating-bottom-nav');
+            if (floatNav) {
+                if (curUser && curUser.role === 'admin') {
+                    floatNav.style.setProperty('display', 'inline-flex', 'important');
+                    floatNav.style.setProperty('visibility', 'visible', 'important');
+                    floatNav.style.setProperty('opacity', '1', 'important');
+                    floatNav.style.setProperty('pointer-events', 'none', 'important');
+                } else if (window.innerWidth >= 768) {
+                    floatNav.style.setProperty('display', 'none', 'important');
+                } else {
+                    floatNav.style.removeProperty('display');
+                }
+            }
+        }
+        window.addEventListener('resize', () => {
+                if (actMap) {
+                try { actMap.invalidateSize(); } catch(e) {}
+            }
+        });
+
         // Initial setup on DOM ready
         document.addEventListener('DOMContentLoaded', () => {
             initDesktopMap();
+            updateRoleSpecificUI();
             renderTrips();
 
             // Sync trips from Cloud database if user is logged in
@@ -1056,6 +1764,7 @@
 
         // Immediate run
         initDesktopMap();
+        updateRoleSpecificUI();
         renderTrips();
     </script>
 </body>

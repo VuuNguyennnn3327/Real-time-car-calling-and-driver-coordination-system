@@ -24,6 +24,20 @@ scratch/
 *task*.md
 !README.md
 
+# Non-runtime reading documents, notes & office files
+*.docx
+*.doc
+*.pdf
+*.pptx
+*.ppt
+*.xlsx
+*.xls
+*ghichu*
+*ghi_chu*
+*notes*
+*note*
+*.bak
+
 # Build outputs & C++ binaries
 build/
 bin/

@@ -94,6 +94,38 @@
             pointer-events: auto !important;
             cursor: pointer !important;
         }
+        body.gsm-role-admin .gsm-floating-bottom-nav,
+        body.gsm-role-admin #gsm-floating-bottom-nav,
+        body.gsm-role-driver .gsm-floating-bottom-nav,
+        body.gsm-role-driver #gsm-floating-bottom-nav {
+            position: fixed !important;
+            bottom: 20px !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            z-index: 2147483640 !important;
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: none !important;
+            height: auto !important;
+            width: auto !important;
+            min-height: 58px !important;
+            overflow: visible !important;
+        }
+        body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        body.gsm-role-admin .gsm-floating-bottom-nav .gsm-nav-btn,
+        body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-pill,
+        body.gsm-role-driver .gsm-floating-bottom-nav .gsm-nav-btn {
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+        }
+        body.gsm-role-admin .gsm-floating-bottom-nav .gsm-bottom-nav-trophy,
+        body.gsm-role-driver .gsm-floating-bottom-nav .gsm-bottom-nav-trophy {
+            display: none !important;
+        }
         .gsm-nav-btn svg, .gsm-nav-btn path, .gsm-nav-btn circle {
             pointer-events: none !important;
         }
