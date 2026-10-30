@@ -24,6 +24,21 @@
                 sessionStorage.removeItem('navigo_session_loaded');
                 sessionStorage.removeItem('navigo_loading_screen_active');
             } catch(e) {}
+            if (fromAction === 'logout') {
+                try {
+                    localStorage.removeItem('goride_user');
+                    localStorage.removeItem('navigo_user');
+                    localStorage.removeItem('ride_rtree_user');
+                    localStorage.removeItem('goride_token');
+                    localStorage.removeItem('navigo_token');
+                    localStorage.removeItem('ride_rtree_token');
+                    localStorage.removeItem('currentUser');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('token');
+                    sessionStorage.clear();
+                    localStorage.setItem('goride_logged_out', '1');
+                } catch(e) {}
+            }
         } else if (sessionStorage.getItem('navigo_session_loaded') === 'true') {
             // If already in an active session without explicit login/logout trigger, go straight to Trang Chủ
             window.location.replace('index.html');

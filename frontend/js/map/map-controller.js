@@ -358,6 +358,11 @@
 
       // Polyline routes
       this.routePolyline = null;
+      this.driverRoutePolyline = null;
+      this._originalRouteCoords = null;
+      this._originalDriverRouteCoords = null;
+      this._routeProgressIndex = 0;
+      this._driverRouteProgressIndex = 0;
 
       // State flags
       this.isClickToSelectActive = false;
@@ -1108,6 +1113,9 @@
 
       // Update position
       marker.setLatLng([lat, lng]);
+      if (metadata && metadata.isActive) {
+        this.trimActiveRoutes(lat, lng);
+      }
 
       // Update metadata
       if (metadata) {
@@ -1203,6 +1211,7 @@
         }).addTo(this.map);
       } else {
         this.markers.userLocation.setLatLng([numLat, numLng]);
+      this.trimActiveRoutes(numLat, numLng);
       }
 
       if (accuracy && accuracy > 0 && accuracy < 500) {
@@ -1354,6 +1363,8 @@
         targetOpts
       );
 
+      this._originalRouteCoords = latLngs.map((c) => [Number(c[0]), Number(c[1])]);
+      this._routeProgressIndex = 0;
       this.routePolyline = L.polyline(latLngs, polylineOptions).addTo(this.map);
       if (typeof this.routePolyline.bringToFront === 'function') {
         this.routePolyline.bringToFront();
@@ -1392,6 +1403,272 @@
       if (this.routePolyline && this.map) {
         this.map.removeLayer(this.routePolyline);
         this.routePolyline = null;
+      }
+    }
+
+    /**
+     * Draws driver route / approach polyline (blue line: driver -> pickup)
+     * @param {Array} coordinates
+     * @param {Object} [options]
+     * @returns {L.Polyline|null}
+     */
+    drawDriverRoute(coordinates, options = {}) {
+      if (!this.map || !coordinates) {
+        return null;
+      }
+      this.clearDriverRoute();
+
+      const latLngs = coordinates
+        .map((coord) => {
+          if (Array.isArray(coord)) {
+            return [Number(coord[0]), Number(coord[1])];
+          }
+          if (coord && typeof coord === 'object') {
+            return [Number(coord.lat || coord.latitude), Number(coord.lng || coord.lon || coord.longitude)];
+          }
+          return coord;
+        })
+        .filter((coord) => Array.isArray(coord) && !isNaN(coord[0]) && !isNaN(coord[1]) && coord[0] !== 0 && coord[1] !== 0);
+
+      if (latLngs.length < 2) return null;
+
+      const polylineOptions = Object.assign(
+        {
+          color: '#0288d1',
+          weight: 6,
+          opacity: 0.95,
+          dashArray: null,
+          lineCap: 'round',
+          lineJoin: 'round'
+        },
+        options
+      );
+
+      this._originalDriverRouteCoords = latLngs.map((c) => [Number(c[0]), Number(c[1])]);
+      this._driverRouteProgressIndex = 0;
+      this.driverRoutePolyline = L.polyline(latLngs, polylineOptions).addTo(this.map);
+      if (typeof this.driverRoutePolyline.bringToFront === 'function') {
+        this.driverRoutePolyline.bringToFront();
+      }
+      return this.driverRoutePolyline;
+    }
+
+    /**
+     * Clears driver route polyline from map
+     */
+    
+    /**
+     * Trims a polyline geometry relative to the current vehicle position [curLat, curLng].
+     * Acts like a "snake eating the path": segments behind the vehicle are discarded,
+     * and the remaining polyline connects seamlessly from [curLat, curLng] onward to the destination.
+     * @param {Array<[number, number]>} fullCoords - The full original route coordinates
+     * @param {number} curLat - Current vehicle latitude
+     * @param {number} curLng - Current vehicle longitude
+     * @param {number} [lastIndex=0] - The last known progression index to prevent backtracking
+     * @returns {{ remainingCoords: Array<[number, number]>, newIndex: number }}
+     */
+    _computeTrimmedRoute(fullCoords, curLat, curLng, lastIndex = 0) {
+      if (!Array.isArray(fullCoords) || fullCoords.length < 2) {
+        return { remainingCoords: fullCoords || [], newIndex: 0 };
+      }
+      const cLat = Number(curLat);
+      const cLng = Number(curLng);
+      if (isNaN(cLat) || isNaN(cLng) || cLat === 0 || cLng === 0) {
+        return { remainingCoords: fullCoords, newIndex: lastIndex };
+      }
+
+      const cosLat = Math.cos((cLat * Math.PI) / 180);
+      let bestDistSq = Infinity;
+      let bestSegmentIdx = Math.max(0, Math.min(lastIndex, fullCoords.length - 2));
+      let bestT = 0;
+      let bestProj = null;
+
+      // Search window starting slightly behind lastIndex to allow minor GPS jitter
+      const startIdx = Math.max(0, lastIndex - 1);
+      for (let i = startIdx; i < fullCoords.length - 1; i++) {
+        const a = fullCoords[i];
+        const b = fullCoords[i + 1];
+
+        const dx = (b[1] - a[1]) * cosLat;
+        const dy = b[0] - a[0];
+        const segLenSq = dx * dx + dy * dy;
+
+        let t = 0;
+        if (segLenSq > 1e-12) {
+          const px = (cLng - a[1]) * cosLat;
+          const py = cLat - a[0];
+          t = Math.max(0, Math.min(1, (px * dx + py * dy) / segLenSq));
+        }
+
+        const projLat = a[0] + t * (b[0] - a[0]);
+        const projLng = a[1] + t * (b[1] - a[1]);
+        const distDx = (cLng - projLng) * cosLat;
+        const distDy = cLat - projLat;
+        const distSq = distDx * distDx + distDy * distDy;
+
+        // Slight forward preference so future segments win over past segments
+        const forwardBias = (i - startIdx) * 1e-9;
+        if (distSq + forwardBias < bestDistSq) {
+          bestDistSq = distSq;
+          bestSegmentIdx = i;
+          bestT = t;
+          bestProj = [projLat, projLng];
+        }
+      }
+
+      // If vehicle is before first point
+      if (bestSegmentIdx === 0 && bestT < 0.05) {
+        return {
+          remainingCoords: [[cLat, cLng], ...fullCoords],
+          newIndex: 0
+        };
+      }
+
+      // Check if reached destination (within ~20 meters of end)
+      const lastPoint = fullCoords[fullCoords.length - 1];
+      const endDx = (cLng - lastPoint[1]) * cosLat;
+      const endDy = cLat - lastPoint[0];
+      const distToEndSq = endDx * endDx + endDy * endDy;
+      if (bestSegmentIdx >= fullCoords.length - 2 && distToEndSq < 3.5e-8) {
+        return {
+          remainingCoords: [[cLat, cLng], lastPoint],
+          newIndex: fullCoords.length - 1
+        };
+      }
+
+      const remaining = [[cLat, cLng]];
+      // If projection is on the segment and distinct from curPos (> ~3.5 meters), snap through it
+      if (bestProj && bestT > 0.05 && bestT < 0.95) {
+        const projToCurSq = Math.pow((cLng - bestProj[1]) * cosLat, 2) + Math.pow(cLat - bestProj[0], 2);
+        if (projToCurSq > 1e-9) {
+          remaining.push(bestProj);
+        }
+      }
+
+      for (let j = bestSegmentIdx + 1; j < fullCoords.length; j++) {
+        remaining.push(fullCoords[j]);
+      }
+
+      if (remaining.length < 2 && fullCoords.length > 0) {
+        remaining.push(fullCoords[fullCoords.length - 1]);
+      }
+
+      return {
+        remainingCoords: remaining,
+        newIndex: Math.max(lastIndex, bestSegmentIdx)
+      };
+    }
+
+    /**
+     * Dynamically trims the driver route (blue line: driver -> pickup) as the vehicle moves forward.
+     * Segments behind the vehicle disappear ("eaten away like a snake"), while the remaining polyline
+     * connects seamlessly from the vehicle's current position to the pickup point.
+     * @param {number} curLat
+     * @param {number} curLng
+     * @returns {boolean}
+     */
+    trimDriverRoute(curLat, curLng) {
+      if (!this.driverRoutePolyline || !Array.isArray(this._originalDriverRouteCoords) || this._originalDriverRouteCoords.length < 2) {
+        return false;
+      }
+      const cLat = Number(curLat);
+      const cLng = Number(curLng);
+      if (isNaN(cLat) || isNaN(cLng) || cLat === 0 || cLng === 0) return false;
+
+      const { remainingCoords, newIndex } = this._computeTrimmedRoute(
+        this._originalDriverRouteCoords,
+        cLat,
+        cLng,
+        this._driverRouteProgressIndex || 0
+      );
+
+      this._driverRouteProgressIndex = newIndex;
+
+      if (remainingCoords && remainingCoords.length >= 2) {
+        if (remainingCoords.length === 2) {
+          const p1 = remainingCoords[0];
+          const p2 = remainingCoords[1];
+          const cos = Math.cos((p1[0] * Math.PI) / 180);
+          const dSq = Math.pow((p1[1] - p2[1]) * cos, 2) + Math.pow(p1[0] - p2[0], 2);
+          if (dSq < 2e-8) {
+            this.clearDriverRoute();
+            return true;
+          }
+        }
+        this.driverRoutePolyline.setLatLngs(remainingCoords);
+        return true;
+      } else if (remainingCoords && remainingCoords.length <= 1) {
+        this.clearDriverRoute();
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Dynamically trims the main trip route (green / teal line) as the vehicle moves forward.
+     * Segments behind the vehicle disappear ("eaten away like a snake"), while the remaining polyline
+     * connects seamlessly from the vehicle's current position to the destination.
+     * @param {number} curLat
+     * @param {number} curLng
+     * @returns {boolean}
+     */
+    trimRoute(curLat, curLng) {
+      if (!this.routePolyline || !Array.isArray(this._originalRouteCoords) || this._originalRouteCoords.length < 2) {
+        return false;
+      }
+      const cLat = Number(curLat);
+      const cLng = Number(curLng);
+      if (isNaN(cLat) || isNaN(cLng) || cLat === 0 || cLng === 0) return false;
+
+      const { remainingCoords, newIndex } = this._computeTrimmedRoute(
+        this._originalRouteCoords,
+        cLat,
+        cLng,
+        this._routeProgressIndex || 0
+      );
+
+      this._routeProgressIndex = newIndex;
+
+      if (remainingCoords && remainingCoords.length >= 2) {
+        if (remainingCoords.length === 2) {
+          const p1 = remainingCoords[0];
+          const p2 = remainingCoords[1];
+          const cos = Math.cos((p1[0] * Math.PI) / 180);
+          const dSq = Math.pow((p1[1] - p2[1]) * cos, 2) + Math.pow(p1[0] - p2[0], 2);
+          if (dSq < 2e-8) {
+            this.clearRoute();
+            return true;
+          }
+        }
+        this.routePolyline.setLatLngs(remainingCoords);
+        return true;
+      } else if (remainingCoords && remainingCoords.length <= 1) {
+        this.clearRoute();
+        return true;
+      }
+      return false;
+    }
+
+    /**
+     * Trims whichever active route polyline is currently displayed on the map
+     * @param {number} curLat
+     * @param {number} curLng
+     */
+    trimActiveRoutes(curLat, curLng) {
+      let trimmed = false;
+      if (this.driverRoutePolyline && this._originalDriverRouteCoords) {
+        trimmed = this.trimDriverRoute(curLat, curLng) || trimmed;
+      }
+      if (this.routePolyline && this._originalRouteCoords) {
+        trimmed = this.trimRoute(curLat, curLng) || trimmed;
+      }
+      return trimmed;
+    }
+
+    clearDriverRoute() {
+      if (this.driverRoutePolyline && this.map) {
+        this.map.removeLayer(this.driverRoutePolyline);
+        this.driverRoutePolyline = null;
       }
     }
 
@@ -1610,6 +1887,7 @@
       this.clearMarkers('all');
       this.clearUserLocation();
       this.clearRoute();
+      this.clearDriverRoute();
 
       if (this._resizeObserver) {
         this._resizeObserver.disconnect();

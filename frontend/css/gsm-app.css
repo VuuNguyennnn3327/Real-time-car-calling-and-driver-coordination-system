@@ -3139,7 +3139,7 @@ body.gsm-notifications-page .gsm-desktop-sidebar .gsm-screen-wrapper {
   background: rgba(15, 45, 60, 0.45);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  z-index: 9999999;
+  z-index: 2147483647 !important;
   display: none;
   align-items: center;
   justify-content: center;
@@ -3258,4 +3258,42 @@ body.gsm-role-admin a.gsm-pc-nav-link[href*="admin.html"] {
     width: 20px !important;
     height: 20px !important;
   }
+}
+
+
+/* ==========================================================================
+   GLOBAL NOTIFICATION PRIORITY OVERLAY & TOPMOST LAYER (ABOVE NAVIGATION)
+   ========================================================================== */
+#navigo-liquid-glass-modal,
+.toast-container,
+#toast-container,
+.incoming-offer-overlay,
+#driver-incoming-offer-modal,
+#driver-rate-customer-modal,
+#driver-auth-guard-modal,
+.goride-dialog-overlay,
+#dialog-overlay,
+.floating-map-pick-banner,
+#floating-map-pick-banner,
+.goride-floating-active-trip,
+#tracking-searching-panel,
+.modal-overlay,
+.modal-overlay.is-active,
+.modal-overlay.open,
+#modal-change-vehicle {
+  z-index: 2147483647 !important;
+}
+
+#navigo-liquid-glass-modal *,
+.incoming-offer-card,
+.goride-dialog-card,
+.modal-card,
+.btn-close-incoming-offer,
+.btn-dialog-corner-close,
+.modal-close-btn,
+.toast-close,
+#btn-liquid-close,
+#btn-close-searching-corner,
+#btn-close-driver-guard {
+  pointer-events: auto !important;
 }

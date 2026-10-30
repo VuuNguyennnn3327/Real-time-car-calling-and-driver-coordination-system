@@ -547,10 +547,17 @@ class RealtimeSyncManager {
         const numLng = Number(lng);
         const loc = { lat: numLat, lng: numLng, heading: Number(heading), updatedAt: Date.now() };
 
+        const numHeading = Number(heading || 0);
         if (this.isAvailable()) {
             try {
                 if (tripId) {
-                    this.db.ref(`goride_trips/${tripId}/driverLocation`).set(loc);
+                    this.db.ref(`goride_trips/${tripId}`).update({
+                        driverLocation: loc,
+                        driverLat: numLat,
+                        driverLng: numLng,
+                        driverLon: numLng,
+                        driverHeading: numHeading
+                    });
                 }
                 if (driverId) {
                     this.db.ref(`goride_drivers/${driverId}`).update({
@@ -586,11 +593,24 @@ class RealtimeSyncManager {
         if (tripId) {
             try {
                 const active = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
-                if (active && active.id === tripId) {
+                if (active && (active.id === tripId || !active.id)) {
                     active.driverLocation = loc;
                     active.driverLat = numLat;
                     active.driverLng = numLng;
+                    active.driverLon = numLng;
+                    active.driverHeading = numHeading;
                     localStorage.setItem('goride_active_trip', JSON.stringify(active));
+                }
+            } catch (e) {}
+
+            try {
+                const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
+                const aIdx = adminTrips.findIndex(t => t.id === tripId);
+                if (aIdx !== -1) {
+                    adminTrips[aIdx].driverLat = numLat;
+                    adminTrips[aIdx].driverLon = numLng;
+                    adminTrips[aIdx].driverHeading = numHeading;
+                    localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
                 }
             } catch (e) {}
         }

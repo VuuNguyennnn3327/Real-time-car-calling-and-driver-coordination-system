@@ -128,8 +128,13 @@
                         sessionStorage.removeItem('navigo_session_loaded');
                         sessionStorage.removeItem('navigo_loading_screen_active');
                     } catch(e) {}
-                    window.location.replace('../loading.html?from=logout');
-                    return;
+                    if (successDiv) {
+                        successDiv.style.display = 'flex';
+                    }
+                    if (window.history && window.history.replaceState) {
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }
                 }
             } catch (err) {}
 

@@ -52,6 +52,7 @@ class CustomerAppController {
         this.driverCarMarker = null;
         this.radarMarker = null;
         this.simulationTimers = [];
+        this._latestDriverPosition = null;
 
         // Phase 2A.3: Real Route State from C++ Dijkstra Backend
         this.currentRouteDistance = null; // meters
@@ -365,7 +366,8 @@ class CustomerAppController {
 
         // Realtime cross-tab sync with driver portal
         window.addEventListener('storage', (e) => {
-            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips') {
+            const isTripActive = this.activeTrip && ['ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes((this.activeTrip.status || '').toUpperCase());
+            if (e.key === 'goride_active_trip' || e.key === 'goride_admin_trips' || (e.key === 'goride_online_drivers' && isTripActive)) {
                 try {
                     let act = JSON.parse(localStorage.getItem('goride_active_trip') || 'null');
                     if (!act && e.key === 'goride_admin_trips') {
@@ -375,13 +377,68 @@ class CustomerAppController {
                     if (act && (act.id === (this.activeTripId || this.activeTrip?.id) || !this.activeTripId)) {
                         const curStatus = (this.activeTrip?.status || 'REQUESTED').toUpperCase();
                         const newStatus = (act.status || 'REQUESTED').toUpperCase();
-                        if (newStatus !== curStatus || (act.driverName && act.driverName !== this.activeTrip?.driverName)) {
-                            this.activeTrip = { ...this.activeTrip, ...act, status: newStatus };
+
+                        // Dynamic driver position check
+                        const inLat = Number(act.driverLat || act.driverLocation?.lat);
+                        const inLon = Number(act.driverLon || act.driverLng || act.driverLocation?.lng);
+                        const inHeading = Number(act.driverHeading || act.driverLocation?.heading || 0);
+                        const hasValidInLoc = !isNaN(inLat) && !isNaN(inLon) && inLat !== 0 && inLon !== 0;
+
+                        if (hasValidInLoc) {
+                            this._latestDriverPosition = {
+                                lat: inLat,
+                                lng: inLon,
+                                heading: inHeading,
+                                timestamp: Date.now()
+                            };
+                        }
+
+                        const dLat = this._latestDriverPosition ? this._latestDriverPosition.lat : (act.driverLat || this.activeTrip?.driverLat);
+                        const dLon = this._latestDriverPosition ? this._latestDriverPosition.lng : (act.driverLon || this.activeTrip?.driverLon);
+                        const dHeading = this._latestDriverPosition ? this._latestDriverPosition.heading : (act.driverHeading || this.activeTrip?.driverHeading || 0);
+
+                        const hasStatusChanged = newStatus !== curStatus;
+                        const hasDriverChanged = act.driverName && act.driverName !== this.activeTrip?.driverName;
+                        const hasPosChanged = hasValidInLoc && (inLat !== this.activeTrip?.driverLat || inLon !== this.activeTrip?.driverLon);
+
+                        if (hasStatusChanged || hasDriverChanged || hasPosChanged) {
+                            this.activeTrip = {
+                                ...this.activeTrip,
+                                ...act,
+                                status: newStatus,
+                                driverLat: dLat,
+                                driverLon: dLon,
+                                driverHeading: dHeading
+                            };
                             this.activeTripId = act.id;
                             this.updateTrackingUI(this.activeTrip);
                         }
+                    } else if (isTripActive) {
+                        this.updateTrackingUI(this.activeTrip);
                     }
                 } catch (err) {}
+            }
+        });
+
+        // Also listen to window event if driver updates on same page / cross-component
+        window.addEventListener('goride:driver_location_changed', (e) => {
+            const isTripActive = this.activeTrip && ['ACCEPTED', 'ARRIVED', 'IN_PROGRESS'].includes((this.activeTrip.status || '').toUpperCase());
+            if (isTripActive && e.detail) {
+                const nLat = Number(e.detail.lat);
+                const nLng = Number(e.detail.lng);
+                const nHeading = Number(e.detail.heading || 0);
+                if (!isNaN(nLat) && !isNaN(nLng) && nLat !== 0 && nLng !== 0) {
+                    this._latestDriverPosition = {
+                        lat: nLat,
+                        lng: nLng,
+                        heading: nHeading,
+                        timestamp: Date.now()
+                    };
+                    this.activeTrip.driverLat = nLat;
+                    this.activeTrip.driverLon = nLng;
+                    this.activeTrip.driverHeading = nHeading;
+                    this.updateTrackingUI(this.activeTrip);
+                }
             }
         });
 
@@ -1541,6 +1598,13 @@ class CustomerAppController {
         }
 
         const btnCancelSearching = document.getElementById('btn-cancel-searching');
+        const btnCloseSearchingCorner = document.getElementById('btn-close-searching-corner');
+        if (btnCloseSearchingCorner) {
+            btnCloseSearchingCorner.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.cancelPendingBooking();
+            });
+        }
         if (btnCancelSearching) {
             btnCancelSearching.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -3006,6 +3070,69 @@ class CustomerAppController {
     }
 
     /**
+     * Calculate navigation route from driver's location to customer's pickup point
+     * Uses C++ Dijkstra -> OSRM -> Street Corridors
+     */
+    async calculateDriverApproachRoute(fLat, fLng, tLat, tLng) {
+        const fromLat = Number(fLat);
+        const fromLng = Number(fLng);
+        const toLat = Number(tLat);
+        const toLng = Number(tLng);
+
+        if (isNaN(fromLat) || isNaN(fromLng) || isNaN(toLat) || isNaN(toLng)) {
+            return [[fLat, fLng], [tLat, tLng]];
+        }
+
+        // Tier 1: Local C++ Dijkstra Backend API (/api/route) if available
+        if (typeof apiClient !== 'undefined' && apiClient && typeof apiClient.getRoute === 'function') {
+            try {
+                const routePromise = apiClient.getRoute(fromLat, fromLng, toLat, toLng);
+                const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 1500));
+                const res = await Promise.race([routePromise, timeoutPromise]);
+                if (res && res.ok && res.data && res.data.success && Array.isArray(res.data.geometry) && res.data.geometry.length > 1) {
+                    return res.data.geometry.map(([lon, lat]) => [lat, lon]);
+                }
+            } catch (e) {}
+        }
+
+        // Tier 2: Public OpenStreetMap Routing Service (OSRM)
+        const osrmEndpoints = [
+            `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`,
+            `https://routing.openstreetmap.de/routed-car/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson`
+        ];
+
+        for (const url of osrmEndpoints) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 4500);
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.code === 'Ok' && Array.isArray(data.routes) && data.routes.length > 0) {
+                        const coords = data.routes[0].geometry.coordinates;
+                        if (Array.isArray(coords) && coords.length > 1) {
+                            return coords.map(([lon, lat]) => [lat, lon]);
+                        }
+                    }
+                }
+            } catch (err) {}
+        }
+
+        // Tier 3: Street-Following Path from street network
+        try {
+            if (typeof this.getStreetFollowingPath === 'function') {
+                const streetPath = this.getStreetFollowingPath({ lat: fromLat, lng: fromLng }, { lat: toLat, lng: toLng });
+                if (streetPath && streetPath.length > 1) {
+                    return streetPath;
+                }
+            }
+        } catch (e) {}
+
+        return [[fromLat, fromLng], [toLat, toLng]];
+    }
+
+    /**
      * Centralized route application
      * Renders solid emerald road-following polyline (#10b981)
      */
@@ -3696,7 +3823,8 @@ class CustomerAppController {
      * Intelligent Progressive Driver Dispatch Algorithm:
      * - Default: Select 2 online drivers closest to the pickup point.
      * - If neither accepts within 30s, expand to 4 closest drivers.
-     * - Further expand if unaccepted, but NEVER select drivers > 20km from pickup point.
+     * - Further expand if unaccepted, but NEVER select drivers > 15km from pickup point.
+     * - Auto cancel trip if unaccepted after 15 minutes.
      * @param {Object} trip 
      * @param {string} vType 
      * @param {number} pickupLat 
@@ -3710,6 +3838,10 @@ class CustomerAppController {
             this.dispatchExpandTimers.forEach(t => clearTimeout(t));
         }
         this.dispatchExpandTimers = [];
+
+        if (!trip.createdAt) {
+            trip.createdAt = new Date().toISOString();
+        }
 
         const pLat = Number(pickupLat);
         const pLng = Number(pickupLng);
@@ -3764,7 +3896,7 @@ class CustomerAppController {
                 }
             }
 
-            // Lọc tài xế hợp lệ: Đang online, khớp loại xe, tọa độ chuẩn xác, BÁN KÍNH <= 20KM
+            // Lọc tài xế hợp lệ: Đang online, khớp loại xe, tọa độ chuẩn xác, BÁN KÍNH <= 15KM
             const eligible = driversList.filter(d => {
                 if (!d) return false;
                 if (d.isOnline === false) return false;
@@ -3779,8 +3911,8 @@ class CustomerAppController {
                 const distKm = this.calculateDistanceKm(pLat, pLng, dLat, dLng);
                 d._distToPickup = distKm;
 
-                // RÀNG BUỘC CỨNG: Nếu tài xế xa hơn điểm đón khách 20km thì tài xế đó TUYỆT ĐỐI không nhận được thông tin cuốc xe này
-                return distKm <= 20;
+                // RÀNG BUỘC CỨNG: Nếu tài xế xa hơn điểm đón khách 15km thì tài xế đó TUYỆT ĐỐI không nhận được thông tin cuốc xe này
+                return distKm <= 15;
             });
 
             // Sắp xếp tăng dần theo khoảng cách tới điểm đón (GẦN NHẤT ĐỨNG ĐẦU TIÊN)
@@ -3845,17 +3977,17 @@ class CustomerAppController {
             updateTripTargets([]);
             const statusText = document.getElementById('tracking-status-text');
             if (statusText) {
-                statusText.textContent = 'Đang tìm xe... Hiện chưa có tài xế trực tuyến trong bán kính 20km từ điểm đón.';
+                statusText.textContent = 'Đang tìm xe... Hiện chưa có tài xế trực tuyến trong bán kính 15km từ điểm đón.';
             }
-            this.showToast('Hệ thống đang quét tìm xe... Chưa có tài xế trực tuyến trong phạm vi 20km.', 'warning', 4500);
+            this.showToast('Hệ thống đang quét tìm xe... Chưa có tài xế trực tuyến trong phạm vi 15km.', 'warning', 4500);
         } else {
-            // Giai đoạn 1 (0s): Chuyển thông tin tới 2 tài xế gần nhất (trong phạm vi <= 20km)
+            // Giai đoạn 1 (0s): Chuyển thông tin tới 2 tài xế gần nhất (trong phạm vi <= 15km)
             const phase1Drivers = initialEligible.slice(0, 2);
             const targetedIdsPhase1 = phase1Drivers.map(d => d.id || d.phone || d.name);
             updateTripTargets(targetedIdsPhase1);
         }
 
-        // Giai đoạn 2 (30s): Mở rộng tới 4 tài xế gần nhất trong bán kính <= 20km
+        // Giai đoạn 2 (30s): Mở rộng tới 4 tài xế gần nhất trong bán kính <= 15km
         const timerPhase2 = setTimeout(async () => {
             if (this.activeTrip && this.activeTrip.id === trip.id && (this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED')) {
                 const refreshedEligible = await fetchEligibleDrivers();
@@ -3863,7 +3995,7 @@ class CustomerAppController {
                     const phase2Drivers = refreshedEligible.slice(0, 4);
                     const targetedIdsPhase2 = phase2Drivers.map(d => d.id || d.phone || d.name);
                     updateTripTargets(targetedIdsPhase2);
-                    this.showToast('Hệ thống đang mở rộng phát tín hiệu tới 4 tài xế gần bạn nhất (trong 20km)...', 'info', 3500);
+                    this.showToast('Hệ thống đang mở rộng phát tín hiệu tới 4 tài xế gần bạn nhất (trong 15km)...', 'info', 3500);
                 } else {
                     updateTripTargets([]);
                 }
@@ -3871,14 +4003,14 @@ class CustomerAppController {
         }, 30000);
         this.dispatchExpandTimers.push(timerPhase2);
 
-        // Giai đoạn 3 (60s): Mở rộng tới TOÀN BỘ tài xế trực tuyến trong bán kính <= 20km
+        // Giai đoạn 3 (60s): Mở rộng tới TOÀN BỘ tài xế trực tuyến trong bán kính <= 15km
         const timerPhase3 = setTimeout(async () => {
             if (this.activeTrip && this.activeTrip.id === trip.id && (this.activeTrip.status === 'REQUESTED' || this.activeTrip.status === 'OFFERED')) {
                 const refreshedEligible = await fetchEligibleDrivers();
                 if (refreshedEligible.length > 0) {
                     const targetedIdsPhase3 = refreshedEligible.map(d => d.id || d.phone || d.name);
                     updateTripTargets(targetedIdsPhase3);
-                    this.showToast('Đang phát tín hiệu tới toàn bộ tài xế trong bán kính 20km...', 'info', 3500);
+                    this.showToast('Đang phát tín hiệu tới toàn bộ tài xế trong bán kính 15km...', 'info', 3500);
                 } else {
                     updateTripTargets([]);
                 }
@@ -3886,7 +4018,7 @@ class CustomerAppController {
         }, 60000);
         this.dispatchExpandTimers.push(timerPhase3);
 
-        // Tự động quét lại định kỳ mỗi 12s nếu hiện tại chưa có tài xế trong 20km nhận
+        // Tự động quét lại định kỳ mỗi 12s nếu hiện tại chưa có tài xế trong 15km nhận
         const periodicRescan = setInterval(async () => {
             if (!this.activeTrip || this.activeTrip.id !== trip.id || (this.activeTrip.status !== 'REQUESTED' && this.activeTrip.status !== 'OFFERED')) {
                 clearInterval(periodicRescan);
@@ -3898,18 +4030,31 @@ class CustomerAppController {
                     const newPhase = currentEligible.slice(0, 2);
                     updateTripTargets(newPhase.map(d => d.id || d.phone || d.name));
                     const statusText = document.getElementById('tracking-status-text');
-                    if (statusText) statusText.textContent = 'Đã tìm thấy tài xế trong phạm vi 20km! Đang gửi tín hiệu...';
-                    this.showToast('Đã phát hiện tài xế trong bán kính 20km, đang gửi yêu cầu...', 'info', 3000);
+                    if (statusText) statusText.textContent = 'Đã tìm thấy tài xế trong phạm vi 15km! Đang gửi tín hiệu...';
+                    this.showToast('Đã phát hiện tài xế trong bán kính 15km, đang gửi yêu cầu...', 'info', 3000);
                 }
             }
         }, 12000);
         this.dispatchExpandTimers.push(periodicRescan);
+
+        // TỰ ĐỘNG HỦY SAU 15 PHÚT (15 * 60 * 1000 ms) nếu không có tài xế nhận cuốc và khách hàng không nhấn hủy
+        // Sau 15 phút sẽ tự động hủy cuốc và không gửi thông báo đến tài xế nào khác hết
+        const autoCancel15MinTimer = setTimeout(() => {
+            if (this.activeTrip && this.activeTrip.id === trip.id) {
+                const s = (this.activeTrip.status || '').toUpperCase();
+                if (s === 'REQUESTED' || s === 'OFFERED') {
+                    updateTripTargets([]);
+                    this.cancelPendingBooking('Tự động hủy do hết 15 phút không có tài xế nhận cuốc');
+                }
+            }
+        }, 15 * 60 * 1000);
+        this.dispatchExpandTimers.push(autoCancel15MinTimer);
     }
 
     /**
      * Cancel pending booking request (When searching or before in-progress)
      */
-    cancelPendingBooking() {
+    cancelPendingBooking(reason = 'Khách hàng hủy khi đang tìm xe') {
         // Clear dispatch expansion timers
         if (this.dispatchExpandTimers && Array.isArray(this.dispatchExpandTimers)) {
             this.dispatchExpandTimers.forEach(t => clearTimeout(t));
@@ -3929,7 +4074,7 @@ class CustomerAppController {
             this.saveUserTrip({
                 id: tripId,
                 status: 'cancelled',
-                cancelReason: 'Khách hàng hủy khi đang tìm xe',
+                cancelReason: reason,
                 pickup: this.pickup,
                 destination: this.destination,
                 fare: this.selectedVehicleFare || 45000,
@@ -3937,16 +4082,23 @@ class CustomerAppController {
             });
 
             if (typeof apiClient !== 'undefined') {
-                apiClient.cancelTrip(tripId, 'Khách hàng hủy khi đang tìm xe').catch(() => {});
+                apiClient.cancelTrip(tripId, reason).catch(() => {});
             }
             if (typeof realtimeSync !== 'undefined') {
                 realtimeSync.updateTripStatus(tripId, 'CANCELLED');
+                if (realtimeSync.isAvailable()) {
+                    realtimeSync.db.ref(`goride_active_offers/${tripId}`).remove();
+                } else if (typeof realtimeSync._restDelete === 'function') {
+                    realtimeSync._restDelete(`goride_active_offers/${tripId}`);
+                }
             }
             try {
                 const adminTrips = JSON.parse(localStorage.getItem('goride_admin_trips') || '[]');
                 const idx = adminTrips.findIndex(t => t.id === tripId);
                 if (idx !== -1) {
                     adminTrips[idx].status = 'cancelled';
+                    adminTrips[idx].cancelReason = reason;
+                    adminTrips[idx].targetedDriverIds = [];
                     localStorage.setItem('goride_admin_trips', JSON.stringify(adminTrips));
                 }
                 localStorage.removeItem('goride_pending_trip_offers');
@@ -3957,7 +4109,7 @@ class CustomerAppController {
                     const refundFare = Number(this.activeTrip.fareAmount || this.activeTrip.fare || this.selectedVehicleFare || 0);
                     if (refundFare > 0) {
                         try {
-                            window.NaviWalletEngine.refundTrip(refundPhone, refundFare, tripId, 'Khách hàng hủy chuyến xe');
+                            window.NaviWalletEngine.refundTrip(refundPhone, refundFare, tripId, reason);
                         } catch (refErr) {
                             console.warn('[CustomerApp] Wallet refund notice:', refErr);
                         }
@@ -3970,7 +4122,7 @@ class CustomerAppController {
                     id: 'trip_cnc_' + tripId + '_' + Date.now(),
                     category: 'trips',
                     title: 'ĐÃ HỦY CHUYẾN XE #' + tripId,
-                    body: 'Bạn đã hủy yêu cầu chuyến xe #' + tripId + '. Bạn có thể đặt lại chuyến bất kỳ lúc nào.',
+                    body: reason.includes('15') ? 'Hết thời gian chờ 15 phút không có tài xế nhận. Cuốc xe đã tự động hủy.' : ('Bạn đã hủy yêu cầu chuyến xe #' + tripId + '. Bạn có thể đặt lại chuyến bất kỳ lúc nào.'),
                     icon: '🛑',
                     actionUrl: 'customer.html',
                     actionText: 'Đặt chuyến mới'
@@ -3981,6 +4133,10 @@ class CustomerAppController {
         // 3. Clear active state & intervals
         this.activeTrip = null;
         this.activeTripId = null;
+        this._latestDriverPosition = null;
+        this._lastApproachDriverPos = null;
+        this._hasDrawnApproachLine = false;
+        this._hasFittedApproachBounds = false;
         try {
             localStorage.removeItem('goride_active_trip');
         } catch (e) {}
@@ -4013,7 +4169,11 @@ class CustomerAppController {
         }
 
         this.updatePersistentBanner();
-        this.showToast('Đã hủy yêu cầu đặt xe thành công. Bạn có thể chọn loại xe khác hoặc đặt lại bất cứ lúc nào.', 'info', 4000);
+        if (reason && reason.includes('15')) {
+            this.showToast('Đã hết thời gian chờ (15 phút) mà chưa có tài xế nhận cuốc. Hệ thống đã tự động hủy yêu cầu.', 'warning', 6000);
+        } else {
+            this.showToast('Đã hủy yêu cầu đặt xe thành công. Bạn có thể chọn loại xe khác hoặc đặt lại bất cứ lúc nào.', 'info', 4000);
+        }
     }
 
     /**
@@ -4037,15 +4197,26 @@ class CustomerAppController {
                     this.activeTrip = { ...this.activeTrip, ...cloudTrip };
                     this.activeTripId = cloudTrip.id;
 
-                    if (cloudTrip.driverLocation) {
-                        this.activeTrip.driverLat = cloudTrip.driverLocation.lat;
-                        this.activeTrip.driverLon = cloudTrip.driverLocation.lng;
-                        this.activeTrip.driverLng = cloudTrip.driverLocation.lng;
-                        this.activeTrip.driverHeading = cloudTrip.driverLocation.heading;
-                    } else if (cloudTrip.driverLat && (cloudTrip.driverLng || cloudTrip.driverLon)) {
-                        this.activeTrip.driverLat = cloudTrip.driverLat;
-                        this.activeTrip.driverLon = cloudTrip.driverLon || cloudTrip.driverLng;
-                        this.activeTrip.driverLng = cloudTrip.driverLon || cloudTrip.driverLng;
+                    const cLat = Number(cloudTrip.driverLocation?.lat || cloudTrip.driverLat);
+                    const cLng = Number(cloudTrip.driverLocation?.lng || cloudTrip.driverLon || cloudTrip.driverLng);
+                    const cHeading = Number(cloudTrip.driverLocation?.heading || cloudTrip.driverHeading || 0);
+
+                    if (!isNaN(cLat) && !isNaN(cLng) && cLat !== 0 && cLng !== 0) {
+                        this._latestDriverPosition = {
+                            lat: cLat,
+                            lng: cLng,
+                            heading: cHeading,
+                            timestamp: Date.now()
+                        };
+                        this.activeTrip.driverLat = cLat;
+                        this.activeTrip.driverLon = cLng;
+                        this.activeTrip.driverLng = cLng;
+                        this.activeTrip.driverHeading = cHeading;
+                    } else if (this._latestDriverPosition) {
+                        this.activeTrip.driverLat = this._latestDriverPosition.lat;
+                        this.activeTrip.driverLon = this._latestDriverPosition.lng;
+                        this.activeTrip.driverLng = this._latestDriverPosition.lng;
+                        this.activeTrip.driverHeading = this._latestDriverPosition.heading;
                     }
 
                     // CRITICAL: Synchronize cloud status immediately into local storage so local interval never reads stale 'requested'
@@ -4105,6 +4276,13 @@ class CustomerAppController {
                     } else if (cloudTrip.status === 'CANCELLED') {
                         this.cancelPendingBooking();
                     }
+
+                    // Tự động hủy nếu đã quá 15 phút mà không có tài xế nhận
+                    let cCreatedAt = cloudTrip.createdAt ? new Date(cloudTrip.createdAt).getTime() : 0;
+                    if (cCreatedAt > 0 && (cloudTrip.status === 'REQUESTED' || cloudTrip.status === 'OFFERED') && (Date.now() - cCreatedAt >= 15 * 60 * 1000)) {
+                        this.cancelPendingBooking('Tự động hủy do hết 15 phút không có tài xế nhận cuốc');
+                        return;
+                    }
                 }
             });
         }
@@ -4141,35 +4319,106 @@ class CustomerAppController {
                                 vehicleType: t.vehicleType || this.selectedService || 'motorbike',
                                 pickupName: t.pickup || this.pickup?.name,
                                 dropoffName: t.destination || this.destination?.name,
+                                createdAt: t.createdAt || null,
                                 fareAmount: Number(t.fare) || this.selectedVehicleFare || 45000,
                                 distanceMeters: (Number(t.distance) || 3) * 1000,
                                 driverLat: (t.driverLat !== undefined && t.driverLat !== null) ? Number(t.driverLat) : null,
-                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : null
+                                driverLon: (t.driverLon !== undefined && t.driverLon !== null) ? Number(t.driverLon) : null,
+                                driverHeading: Number(t.driverHeading || 0)
                             };
-                            // Sync GPS and vehicleType from live driver broadcast
-                            try {
-                                const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
-                                const dEntry = Object.values(onlineDrivers).find(d => 
-                                    (t.driverName && d.name === t.driverName) || 
-                                    (t.licensePlate && d.plate === t.licensePlate)
-                                );
-                                if (dEntry && dEntry.isOnline) {
-                                    const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
-                                    const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
-                                    if (!isNaN(dLat) && dLat !== 0) currentTrip.driverLat = dLat;
-                                    if (!isNaN(dLng) && dLng !== 0) currentTrip.driverLon = dLng;
-                                    if (dEntry.vehicleType) currentTrip.vehicleType = dEntry.vehicleType;
-                                }
-                            } catch (e) {}
                         }
                     } catch (e) {}
                 }
 
+                // 3. Fallback to goride_active_trip if currentTrip still not found
+                if (!currentTrip) {
+                    try {
+                        const act = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                        if (act && (act.id === tripId || (!tripId && act.id))) {
+                            currentTrip = {
+                                id: act.id,
+                                status: (act.status || 'requested').toUpperCase(),
+                                customerName: act.customerName || 'Khách hàng',
+                                driverName: act.driverName || null,
+                                licensePlate: act.licensePlate || '',
+                                vehicleModel: act.vehicleModel || '',
+                                vehicleType: act.vehicleType || this.selectedService || 'motorbike',
+                                pickupName: act.pickup?.name || act.pickup || this.pickup?.name,
+                                dropoffName: act.destination?.name || act.destination || this.destination?.name,
+                                createdAt: act.createdAt || null,
+                                fareAmount: Number(act.fare || act.fareAmount) || this.selectedVehicleFare || 45000,
+                                distanceMeters: (Number(act.distance) || 3) * 1000,
+                                driverLat: (act.driverLat !== undefined && act.driverLat !== null) ? Number(act.driverLat) : null,
+                                driverLon: (act.driverLon !== undefined && act.driverLon !== null) ? Number(act.driverLon) : null,
+                                driverHeading: Number(act.driverHeading || 0),
+                                routeGeometry: act.routeGeometry || null
+                            };
+                        }
+                    } catch (e) {}
+                }
+
+                // Check live dynamic coordinates stream from driver broadcast
+                let liveCoord = null;
+                try {
+                    const act = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                    if (act && (act.id === tripId || (!tripId && act.id) || (currentTrip && act.id === currentTrip.id))) {
+                        const aLat = Number(act.driverLat || act.driverLocation?.lat);
+                        const aLng = Number(act.driverLon || act.driverLng || act.driverLocation?.lng);
+                        if (!isNaN(aLat) && !isNaN(aLng) && aLat !== 0 && aLng !== 0) {
+                            liveCoord = { lat: aLat, lng: aLng, heading: Number(act.driverHeading || act.driverLocation?.heading || 0) };
+                        }
+                    }
+                } catch (e) {}
+
+                if (!liveCoord) {
+                    try {
+                        const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+                        const dEntry = Object.values(onlineDrivers).find(d => 
+                            (currentTrip && currentTrip.driverName && d.name === currentTrip.driverName) || 
+                            (currentTrip && currentTrip.licensePlate && d.plate === currentTrip.licensePlate) ||
+                            (this.activeTrip && this.activeTrip.driverName && d.name === this.activeTrip.driverName) ||
+                            (this.activeTrip && this.activeTrip.licensePlate && d.plate === this.activeTrip.licensePlate)
+                        );
+                        if (dEntry && dEntry.isOnline) {
+                            const dLat = Number(dEntry.location?.lat !== undefined ? dEntry.location.lat : dEntry.lat);
+                            const dLng = Number(dEntry.location?.lng !== undefined ? dEntry.location.lng : dEntry.lng);
+                            if (!isNaN(dLat) && !isNaN(dLng) && dLat !== 0 && dLng !== 0) {
+                                liveCoord = { lat: dLat, lng: dLng, heading: Number(dEntry.location?.heading || dEntry.heading || 0) };
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                if (liveCoord) {
+                    this._latestDriverPosition = {
+                        lat: liveCoord.lat,
+                        lng: liveCoord.lng,
+                        heading: liveCoord.heading,
+                        timestamp: Date.now()
+                    };
+                }
+
                 if (currentTrip) {
+                    // CRITICAL FIX: Eliminate Default Location Anchors.
+                    // All positions are transient. When driver moves, marker follows updates.
+                    // If no new update has arrived between polling cycles, HOLD the most recent update position!
+                    // NEVER jump back to the initial accept-time position!
+                    if (this._latestDriverPosition) {
+                        currentTrip.driverLat = this._latestDriverPosition.lat;
+                        currentTrip.driverLon = this._latestDriverPosition.lng;
+                        currentTrip.driverHeading = this._latestDriverPosition.heading;
+                    } else if (currentTrip.driverLat && currentTrip.driverLon) {
+                        this._latestDriverPosition = {
+                            lat: Number(currentTrip.driverLat),
+                            lng: Number(currentTrip.driverLon),
+                            heading: Number(currentTrip.driverHeading || 0),
+                            timestamp: Date.now()
+                        };
+                    }
+
                     const prevStatus = this.activeTrip ? this.activeTrip.status : 'REQUESTED';
 
                     // MONOTONIC STATUS PROGRESSION:
-                    // Prevent stale local data from rolling back an accepted/in-progress trip to REQUESTED
                     const STATUS_WEIGHT = {
                         'REQUESTED': 1,
                         'OFFERED': 2,
@@ -4183,21 +4432,18 @@ class CustomerAppController {
                     const newWeight = STATUS_WEIGHT[(currentTrip.status || 'REQUESTED').toUpperCase()] || 1;
 
                     if (newWeight < curWeight) {
-                        // Keep the higher status and driver details from activeTrip
                         currentTrip.status = this.activeTrip.status;
                         if (!currentTrip.driverName || currentTrip.driverName === 'Chưa gán') {
                             currentTrip.driverName = this.activeTrip.driverName;
                         }
                         if (!currentTrip.licensePlate) currentTrip.licensePlate = this.activeTrip.licensePlate;
                         if (!currentTrip.vehicleModel) currentTrip.vehicleModel = this.activeTrip.vehicleModel;
-                        if (!currentTrip.driverLat) currentTrip.driverLat = this.activeTrip.driverLat;
-                        if (!currentTrip.driverLon) currentTrip.driverLon = this.activeTrip.driverLon;
                     }
 
                     this.activeTrip = currentTrip;
                     this.activeTripId = currentTrip.id;
 
-                    // Sync to localStorage goride_active_trip
+                    // Sync to localStorage goride_active_trip with latest dynamic coordinates
                     try {
                         const existing = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
                         existing.id = currentTrip.id;
@@ -4207,6 +4453,11 @@ class CustomerAppController {
                         if (currentTrip.vehicleModel) existing.vehicleModel = currentTrip.vehicleModel;
                         if (currentTrip.vehicleType) existing.vehicleType = currentTrip.vehicleType;
                         if (currentTrip.fareAmount) existing.fareAmount = currentTrip.fareAmount;
+                        if (this._latestDriverPosition) {
+                            existing.driverLat = this._latestDriverPosition.lat;
+                            existing.driverLon = this._latestDriverPosition.lng;
+                            existing.driverHeading = this._latestDriverPosition.heading;
+                        }
                         localStorage.setItem('goride_active_trip', JSON.stringify(existing));
                     } catch (e) {}
 
@@ -4235,6 +4486,13 @@ class CustomerAppController {
                         this.completeTrip(currentTrip);
                     } else if (currentTrip.status === 'CANCELLED') {
                         this.cancelPendingBooking();
+                    }
+
+                    // Tự động hủy nếu đã quá 15 phút mà không có tài xế nhận
+                    let tripCreatedTime = currentTrip.createdAt ? new Date(currentTrip.createdAt).getTime() : 0;
+                    if (tripCreatedTime > 0 && (currentTrip.status === 'REQUESTED' || currentTrip.status === 'OFFERED') && (Date.now() - tripCreatedTime >= 15 * 60 * 1000)) {
+                        this.cancelPendingBooking('Tự động hủy do hết 15 phút không có tài xế nhận cuốc');
+                        return;
                     }
                 } else if (pollCount > 8 && !this.activeTrip) {
                     // Trip ended or cancelled
@@ -4381,11 +4639,96 @@ class CustomerAppController {
                 if (statusText) statusText.textContent = 'Chuyến đi đang thực hiện. Đang di chuyển đến điểm trả khách...';
             }
 
-            // Render real driver marker if position available
+            // Render real driver marker & blue movement line if position available
             if (this.mapController) {
-                const dLat = (trip.driverLat !== undefined && trip.driverLat !== null) ? Number(trip.driverLat) : (trip.driverLocation ? Number(trip.driverLocation.lat) : null);
-                const dLon = (trip.driverLon !== undefined && trip.driverLon !== null) ? Number(trip.driverLon) : ((trip.driverLng !== undefined && trip.driverLng !== null) ? Number(trip.driverLng) : (trip.driverLocation ? Number(trip.driverLocation.lng) : null));
-                if (dLat !== null && dLon !== null && !isNaN(dLat) && !isNaN(dLon)) {
+                const pLat = Number(trip.pickupLat || (trip.pickup && (trip.pickup.lat || trip.pickup.latitude)) || (this.pickup && this.pickup.lat) || 10.7725);
+                const pLon = Number(trip.pickupLon || trip.pickupLng || (trip.pickup && (trip.pickup.lng || trip.pickup.lon || trip.pickup.longitude)) || (this.pickup && this.pickup.lng) || 106.6980);
+
+                let dLat = null;
+                let dLon = null;
+                let dHeading = 0;
+
+                // Priority 1: Hold the most recent verified dynamic driver position
+                if (this._latestDriverPosition && !isNaN(this._latestDriverPosition.lat) && this._latestDriverPosition.lat !== 0) {
+                    dLat = Number(this._latestDriverPosition.lat);
+                    dLon = Number(this._latestDriverPosition.lng);
+                    dHeading = Number(this._latestDriverPosition.heading || 0);
+                } else if (trip.driverLocation && trip.driverLocation.lat) {
+                    dLat = Number(trip.driverLocation.lat);
+                    dLon = Number(trip.driverLocation.lng);
+                    dHeading = Number(trip.driverLocation.heading || 0);
+                    this._latestDriverPosition = { lat: dLat, lng: dLon, heading: dHeading, timestamp: Date.now() };
+                } else if (trip.driverLat !== undefined && trip.driverLat !== null && !isNaN(Number(trip.driverLat)) && Number(trip.driverLat) !== 0) {
+                    dLat = Number(trip.driverLat);
+                    dLon = Number(trip.driverLon !== undefined ? trip.driverLon : trip.driverLng);
+                    dHeading = Number(trip.driverHeading || 0);
+                    this._latestDriverPosition = { lat: dLat, lng: dLon, heading: dHeading, timestamp: Date.now() };
+                }
+
+                // Initial fallbacks if _latestDriverPosition not yet populated
+                if (dLat === null || isNaN(dLat) || dLat === 0) {
+                    if (this.activeTrip && this.activeTrip.driverLat) {
+                        dLat = Number(this.activeTrip.driverLat);
+                        dLon = Number(this.activeTrip.driverLon || this.activeTrip.driverLng);
+                        dHeading = Number(this.activeTrip.driverHeading || 0);
+                        this._latestDriverPosition = { lat: dLat, lng: dLon, heading: dHeading, timestamp: Date.now() };
+                    }
+                }
+                if (dLat === null || isNaN(dLat) || dLat === 0) {
+                    try {
+                        const act = JSON.parse(localStorage.getItem('goride_active_trip') || '{}');
+                        const aLat = Number(act.driverLat || act.driverLocation?.lat);
+                        const aLon = Number(act.driverLon || act.driverLng || act.driverLocation?.lng);
+                        if (!isNaN(aLat) && !isNaN(aLon) && aLat !== 0 && aLon !== 0) {
+                            dLat = aLat;
+                            dLon = aLon;
+                            dHeading = Number(act.driverHeading || act.driverLocation?.heading || 0);
+                            this._latestDriverPosition = { lat: dLat, lng: dLon, heading: dHeading, timestamp: Date.now() };
+                        }
+                    } catch (e) {}
+                }
+                if (dLat === null || isNaN(dLat) || dLat === 0) {
+                    try {
+                        const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
+                        const dEntry = Object.values(onlineDrivers).find(d => 
+                            (trip.driverName && d.name === trip.driverName) || 
+                            (trip.licensePlate && d.plate === trip.licensePlate)
+                        ) || Object.values(onlineDrivers).find(d => d && d.isOnline);
+                        if (dEntry) {
+                            const oLat = Number(dEntry.lat !== undefined ? dEntry.lat : dEntry.location?.lat);
+                            const oLon = Number(dEntry.lng !== undefined ? dEntry.lng : (dEntry.lon !== undefined ? dEntry.lon : dEntry.location?.lng));
+                            if (!isNaN(oLat) && !isNaN(oLon) && oLat !== 0) {
+                                dLat = oLat;
+                                dLon = oLon;
+                                dHeading = Number(dEntry.heading || dEntry.location?.heading || 0);
+                                this._latestDriverPosition = { lat: dLat, lng: dLon, heading: dHeading, timestamp: Date.now() };
+                            }
+                        }
+                    } catch (e) {}
+                }
+                if (dLat === null || isNaN(dLat) || dLat === 0) {
+                    try {
+                        const lastLoc = JSON.parse(localStorage.getItem('goride_driver_last_location') || '{}');
+                        if (lastLoc && lastLoc.lat && lastLoc.lng) {
+                            dLat = Number(lastLoc.lat);
+                            dLon = Number(lastLoc.lng);
+                            this._latestDriverPosition = { lat: dLat, lng: dLon, heading: 0, timestamp: Date.now() };
+                        }
+                    } catch (e) {}
+                }
+
+                // Gỡ bỏ hoàn toàn vị trí mặc định giả lập (+0.0035). Chỉ render khi có tọa độ thực tế.
+                if (dLat !== null && dLon !== null && !isNaN(dLat) && !isNaN(dLon) && dLat !== 0 && dLon !== 0) {
+                    trip.driverLat = dLat;
+                    trip.driverLon = dLon;
+                    trip.driverHeading = dHeading;
+                    if (this.activeTrip) {
+                        this.activeTrip.driverLat = dLat;
+                        this.activeTrip.driverLon = dLon;
+                        this.activeTrip.driverHeading = dHeading;
+                    }
+                    this._latestDriverPosition = { lat: dLat, lng: dLon, heading: dHeading, timestamp: Date.now() };
+
                     let vType = tripVType;
                     try {
                         const onlineDrivers = JSON.parse(localStorage.getItem('goride_online_drivers') || '{}');
@@ -4398,19 +4741,95 @@ class CustomerAppController {
                         }
                     } catch (e) {}
 
-                    this.mapController.updateDriverMarker('active_driver', dLat, dLon, trip.driverHeading || 0, {
+                    this.mapController.updateDriverMarker('active_driver', dLat, dLon, dHeading, {
                         name: trip.driverName || 'Tài xế',
                         vehicle: `${vDetails.label}${trip.licensePlate ? ' - ' + trip.licensePlate : ''}`,
                         vehicleType: vType,
-                        routeGeometry: createdTrip.routeGeometry,
+                        routeGeometry: trip.routeGeometry || (this.activeTrip ? this.activeTrip.routeGeometry : null) || null,
                         isActive: true
                     });
+
+                    // STAGE 1: Driver heading to pickup -> Show pickup pin and blue approach route (#0288d1)
+                    if (status === 'ACCEPTED') {
+                        if (typeof this.mapController.addPickupMarker === 'function') {
+                            this.mapController.addPickupMarker(pLat, pLon, trip.pickupName || (this.pickup && this.pickup.name) || 'Điểm đón của bạn');
+                        }
+
+                        // Dynamically trim blue driver approach route behind current position ("snake eating the path")
+                        if (typeof this.mapController.trimDriverRoute === 'function') {
+                            this.mapController.trimDriverRoute(dLat, dLon);
+                        }
+
+                        const lastPos = this._lastApproachDriverPos;
+                        const moved = !lastPos || (Math.abs(dLat - lastPos.lat) > 0.0004 || Math.abs(dLon - lastPos.lng) > 0.0004);
+                        if (moved) {
+                            this._lastApproachDriverPos = { lat: dLat, lng: dLon };
+                            const approachToken = ++this._approachRouteSeq || (this._approachRouteSeq = 1);
+
+                            // Quick initial polyline if first time
+                            if (!this._hasDrawnApproachLine && typeof this.mapController.drawDriverRoute === 'function') {
+                                this.mapController.drawDriverRoute([[dLat, dLon], [pLat, pLon]], {
+                                    color: '#0288d1',
+                                    weight: 6,
+                                    opacity: 0.95
+                                });
+                                this._hasDrawnApproachLine = true;
+                                if (typeof this.mapController.trimDriverRoute === 'function') {
+                                    this.mapController.trimDriverRoute(dLat, dLon);
+                                }
+                            }
+
+                            // Calculate realistic turn-by-turn road route via C++ Dijkstra / OSRM / Street graph
+                            this.calculateDriverApproachRoute(dLat, dLon, pLat, pLon).then(routePath => {
+                                if (this._approachRouteSeq === approachToken && routePath && routePath.length > 1) {
+                                    if (this.mapController && typeof this.mapController.drawDriverRoute === 'function') {
+                                        this.mapController.drawDriverRoute(routePath, {
+                                            color: '#0288d1',
+                                            weight: 6,
+                                            opacity: 0.95
+                                        });
+                                        if (typeof this.mapController.trimDriverRoute === 'function') {
+                                            this.mapController.trimDriverRoute(dLat, dLon);
+                                        }
+                                    }
+                                    if (this.mapController && typeof this.mapController.fitBounds === 'function' && !this._hasFittedApproachBounds) {
+                                        this._hasFittedApproachBounds = true;
+                                        this.mapController.fitBounds(routePath, { padding: [70, 70] });
+                                    }
+                                }
+                            });
+                        }
+                    } else {
+                        // Driver arrived at pickup or trip in progress -> clear blue approach line
+                        this._lastApproachDriverPos = null;
+                        this._hasFittedApproachBounds = false;
+                        this._hasDrawnApproachLine = false;
+                        if (typeof this.mapController.clearDriverRoute === 'function') {
+                            this.mapController.clearDriverRoute();
+                        }
+
+                        // STAGE 2: Trip in progress -> dynamically trim trip route behind vehicle position ("snake eating the path")
+                        if (status === 'IN_PROGRESS') {
+                            if (typeof this.mapController.trimRoute === 'function') {
+                                this.mapController.trimRoute(dLat, dLon);
+                            }
+                        }
+                    }
                 } else {
                     this.mapController.clearMarkers('drivers');
+                    if (typeof this.mapController.clearDriverRoute === 'function') {
+                        this.mapController.clearDriverRoute();
+                    }
                 }
             }
         } else if (status === 'COMPLETED') {
             this.hideRadar();
+            this._lastApproachDriverPos = null;
+            this._hasFittedApproachBounds = false;
+            this._hasDrawnApproachLine = false;
+            if (this.mapController && typeof this.mapController.clearDriverRoute === 'function') {
+                this.mapController.clearDriverRoute();
+            }
             if (prog1) prog1.classList.add('active');
             if (prog2) prog2.classList.add('active');
             if (prog3) prog3.classList.add('active');
@@ -4420,7 +4839,7 @@ class CustomerAppController {
                 clearInterval(this.trackingInterval);
                 this.trackingInterval = null;
             }
-            this.completeTrip(trip);
+                        this.completeTrip(trip);
         } else if (status === 'CANCELLED') {
             this.hideRadar();
             if (this.trackingInterval) {
@@ -4446,6 +4865,10 @@ class CustomerAppController {
      */
     completeTrip(trip) {
         this.hideRadar();
+        this._latestDriverPosition = null;
+        this._lastApproachDriverPos = null;
+        this._hasDrawnApproachLine = false;
+        this._hasFittedApproachBounds = false;
         try {
             localStorage.removeItem('goride_active_trip');
         } catch (e) {}
@@ -4652,6 +5075,12 @@ class CustomerAppController {
      */
     resetBookingState() {
         this.hideRadar();
+        this._lastApproachDriverPos = null;
+        this._hasFittedApproachBounds = false;
+        this._hasDrawnApproachLine = false;
+        if (this.mapController && typeof this.mapController.clearDriverRoute === 'function') {
+            this.mapController.clearDriverRoute();
+        }
         if (this.trackingInterval) {
             clearInterval(this.trackingInterval);
             this.trackingInterval = null;
@@ -4681,7 +5110,8 @@ class CustomerAppController {
         const dName = (this.activeTrip && this.activeTrip.driverName) ? this.activeTrip.driverName : 'Tài xế';
         const dPhone = (this.activeTrip && (this.activeTrip.driverPhone || this.activeTrip.phone)) ? (this.activeTrip.driverPhone || this.activeTrip.phone) : '09xx xxx xxx';
         this.showDialog(`
-            <div style="text-align:center; padding:10px 0;">
+            <div style="position:relative; text-align:center; padding:10px 0;">
+                <button type="button" class="btn-dialog-corner-close" id="btn-close-call-corner" aria-label="Đóng thông báo" title="Đóng" style="position:absolute; top:-4px; right:-4px; width:30px; height:30px; border-radius:50%; border:none; background:#f1f5f9; font-size:1.3rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#64748b; z-index:10;">&times;</button>
                 <div style="width:60px; height:60px; border-radius:50%; background:#ecfdf5; color:#059669; font-size:1.8rem; display:flex; align-items:center; justify-content:center; margin:0 auto 12px;">📞</div>
                 <h3 style="margin:0 0 4px; color:#0f172a;">Gọi cho tài xế <span style="font-size:0.75rem; color:#dc2626; font-weight:700;">[CHƯA HỖ TRỢ]</span></h3>
                 <p style="margin:0; font-size:0.9rem; color:#64748b;">${this.escapeHtml(dName)} &bull; ${this.escapeHtml(dPhone)}</p>
@@ -4694,6 +5124,7 @@ class CustomerAppController {
 
         const closeBtn = document.getElementById('btn-close-call-dialog');
         if (closeBtn) closeBtn.addEventListener('click', () => this.closeDialog());
+
     }
 
     /**
@@ -4734,6 +5165,7 @@ class CustomerAppController {
 
         const closeBtn = document.getElementById('btn-close-chat');
         if (closeBtn) closeBtn.addEventListener('click', () => this.closeDialog());
+
     }
 
     /**
@@ -4757,7 +5189,8 @@ class CustomerAppController {
             : 'Hệ thống đang quét tìm tài xế gần bạn nhất qua chỉ mục R-Tree. Bạn có chắc muốn dừng tìm kiếm và hủy yêu cầu không?';
 
         this.showDialog(`
-            <div style="text-align:center;">
+            <div style="position:relative; text-align:center;">
+                <button type="button" class="btn-dialog-corner-close" id="btn-close-cancel-corner" aria-label="Đóng thông báo" title="Đóng" style="position:absolute; top:-4px; right:-4px; width:30px; height:30px; border-radius:50%; border:none; background:#f1f5f9; font-size:1.3rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; color:#64748b; z-index:10;">&times;</button>
                 <div style="width:50px; height:50px; border-radius:50%; background:#fee2e2; color:#dc2626; font-size:1.6rem; display:flex; align-items:center; justify-content:center; margin:0 auto 10px;">⚠️</div>
                 <h3 style="margin:0 0 6px; color:#0f172a;">Hủy chuyến xe?</h3>
                 <p style="margin:0; font-size:0.85rem; color:#64748b;">${warningMsg}</p>
@@ -4772,6 +5205,8 @@ class CustomerAppController {
         const btnDoCancel = document.getElementById('btn-do-cancel');
 
         if (btnKeep) btnKeep.addEventListener('click', () => this.closeDialog());
+        const btnCloseCancelCorner = document.getElementById('btn-close-cancel-corner');
+        if (btnCloseCancelCorner) btnCloseCancelCorner.addEventListener('click', () => this.closeDialog());
         if (btnDoCancel) {
             btnDoCancel.addEventListener('click', () => {
                 this.closeDialog();
@@ -4788,6 +5223,26 @@ class CustomerAppController {
         const card = document.getElementById('dialog-card-content');
         if (overlay && card) {
             card.innerHTML = htmlContent;
+            card.style.position = 'relative';
+            if (!card.querySelector('.btn-dialog-corner-close, #btn-close-chat, #btn-close-rating-corner, #btn-close-cancel-corner, #btn-close-call-corner, .toast-close, .modal-close')) {
+                const cornerClose = document.createElement('button');
+                cornerClose.type = 'button';
+                cornerClose.className = 'btn-dialog-corner-close';
+                cornerClose.setAttribute('aria-label', 'Đóng thông báo');
+                cornerClose.title = 'Đóng';
+                cornerClose.innerHTML = '&times;';
+                cornerClose.style.cssText = 'position:absolute; top:10px; right:12px; width:30px; height:30px; border-radius:50%; border:none; background:#f1f5f9; color:#64748b; font-size:1.3rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:20; transition:all 0.15s ease;';
+                cornerClose.onmouseenter = () => { cornerClose.style.background = '#fee2e2'; cornerClose.style.color = '#dc2626'; };
+                cornerClose.onmouseleave = () => { cornerClose.style.background = '#f1f5f9'; cornerClose.style.color = '#64748b'; };
+                cornerClose.onclick = () => this.closeDialog();
+                card.appendChild(cornerClose);
+            }
+            if (!overlay.dataset.clickBound) {
+                overlay.dataset.clickBound = 'true';
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) this.closeDialog();
+                });
+            }
             overlay.classList.add('active');
         }
     }

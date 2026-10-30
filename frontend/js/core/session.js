@@ -84,10 +84,11 @@ window.showNavigoModal = function(options) {
 
     const overlay = document.createElement('div');
     overlay.id = 'navigo-liquid-glass-modal';
-    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(15,45,60,0.45); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); z-index:9999999; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(15,45,60,0.45); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); z-index:2147483647 !important; display:flex; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;';
 
     overlay.innerHTML = `
-        <div style="background:rgba(255,255,255,0.92); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1.5px solid rgba(255,255,255,0.95); border-radius:24px; padding:28px 24px 22px; max-width:380px; width:100%; text-align:center; box-shadow:0 25px 60px rgba(15,45,60,0.25), inset 0 1px 1px rgba(255,255,255,0.8); font-family:system-ui,-apple-system,sans-serif; animation:liquidPop 0.22s cubic-bezier(0.16,1,0.3,1);">
+        <div style="position:relative; background:rgba(255,255,255,0.92); backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px); border:1.5px solid rgba(255,255,255,0.95); border-radius:24px; padding:28px 24px 22px; max-width:380px; width:100%; text-align:center; box-shadow:0 25px 60px rgba(15,45,60,0.25), inset 0 1px 1px rgba(255,255,255,0.8); font-family:system-ui,-apple-system,sans-serif; animation:liquidPop 0.22s cubic-bezier(0.16,1,0.3,1);">
+            <button type="button" id="btn-liquid-close" aria-label="Đóng thông báo" title="Đóng" style="position:absolute; top:12px; right:12px; width:30px; height:30px; border-radius:50%; border:none; background:rgba(0,0,0,0.06); color:#64748b; font-size:1.3rem; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s ease; z-index:10;">&times;</button>
             <div style="width:58px; height:58px; border-radius:50%; background:${danger ? 'rgba(254,242,242,0.9)' : 'rgba(230,247,246,0.9)'}; border:1px solid ${danger ? 'rgba(254,202,202,0.9)' : 'rgba(187,242,238,0.9)'}; color:${danger ? '#dc2626' : '#00b1a9'}; display:flex; align-items:center; justify-content:center; font-size:1.75rem; margin:0 auto 16px auto; box-shadow:0 4px 14px rgba(0,0,0,0.06);">
                 ${icon}
             </div>
@@ -111,6 +112,16 @@ window.showNavigoModal = function(options) {
     `;
 
     document.body.appendChild(overlay);
+
+    const closeBtn = overlay.querySelector('#btn-liquid-close');
+    if (closeBtn) {
+        closeBtn.onmouseenter = () => { closeBtn.style.background = '#fee2e2'; closeBtn.style.color = '#dc2626'; };
+        closeBtn.onmouseleave = () => { closeBtn.style.background = 'rgba(0,0,0,0.06)'; closeBtn.style.color = '#64748b'; };
+        closeBtn.onclick = () => {
+            overlay.remove();
+            if (typeof onCancel === 'function') onCancel();
+        };
+    }
 
     const cancelBtn = overlay.querySelector('#btn-liquid-cancel');
     if (cancelBtn) {
@@ -292,6 +303,24 @@ class SessionManager {
      */
     _initFromStorage() {
         try {
+            // Strict guard: If user explicitly logged out, NEVER restore session
+            if (typeof localStorage !== 'undefined' && localStorage.getItem('goride_logged_out') === '1') {
+                this.currentUser = null;
+                this.token = null;
+                this._isLoggedOut = true;
+                const authKeys = [
+                    'ride_rtree_user', 'ride_rtree_token',
+                    'goride_user', 'goride_token',
+                    'navigo_user', 'navigo_token',
+                    'user', 'token', 'currentUser', 'session_user', 'user_token', 'auth_token'
+                ];
+                authKeys.forEach(k => {
+                    try { localStorage.removeItem(k); } catch (e) {}
+                    try { sessionStorage.removeItem(k); } catch (e) {}
+                });
+                return;
+            }
+
             const isValidUserJson = (str) => {
                 if (!str || typeof str !== 'string') return false;
                 const trimmed = str.trim();
@@ -364,7 +393,7 @@ class SessionManager {
     }
 
     getCurrentUser() {
-        if (!this.currentUser) {
+        if (!this.currentUser && !this._isLoggedOut) {
             this._initFromStorage();
         }
         return this.currentUser;
@@ -477,12 +506,13 @@ class SessionManager {
                 'ride_rtree_user', 'ride_rtree_token',
                 'goride_user', 'goride_token',
                 'navigo_user', 'navigo_token',
-                'user', 'token', 'currentUser', 'user_token',
-                'goride_active_trip', 'goride_driver_online_state',
-                'goride_pending_trip_offers', 'goride_current_order',
+                'user', 'token', 'currentUser', 'session_user', 'user_token', 'auth_token',
+                'goride_active_trip', 'goride_driver_online_state', 'navigo_driver_online_state',
+                'goride_driver_last_location', 'goride_pending_trip_offers', 'goride_current_order',
+                'goride_handled_offers',
                 'navigo_location_permission_granted', 'navigo_user_location',
                 'navigo_session_loaded', 'navigo_session_location_prompted',
-                'navigo_loading_screen_active', 'navigo_from_loading'
+                'navigo_loading_screen_active', 'navigo_from_loading', 'navigo_from_logout'
             ];
             keysToRemove.forEach(k => {
                 try {
@@ -514,16 +544,18 @@ class SessionManager {
                     'ride_rtree_user', 'ride_rtree_token',
                     'goride_user', 'goride_token',
                     'navigo_user', 'navigo_token',
-                    'user', 'token', 'currentUser', 'session_user',
-                    'goride_active_trip', 'goride_driver_online_state',
-                    'goride_pending_trip_offers',
+                    'user', 'token', 'currentUser', 'session_user', 'user_token', 'auth_token',
+                    'goride_active_trip', 'goride_driver_online_state', 'navigo_driver_online_state',
+                    'goride_driver_last_location', 'goride_pending_trip_offers', 'goride_current_order',
+                    'goride_handled_offers',
                     'navigo_session_loaded', 'navigo_session_location_prompted',
-                    'navigo_loading_screen_active', 'navigo_from_loading'
+                    'navigo_loading_screen_active', 'navigo_from_loading', 'navigo_from_logout'
                 ];
                 keysToRemove.forEach(k => {
                     try { localStorage.removeItem(k); } catch(e) {}
                     try { sessionStorage.removeItem(k); } catch(e) {}
                 });
+                localStorage.setItem('goride_logged_out', '1');
             } catch(e) {}
 
             const isPagesDir = /[\/\\]pages[\/\\]/i.test(window.location.pathname) || window.location.pathname.includes('/pages/');
@@ -645,11 +677,17 @@ if (typeof document !== 'undefined') {
 
         // 2. Auth state elements
         document.querySelectorAll('[data-auth="guest"]').forEach(el => {
-            el.style.display = isGuest ? 'flex' : 'none';
+            el.style.setProperty('display', isGuest ? 'flex' : 'none', 'important');
         });
         document.querySelectorAll('[data-auth="user"]').forEach(el => {
-            el.style.display = isGuest ? 'none' : 'flex';
+            el.style.setProperty('display', isGuest ? 'none' : 'flex', 'important');
         });
+
+        if (isGuest) {
+            document.querySelectorAll('[data-action="logout"], #btn-desktop-logout, #btn-logout-account, .gsm-btn-logout-row, #btn-profile-logout, #btn-customer-logout, .admin-sidebar-btn-logout').forEach(el => {
+                el.style.setProperty('display', 'none', 'important');
+            });
+        }
 
         // 3. Admin elements protection
         document.querySelectorAll('[data-role="admin"], [data-auth="admin"], .gsm-nav-admin-only').forEach(el => {
@@ -1375,6 +1413,28 @@ if (typeof document !== 'undefined') {
             if (profPhone && user.phone) profPhone.textContent = user.phone;
             const profAvatar = document.getElementById('profile-avatar-initials');
             if (profAvatar) profAvatar.textContent = initial;
+        } else {
+            document.querySelectorAll('[data-user-name]').forEach(el => {
+                el.textContent = 'Khách';
+            });
+            document.querySelectorAll('[data-user-avatar]').forEach(el => {
+                el.textContent = '👤';
+            });
+            const profName = document.getElementById('profile-display-name');
+            if (profName) profName.textContent = 'Chưa đăng nhập';
+            const profPhone = document.getElementById('profile-display-phone');
+            if (profPhone) profPhone.textContent = 'Vui lòng đăng nhập tài khoản';
+            const profAvatar = document.getElementById('profile-avatar-initials');
+            if (profAvatar) profAvatar.textContent = '?';
+            const profBadgeSlot = document.getElementById('profile-account-badge-slot');
+            if (profBadgeSlot) {
+                profBadgeSlot.innerHTML = `
+                    <a href="login.html?redirect=profile.html" class="gsm-account-badge" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:9999px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; font-size:0.8rem; font-weight:800; text-decoration:none; box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+                        <span>🔒</span>
+                        <span>Đăng nhập</span>
+                    </a>
+                `;
+            }
         }
     }
 

@@ -5321,7 +5321,7 @@ a, a:hover, a:focus, a:active,
   transform: translateX(-50%);
   width: calc(100% - 28px);
   max-width: 540px;
-  z-index: 10001;
+  z-index: 2147483647 !important;
   cursor: pointer;
   text-decoration: none !important;
   user-select: none;
@@ -5664,7 +5664,7 @@ a, a:hover, a:focus, a:active,
   top: calc(var(--header-height, 64px) + 12px) !important;
   right: 16px !important;
   left: auto !important;
-  z-index: 999999 !important;
+  z-index: 2147483647 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 6px !important;
@@ -5717,7 +5717,7 @@ a, a:hover, a:focus, a:active,
   gap: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
   border: 1.5px solid #00b1a9;
-  z-index: 9999;
+  z-index: 2147483647 !important;
   animation: slideDownPick 0.22s ease-out;
 }
 
@@ -5844,3 +5844,43 @@ body.customer-body .gsm-floating-bottom-nav,
 
 
 
+
+
+/* ==========================================================================
+   28. GLOBAL NOTIFICATION PRIORITY OVERLAY & TOPMOST LAYER (ABOVE NAVIGATION)
+   Ensures ride receiving, booking, alerts & floating notifications sit on the
+   first layer above the navigation bar (z-index: 2147483647).
+   ========================================================================== */
+#navigo-liquid-glass-modal,
+.toast-container,
+#toast-container,
+.incoming-offer-overlay,
+#driver-incoming-offer-modal,
+#driver-rate-customer-modal,
+#driver-auth-guard-modal,
+.goride-dialog-overlay,
+#dialog-overlay,
+.floating-map-pick-banner,
+#floating-map-pick-banner,
+.goride-floating-active-trip,
+#tracking-searching-panel,
+.modal-overlay,
+.modal-overlay.is-active,
+.modal-overlay.open,
+#modal-change-vehicle {
+  z-index: 2147483647 !important;
+}
+
+#navigo-liquid-glass-modal *,
+.incoming-offer-card,
+.goride-dialog-card,
+.modal-card,
+.btn-close-incoming-offer,
+.btn-dialog-corner-close,
+.modal-close-btn,
+.toast-close,
+#btn-liquid-close,
+#btn-close-searching-corner,
+#btn-close-driver-guard {
+  pointer-events: auto !important;
+}

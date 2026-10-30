@@ -400,8 +400,27 @@
                         <span>Đăng nhập</span>
                     </a>
                 `;
+                const logoutBtn = document.getElementById('btn-logout-account');
+                if (logoutBtn) logoutBtn.style.setProperty('display', 'none', 'important');
+                const editName = document.getElementById('btn-edit-user-name');
+                if (editName) editName.style.setProperty('display', 'none', 'important');
+                const editPhone = document.getElementById('btn-edit-user-phone');
+                if (editPhone) editPhone.style.setProperty('display', 'none', 'important');
+                const nameEl = document.getElementById('profile-display-name');
+                if (nameEl) nameEl.textContent = 'Chưa đăng nhập';
+                const phoneEl = document.getElementById('profile-display-phone');
+                if (phoneEl) phoneEl.textContent = 'Vui lòng đăng nhập tài khoản';
+                const avatarEl = document.getElementById('profile-avatar-initials');
+                if (avatarEl) avatarEl.textContent = '?';
                 return;
             }
+
+            const logoutBtn = document.getElementById('btn-logout-account');
+            if (logoutBtn) logoutBtn.style.removeProperty('display');
+            const editName = document.getElementById('btn-edit-user-name');
+            if (editName) editName.style.removeProperty('display');
+            const editPhone = document.getElementById('btn-edit-user-phone');
+            if (editPhone) editPhone.style.removeProperty('display');
 
             const nameEl = document.getElementById('profile-display-name');
             if (nameEl && user.name) nameEl.textContent = user.name;
@@ -1249,13 +1268,20 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const user = (typeof sessionManager !== 'undefined') ? sessionManager.getUser() : null;
+            if (!user) {
+                window.location.replace('login.html?redirect=profile.html');
+                return;
+            }
             refreshAllProfileSections();
             initUserNameEdit();
             initUserPhoneEdit();
         });
         window.addEventListener('session:change', refreshAllProfileSections);
         window.addEventListener('session:login', refreshAllProfileSections);
-        window.addEventListener('session:logout', refreshAllProfileSections);
+        window.addEventListener('session:logout', () => {
+            window.location.replace('login.html?redirect=profile.html');
+        });
         window.addEventListener('storage', (e) => {
             if (!e.key || e.key === 'goride_driver_online_state' || e.key.includes('user') || e.key.includes('ratings') || e.key.includes('driver')) {
                 refreshAllProfileSections();
@@ -1271,7 +1297,7 @@
     </script>
 
     <!-- Modal Thay Đổi Loại Phương Tiện Hoạt Động Của Tài Xế -->
-    <div id="modal-change-vehicle" style="display:none; position:fixed; inset:0; background:rgba(15,45,60,0.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:999999; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
+    <div id="modal-change-vehicle" style="display:none; position:fixed; inset:0; background:rgba(15,45,60,0.5); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:2147483647 !important; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;">
         <div style="background:#ffffff; border-radius:24px; padding:24px 20px 20px; max-width:460px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 25px 60px rgba(15,45,60,0.3); border:1.5px solid #cbd5e1; animation:liquidPop 0.22s cubic-bezier(0.16,1,0.3,1);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #f1f5f9; padding-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:8px;">
